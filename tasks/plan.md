@@ -1,6 +1,6 @@
-﻿# Plán: Scroll tabuľky Resources v dostupnej výške
+# Plán: Scroll tabuľky Resources v dostupnej výške
 
-Dátum: 2026-10-16. Stav: pripravené na implementáciu; oprava ešte nie je vykonaná.
+Dátum: 2026-10-16. Stav: T1/T2 vykonané a overené; T3 otvorená pre použiteľnosť krátkych okien. Pozri [merania](resources-table-scroll-measurements.md).
 Úlohy: [tasks/todo.md](todo.md). Používateľ výslovne povolil nahradiť oba predchádzajúce dokumenty, pretože ich práca je hotová. Pre túto úlohu požaduje lokálny plán a zoznam úloh.
 
 ## Cieľ a rozsah
@@ -94,4 +94,4 @@ Browser skript vyžaduje spustený lokálny Vite a zdokumentovaný Playwright ru
 
 ## Stav plánovania
 
-Dokument vznikol na výslovnú žiadosť používateľa. Súhlas s prepísaním plánov neznamená vykonanú implementáciu. T1 až T4 zostávajú otvorené; ďalší krok je realizácia podľa tohto plánu po pokyne používateľa.
+Dokument vznikol na výslovnú žiadosť používateľa. Súhlas s prepísaním plánov neznamená vykonanú implementáciu. Používateľ následne zadal vykonanie inline. T1/T2 a kontrolný bod A sú overené. T3 odhalila nedostatočnú výšku pri 1280x600; po návrhu malej úpravy odsadení sa čaká na odpoveď používateľa. Celý plán sa zatiaľ neoznačuje za dokončený.

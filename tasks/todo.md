@@ -1,6 +1,6 @@
-﻿# Úlohy: Scroll tabuľky Resources
+# Úlohy: Scroll tabuľky Resources
 
-Plán: [plan.md](plan.md). Stav: implementácia sa ešte nezačala.
+Plán: [plan.md](plan.md). Stav: T1/T2 a kontrolný bod A overené. T3 je otvorená pre použiteľnosť krátkych okien; čaká sa na odpoveď k zmenšeniu odsadení. Výsledky: [merania](resources-table-scroll-measurements.md).
 Predchádzajúci obsah bol nahradený so súhlasom používateľa, ktorý potvrdil jeho dokončenie. Tento lokálny checklist je pre túto úlohu výslovne vyžiadaný; nevytvára duplicitné GitHub issues.
 
 ## T1: Reprodukovateľná Playwright regresia
@@ -11,9 +11,9 @@ Súbor: scripts/qa/verify-resources-table-scroll.mjs.
 
 Kritériá prijatia:
 
-- [ ] Izolovaný browser používa validné fixture, 232 VM, štyri provider taby a zbalené metriky; nečíta prihlasovacie údaje.
-- [ ] Pred opravou reprodukuje layoutové zlyhanie pri 1366x768 alebo 1280x600; príčina zlyhania je zaznamenaná.
-- [ ] Zachytí výšky, overflow, scrollTop a pozície ovládania; spustenie a Playwright runtime sú zdokumentované.
+- [x] Izolovaný browser používa validné fixture, 232 VM, štyri provider taby a zbalené metriky; nečíta prihlasovacie údaje.
+- [x] Pred opravou reprodukuje layoutové zlyhanie pri 1366x768 alebo 1280x600; príčina zlyhania je zaznamenaná.
+- [x] Zachytí výšky, overflow, scrollTop a pozície ovládania; spustenie a Playwright runtime sú zdokumentované.
 
 Overenie: node scripts/qa/verify-resources-table-scroll.mjs; očakávané zlyhanie pred opravou.
 
@@ -25,17 +25,17 @@ Súbory: src/features/discovery-inventory/resources/components/ResourceInventory
 
 Kritériá prijatia:
 
-- [ ] Resources používa min-h-0 cez rodiča aj kartu a nevyžaduje 480 px.
-- [ ] Existujúci DataTableSurface vlastní scroll riadkov; metriky, preference a dátové operácie sú zachované.
-- [ ] Cielené component testy, lint a browser regresia z T1 po oprave prejdú.
+- [x] Resources používa min-h-0 cez rodiča aj kartu a nevyžaduje 480 px.
+- [x] Existujúci DataTableSurface vlastní scroll riadkov; metriky, preference a dátové operácie sú zachované.
+- [x] Cielené component testy, lint a browser regresia z T1 po oprave prejdú.
 
 Overenie: focused Vitest/ESLint príkazy v plan.md a Playwright skript. jsdom test nenahrádza browser meranie.
 
 ## Kontrolný bod A
 
-- [ ] Pri 1366x768 aj 1280x600 nepreteká desktopová route a wheel posúva oblasť riadkov.
-- [ ] Stránkovanie je v okne; nestačí iba skryť vonkajšie pretečenie.
-- [ ] Zásah do ContainedViewportFrame je buď nepotrebný, alebo podložený samostatným meraním a cielenými testmi.
+- [x] Pri 1366x768 aj 1280x600 nepreteká desktopová route a wheel posúva oblasť riadkov.
+- [x] Stránkovanie je v okne; nestačí iba skryť vonkajšie pretečenie.
+- [x] Zásah do ContainedViewportFrame je buď nepotrebný, alebo podložený samostatným meraním a cielenými testmi.
 
 ## T3: Overenie flow a použiteľnosti
 
@@ -46,7 +46,7 @@ Súbory: scripts/qa/verify-resources-table-scroll.mjs a tasks/resources-table-sc
 Kritériá prijatia:
 
 - [ ] VMware, FlashSystem, IBM Power a Resources ISE prejdú desktopovou maticou; Providers a mobil 390x844 nemajú regresiu.
-- [ ] Overené compact/comfortable, 10/25/50 riadkov, sidebar, taby, zbalené/rozbalené metriky a loading/empty/error/cached-error stavy podľa plan.md.
+- [x] Overené compact/comfortable, 10/25/50 riadkov, sidebar, taby, zbalené/rozbalené metriky a loading/empty/error/cached-error stavy podľa plan.md.
 - [ ] Wheel a klávesnica dosiahnu riadky aj stránkovanie; pri 1280x600 je zdokumentovaný počet celých viditeľných riadkov. Ak nie je viditeľný ani jeden, úloha zostáva otvorená a uvedie sa konkrétny návrh malej úpravy.
 
 Overenie: Playwright skript, merania geometrie pred/po scrollovaní a screenshoty; zaznamenať aj runtime chyby. Odlišné výsledky pri zoome neodhadovať z fyzických pixelov screenshotu.
