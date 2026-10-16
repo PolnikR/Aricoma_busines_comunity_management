@@ -78,7 +78,7 @@
     let active=0;
     const update=()=>{
       const main=document.querySelector('main');const w=main.clientWidth-40,h=main.clientHeight-24;
-      const mode=w>=1150&&h>=740?'wide':w>=850&&h>=440?'compact':'sections';
+      const mode=w>=1150&&h>=740?'wide':w>=850&&h>=500?'compact':'sections';
       document.body.dataset.layout=mode;
       const selected=pages[active];
       keys.forEach(key=>document.getElementById(key).hidden=mode==='sections'&&key!==selected.key);

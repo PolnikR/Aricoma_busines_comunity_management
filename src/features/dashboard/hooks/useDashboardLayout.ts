@@ -7,7 +7,7 @@ export function useDashboardLayout(host: HTMLElement | null): 'wide' | 'compact'
     const measure = () => {
       const { width, height } = host.getBoundingClientRect()
       if (!width || !height) return
-      setLayout(width >= 1150 && height >= 740 ? 'wide' : width >= 850 && height >= 440 ? 'compact' : 'sections')
+      setLayout(width >= 1150 && height >= 740 ? 'wide' : width >= 850 && height >= 500 ? 'compact' : 'sections')
     }
     measure()
     if (typeof ResizeObserver === 'undefined') {

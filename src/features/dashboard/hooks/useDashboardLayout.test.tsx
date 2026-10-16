@@ -18,6 +18,8 @@ describe('dashboard host layout', () => {
     vi.spyOn(host, 'getBoundingClientRect').mockImplementation(() => DOMRect.fromRect(size))
     const { result, rerender, unmount } = renderHook(() => useDashboardLayout(host))
     expect(result.current).toBe('compact')
+    act(() => { size = { width: 896, height: 444 }; notify?.() })
+    expect(result.current).toBe('sections')
     act(() => { size = { width: 400, height: 650 }; notify?.() })
     expect(result.current).toBe('sections')
     act(() => { size = { width: 1534, height: 950 }; notify?.() })
