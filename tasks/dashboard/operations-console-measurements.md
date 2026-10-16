@@ -34,3 +34,7 @@ Baseline bol zmeraný cez Chrome DevTools Protocol na izolovanom Edge a lokálno
 Focused baseline: `npm.cmd exec vitest run src/features/dashboard/pages/OverviewPage.test.tsx src/features/dashboard/components/DashboardMetricCard.test.tsx src/features/dashboard/model/selectDashboardMetrics.test.ts src/contexts/ThemeContext.test.tsx src/layouts/app-shell/AppShell.test.tsx` — **5 súborov, 27 testov prešlo**.
 
 Toto je meranie východiska. Light/Dark/EN/SK/CS, veľké hodnoty a minimálne malé plochy sa overia na konečnom návrhu; nejde o tvrdenie, že starý dashboard spĺňa novú zmluvu.
+
+## Potvrdené hranice po implementácii (2026-10-16)
+
+Finálne meranie nahradilo počiatočné hypotézy: Wide potrebuje host aspoň 1150 × 740 CSS px, Compact 850 × 500 CSS px; nižšie rozmery používajú Sections. Pri pôvodnom H440 bol pri efektívnej ploche 960 × 540 zistený vertikálny overflow, preto prah stúpol. Všetky požadované desktopové viewporty zostávajú v plnej kompozícii. Výsledky EN/SK/CS, oboch tém, sidebarov a všetkých mobilných stránok sú v [záverečnom reporte](operations-console-verification.md).

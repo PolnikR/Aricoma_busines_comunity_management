@@ -1,6 +1,6 @@
 # Operations Console — Light/Dark a vyplnenie dostupnej obrazovky
 
-Dátum: 2026-10-15. Stav: implementačný plán, implementácia nezačala.
+Dátum plánu: 2026-10-15. Implementácia dokončená a overená 2026-10-16 inline, v atomických commitoch. Výsledky a finálne rozmerové hranice: [overenie implementácie](operations-console-verification.md).
 
 ## Zadanie a rozsah
 
@@ -128,7 +128,7 @@ Pre mobile-only zvyšnú výšku je súčasťou plánu úzky route opt-in, napr.
 | OC10 | Finálne overenie | OC9 | [#27](https://github.com/PolnikR/Aricoma_busines_comunity_management/issues/27) |
 <!-- TASK_INDEX_END -->
 
-Poradie: OC1 → OC2 → OC3 → OC4 → OC5 → OC6 → OC7 → OC8 → OC9 → OC10. Všetky implementačné úlohy zostávajú otvorené; vytvorenie plánu neznamená ich vykonanie. Žiadny deploy, push ani merge nie je súčasťou tohto zadania.
+Poradie: OC1 → OC2 → OC3 → OC4 → OC5 → OC6 → OC7 → OC8 → OC9 → OC10. Implementačné kroky sú dokončené; dôkazy a hranice overenia sú v záverečnom reporte. Žiadny deploy, push ani merge nie je súčasťou tohto zadania.
 
 ### Kontrolné body
 
