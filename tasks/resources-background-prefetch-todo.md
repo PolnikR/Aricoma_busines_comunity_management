@@ -139,3 +139,5 @@ V tejto úlohe sa overuje iba obsah a rozsah dvoch nových Markdown súborov. Pr
 - T1/T5: CUA aj Node REPL zlyhali pred inicializáciou prehliadača (os error 3), Chrome DevTools MCP chýba. Žiadne nové živé meranie ani výkonové tvrdenie.
 
 - Funkčný slice T2 + základ T3: dva produkčné komponenty, QueryClient wrappers pôvodných testov a nová integrácia. Red: tri nové testy odhalili chýbajúci trigger. Green: tri súbory / 19 testov prešlo; po poslednej úprave async flush samostatne integrácia 3/3. Focused ESLint piatich zmenených TS/TSX súborov prešiel po oprave jednej optional chain a async callbackov; `git diff --check -- src/features/discovery-inventory/resources` bez chýb. Readiness/error/filter hraničné scenáre budú nasledovať v samostatnom testovacom commite.
+
+- Regresie: 7 focused súborov prešlo (65 testov spolu s prejdenými ISE prípadmi), 5 ISE testov najprv odhalilo chýbajúci QueryClientProvider po novom useQueryClient v zdieľanom VMware komponente. Doplnený iba wrapper/cleanup testov ISE; produkčné ISE sa nemení. Po oprave komponent + ISE: 24/24 prešlo. Focused ESLint ISE súboru bez nálezu.
