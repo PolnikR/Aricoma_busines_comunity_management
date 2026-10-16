@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useInitialResourcePrefetch } from '@/features/discovery-inventory/resources/hooks/useInitialResourcePrefetch'
 import { useTranslation } from '@/hooks/useTranslation'
 import { RefreshIcon } from '@/shared/icons/Icons'
@@ -35,18 +35,19 @@ export function OverviewPage({ data = dashboardFixture, initialState = 'demo' }:
   ]
   const activePage = Math.min(page, pages.length - 1)
   const active = pages[activePage] ?? { section: 'indicators', item: 0 }
-  useLayoutEffect(() => {
-    const focused = lastFocused.current
-    if (focused && (!focused.isConnected || focused.closest('[hidden]'))) {
-      if (paged) sectionSelect.current?.focus()
-      else pageTitle.current?.focus()
-    }
-  }, [layout, paged])
   const [state, setState] = useState<DashboardState>(initialState)
   useInitialResourcePrefetch(state !== 'loading' && state !== 'unknown')
   const [refreshed, setRefreshed] = useState(false)
   const [detail, setDetail] = useState<DashboardDetail | null>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
+  useEffect(() => {
+    if (detail || previewOpen) return
+    const focused = lastFocused.current
+    if (focused && (!focused.isConnected || focused.closest('[hidden]'))) {
+      if (paged) sectionSelect.current?.focus()
+      else pageTitle.current?.focus()
+    }
+  }, [detail, previewOpen, layout, paged])
   const [density, setDensity] = useState<DashboardDensity>(() => {
     try {
       const saved = window.localStorage.getItem(DENSITY_STORAGE_KEY)

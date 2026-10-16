@@ -162,4 +162,23 @@ describe('approved Overview', () => {
     expect(screen.getByRole('button', { name: /IBM Power partitions.*32/ })).toBeVisible()
     vi.restoreAllMocks()
   })
+
+  it('keeps focus inside a dialog during resize and returns to the visible pager after close', async () => {
+    let size = { width: 1534, height: 950 }
+    let notify: (() => void) | undefined
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(() => DOMRect.fromRect(size))
+    vi.stubGlobal('ResizeObserver', class {
+      constructor(callback: () => void) { notify = callback }
+      observe() { /* Controlled host resize. */ }
+      disconnect() { /* No external resource in this controlled observer. */ }
+    })
+    const user = userEvent.setup()
+    render(<OverviewPage />)
+    await user.click(screen.getByRole('button', { name: /IBM Power partitions.*32/ }))
+    const dialog = screen.getByRole('dialog', { name: 'IBM Power partitions' })
+    act(() => { size = { width: 288, height: 384 }; notify?.() })
+    expect(dialog).toContainElement(document.activeElement as HTMLElement)
+    await user.keyboard('{Escape}')
+    expect(screen.getByRole('combobox', { name: 'Dashboard section' })).toHaveFocus()
+  })
 })
