@@ -1,29 +1,44 @@
 ﻿/* Standalone browser template. Only local fixtures are rendered; no API requests. */
+const iconPaths = {
+  grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+  server: '<rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="18" height="7" rx="2"/><path d="M7 6.5h.01M7 17.5h.01M12 6.5h5M12 17.5h5"/>',
+  recovery: '<path d="M3 10a9 9 0 1 1 2 8M3 4v6h6M12 7v5l3 2"/>',
+  shield: '<path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z"/><path d="m8 12 3 3 5-6"/>',
+  layers: '<path d="m12 3 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 16l9 5 9-5"/>',
+  replication: '<path d="M4 7h15m-4-4 4 4-4 4M20 17H5m4-4-4 4 4 4"/>',
+  snapshot: '<rect x="5" y="3" width="16" height="16" rx="2"/><path d="M16 22H3a1 1 0 0 1-1-1V8M9 8h8M9 12h5"/>',
+  arrow: '<path d="M5 12h14m-5-5 5 5-5 5"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10h.01"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+};
+const icon = name => `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">${iconPaths[name] || iconPaths.layers}</svg>`;
+document.querySelectorAll('[data-icon]').forEach(el => { el.innerHTML = icon(el.dataset.icon); });
 const number = value => value === null ? '—' : new Intl.NumberFormat('en-US').format(value);
 const sum = (rows, key) => rows.some(row => row[key] === null) ? null : rows.reduce((total, row) => total + row[key], 0);
 const pill = (text, tone = '') => `<span class="pill ${tone}">${text}</span>`;
 const colors = { good: 'var(--green)', blue: 'var(--blue)', teal: 'var(--teal)', warn: 'var(--amber)', bad: 'var(--red)', unknown: 'var(--unknown)' };
 const swatch = tone => `<i class="swatch" style="--segment:${colors[tone]}" aria-hidden="true"></i>`;
 const table = (label, headers, rows) => `<div class="table-wrap" tabindex="0" role="region" aria-label="${label}"><table><caption class="sr-only">${label} — simulated data</caption><thead><tr>${headers.map(h => `<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
-const panel = (title, subtitle, body, { action = '', foot = '', full = false, raw = false } = {}) => `<section class="panel ${full ? 'span-all' : ''}" aria-label="${title}"><header class="panel-head"><div><h2>${title}</h2><p>${subtitle}</p></div>${action || '<span class="section-number">DEMO</span>'}</header>${raw ? body : `<div class="panel-body">${body}</div>`}${foot ? `<div class="panel-foot">${foot}</div>` : ''}</section>`;
-const kpi = (label, value, foot, unit = '', symbol = '◇') => `<div class="kpi"><div class="kpi-label">${label}<span class="kpi-symbol" aria-hidden="true">${symbol}</span></div><div class="kpi-value">${number(value)}<small>${unit}</small></div><div class="kpi-foot">${foot}</div></div>`;
+const panel = (title, subtitle, body, { action = '', foot = '', full = false, raw = false } = {}) => `<section class="panel ${full ? 'span-all' : ''}" data-panel="${title.toLowerCase().replaceAll(' ', '-')}" aria-label="${title}"><header class="panel-head"><div><h2>${title}</h2><p>${subtitle}</p></div>${action || '<span class="section-number">SIMULATED</span>'}</header>${raw ? body : `<div class="panel-body">${body}</div>`}${foot ? `<div class="panel-foot">${foot}</div>` : ''}</section>`;
+const kpi = (label, value, foot, unit = '', symbol = '◇', segments = []) => `<div class="kpi"><div class="kpi-label"><span>${label}</span><span class="kpi-symbol">${icon(({ '▤': 'server', '◉': 'shield', '⇄': 'replication', '↻': 'recovery', '▦': 'grid', '▱': 'layers' })[symbol])}</span></div><div class="kpi-value">${number(value)}<small>${unit}</small></div>${segments.length ? `<div class="kpi-track" aria-hidden="true">${segments.map(s => `<span style="flex:${s.value};--segment:${colors[s.tone]}"></span>`).join('')}</div>` : ''}<div class="kpi-foot">${foot}</div></div>`;
 const kpis = items => `<section class="kpis" aria-label="Key statistics">${items.join('')}</section>`;
 function donut(segments, center, label) {
   const total = segments.reduce((n, segment) => n + segment.value, 0);
   let offset = 0;
   const circles = segments.map(segment => {
     const length = total ? segment.value / total * 100 : 0;
-    const circle = `<circle cx="90" cy="90" r="70" pathLength="100" stroke="${colors[segment.tone]}" stroke-dasharray="${length} ${100 - length}" stroke-dashoffset="${-offset}"/>`;
+    const visible = Math.max(0, length - .7);
+    const circle = `<circle cx="90" cy="90" r="70" pathLength="100" stroke="${colors[segment.tone]}" stroke-dasharray="${visible} ${100 - visible}" stroke-dashoffset="${-offset}"><title>${segment.label}: ${number(segment.value)}</title></circle>`;
     offset += length;
     return circle;
   }).join('');
-  return `<div class="chart-layout"><div class="donut"><svg viewBox="0 0 180 180" aria-hidden="true"><circle cx="90" cy="90" r="70" stroke="var(--line)"/>${circles}</svg><div class="donut-center"><strong>${center}</strong><span>${label}</span></div></div><div class="legend">${segments.map(s => `<div class="legend-row"><span>${swatch(s.tone)}${s.label}</span><strong>${number(s.value)}</strong></div>`).join('')}</div></div>`;
+  return `<div class="chart-layout"><div class="donut"><svg viewBox="0 0 180 180" aria-hidden="true"><circle class="donut-guide" cx="90" cy="90" r="83"/><circle cx="90" cy="90" r="70" stroke="var(--track)"/>${circles}</svg><div class="donut-center"><span class="donut-emblem">${icon('shield')}</span><strong>${center}</strong><span>${label}</span></div></div><div class="legend">${segments.map(s => `<div class="legend-row"><span>${swatch(s.tone)}${s.label}</span><strong>${number(s.value)}<small>${total ? (s.value / total * 100).toFixed(1) : '0.0'}%</small></strong></div>`).join('')}</div></div>`;
 }
 function bar(label, value, total, tone = 'blue', context = '') {
   const width = value === null || !total ? 0 : value / total * 100;
   return `<div class="metric-row"><div class="bar-label"><span>${label}</span><strong>${number(value)}${context ? ` <small>${context}</small>` : ''}</strong></div><div class="bar-track" aria-hidden="true">${value === null ? '<span class="unavailable"></span>' : `<span style="width:${width}%;--segment:${colors[tone]}"></span>`}</div></div>`;
 }
-const link = (view, label) => `<a class="panel-link" href="#${view}">${label} <span aria-hidden="true">↗</span></a>`;
+const link = (view, label) => `<a class="panel-link" href="#${view}">${label}${icon('arrow')}</a>`;
 const systems = dashboardData.systems;
 const groupCount = sum(dashboardData.groups, 'local') + sum(dashboardData.groups, 'remote');
 const deployed = sum(dashboardData.applications, 'deployed');
@@ -33,7 +48,7 @@ let currentView = 'overall';
 function activity(recoveryOnly = false) {
   const rows = dashboardData.activity.filter(row => !recoveryOnly || row.type === 'recovery');
   return panel('Recent Activity', 'Latest operations · 16 Oct 2026 · CEST', table('Recent Activity', ['Started', 'Operation', 'Resource', 'Platform', 'Result', 'Duration'], rows.map(row => [
-    `<span class="mono">${row.time}</span>`, `<span class="operation-icon" aria-hidden="true">${row.type === 'snapshot' ? '▣' : '↻'}</span>${row.operation}`,
+    `<span class="mono">${row.time}</span>`, `<span class="operation-icon">${icon(row.type === 'snapshot' ? 'snapshot' : row.type === 'replication' ? 'replication' : 'recovery')}</span>${row.operation}`,
     `<span class="mono">${row.resource}</span>`, row.platform, pill(row.status, row.status === 'Succeeded' ? 'good' : row.status === 'Failed' ? 'bad' : 'blue'), row.duration,
   ])), { full: true, raw: true, foot: 'Illustrative history. Running operations have no final duration or outcome.' });
 }
@@ -49,21 +64,21 @@ function overall() {
   const available = systems.filter(s => s.available).length + sum(dashboardData.compute, 'online');
   const total = systems.length + sum(dashboardData.compute, 'count');
   const resources = [...dashboardData.compute, ...['ibm', 'hitachi'].map(v => ({ name: v === 'ibm' ? 'IBM FlashSystem' : 'Hitachi VSP', count: systems.filter(s => s.vendor === v).length, online: systems.filter(s => s.vendor === v && s.available).length }))];
-  const infra = panel('Infrastructure Overview', 'Availability by compute platform and storage vendor', `<div class="resource-grid">${resources.map(r => `<div class="resource"><span class="resource-icon" aria-hidden="true">▤</span><div class="resource-info"><div class="resource-name">${r.name}</div><div class="resource-meta"><strong>${r.count}</strong><span>${r.online}/${r.count} available</span></div></div></div>`).join('')}</div>`, { foot: 'Demo availability checks · 10:00 CEST. Counts represent registered systems / providers.' });
+  const infra = panel('Infrastructure Overview', 'Availability across your compute and storage estate', `<div class="resource-grid">${resources.map((r, i) => `<div class="resource"><div class="resource-top"><span class="resource-icon resource-${i}" aria-hidden="true">${['VM', 'P', 'FS', 'HV'][i]}</span><div class="resource-info"><div class="resource-name">${r.name}</div><small>${i < 2 ? 'COMPUTE PLATFORM' : 'STORAGE SYSTEM'}</small></div>${pill(r.online === r.count ? 'Available' : 'Attention', r.online === r.count ? 'good' : 'warn')}</div><div class="resource-meta"><strong>${r.count}<small>systems</small></strong><span>${r.online}/${r.count} available</span></div><div class="availability-blocks" aria-hidden="true">${Array.from({ length: r.count }, (_, n) => `<i class="${n < r.online ? 'available' : 'offline'}"></i>`).join('')}</div></div>`).join('')}</div>`, { foot: 'Demo availability checks · 10:00 CEST. Counts represent registered systems / providers.' });
   const issues = [
     ['Connection failures', 'Providers with a failed availability check', total - available, 'bad'],
     ['Snapshot failures', 'Failed operations in the last 24 hours', sum(systems, 'failedOperations'), 'bad'],
     ['Replication issues', 'Relationships requiring attention', sum(systems, 'replicationProblem'), 'warn'],
     ['Recovery failures', 'Failed executions in the last 24 hours', dashboardData.recovery.failed, 'bad'],
   ];
-  const issuePanel = panel('Operational Issues', 'Signals that need an operator’s attention', issues.map(([title, description, value, tone]) => `<div class="issue-row"><span class="issue-icon ${tone}" aria-hidden="true">!</span><div><h3>${title}</h3><p>${description}</p></div><strong>${value}</strong></div>`).join(''), { action: pill('Attention required', 'warn') });
-  const recovery = panel('Recovery Overview', 'Orchestration across both storage vendors', `<div class="recovery-summary"><div><strong>${groupCount}</strong><small>Recovery Groups</small></div><div><strong>${appCount}</strong><small>Applications</small></div><div><strong>${dashboardData.recovery.configurations}</strong><small>Deployed configs</small></div></div><div class="topology"><div class="site"><span class="site-icon" aria-hidden="true">▤</span><div><strong>${sum(dashboardData.groups, 'local')} Local</strong><small>RECOVERY GROUPS</small></div></div><div class="route" aria-hidden="true"></div><div class="site"><span class="site-icon" aria-hidden="true">▤</span><div><strong>${sum(dashboardData.groups, 'remote')} Remote</strong><small>RECOVERY GROUPS</small></div></div></div><p class="note">${deployed} of ${appCount} applications have deployed configurations. Deployment alone does not verify recoverability.</p>`, { action: link('recovery', 'Explore recovery') });
+  const issuePanel = panel('Operational Issues', 'Four signals to investigate', issues.map(([title, description, value, tone]) => `<div class="issue-row"><span class="issue-icon ${tone}" aria-hidden="true">!</span><div><h3>${title}</h3><p>${description}</p></div><strong>${value}</strong></div>`).join(''), { action: pill('Attention required', 'warn'), foot: 'Counts use different units and must not be summed.' });
+  const recovery = panel('Recovery Overview', 'Storage-independent orchestration', `<div class="recovery-summary"><div><strong>${groupCount}</strong><small>Groups</small></div><div><strong>${appCount}</strong><small>Applications</small></div><div><strong>${dashboardData.recovery.configurations}</strong><small>Deployed configs</small></div></div><div class="topology"><div class="orchestrator">${icon('layers')}<span>ABCO orchestration</span></div><div class="topology-branches" aria-hidden="true"></div><div class="sites"><div class="site">${icon('server')}<div><strong>${sum(dashboardData.groups, 'local')} <small>Local</small></strong><span>IBM · Hitachi</span></div></div><div class="site">${icon('replication')}<div><strong>${sum(dashboardData.groups, 'remote')} <small>Remote</small></strong><span>IBM · Hitachi</span></div></div></div><span class="topology-caption">RECOVERY MODES · ILLUSTRATIVE</span></div>`, { action: link('recovery', 'Explore'), foot: `${deployed}/${appCount} applications deployed. Deployment does not verify recoverability.` });
   return kpis([
-    kpi('Infrastructure availability', available, `${pill(`${total - available} unavailable`, 'warn')} of ${total} registered resources`, `/ ${total}`, '▤'),
-    kpi('Volumes with snapshots', sum(systems, 'snapshotCurrent') + sum(systems, 'snapshotStale'), `${pill('80 stale', 'warn')} 80 without a snapshot`, '/ 1,360', '◉'),
-    kpi('Replication relationships', sum(systems, 'replicationSynced'), `${pill('6 issues', 'warn')} 8 synchronizing`, '/ 122', '⇄'),
-    kpi('Recovery executions', dashboardData.recovery.succeeded, `${pill('2 failed', 'bad')} 1 running · last 24h`, 'succeeded', '↻'),
-  ]) + `<div class="grid">${infra}${issuePanel}${protection(systems)}${recovery}${activity()}</div>`;
+    kpi('Infrastructure availability', available, `${pill(`${total - available} unavailable`, 'warn')} ${total} registered resources`, `/ ${total}`, '▤', [{ value: available, tone: 'good' }, { value: total - available, tone: 'bad' }]),
+    kpi('Volumes with snapshots', sum(systems, 'snapshotCurrent') + sum(systems, 'snapshotStale'), `${pill('80 stale', 'warn')} 80 without a snapshot`, '/ 1,360', '◉', [{ value: sum(systems, 'snapshotCurrent'), tone: 'blue' }, { value: sum(systems, 'snapshotStale'), tone: 'warn' }, { value: sum(systems, 'snapshotNone'), tone: 'bad' }]),
+    kpi('Replication relationships', sum(systems, 'replicationSynced'), `${pill('6 issues', 'warn')} 8 synchronizing`, '/ 122', '⇄', [{ value: sum(systems, 'replicationSynced'), tone: 'teal' }, { value: sum(systems, 'replicationSyncing'), tone: 'blue' }, { value: sum(systems, 'replicationProblem'), tone: 'bad' }]),
+    kpi('Recovery executions', dashboardData.recovery.succeeded, `${pill('2 failed', 'bad')} 1 running · last 24h`, 'succeeded', '↻', [{ value: dashboardData.recovery.succeeded, tone: 'good' }, { value: dashboardData.recovery.failed, tone: 'bad' }, { value: dashboardData.recovery.running, tone: 'blue' }]),
+  ]) + `<div class="grid overall-grid">${protection(systems)}${issuePanel}${recovery}${infra}${activity()}</div>`;
 }
 function distribution(rows) {
   const totals = rows.map(s => sum([s], 'snapshotsReady') === null ? null : s.snapshotsReady + s.snapshotsStale + s.snapshotsFailed);
@@ -120,6 +135,7 @@ function render() {
   document.getElementById('page-description').textContent = description;
   document.getElementById('view-number').textContent = index;
   document.title = `ABCO · ${name}`;
+  document.body.dataset.view = currentView;
   document.getElementById('vendor-filter').hidden = currentView !== 'storage';
   document.getElementById('scope-label').textContent = currentView === 'storage' ? (vendor === 'all' ? 'All storage vendors' : vendor === 'ibm' ? 'IBM FlashSystem' : 'Hitachi VSP') : currentView === 'overall' ? 'All platform resources' : 'All recovery workloads';
   document.querySelectorAll('[data-view]').forEach(a => a.dataset.view === currentView ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'));
