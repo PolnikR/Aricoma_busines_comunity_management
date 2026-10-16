@@ -1,0 +1,32 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light">
+<title>ABCO · Platform overview</title><link rel="icon" href="data:,"><link rel="stylesheet" href="overview-vivid.css">
+<script src="overview-vivid-data.js" defer></script><script src="overview-vivid.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to dashboard</a>
+<aside class="sidebar">
+<a class="brand" href="#overall"><span class="brand-mark">A</span><span>ABCO<small>BUSINESS CONTINUITY</small></span></a>
+<div class="workspace-label">OPERATIONS WORKSPACE</div>
+<nav aria-label="Dashboard views">
+<a href="#overall" data-view="overall" aria-current="page"><span aria-hidden="true">▦</span>Overall</a>
+<a href="#storage" data-view="storage"><span aria-hidden="true">▤</span>Storage Systems</a>
+<a href="#recovery" data-view="recovery"><span aria-hidden="true">↻</span>Recovery Operations</a>
+</nav>
+<div class="nav-divider"></div><p class="sidebar-caption">One platform.<br>Every recovery path.</p>
+<div class="sidebar-bottom"><span class="outline-tag">DESIGN TEMPLATE</span><p>Target architecture<br>IBM · Hitachi · VMware · Power</p><span class="version">ABCO / CONSOLE 01</span></div>
+</aside>
+<div class="workspace">
+<header class="topbar"><div><span class="product-name">ABCO Dashboard</span><span class="breadcrumb">/ <span id="breadcrumb">Overall</span></span></div><div class="topbar-right"><span class="demo-label">Demo environment</span><span class="avatar" aria-label="Demo operator">OP</span></div></header>
+<main id="main" tabindex="-1">
+<div class="page-heading"><div><p class="eyebrow">BUSINESS CONTINUITY / <span id="view-number">01</span></p><h1 id="page-title">Platform overview</h1><p id="page-description" class="muted">Infrastructure, data protection and recovery. One operational picture.</p></div><button class="secondary" id="model-button" aria-haspopup="dialog">Data &amp; coverage <span aria-hidden="true">↗</span></button></div>
+<div class="demo-notice"><span class="notice-icon" aria-hidden="true">i</span><p><strong>Illustrative data.</strong> All values are simulated, including IBM and Hitachi. Target support does not imply a working integration. <span class="unknown-key">— = unavailable, never zero.</span></p></div>
+<div class="view-toolbar"><div class="view-context"><span class="status-dot"></span><span id="scope-label">All platform resources</span></div><div class="toolbar-right"><span class="period">Fixture window · 16 Oct 2026 / 24h</span><fieldset id="vendor-filter" hidden><legend class="sr-only">Storage vendor</legend><button type="button" data-vendor="all" aria-pressed="true">All</button><button type="button" data-vendor="ibm" aria-pressed="false">IBM FlashSystem</button><button type="button" data-vendor="hitachi" aria-pressed="false">Hitachi VSP</button></fieldset></div></div>
+<div id="dashboard"></div><p id="announcement" class="sr-only" role="status" aria-live="polite"></p>
+<footer><span>ABCO <b>·</b> Multi-vendor resilience</span><span>Static template · No hardware connection</span></footer>
+</main></div>
+<dialog id="detail-dialog" aria-labelledby="dialog-title"><div class="dialog-heading"><span class="eyebrow">DATA TRANSPARENCY</span><button id="close-dialog" class="icon-button" aria-label="Close details">×</button></div><h2 id="dialog-title">Data &amp; coverage</h2><div id="dialog-content"></div><form method="dialog"><button class="primary">Close details</button></form></dialog>
+<noscript><p class="noscript">Enable JavaScript to explore this interactive demo template.</p></noscript>
+</body></html>
