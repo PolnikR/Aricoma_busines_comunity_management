@@ -1,64 +1,72 @@
-# Úlohy: Recovery Group topology UI + backend
+﻿# Úlohy: Scroll tabuľky Resources
 
-## Aktívne rozšírenie: Metro Mirror predvyplnenie (2026-09-30)
+Plán: [plan.md](plan.md). Stav: implementácia sa ešte nezačala.
+Predchádzajúci obsah bol nahradený so súhlasom používateľa, ktorý potvrdil jeho dokončenie. Tento lokálny checklist je pre túto úlohu výslovne vyžiadaný; nevytvára duplicitné GitHub issues.
 
-Plán: `tasks/plan.md`, fáza MM1–MM7. MM1–MM6 implementované inline; pôvodná implementačná história nižšie zostáva zachovaná.
+## T1: Reprodukovateľná Playwright regresia
 
-- [x] MM1: Generated relationship lookup hook a focused testy.
-- [x] MM2: Reconciliácia automatických, ručných a uložených hodnôt.
-- [x] Kontrolný bod MM-A: Reset pravidlá a ochrana ručných úprav.
-- [x] MM3: Oddeliť Topology gate od úplnej storage/submit validácie.
-- [x] MM4: Presun CG do controlled storage panelu zo shared komponentov.
-- [x] Kontrolný bod MM-B: Topology bez CG a jediný zdroj draft stavu.
-- [x] MM5: Integrácia do Related storage aj volume-only Resources.
-- [x] MM6: en/sk/cs a contract test uloženia ručných opráv.
-- [x] Kontrolný bod MM-C: Payload a edit round-trip bez provenance.
-- [ ] MM7: Responzívny browser smoke a autorizovaný read-only backend lookup — browser unavailable; API bez prihlásenia 401. Verejné OpenAPI overené, kontrakt súhlasí.
-- [x] Focused testy/lint/typecheck podľa plánu, výsledky a limity zaznamenané.
-- [x] Overené implementačné zmeny atomicky commitnuté na prototype; bez merge/push.
+Opis: pripraviť opakovateľné meranie skutočnej aplikácie na izolovaných testovacích dátach.
+Závislosti: žiadne. Rozsah: malý, 1 nový skript.
+Súbor: scripts/qa/verify-resources-table-scroll.mjs.
 
-### Overenie rozšírenia (2026-09-30)
+Kritériá prijatia:
 
-- Implementačné commity: `6f9abb7` (MM1), `a6759e8` (MM2), `ee22237` (MM3), `0896550` (MM4), `06c7e19` (MM5), `4dd957c` (MM6).
-- Focused Vitest: **13 súborov / 131 testov prešlo**. Po následnej úprave typovania mocku opätovne prešlo 5 testov lookup hooku.
-- `npm.cmd exec eslint -- <zmenené .ts/.tsx súbory oproti a7166aa>`: prešlo.
-- `npm.cmd run typecheck`: prešlo. `git diff --check`: prešlo. Upravené locales boli parsované ako JSON a overené locale testom.
-- Celý test suite ani production build neboli spustené.
-- Browser: `cua.getState()` vrátil prázdny zoznam; pokus vytvoriť Chrome tab skončil `Browser is not available: chrome`. Responzívne rozmery, zoom a vizuálny smoke nie sú overené.
-- Read-only backend: `/openapi.json` 200 potvrdzuje required `provider_id` (master FLASHCOPY), `volume_names[]` a existujúcu response schému. `/get_providers?role=all` 401 bez prihlásenia. Reálny relationship lookup ani CRUD nebol vykonaný; orchestration sa nespúšťala.
-- Implementačné rozhodnutie: automatické hodnoty sú odvodené z aktuálneho query výsledku, draft uchováva iba ručné/persistované auxiliary hodnoty a príznak ručne zadaného CG. Takto refetch neprepisuje opravy a nevzniká effect s časovačom. Prerezanie odstránených overrides čaká na dokončené discovery.
+- [ ] Izolovaný browser používa validné fixture, 232 VM, štyri provider taby a zbalené metriky; nečíta prihlasovacie údaje.
+- [ ] Pred opravou reprodukuje layoutové zlyhanie pri 1366x768 alebo 1280x600; príčina zlyhania je zaznamenaná.
+- [ ] Zachytí výšky, overflow, scrollTop a pozície ovládania; spustenie a Playwright runtime sú zdokumentované.
 
-Reprodukcia focused testov (PowerShell, z prototype worktree):
+Overenie: node scripts/qa/verify-resources-table-scroll.mjs; očakávané zlyhanie pred opravou.
 
-```powershell
-$rg = 'src/features/recovery-plans/recovery-groups'
-npm.cmd exec vitest run "$rg/hooks/useRecoveryGroupMetroMirrorRelationships.test.tsx" "$rg/utils/reconcileMetroMirrorPrefill.test.ts" "$rg/utils/recoveryGroupTopology.test.ts" "$rg/api/recoveryGroupsValidation.test.ts" "$rg/hooks/useRecoveryGroups.test.tsx" "$rg/components/RecoveryGroupTopologyStep.test.tsx" "$rg/components/RecoveryGroupMetroMirrorFields.test.tsx" "$rg/components/RecoveryGroupBuilder.test.tsx" "$rg/components/RecoveryGroupResourcesStep.test.tsx" "$rg/helpers/mapRecoveryGroups.test.ts" src/locales/recoveryGroupTopologyTranslations.test.ts "$rg/pages/RecoveryGroupBuilderPage.test.tsx" "$rg/pages/RecoveryGroupEditorPage.test.tsx"
-$changedFiles = @(git diff --name-only a7166aa -- '*.ts' '*.tsx')
-& npm.cmd exec eslint -- $changedFiles
-npm.cmd run typecheck
-git diff --check
-```
+## T2: Oprava Resources flex obalu
 
-## Pôvodná fáza — historický stav
+Opis: obnoviť štandardný zmenšiteľný layout InventoryShell a odstrániť Resources-only minimum 480 px.
+Závislosti: T1. Rozsah: malý, 2 súbory; pri preukázanej potrebe ďalšiu zmenu frame oddeliť do malej nadväzujúcej úlohy.
+Súbory: src/features/discovery-inventory/resources/components/ResourceInventoryShell.tsx a ResourceInventoryShell.test.tsx.
 
-Autoritatívny plán: tasks/plan.md. Pracovisko: .worktrees/topology-preview, vetva prototype/recovery-group-topology. Implementácia prebieha v tejto konverzácii.
+Kritériá prijatia:
 
-- [x] T1: Read model a Local/Metro round-trip fixture mapovanie.
-- [x] T2: Submit validácia a generated payload pre VM aj volume-only.
-- [x] Kontrolný bod A: Zachovaný kontrakt, metadata a legacy Local.
-- [x] T3: Generated submit hooks, response record, refresh a chyby.
-- [x] T4: Shared resource row slot a dostupný úplný názov.
-- [x] T5: Controlled Topology komponent a partner validácia.
-- [x] T6: Wizard indexy, edit initialization, Source/discovery prechody.
-- [x] Kontrolný bod B: Local regresia a Metro inventory kontext.
-- [x] T7: Auxiliary input v každom vybranom drag-and-drop volume riadku.
-- [ ] T8: en/sk/cs a responzívny app layout s viditeľným footerom (browserové rozlíšenia a zoom neoverené: browser service unavailable).
-- [x] T9: Create/edit round-trip kontrakt a focused testy.
-- [ ] Kontrolný bod C: Browser výsledky chýbajú; živý backend smoke test nebol vykonaný.
+- [ ] Resources používa min-h-0 cez rodiča aj kartu a nevyžaduje 480 px.
+- [ ] Existujúci DataTableSurface vlastní scroll riadkov; metriky, preference a dátové operácie sú zachované.
+- [ ] Cielené component testy, lint a browser regresia z T1 po oprave prejdú.
 
-Pri každej úlohe:
-- [x] Akceptačné kritériá implementačných úloh a focused testy podľa tasks/plan.md.
-- [x] Cielený lint, relevantný typecheck a git diff --check.
-- [ ] Atomic commit výhradne na prototype/recovery-group-topology.
+Overenie: focused Vitest/ESLint príkazy v plan.md a Playwright skript. jsdom test nenahrádza browser meranie.
 
-Focused testy: 14 súborov, 115 testov prešlo; tsc, ESLint a git diff --check prešli. Browserový vizuálny test nebolo možné spustiť, pretože browser service nebola dostupná. Neprepínať hlavný checkout, nepushovať ani nemergovať do test bez samostatného zadania.
+## Kontrolný bod A
+
+- [ ] Pri 1366x768 aj 1280x600 nepreteká desktopová route a wheel posúva oblasť riadkov.
+- [ ] Stránkovanie je v okne; nestačí iba skryť vonkajšie pretečenie.
+- [ ] Zásah do ContainedViewportFrame je buď nepotrebný, alebo podložený samostatným meraním a cielenými testmi.
+
+## T3: Overenie flow a použiteľnosti
+
+Opis: rozšíriť QA skript na dotknuté stránky a zapísať merania pred/po.
+Závislosti: T2 a kontrolný bod A. Rozsah: stredný, 2 súbory.
+Súbory: scripts/qa/verify-resources-table-scroll.mjs a tasks/resources-table-scroll-measurements.md.
+
+Kritériá prijatia:
+
+- [ ] VMware, FlashSystem, IBM Power a Resources ISE prejdú desktopovou maticou; Providers a mobil 390x844 nemajú regresiu.
+- [ ] Overené compact/comfortable, 10/25/50 riadkov, sidebar, taby, zbalené/rozbalené metriky a loading/empty/error/cached-error stavy podľa plan.md.
+- [ ] Wheel a klávesnica dosiahnu riadky aj stránkovanie; pri 1280x600 je zdokumentovaný počet celých viditeľných riadkov. Ak nie je viditeľný ani jeden, úloha zostáva otvorená a uvedie sa konkrétny návrh malej úpravy.
+
+Overenie: Playwright skript, merania geometrie pred/po scrollovaní a screenshoty; zaznamenať aj runtime chyby. Odlišné výsledky pri zoome neodhadovať z fyzických pixelov screenshotu.
+
+## T4: Kontroly a commit
+
+Opis: overiť konečný diff a uložiť hotovú opravu s dôkazmi.
+Závislosti: T3. Rozsah: malý, aktualizácia tohto checklistu a záznamu meraní.
+Súbory: tasks/todo.md a tasks/resources-table-scroll-measurements.md.
+
+Kritériá prijatia:
+
+- [ ] Focused Vitest a ESLint dotknutých súborov, Playwright a git diff --check prejdú; presné výsledky sú zapísané.
+- [ ] Commit obsahuje iba zmeny tejto úlohy; existujúce cudzie zmeny zostávajú nedotknuté.
+- [ ] Odovzdanie uvádza commit, verifikáciu a limity; celý suite ani build sa nespúšťajú bez dôvodu podľa AGENTS.md.
+
+Overenie: git diff --cached --stat, git diff --cached --check a git log -1 po úspešnom commite.
+
+## Kontrolný bod B: Dokončenie
+
+- [ ] Všetky otvorené kritériá T1 až T4 sú splnené; oprava nie je vyhlásená za hotovú iba na základe testov CSS tried.
+- [ ] Merania potvrdzujú scroll v tabuľke, stabilné ovládanie a použiteľnosť nízkych okien.
+- [ ] Výsledná oprava je overená a commitnutá; push a merge nie sú súčasťou zadania.
