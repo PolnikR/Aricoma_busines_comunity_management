@@ -13,7 +13,7 @@ function render(element: ReactElement) {
   return renderComponent(<QueryClientProvider client={client}>{element}</QueryClientProvider>)
 }
 beforeEach(() => { vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response(JSON.stringify({ providers: [] }))))) })
-afterEach(() => { cleanup(); clients.splice(0).forEach(client => { client.clear(); }); vi.unstubAllGlobals() })
+afterEach(() => { cleanup(); clients.splice(0).forEach(client => { client.clear(); }); vi.unstubAllGlobals(); vi.restoreAllMocks() })
 describe('approved Overview', () => {
   beforeEach(() => { window.localStorage.removeItem('abco.dashboard.kpiDensity') })
   it('keeps the four KPI and four panel composition from the approved HTML', () => {
@@ -36,7 +36,7 @@ describe('approved Overview', () => {
   })
   it('orders the lower panels and preserves the infrastructure design', () => {
     const { container } = render(<OverviewPage />)
-    const panels = [...container.querySelectorAll('.board > .panel')]
+    const panels = [...container.querySelectorAll('.board .panel')]
     expect(panels).toHaveLength(4)
     expect(panels.map(panel => panel.querySelector('h2')?.textContent)).toEqual([
       'Recovery Applications', 'Recovery Groups Topology', 'Issues Distribution', 'Infrastructure Overview',
@@ -130,5 +130,36 @@ describe('approved Overview', () => {
     expect(screen.getAllByRole('progressbar')).toHaveLength(3)
     expect(screen.getByRole('button', { name: /Hitachi volumes/ })).toHaveTextContent('—')
     expect(screen.getByRole('button', { name: /VMware VMs.*128/ })).toBeVisible()
+  })
+
+  it('pages small hosts without losing metrics, focus or the chosen section on resize', async () => {
+    let size = { width: 288, height: 384 }
+    let notify: (() => void) | undefined
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(() => DOMRect.fromRect(size))
+    vi.stubGlobal('ResizeObserver', class {
+      constructor(callback: () => void) { notify = callback }
+      observe() { /* The real host is measured through its DOM rect. */ }
+      disconnect() { /* No external resource in this controlled observer. */ }
+    })
+    const user = userEvent.setup()
+    render(<OverviewPage />)
+    const select = screen.getByRole('combobox', { name: 'Dashboard section' })
+    expect(screen.getByRole('button', { name: /Failed snapshot jobs/ })).toBeVisible()
+    expect(screen.queryByRole('button', { name: /Replication issues/ })).not.toBeInTheDocument()
+    await user.selectOptions(select, screen.getByRole('option', { name: 'Infrastructure · 1 / 4' }))
+    expect(screen.getByRole('button', { name: /VMware VMs.*128/ })).toBeVisible()
+    expect(screen.queryByRole('button', { name: /IBM Power partitions/ })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+    const opener = screen.getByRole('button', { name: /IBM Power partitions.*32/ })
+    await user.click(opener)
+    await user.keyboard('{Escape}')
+    expect(opener).toHaveFocus()
+    act(() => { size = { width: 1534, height: 950 }; notify?.() })
+    expect(screen.queryByRole('combobox', { name: 'Dashboard section' })).not.toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Issues Distribution' })).toBeVisible()
+    act(() => { size = { width: 288, height: 384 }; notify?.() })
+    expect(screen.getByRole('combobox', { name: 'Dashboard section' })).toHaveDisplayValue('Infrastructure · 2 / 4')
+    expect(screen.getByRole('button', { name: /IBM Power partitions.*32/ })).toBeVisible()
+    vi.restoreAllMocks()
   })
 })
