@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import { Button } from '@/shared/components/button/Button'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
@@ -25,6 +27,9 @@ import { VirtualMachinesTable, type TableDensity } from './VirtualMachinesTable'
 import { VirtualMachinesToolbar } from './VirtualMachinesToolbar'
 import { VmwareProviderFilterSummary } from './VmwareProviderFilterSummary'
 import type { VmwareProviderFilter } from '../../helpers/vmwareProviderFilter'
+import { resolveVmwareInitialFilters } from '../../helpers/resolveVmwareInitialFilters'
+import { readProviderFilterSnapshot } from '../../state/providerFilterSession'
+import { vmwareInventoryQuery } from '../../model/inventoryQueries'
 
 const defaultFilters: VirtualMachineFilters = {
   search: '',
@@ -41,10 +46,15 @@ const emptyFilterOptions: VirtualMachineFilterOptions = {
   connectionStates: [],
 }
 
-export function VmwareResourcesPage(props: SourceResourcesPageProps) {
+interface VmwareResourcesPageProps extends SourceResourcesPageProps {
+  backgroundPrefetchProvider?: ProviderRecord
+}
+
+export function VmwareResourcesPage(props: VmwareResourcesPageProps) {
+  const queryClient = useQueryClient()
   const {
     providers, providersPending, providersSuccess, providersFetching,
-    providersError, onRefetchProviders, providerId, tabs, t, role,
+    providersError, onRefetchProviders, providerId, tabs, t, role, backgroundPrefetchProvider,
   } = props
   const vmwareProviders = getProvidersByTypeAndRole(providers, 'VMWARE', role)
   const selectedProvider = vmwareProviders.find((provider) => provider.id === providerId) ?? vmwareProviders[0] ?? null
@@ -70,6 +80,9 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
     isBackgroundFetching,
     isError,
     isEmpty,
+    isSuccess,
+    isPlaceholderData,
+    isDebouncing,
     refetch,
     forceRefresh,
     isForceRefreshing,
@@ -96,6 +109,37 @@ export function VmwareResourcesPage(props: SourceResourcesPageProps) {
     [inventory],
   )
   const data = allData ? applyFiltersAndPagination(allData, query) : null
+
+  const backgroundProviderId = backgroundPrefetchProvider?.id
+  const backgroundPrefix = backgroundPrefetchProvider?.vmPrefix ?? null
+  const backgroundTag = backgroundPrefetchProvider?.vmTags?.map(tag => tag.trim()).find(Boolean) ?? ''
+  const canPrefetch = role === 'source' && inventoryEnabled && !providersPending && !providersError
+    && isSuccess && Boolean(inventory) && !isPlaceholderData && !isDebouncing && !isFetching && !isForceRefreshing
+    && backgroundPrefetchProvider?.type === 'VMWARE' && backgroundPrefetchProvider.role !== 'target'
+    && backgroundPrefetchProvider.credentialStatus !== 'missing' && backgroundProviderId !== selectedProvider.id
+
+  useEffect(() => {
+    if (!canPrefetch || !backgroundProviderId) return
+    let disposed = false
+    const run = () => {
+      if (disposed) return
+      // Switching provider tabs clears URL filters; restore the destination's own scope.
+      const filters = resolveVmwareInitialFilters({
+        id: backgroundProviderId, role: 'source', vmPrefix: backgroundPrefix, vmTags: backgroundTag ? [backgroundTag] : [],
+      }, new URLSearchParams(), readProviderFilterSnapshot({ role: 'source', resourceTab: 'vmware', providerId: backgroundProviderId }))
+      const tag = getServerSideTagFilter(filters.tags)
+      const options = vmwareInventoryQuery({ providerId: backgroundProviderId, namePrefix: filters.search, ...(tag ? { tag } : {}) })
+      if (queryClient.getQueryState(options.queryKey)?.status === 'error') return
+      void queryClient.prefetchQuery(options)
+    }
+    const idle = typeof window.requestIdleCallback === 'function'
+    const id = idle ? window.requestIdleCallback(run, { timeout: 1000 }) : window.setTimeout(run, 0)
+    return () => {
+      disposed = true
+      if (idle) window.cancelIdleCallback(id)
+      else window.clearTimeout(id)
+    }
+  }, [queryClient, canPrefetch, backgroundProviderId, backgroundPrefix, backgroundTag])
 
   useEffect(() => {
     if (!isFetching && data && data.page !== query.page) updateQuery({ page: data.page })

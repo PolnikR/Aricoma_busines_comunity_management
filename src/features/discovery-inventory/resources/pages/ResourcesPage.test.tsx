@@ -1,6 +1,6 @@
-import { act, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render as renderUi, screen, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { STANDARD_QUERY_OPTIONS } from '@/shared/query/cachePolicy'
 import { ResourcesPage } from './ResourcesPage'
@@ -9,6 +9,11 @@ import type { DiscoveryInventory } from '../model/discoveryTypes'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 
 const refetch = vi.fn()
+let pageClient: QueryClient
+
+function render(ui: ReactNode) {
+  return renderUi(ui, { wrapper: ({ children }) => <QueryClientProvider client={pageClient}>{children}</QueryClientProvider> })
+}
 const updateQuery = vi.fn()
 const updateFilters = vi.fn()
 const refetchProviders = vi.fn()
@@ -154,6 +159,7 @@ vi.mock('@/shared/components/stat-card/StatCard', async (importOriginal) => {
 })
 
 beforeEach(() => {
+  pageClient = new QueryClient({ defaultOptions: { queries: { ...STANDARD_QUERY_OPTIONS, retry: false } } })
   vi.clearAllMocks()
   resourceTab = 'vmware'
   selectedProviderId = null
@@ -197,6 +203,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  pageClient.clear()
   vi.unstubAllGlobals()
   vi.useRealTimers()
 })

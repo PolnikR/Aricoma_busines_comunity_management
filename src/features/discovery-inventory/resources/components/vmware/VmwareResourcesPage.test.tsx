@@ -1,4 +1,6 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render as renderUi, screen, fireEvent } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { VmwareResourcesPage } from './VmwareResourcesPage'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
@@ -24,6 +26,11 @@ let forceRefreshError: Error | null = null
 let forceRefreshPending = false
 const refetchInventory = vi.fn()
 const forceRefreshInventory = vi.fn().mockResolvedValue(undefined)
+let client: QueryClient
+
+function render(ui: ReactNode) {
+  return renderUi(ui, { wrapper: ({ children }) => <QueryClientProvider client={client}>{children}</QueryClientProvider> })
+}
 
 vi.mock('../../hooks/useVirtualMachineSearchParams', () => ({
   useVirtualMachineSearchParams: () => ({
@@ -82,13 +89,14 @@ const props = {
 }
 
 beforeEach(() => {
+  client = new QueryClient()
   inventory = { reportedCount: 1, virtualMachines: [vm] }
   inventoryBackgroundFetching = false
   inventoryError = false
   forceRefreshError = null
   forceRefreshPending = false
 })
-afterEach(() => { vi.clearAllMocks() })
+afterEach(() => { client.clear(); vi.clearAllMocks() })
 
 describe('VmwareResourcesPage', () => {
   it('passes background fetching to the table without replacing the inventory shell', () => {
