@@ -9,7 +9,7 @@ Po pripravení prvého VMware tabu v Resources začať na pozadí načítavať d
 
 „Prvý“ a „druhý“ znamenajú poradie VMware tabov vytvorené existujúcim `buildResourceSourceTabs`, nie poradie API odpovede, číselnú príponu ID ani ľubovoľného nasledujúceho providera. Pri viac ako dvoch source VMware provideroch sa prednačíta iba druhý. Pri priamom otvorení druhého alebo iného tabu sa nový background prefetch nespustí. Toto je zámerne úzky návrh na schválenie.
 
-Dashboard naďalej pripravuje počiatočné Resources/ISE inventáre. Resources ISE, IBM Power, FlashSystem, Recovery Groups, routing, eager loading, cache policy a API kontrakty sa nerozširujú. Source FlashSystem HTTP 502 je mimo rozsahu. Nemenia sa existujúce `tasks/data-prefetch-*`, Dashboard redizajn ani cudzie rozpracované zmeny. Na výslovný pokyn zadania sa nevytvára vetva, commit, push ani merge.
+Dashboard naďalej pripravuje počiatočné Resources/ISE inventáre. Resources ISE, IBM Power, FlashSystem, Recovery Groups, routing, eager loading, cache policy a API kontrakty sa nerozširujú. Source FlashSystem HTTP 502 je mimo rozsahu. Nemenia sa existujúce `tasks/data-prefetch-*`, Dashboard redizajn ani cudzie rozpracované zmeny. Nevytvára sa nová vetva, push ani merge. Novší pokyn používateľa z 2026-10-16 výslovne vyžaduje atomické commity overených zmien.
 
 ## Zistenia z existujúceho kódu
 
@@ -138,8 +138,10 @@ Dodané orientačné výsledky: VMware 1 458/323 ms (prvý/cache), VMware 2 6361
 
 IBM Power aj FlashSystem už majú `powerInventoryQuery`/`flashSystemInventoryQuery` a rovnakého klienta. Po samostatnom schválení možno v ich vendor komponente použiť obdobný malý ready efekt; pri Power je prefix lokálny filter nad provider payloadom, FlashSystem používa provider ID. Netreba ďalšiu architektonickú vrstvu. Najskôr doložiť úžitok meraním; source FlashSystem 502 sa týmto neopraví.
 
-Na implementáciu treba schváliť tento plán vrátane úzkeho výberu iba druhého source tabu a lokálneho error guardu. Na uzavretie výkonovej časti treba dostupný Edge, reálny backend a kontrolované meracie podmienky. Teraz sa iba vytvárajú dva dokumenty; ich existencia neznamená splnenie runtime akceptácie.
+Plán bol schválený cez `executing-plans inline`. Implementačné T2–T4 sú vykonané a automatizovane overené; T1 a výkonová časť T5 zostávajú blokované. Nie je doložené nové zrýchlenie na reálnom backende. Presné príkazy a výsledky sú v TODO.
 
 ## Realizácia 2026-10-16
 
 Novšie pokyny `executing-plans inline` a `atomicky commituj kazdu zmenua pokracuj` nahrádzajú historické obmedzenia plánovacej fázy: implementovať inline a každú overenú logickú zmenu commitnúť. Nevytvárať novú vetvu, push ani merge. T1/T5 živé merania blokuje runtime oboch UI nástrojov (The system cannot find the path specified, os error 3); Chrome DevTools MCP nie je dostupný. Automatizovanú implementačnú časť T2–T4 vykonať nezávisle, T1 a meranie T5 ponechať nesplnené. Východiskové focused testy dvoch komponentov: 16/16 prešlo.
+
+Záverečná automatizovaná validácia: 11 focused testovacích súborov, 116/116 testov; focused ESLint všetkých zmenených TS/TSX bez chýb a `git diff --check`. Zásah ostal v dvoch produkčných komponentoch. Okrem plánovaných testov bolo potrebné doplniť QueryClient wrapper v `src/features/discovery-inventory/resources-ise/pages/ResourcesIsePage.test.tsx` (odhalené regresným testom); produkčné ISE sa nemenilo. Plná suite, typecheck ani build neboli spustené. Historické poznámky o dokumentačnej fáze vyššie nie sú aktuálnym realizačným stavom.

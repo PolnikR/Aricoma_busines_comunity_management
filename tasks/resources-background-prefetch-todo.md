@@ -1,7 +1,7 @@
 # TODO: Background prefetch druhého VMware providera
 
 Plán: [resources-background-prefetch-plan.md](resources-background-prefetch-plan.md).
-Stav: schválené, implementácia prebieha inline. T1/T5 živé merania blokované UI runtime (os error 3); T2–T4 pokračujú nezávisle.
+Stav: schválené, T2–T4 implementované a automatizovane overené inline. T1/T5 živé merania blokované UI runtime (os error 3); T2–T4 pokračujú nezávisle.
 Task list target je tento topic-specific súbor, nie `tasks/todo.md` ani existujúce `tasks/data-prefetch-todo.md`.
 
 ## Pred začatím
@@ -32,15 +32,15 @@ Task list target je tento topic-specific súbor, nie `tasks/todo.md` ani existuj
 **Popis:** Jeden funkčný slice cez dva komponenty: rodič vyberá druhý source tab zo svojich zoradených tabov, VMware komponent dostane nepovinný opt-in prop a po úspešnom aktívnom inventári/idle začne existujúci `prefetchQuery`. Súčasťou sú komponentové testy výberu a readiness.
 
 **Akceptačné kritériá:**
-- [ ] Iba aktívny prvý source VMware tab poskytne konkrétneho druhého kandidáta; chýbajúci/druhý bez credentials/target/iný vendor/direct-link VMware 2 nespustí nový prefetch ani náhradu tretím.
-- [ ] Efekt čaká na success, dáta bez placeholderu/debounce/fetch/force refreshu; cleanup ruší iba nespustený callback. Funguje idle aj timer fallback a úspešne prázdny inventár.
-- [ ] Použité existujúce role-scoped snapshot/filter helper/factory/QueryClient; cache defaults bez zmeny, error-state guard bez nového registra alebo retry slučky.
+- [x] Iba aktívny prvý source VMware tab poskytne konkrétneho druhého kandidáta; chýbajúci/druhý bez credentials/target/iný vendor/direct-link VMware 2 nespustí nový prefetch ani náhradu tretím.
+- [x] Efekt čaká na success, dáta bez placeholderu/debounce/fetch/force refreshu; cleanup ruší iba nespustený callback. Funguje idle aj timer fallback a úspešne prázdny inventár.
+- [x] Použité existujúce role-scoped snapshot/filter helper/factory/QueryClient; cache defaults bez zmeny, error-state guard bez nového registra alebo retry slučky.
 
 **Overenie:**
-- [ ] Najprv doplniť testy a potvrdiť, že chýbajúce nové správanie odhalia; potom implementovať slice.
-- [ ] `npm exec -- vitest run src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.test.tsx`
-- [ ] `npm exec -- eslint src/features/discovery-inventory/resources/pages/ResourcesPage.tsx src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.tsx src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.test.tsx --max-warnings 0`
-- [ ] Manuálna kontrola diffu: iba dva produkčné komponenty, žiadna zmena shared props, factories, routing alebo Dashboardu.
+- [x] Najprv doplniť testy a potvrdiť, že chýbajúce nové správanie odhalia; potom implementovať slice.
+- [x] `npm exec -- vitest run src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.test.tsx`
+- [x] `npm exec -- eslint src/features/discovery-inventory/resources/pages/ResourcesPage.tsx src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.tsx src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.test.tsx --max-warnings 0`
+- [x] Manuálna kontrola diffu: iba dva produkčné komponenty, žiadna zmena shared props, factories, routing alebo Dashboardu.
 
 **Závislosti:** T1.
 **Súbory:**
@@ -54,22 +54,22 @@ Task list target je tento topic-specific súbor, nie `tasks/todo.md` ani existuj
 ## Checkpoint A: Po T1–T2
 
 - [ ] Baseline je reprodukovateľný a aktívny tab sa vykreslí pred začiatkom novej práce.
-- [ ] Focused testy T2 prechádzajú, diff dodržiava scope.
-- [ ] Žiadny nový scheduler framework, request register, cache alebo vendor fan-out.
+- [x] Focused testy T2 prechádzajú, diff dodržiava scope.
+- [x] Žiadny nový scheduler framework, request register, cache alebo vendor fan-out.
 
 ## T3: Dokázať pending aj dokončený prefetch cez reálne taby
 
 **Popis:** Pridať integračný test s dvoma source VMware providermi, reálnym QueryClient a skutočnou navigáciou cez taby. Použiť validné HTTP fixtures, ovládateľný scheduler a deferred response; netestovať iba volanie helpera.
 
 **Akceptačné kritériá:**
-- [ ] Dashboard seed → VMware 1 ready → pending VMware 2 → klik → dokončenie dá správne rows a presne jeden VMware 2 POST pre rovnaký key. Klik nemení navigáciu na blokujúcu.
-- [ ] Dokončený fresh prefetch → klik aj návraty/rerender/StrictMode nezvýšia počet inventory POST; target a tretí source nemajú špekulatívny request.
-- [ ] Fixný prefix/tag druhého, source snapshot/defaults, odlišné URL filtre prvého aj target snapshot sú pokryté; body prefetchu a bežného otvorenia je zhodné. Zmena filtra správne vytvorí iný key.
+- [x] Dashboard seed → VMware 1 ready → pending VMware 2 → klik → dokončenie dá správne rows a presne jeden VMware 2 POST pre rovnaký key. Klik nemení navigáciu na blokujúcu.
+- [x] Dokončený fresh prefetch → klik aj návraty/rerender/StrictMode nezvýšia počet inventory POST; target a tretí source nemajú špekulatívny request.
+- [x] Fixný prefix/tag druhého, source snapshot/defaults, odlišné URL filtre prvého aj target snapshot sú pokryté; body prefetchu a bežného otvorenia je zhodné. Zmena filtra správne vytvorí iný key.
 
 **Overenie:**
-- [ ] `npm exec -- vitest run src/features/discovery-inventory/resources/pages/ResourcesBackgroundPrefetch.integration.test.tsx`
-- [ ] `npm exec -- eslint src/features/discovery-inventory/resources/pages/ResourcesBackgroundPrefetch.integration.test.tsx --max-warnings 0`
-- [ ] Test používa `STANDARD_QUERY_OPTIONS` (s explicitným retry override iba pre deterministické cases), počíta POST podľa ID/body a samostatne `/tags`/metadata. Scheduler mock podporuje viac callbackov.
+- [x] `npm exec -- vitest run src/features/discovery-inventory/resources/pages/ResourcesBackgroundPrefetch.integration.test.tsx`
+- [x] `npm exec -- eslint src/features/discovery-inventory/resources/pages/ResourcesBackgroundPrefetch.integration.test.tsx --max-warnings 0`
+- [x] Test používa `STANDARD_QUERY_OPTIONS` (s explicitným retry override iba pre deterministické cases), počíta POST podľa ID/body a samostatne `/tags`/metadata. Scheduler mock podporuje viac callbackov.
 
 **Závislosti:** T2.
 **Súbory:** nový `src/features/discovery-inventory/resources/pages/ResourcesBackgroundPrefetch.integration.test.tsx`.
@@ -80,15 +80,15 @@ Task list target je tento topic-specific súbor, nie `tasks/todo.md` ani existuj
 **Popis:** Rozšíriť novú integráciu o failure recovery, remount, zrušený callback, stale/invalidated entries a izoláciu dát. Ak zlyhá produkčné správanie, opraviť iba už dotknuté komponenty a zopakovať T2–T3.
 
 **Akceptačné kritériá:**
-- [ ] HTTP 500/offline VMware 2 neovplyvní VMware 1 ani nevytvorí background toast/rejection/slučku po rerender/remount; samostatný prípad `retry:1` má najviac dva pokusy na jeden fetch cyklus.
-- [ ] Otvorenie po definitívnom zlyhaní môže bežným observerom znovu fetchovať a uspieť; prepnutie počas zlyhávajúceho pending requestu nepridá súbežný fetch mimo policy retry.
-- [ ] Odchod/zmena providera pred callbackom nepridá request; už bežiaci request sa neruší kvôli prepnutiu. Stale/invalidation, odlišný scope a force refresh zachovajú existujúcu policy a správne UI dáta.
+- [x] HTTP 500/offline VMware 2 neovplyvní VMware 1 ani nevytvorí background toast/rejection/slučku po rerender/remount; samostatný prípad `retry:1` má najviac dva pokusy na jeden fetch cyklus.
+- [x] Otvorenie po definitívnom zlyhaní môže bežným observerom znovu fetchovať a uspieť; prepnutie počas zlyhávajúceho pending requestu nepridá súbežný fetch mimo policy retry.
+- [x] Odchod/zmena providera pred callbackom nepridá request; už bežiaci request sa neruší kvôli prepnutiu. Stale/invalidation, odlišný scope a force refresh zachovajú existujúcu policy a správne UI dáta.
 
 **Overenie:**
-- [ ] `npm exec -- vitest run src/features/discovery-inventory/resources/pages/ResourcesBackgroundPrefetch.integration.test.tsx src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx`
-- [ ] Existujúce regresie: `npm exec -- vitest run src/features/discovery-inventory/resources/pages/ResourcesPrefetch.integration.test.tsx src/features/discovery-inventory/resources/hooks/useInitialResourcePrefetch.test.tsx src/features/discovery-inventory/resources/pages/ResourcesRouteTransition.test.tsx src/features/discovery-inventory/resources-ise/pages/ResourcesIsePage.test.tsx`
-- [ ] Filter kontrakty: `npm exec -- vitest run src/features/discovery-inventory/resources/helpers/resolveVmwareInitialFilters.test.ts src/features/discovery-inventory/resources/hooks/useResourceTabSearchParam.test.tsx src/features/discovery-inventory/resources/hooks/useVirtualMachineSearchParams.test.tsx`
-- [ ] Focused ESLint pre zmenené súbory z T2/T3, `git diff --check -- src/features/discovery-inventory/resources`.
+- [x] `npm exec -- vitest run src/features/discovery-inventory/resources/pages/ResourcesBackgroundPrefetch.integration.test.tsx src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx`
+- [x] Existujúce regresie: `npm exec -- vitest run src/features/discovery-inventory/resources/pages/ResourcesPrefetch.integration.test.tsx src/features/discovery-inventory/resources/hooks/useInitialResourcePrefetch.test.tsx src/features/discovery-inventory/resources/pages/ResourcesRouteTransition.test.tsx src/features/discovery-inventory/resources-ise/pages/ResourcesIsePage.test.tsx`
+- [x] Filter kontrakty: `npm exec -- vitest run src/features/discovery-inventory/resources/helpers/resolveVmwareInitialFilters.test.ts src/features/discovery-inventory/resources/hooks/useResourceTabSearchParam.test.tsx src/features/discovery-inventory/resources/hooks/useVirtualMachineSearchParams.test.tsx`
+- [x] Focused ESLint pre zmenené súbory z T2/T3, `git diff --check -- src/features/discovery-inventory/resources`.
 
 **Závislosti:** T3.
 **Súbory:** nový integračný test; pri preukázanej chybe iba dva komponenty z T2 (najviac 3 súbory). Existujúce regresné testy sú primárne na spustenie, nie plánovaný refaktor.
@@ -96,9 +96,9 @@ Task list target je tento topic-specific súbor, nie `tasks/todo.md` ani existuj
 
 ## Checkpoint B: Po T3–T4
 
-- [ ] Pending aj completed scenár má dôkaz jedného requestu a správneho UI, nielen spy na factory.
-- [ ] Error/remount/role/filter prípady a všetky uvedené focused regresie prechádzajú.
-- [ ] Rozsah ostáva dva produkčné súbory; žiadny nový cache/key/API kontrakt. Full suite/build sa nespúšťa automaticky; ak vznikne konkrétny type-level problém mimo focused overenia, zdôvodniť a až potom rozšíriť validáciu.
+- [x] Pending aj completed scenár má dôkaz jedného requestu a správneho UI, nielen spy na factory.
+- [x] Error/remount/role/filter prípady a všetky uvedené focused regresie prechádzajú.
+- [x] Rozsah ostáva dva produkčné súbory; žiadny nový cache/key/API kontrakt. Full suite/build sa nespúšťa automaticky; ak vznikne konkrétny type-level problém mimo focused overenia, zdôvodniť a až potom rozšíriť validáciu.
 
 ## T5: Porovnať výkon v Edge a uzavrieť review
 
@@ -141,3 +141,34 @@ V tejto úlohe sa overuje iba obsah a rozsah dvoch nových Markdown súborov. Pr
 - Funkčný slice T2 + základ T3: dva produkčné komponenty, QueryClient wrappers pôvodných testov a nová integrácia. Red: tri nové testy odhalili chýbajúci trigger. Green: tri súbory / 19 testov prešlo; po poslednej úprave async flush samostatne integrácia 3/3. Focused ESLint piatich zmenených TS/TSX súborov prešiel po oprave jednej optional chain a async callbackov; `git diff --check -- src/features/discovery-inventory/resources` bez chýb. Readiness/error/filter hraničné scenáre budú nasledovať v samostatnom testovacom commite.
 
 - Regresie: 7 focused súborov prešlo (65 testov spolu s prejdenými ISE prípadmi), 5 ISE testov najprv odhalilo chýbajúci QueryClientProvider po novom useQueryClient v zdieľanom VMware komponente. Doplnený iba wrapper/cleanup testov ISE; produkčné ISE sa nemení. Po oprave komponent + ISE: 24/24 prešlo. Focused ESLint ISE súboru bez nálezu.
+
+## Záverečné overenie implementácie (2026-10-16)
+
+- T2–T4 dokončené automatizovane; T1, výkonová časť T5 a celková runtime akceptácia ostávajú otvorené. Pred/po Edge merania sa nenahradili domnienkou.
+- Nová integrácia: 22 scenárov. Komponentové readiness gates: 8 nových prípadov. Finálny spoločný focused beh: **11 súborov, 116/116 testov prešlo** (69,04 s).
+- Focused ESLint nižšie bol vykonaný po jednotlivých zmenách; všetkých 6 súborov bez chýb, posledné dva testovacie súbory opäť bez chýb po finálnom doplnení.
+- Review správnosti, jednoduchosti, architektúry, bezpečnosti a výkonu: bez otvoreného automatizovane reprodukovaného nálezu. Zdieľaný QueryClient, identické factories/body, bez nových cache keys, policy alebo centrálnej vrstvy. Sieťová konkurencia a používateľská latencia vyžadujú ešte T1/T5.
+- Plná suite, typecheck ani production build neboli spustené; rozsah bol focused podľa AGENTS.md.
+
+Presný záverečný testovací príkaz:
+
+```powershell
+npm.cmd exec -- vitest run src/features/discovery-inventory/resources/pages/ResourcesBackgroundPrefetch.integration.test.tsx src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.test.tsx src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx src/features/discovery-inventory/resources-ise/pages/ResourcesIsePage.test.tsx src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx src/features/discovery-inventory/resources/pages/ResourcesPrefetch.integration.test.tsx src/features/discovery-inventory/resources/hooks/useInitialResourcePrefetch.test.tsx src/features/discovery-inventory/resources/pages/ResourcesRouteTransition.test.tsx src/features/discovery-inventory/resources/helpers/resolveVmwareInitialFilters.test.ts src/features/discovery-inventory/resources/hooks/useResourceTabSearchParam.test.tsx src/features/discovery-inventory/resources/hooks/useVirtualMachineSearchParams.test.tsx
+```
+
+Cielený lint (vykonaný v skupinách podľa zmeny):
+
+```powershell
+npm.cmd exec -- eslint src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx --max-warnings 0
+npm.cmd exec -- eslint src/features/discovery-inventory/resources/pages/ResourcesPage.tsx --max-warnings 0
+npm.cmd exec -- eslint src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.test.tsx --max-warnings 0
+npm.cmd exec -- eslint src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.tsx --max-warnings 0
+npm.cmd exec -- eslint src/features/discovery-inventory/resources/pages/ResourcesBackgroundPrefetch.integration.test.tsx --max-warnings 0
+npm.cmd exec -- eslint src/features/discovery-inventory/resources-ise/pages/ResourcesIsePage.test.tsx --max-warnings 0
+```
+
+Kontrola diffu:
+
+```powershell
+git diff --check -- src/features/discovery-inventory/resources-ise src/features/discovery-inventory/resources tasks/resources-background-prefetch-plan.md tasks/resources-background-prefetch-todo.md
+```
