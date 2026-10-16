@@ -49,7 +49,7 @@ async function measure(page) {
       const rect = row.getBoundingClientRect()
       return rect.top >= Math.max(viewport.top, header?.bottom ?? 0) - 1 && rect.bottom <= viewport.bottom + 1
     }).length : 0
-    return { viewport: [innerWidth, innerHeight], main: box(main), chain, scroll: box(scroll), fullRows,
+    return { viewport: [innerWidth, innerHeight], main: box(main), chain, scroll: box(scroll), fullRows, rowCount: rows.length,
       rowHeight: rows[0]?.getBoundingClientRect().height, headerHeight: header?.height,
       heading: box(main.querySelector('h1')), toolbar: box(surface?.firstElementChild),
       pagination: box(surface?.lastElementChild),
@@ -124,6 +124,10 @@ async function runCase(test) {
     results.push({ test, ...before, errors })
     await page.screenshot({ path: `${output}/${test.name}.png` })
     assert.deepEqual(errors, [], 'No browser exceptions')
+    if (!test.state) assert.equal(before.rowCount, test.pageSize ?? 10, 'Requested page size is rendered')
+    if (!test.providers && !['loading', 'error'].includes(test.state)) {
+      assert.equal(await page.locator('main button[aria-expanded]').first().getAttribute('aria-expanded'), String(Boolean(test.expanded)), 'Metrics keep the selected expanded state')
+    }
     if (test.width < 1024) {
       const next = page.getByRole('button', { name: 'Next page', exact: true })
       await next.scrollIntoViewIfNeeded()
@@ -196,6 +200,7 @@ try {
       await runCase({ ...flow, name: `${name}-expanded-${height}`, expanded: true, width: 1280, height })
     }
     await runCase({ ...flow, name: `${name}-sidebar-collapsed`, sidebar: false, width: 1280, height: 600 })
+    await runCase({ ...flow, name: `${name}-comfortable-expanded-600`, density: 'comfortable', expanded: true, width: 1280, height: 600 })
     await runCase({ ...flow, name: `${name}-mobile`, width: 390, height: 844 })
   }
   if (matrix) {

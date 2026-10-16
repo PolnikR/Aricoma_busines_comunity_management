@@ -1,6 +1,6 @@
 # Plán: Scroll tabuľky Resources v dostupnej výške
 
-Dátum: 2026-10-16. Stav: T1/T2 vykonané a overené; T3 otvorená pre použiteľnosť krátkych okien. Pozri [merania](resources-table-scroll-measurements.md).
+Dátum: 2026-10-16. Stav: T1 až T4 vrátane schváleného T2b vykonané a overené; finálna matica 105 PASS, 0 FAIL. Pozri [merania](resources-table-scroll-measurements.md).
 Úlohy: [tasks/todo.md](todo.md). Používateľ výslovne povolil nahradiť oba predchádzajúce dokumenty, pretože ich práca je hotová. Pre túto úlohu požaduje lokálny plán a zoznam úloh.
 
 ## Cieľ a rozsah
@@ -37,7 +37,7 @@ Diagnostické artefakty sú dočasne v node_modules/.cache/scroll-probe/ (probe.
 
 ## Rozhodnutia pre implementáciu
 
-1. Odstrániť Resources-only minimum 480 px a obnoviť štandardný InventoryShell s lg:min-h-0 cez celý flex reťazec. ResourceInventoryShell môže byť znovu priamy re-export InventoryShell. Odstrániť iba konštantu a importy, ktoré tým vzniknú ako nepoužité.
+1. Odstrániť Resources-only minimum 480 px a obnoviť štandardný InventoryShell s lg:min-h-0 cez celý flex reťazec. ResourceInventoryShell používa štandardný InventoryShell a zapína iba schválené kompaktnejšie desktopové odsadenia. Odstrániť iba konštantu a importy, ktoré tým vzniknú ako nepoužité.
 2. Shared surfaceMinHeightClassName zatiaľ ponechať. Jeho odstránenie zo všetkých shared kontraktov nie je potrebné na opravu Resources a rozšírilo by diff.
 3. Ponechať existujúce DataTableSurface ako vlastníka vertikálneho scrollu riadkov. Neopravovať symptóm samotným overflow-hidden na vonkajšom obale. ContainedViewportFrame meniť iba vtedy, ak po oprave flex reťazca preukázateľne naďalej preteká; každú takú zmenu podložiť meraním a overiť všetkých jeho spotrebiteľov.
 4. Nemeníme AppShell, route handles, predvolené metriky ani používateľské preferencie. Zatiaľ nepridávať automatické zbaľovanie metrík, výškové breakpointy alebo nový kompaktný header.
@@ -58,6 +58,13 @@ Overenie: pred opravou musí zlyhať cielená assertion o vonkajšom scrollovan�
 Upraviť ResourceInventoryShell.tsx a ResourceInventoryShell.test.tsx. Test už nesmie vyžadovať 480 px; má overovať zmenšiteľný layout a zachovanie obsahu. Zásah do shared frame a jeho testu je podmienený meraním podľa rozhodnutia 3.
 
 Overenie: príslušné component testy, focused ESLint a browser regresia z T1 po oprave. Kontrolný bod A: vonkajší scroll zmizol v oboch reprodukciách a koliesko posúva vnútorný kontajner.
+
+
+### T2b: Schválené odsadenia Resources (malá)
+
+Používateľ po výsledkoch T3 výslovne schválil zmenšenie odsadení iba na Resources. InventoryShell má voliteľné compactSpacing (default false), ktoré mení iba desktopový gap na 4 px, padding vonkajšej karty na 0, vertikálny padding inventory hlavičky na 2 px a padding obsahu na 0. ResourceInventoryShell túto voľbu zapína pre všetky svoje flow. Providers a ďalšie stránky ostávajú na predvolenom rozložení; mobilné triedy sa nemenia. Nejde o zmenu hustoty riadkov alebo metrík.
+
+Súbory: src/shared/components/inventory-shell/InventoryShell.tsx, src/features/discovery-inventory/resources/components/ResourceInventoryShell.tsx a scripts/qa/verify-resources-table-scroll.mjs. Závislosť: T2 a zlyhania T3. Overenie: existujúce focused component testy, ESLint zmenených TSX a Playwright vrátane Comfortable + rozbalené metriky pri 1280x600, cached-error a zachovania voľby metrík. Po T2b zopakovať celú maticu pred dokončením T3/T4.
 
 ### T3: Browser overenie dotknutých flow (stredná)
 
@@ -94,4 +101,4 @@ Browser skript vyžaduje spustený lokálny Vite a zdokumentovaný Playwright ru
 
 ## Stav plánovania
 
-Dokument vznikol na výslovnú žiadosť používateľa. Súhlas s prepísaním plánov neznamená vykonanú implementáciu. Používateľ následne zadal vykonanie inline. T1/T2 a kontrolný bod A sú overené. T3 odhalila nedostatočnú výšku pri 1280x600; po návrhu malej úpravy odsadení sa čaká na odpoveď používateľa. Celý plán sa zatiaľ neoznačuje za dokončený.
+Dokument vznikol na výslovnú žiadosť používateľa. Súhlas s prepísaním plánov neznamená vykonanú implementáciu. Používateľ následne zadal vykonanie inline. T1/T2 a kontrolný bod A sú overené. T3 odhalila nedostatočnú výšku pri 1280x600. Používateľ schválil aj zmenšenie odsadení Resources. Rozšírenie T2b je implementované a overené. Finálna browser matica prešla vo všetkých 105 prípadoch; focused testy, lint a kontroly sú zaznamenané v meraniach. Zmeny sa ponechávajú na aktuálnej vetve bez push alebo merge.

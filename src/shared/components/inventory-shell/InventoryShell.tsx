@@ -10,6 +10,8 @@ interface InventoryShellProps {
   inventoryDescription?: ReactNode
   tabs?: ReactNode
   notice?: ReactNode
+  /** Reduce desktop spacing around the table without changing row density. */
+  compactSpacing?: boolean
   /**
    * lg+ lower bound for the inventory card, e.g. `lg:min-h-[480px]`. It replaces the default
    * `lg:min-h-0`, so on short viewports the card stops shrinking and the route frame scrolls instead.
@@ -24,11 +26,12 @@ export function InventoryShell({
   inventoryDescription,
   tabs,
   notice,
+  compactSpacing = false,
   surfaceMinHeightClassName,
   children,
 }: InventoryShellProps) {
   return (
-  <div className={cn('flex flex-1 flex-col gap-4', !surfaceMinHeightClassName && 'lg:min-h-0')}>
+  <div className={cn('flex flex-1 flex-col gap-4', !surfaceMinHeightClassName && 'lg:min-h-0', compactSpacing && 'lg:gap-1')}>
     {metrics}
     {notice}
 
@@ -36,9 +39,9 @@ export function InventoryShell({
       className={cn('flex flex-1 flex-col', surfaceMinHeightClassName ?? 'lg:min-h-0')}
       aria-label={inventoryTitle}
     >
-      <Card className="relative flex flex-1 flex-col overflow-hidden p-0 sm:p-0 lg:min-h-0">
+      <Card className={cn('relative flex flex-1 flex-col overflow-hidden p-0 sm:p-0 lg:min-h-0', compactSpacing && 'lg:!p-0')}>
         {(Boolean(inventoryTitle) || Boolean(inventoryDescription) || Boolean(tabs)) && (
-          <div className="flex shrink-0 items-center justify-end gap-2 border-b border-border px-4 py-2.5">
+          <div className={cn('flex shrink-0 items-center justify-end gap-2 border-b border-border px-4 py-2.5', compactSpacing && 'lg:py-0.5')}>
             {(Boolean(inventoryTitle) || Boolean(inventoryDescription)) && (
               <div className="mr-auto">
                 {inventoryTitle && (
@@ -59,7 +62,7 @@ export function InventoryShell({
           </div>
         )}
 
-        <div className="flex flex-1 flex-col overflow-hidden bg-surface-subtle p-3 lg:min-h-0">
+        <div className={cn('flex flex-1 flex-col overflow-hidden bg-surface-subtle p-3 lg:min-h-0', compactSpacing && 'lg:p-0')}>
           {children}
         </div>
       </Card>

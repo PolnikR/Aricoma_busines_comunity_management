@@ -1,6 +1,6 @@
 # Úlohy: Scroll tabuľky Resources
 
-Plán: [plan.md](plan.md). Stav: T1/T2 a kontrolný bod A overené. T3 je otvorená pre použiteľnosť krátkych okien; čaká sa na odpoveď k zmenšeniu odsadení. Výsledky: [merania](resources-table-scroll-measurements.md).
+Plán: [plan.md](plan.md). Stav: T1 až T4, schválené T2b aj oba kontrolné body dokončené. Finálna matica: 105 PASS, 0 FAIL. Výsledky: [merania](resources-table-scroll-measurements.md).
 Predchádzajúci obsah bol nahradený so súhlasom používateľa, ktorý potvrdil jeho dokončenie. Tento lokálny checklist je pre túto úlohu výslovne vyžiadaný; nevytvára duplicitné GitHub issues.
 
 ## T1: Reprodukovateľná Playwright regresia
@@ -37,6 +37,14 @@ Overenie: focused Vitest/ESLint príkazy v plan.md a Playwright skript. jsdom te
 - [x] Stránkovanie je v okne; nestačí iba skryť vonkajšie pretečenie.
 - [x] Zásah do ContainedViewportFrame je buď nepotrebný, alebo podložený samostatným meraním a cielenými testmi.
 
+## T2b: Schválené odsadenia Resources
+
+Opis a súbory: doplnenie v plan.md. Závislosti: T2 a zistenia T3. Rozsah: malý, 3 súbory.
+
+- [x] Compact spacing je zapnutý iba cez ResourceInventoryShell, od lg; hustota riadkov, metriky a mobilné odsadenia sú zachované.
+- [x] Comfortable + rozbalené metriky a cached-error pri 1280x600 prešli po oprave; pred opravou mali 0 celých riadkov.
+- [x] Existujúce focused testy a ESLint prešli; celá browser matica v T3 prešla (105/105).
+
 ## T3: Overenie flow a použiteľnosti
 
 Opis: rozšíriť QA skript na dotknuté stránky a zapísať merania pred/po.
@@ -45,9 +53,9 @@ Súbory: scripts/qa/verify-resources-table-scroll.mjs a tasks/resources-table-sc
 
 Kritériá prijatia:
 
-- [ ] VMware, FlashSystem, IBM Power a Resources ISE prejdú desktopovou maticou; Providers a mobil 390x844 nemajú regresiu.
+- [x] VMware, FlashSystem, IBM Power a Resources ISE prejdú desktopovou maticou; Providers a mobil 390x844 nemajú regresiu.
 - [x] Overené compact/comfortable, 10/25/50 riadkov, sidebar, taby, zbalené/rozbalené metriky a loading/empty/error/cached-error stavy podľa plan.md.
-- [ ] Wheel a klávesnica dosiahnu riadky aj stránkovanie; pri 1280x600 je zdokumentovaný počet celých viditeľných riadkov. Ak nie je viditeľný ani jeden, úloha zostáva otvorená a uvedie sa konkrétny návrh malej úpravy.
+- [x] Wheel a klávesnica dosiahnu riadky aj stránkovanie; pri 1280x600 je zdokumentovaný počet celých viditeľných riadkov. Ak nie je viditeľný ani jeden, úloha zostáva otvorená a uvedie sa konkrétny návrh malej úpravy.
 
 Overenie: Playwright skript, merania geometrie pred/po scrollovaní a screenshoty; zaznamenať aj runtime chyby. Odlišné výsledky pri zoome neodhadovať z fyzických pixelov screenshotu.
 
@@ -59,14 +67,14 @@ Súbory: tasks/todo.md a tasks/resources-table-scroll-measurements.md.
 
 Kritériá prijatia:
 
-- [ ] Focused Vitest a ESLint dotknutých súborov, Playwright a git diff --check prejdú; presné výsledky sú zapísané.
-- [ ] Commit obsahuje iba zmeny tejto úlohy; existujúce cudzie zmeny zostávajú nedotknuté.
-- [ ] Odovzdanie uvádza commit, verifikáciu a limity; celý suite ani build sa nespúšťajú bez dôvodu podľa AGENTS.md.
+- [x] Focused Vitest a ESLint dotknutých súborov, Playwright a git diff --check prejdú; presné výsledky sú zapísané.
+- [x] Commit obsahuje iba zmeny tejto úlohy; existujúce cudzie zmeny zostávajú nedotknuté.
+- [x] Odovzdanie uvádza commit, verifikáciu a limity; celý suite ani build sa nespúšťajú bez dôvodu podľa AGENTS.md.
 
 Overenie: git diff --cached --stat, git diff --cached --check a git log -1 po úspešnom commite.
 
 ## Kontrolný bod B: Dokončenie
 
-- [ ] Všetky otvorené kritériá T1 až T4 sú splnené; oprava nie je vyhlásená za hotovú iba na základe testov CSS tried.
-- [ ] Merania potvrdzujú scroll v tabuľke, stabilné ovládanie a použiteľnosť nízkych okien.
-- [ ] Výsledná oprava je overená a commitnutá; push a merge nie sú súčasťou zadania.
+- [x] Všetky otvorené kritériá T1 až T4 sú splnené; oprava nie je vyhlásená za hotovú iba na základe testov CSS tried.
+- [x] Merania potvrdzujú scroll v tabuľke, stabilné ovládanie a použiteľnosť nízkych okien.
+- [x] Výsledná oprava je overená a commitnutá; push a merge nie sú súčasťou zadania.
