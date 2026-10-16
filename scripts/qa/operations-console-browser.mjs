@@ -58,6 +58,7 @@ export async function openBrowser(port = 9340) {
   }
   const settle = () => read('new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve(true))))')
   let initScript
+  let navigation = 0
   return {
     send, read, settle, errors,
     async viewport(width, height) {
@@ -68,9 +69,11 @@ export async function openBrowser(port = 9340) {
       if (initScript) await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: initScript })
       const source = `try {localStorage.setItem('app-theme', ${JSON.stringify(theme)});localStorage.setItem('app-language', ${JSON.stringify(language)});localStorage.setItem('app-sidebar-expanded', ${JSON.stringify(String(expanded))});localStorage.setItem('abco.dashboard.kpiDensity', ${JSON.stringify(density)});} catch {}`
       initScript = (await send('Page.addScriptToEvaluateOnNewDocument', { source })).identifier
-      await send('Page.navigate', { url })
+      const destination = new URL(url)
+      destination.searchParams.set('console-qa', String(++navigation))
+      await send('Page.navigate', { url: destination.href })
       for (let i = 0; i < 150; i++) {
-        const ready = await read(`document.readyState === 'complete' && !!document.querySelector('.operations-dashboard, .analysis-grid') && !!document.querySelector('h1') && !document.querySelector('h1').textContent.includes('dashboard.')`)
+        const ready = await read(`location.href === ${JSON.stringify(destination.href)} && document.readyState === 'complete' && document.documentElement.dataset.theme === ${JSON.stringify(theme)} && !!document.querySelector('.operations-dashboard, .analysis-grid') && !!document.querySelector('h1') && !document.querySelector('h1').textContent.includes('dashboard.')`)
         if (ready) { await read('document.fonts.ready.then(() => true)'); await settle(); return }
         await new Promise(resolve => setTimeout(resolve, 100))
       }
