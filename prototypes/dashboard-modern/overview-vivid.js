@@ -1,4 +1,20 @@
 ﻿/* Standalone browser template. Only local fixtures are rendered; no API requests. */
+const themeToggle = document.getElementById('theme-toggle');
+function setTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  document.querySelector('meta[name="color-scheme"]').content = theme;
+  themeToggle.setAttribute('aria-pressed', String(theme === 'dark'));
+}
+setTheme(new URLSearchParams(location.search).get('theme') === 'dark' ? 'dark' : 'light');
+themeToggle.addEventListener('click', () => {
+  const theme = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+  setTheme(theme);
+  const url = new URL(location.href);
+  url.searchParams.set('theme', theme);
+  history.replaceState(null, '', url);
+  document.getElementById('announcement').textContent = `${theme === 'light' ? 'Light' : 'Dark'} mode enabled.`;
+});
+
 const iconPaths = {
   grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
   server: '<rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="18" height="7" rx="2"/><path d="M7 6.5h.01M7 17.5h.01M12 6.5h5M12 17.5h5"/>',

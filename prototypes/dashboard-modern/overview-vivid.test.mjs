@@ -100,3 +100,29 @@ test('Both vendors use the same shape and inventory buckets reconcile', () => {
   }
   dom.window.close();
 });
+
+test('Light mode is the default and the theme toggle preserves the selected view and filter', async () => {
+  const dom = load('#storage?vendor=hitachi');
+  const doc = dom.window.document;
+  const button = doc.getElementById('theme-toggle');
+  assert.equal(doc.documentElement.dataset.theme, 'light');
+  assert.equal(button.getAttribute('aria-pressed'), 'false');
+  button.click();
+  assert.equal(doc.documentElement.dataset.theme, 'dark');
+  assert.equal(doc.querySelector('meta[name="color-scheme"]').content, 'dark');
+  assert.equal(button.getAttribute('aria-pressed'), 'true');
+  assert.equal(dom.window.location.hash, '#storage?vendor=hitachi');
+  assert.equal(dom.window.location.search, '?theme=dark');
+  const reloaded = load(dom.window.location.search + dom.window.location.hash);
+  assert.equal(reloaded.window.document.documentElement.dataset.theme, 'dark');
+  reloaded.window.close();
+  dom.window.location.hash = 'recovery';
+  await new Promise(resolve => dom.window.setTimeout(resolve, 0));
+  assert.equal(doc.documentElement.dataset.theme, 'dark');
+  button.click();
+  assert.equal(doc.documentElement.dataset.theme, 'light');
+  assert.equal(doc.querySelector('meta[name="color-scheme"]').content, 'light');
+  assert.equal(button.getAttribute('aria-pressed'), 'false');
+  assert.equal(dom.window.location.hash, '#recovery');
+  dom.window.close();
+});
