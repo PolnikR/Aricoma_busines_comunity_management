@@ -1,184 +1,72 @@
-import type { ReactElement } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { render as renderComponent, screen, cleanup, act, within } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { OverviewPage } from './OverviewPage'
+import { overallPreviewFixture } from '../mocks/overallPreviewFixtures'
+import { selectOverallProtection } from '../model/overallPreviewMetrics'
+
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+vi.mock('@/features/discovery-inventory/resources/hooks/useInitialResourcePrefetch', () => ({
+  useInitialResourcePrefetch: vi.fn(),
+}))
 
-const clients: QueryClient[] = []
-function render(element: ReactElement) {
+function mount() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  clients.push(client)
-  return renderComponent(<QueryClientProvider client={client}>{element}</QueryClientProvider>)
+  const result = render(<QueryClientProvider client={client}><OverviewPage /></QueryClientProvider>)
+  return { ...result, client }
 }
-beforeEach(() => { vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response(JSON.stringify({ providers: [] }))))) })
-afterEach(() => { cleanup(); clients.splice(0).forEach(client => { client.clear(); }); vi.unstubAllGlobals(); vi.restoreAllMocks() })
-describe('approved Overview', () => {
-  beforeEach(() => { window.localStorage.removeItem('abco.dashboard.kpiDensity') })
-  it('keeps the four KPI and four panel composition from the approved HTML', () => {
-    render(<OverviewPage />)
-    expect(screen.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible()
-    expect(screen.getByText('Demo data')).toBeVisible()
-    for (const name of ['Issues Distribution', 'Infrastructure Overview', 'Recovery Applications', 'Recovery Groups Topology']) expect(screen.getByRole('region', { name })).toBeVisible()
-    expect(screen.getAllByRole('button', { name: /Recovery Groups with failed jobs|Affected replication groups|Providers with failed tests|Missing storage volumes/ })).toHaveLength(4)
-    expect(screen.getByRole('button', { name: /Failed snapshot jobs/ })).toHaveTextContent('3')
-    expect(screen.getByRole('button', { name: /Replication issues/ })).toHaveTextContent('IBM Metro Mirror / Hitachi TrueCopy')
-    expect(screen.getByRole('button', { name: /Replication issues/ })).toHaveTextContent('7')
-    expect(screen.getByRole('button', { name: /Connection failures/ })).toHaveTextContent('4')
-    expect(screen.getByRole('button', { name: /Missing volumes/ })).toHaveTextContent('5')
-    expect(screen.getByRole('img', { name: /24.*16.*8/ })).toBeVisible()
-    expect(screen.getByRole('img', { name: /34.*23.*11/ })).toBeVisible()
-    expect(screen.getByRole('img', { name: /19 category counts/ })).toBeVisible()
-    expect(screen.getByText('FlashCopy mappings (demo; not recovery points)')).toBeVisible()
-    expect(screen.getByText('Groups with snapshot policy (demo)')).toBeVisible()
-    expect(screen.getByRole('progressbar', { name: /VMware VMs.*Powered on/ })).toHaveAttribute('aria-valuenow', '108')
-  })
-  it('orders the lower panels and preserves the infrastructure design', () => {
-    const { container } = render(<OverviewPage />)
-    const panels = [...container.querySelectorAll('.board .panel')]
-    expect(panels).toHaveLength(4)
-    expect(panels.map(panel => panel.querySelector('h2')?.textContent)).toEqual([
-      'Recovery Applications', 'Recovery Groups Topology', 'Issues Distribution', 'Infrastructure Overview',
-    ])
-    expect(container.querySelectorAll('.board .resources > .resource')).toHaveLength(4)
-    const applications = screen.getByRole('region', { name: 'Recovery Applications' })
-    expect(within(applications).getByRole('meter', { name: 'VMware' })).toHaveAttribute('value', '23')
-    expect(within(applications).getByRole('meter', { name: 'IBM Power' })).toHaveAttribute('max', '34')
-    const topology = screen.getByRole('region', { name: 'Recovery Groups Topology' })
-    expect(within(topology).getByText('Local')).toBeVisible()
-    expect(within(topology).getByText('66.7%')).toBeVisible()
-    expect(container.querySelectorAll('.issue-share')).toHaveLength(4)
-  })
-  it('uses exception-based Vercel KPI cards with red status labels and fault icons', () => {
-    const { container } = render(<OverviewPage />)
-    expect(container.querySelectorAll('.health-kpi')).toHaveLength(4)
-    expect(container.querySelectorAll('.health-kpi-icon svg')).toHaveLength(4)
-    for (const status of ['ISSUES', 'MISSING']) expect(screen.getByText(status)).toBeVisible()
-    expect(screen.getByRole('button', { name: /Failed snapshot jobs/ }).querySelector('.health-kpi-icon svg')).not.toBeNull()
-  })
-  it('defaults to Auto, persists manual density choices and restores the last choice', async () => {
-    const user = userEvent.setup()
-    const { unmount } = render(<OverviewPage />)
-    const grid = screen.getByRole('region', { name: 'Key indicators' })
-    expect(grid).toHaveAttribute('data-density', 'auto')
-    expect(screen.getByRole('button', { name: 'Auto' })).toHaveAttribute('aria-pressed', 'true')
-    await user.click(screen.getByRole('button', { name: 'Compact' }))
-    expect(grid).toHaveAttribute('data-density', 'compact')
-    expect(window.localStorage.getItem('abco.dashboard.kpiDensity')).toBe('compact')
-    unmount()
-    render(<OverviewPage />)
-    expect(screen.getByRole('region', { name: 'Key indicators' })).toHaveAttribute('data-density', 'compact')
-    await user.click(screen.getByRole('button', { name: 'Spacious' }))
-    expect(screen.getByRole('button', { name: 'Spacious' })).toHaveAttribute('aria-pressed', 'true')
-    await user.click(screen.getByRole('button', { name: 'Auto' }))
-    expect(window.localStorage.getItem('abco.dashboard.kpiDensity')).toBe('auto')
-  })
-  it('explains latest scheduled group run failures', async () => {
-    render(<OverviewPage />)
-    await userEvent.setup().click(screen.getByRole('button', { name: /Failed snapshot jobs/ }))
-    expect(screen.getByRole('dialog', { name: 'Failed snapshot jobs' })).toHaveTextContent('latest completed scheduled snapshot run')
+afterEach(() => { cleanup(); vi.restoreAllMocks() })
+
+describe('Overall dashboard preview', () => {
+  it('renders only selected Overall content with five extracted sections and no legacy banner', () => {
+    const { container, client } = mount()
+    expect(screen.getByRole('group', { name: 'Storage vendor' })).toBeVisible()
+    expect(screen.getByRole('region', { name: 'Key statistics' })).toBeVisible()
+    for (const section of ['Protection Overview', 'Recovery Overview', 'Infrastructure Overview', 'Deployment Coverage']) {
+      expect(screen.getByRole('region', { name: section })).toBeVisible()
+    }
+    expect(container.querySelectorAll('.overall-kpi')).toHaveLength(4)
+    expect(container.querySelectorAll('.overall-recovery-tile')).toHaveLength(2)
+    expect(container.querySelectorAll('.overall-resource')).toHaveLength(4)
+    expect(screen.queryByText('Platform overview')).not.toBeInTheDocument()
+    expect(screen.queryByText('Design preview')).not.toBeInTheDocument()
+    expect(screen.queryByText('Issues Distribution')).not.toBeInTheDocument()
+    expect(screen.getAllByText('SIMULATED')).toHaveLength(4)
+    client.clear()
   })
 
-  it('compares issue shares on one scale with explicit counts and units', () => {
-    render(<OverviewPage />)
-    const table = screen.getByRole('table', { name: /19 category counts/ })
-    expect(within(table).getByRole('columnheader', { name: 'Share' })).toBeVisible()
-    expect(within(table).getByRole('columnheader', { name: 'Count' })).toBeVisible()
-    const snapshot = within(table).getByRole('row', { name: /Failed snapshot jobs/ })
-    expect(snapshot).toHaveTextContent('16%')
-    expect(within(snapshot).getByText('3')).toBeVisible()
-    expect(snapshot.querySelector('.issue-track-fill')).toHaveStyle({ width: '15.789473684210526%' })
-    const replication = within(table).getByRole('row', { name: /Replication issues/ })
-    expect(replication).toHaveTextContent('37%')
-    expect(within(replication).getByText('7')).toBeVisible()
-  })
-  it('opens a local demo detail and restores focus after Escape', async () => {
-    const user = userEvent.setup()
-    render(<OverviewPage />)
-    const opener = screen.getByRole('button', { name: /VMware VMs/ })
-    await user.click(opener)
-    expect(screen.getByRole('dialog', { name: 'VMware VMs' })).toHaveTextContent('Demo')
-    await user.keyboard('{Escape}')
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    expect(opener).toHaveFocus()
-  })
-  it('refreshes only the local fixture and leaves no live-health implication', async () => {
-    render(<OverviewPage />)
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Refresh' }))
-    expect(screen.getByText('Demo data · unchanged')).toBeVisible()
-    expect(screen.getByText('Demo data')).toBeVisible()
-  })
-  it.each(['loading', 'unknown'] as const)('keeps unavailable %s signals separate from zero', async state => {
-    render(<OverviewPage initialState={state} />)
-    expect(screen.getAllByText('—')).toHaveLength(4)
-    expect(screen.getAllByText('UNKNOWN')).toHaveLength(4)
-    for (const name of ['Issues Distribution', 'Infrastructure Overview', 'Recovery Applications', 'Recovery Groups Topology']) expect(screen.getByRole('region', { name })).toBeVisible()
-    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
-    expect(screen.queryByRole('img')).not.toBeInTheDocument()
-    expect(screen.queryByText('FlashCopy mappings (demo; not recovery points)')).not.toBeInTheDocument()
-    await act(async () => { await new Promise(resolve => { window.setTimeout(resolve, 0) }) })
-    expect(fetch).not.toHaveBeenCalled()
-  })
-  it('renders confirmed empty collections as zero', () => {
-    render(<OverviewPage initialState="empty" />)
-    expect(screen.getAllByText('0')).toHaveLength(4)
-    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
-  })
-  it('preserves available resources when a single demo provider fails', () => {
-    render(<OverviewPage initialState="partial" />)
-    expect(screen.getAllByRole('progressbar')).toHaveLength(3)
-    expect(screen.getByRole('button', { name: /Hitachi volumes/ })).toHaveTextContent('—')
-    expect(screen.getByRole('button', { name: /VMware VMs.*128/ })).toBeVisible()
+  it('matches the approved illustrative totals and separates push from recovery health', () => {
+    const { client } = mount()
+    const metrics = screen.getByRole('region', { name: 'Key statistics' })
+    expect(within(metrics).getByText('1,280')).toBeVisible()
+    expect(within(metrics).getByText('13')).toBeVisible()
+    const recovery = screen.getByRole('region', { name: 'Recovery Overview' })
+    expect(within(recovery).getByText('24')).toBeVisible()
+    expect(within(recovery).getByText('34')).toBeVisible()
+    const deployment = screen.getByRole('region', { name: 'Deployment Coverage' })
+    expect(within(deployment).getByRole('progressbar', { name: /VMware pushed/ })).toHaveAttribute('aria-valuenow', '18')
+    expect(within(deployment).getByRole('progressbar', { name: /IBM Power pushed/ })).toHaveAttribute('aria-valuenow', '8')
+    client.clear()
   })
 
-  it('pages small hosts without losing metrics, focus or the chosen section on resize', async () => {
-    let size = { width: 288, height: 384 }
-    let notify: (() => void) | undefined
-    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(() => DOMRect.fromRect(size))
-    vi.stubGlobal('ResizeObserver', class {
-      constructor(callback: () => void) { notify = callback }
-      observe() { /* The real host is measured through its DOM rect. */ }
-      disconnect() { /* No external resource in this controlled observer. */ }
-    })
+  it('updates only the snapshot coverage filter, preserving provider and recovery totals', async () => {
     const user = userEvent.setup()
-    render(<OverviewPage />)
-    const select = screen.getByRole('combobox', { name: 'Dashboard section' })
-    expect(screen.getByRole('button', { name: /Failed snapshot jobs/ })).toBeVisible()
-    expect(screen.queryByRole('button', { name: /Replication issues/ })).not.toBeInTheDocument()
-    await user.selectOptions(select, screen.getByRole('option', { name: 'Infrastructure · 1 / 4' }))
-    expect(screen.getByRole('button', { name: /VMware VMs.*128/ })).toBeVisible()
-    expect(screen.queryByRole('button', { name: /IBM Power partitions/ })).not.toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Next' }))
-    const opener = screen.getByRole('button', { name: /IBM Power partitions.*32/ })
-    await user.click(opener)
-    await user.keyboard('{Escape}')
-    expect(opener).toHaveFocus()
-    act(() => { size = { width: 1534, height: 950 }; notify?.() })
-    expect(screen.queryByRole('combobox', { name: 'Dashboard section' })).not.toBeInTheDocument()
-    expect(screen.getByRole('region', { name: 'Issues Distribution' })).toBeVisible()
-    act(() => { size = { width: 288, height: 384 }; notify?.() })
-    expect(screen.getByRole('combobox', { name: 'Dashboard section' })).toHaveDisplayValue('Infrastructure · 2 / 4')
-    expect(screen.getByRole('button', { name: /IBM Power partitions.*32/ })).toBeVisible()
-    vi.restoreAllMocks()
+    const { client } = mount()
+    const protection = screen.getByRole('region', { name: 'Protection Overview' })
+    await user.click(screen.getByRole('button', { name: 'IBM FlashSystem' }))
+    expect(screen.getByRole('button', { name: 'IBM FlashSystem' })).toHaveAttribute('aria-pressed', 'true')
+    expect(within(protection).getByRole('img', { name: /820 with snapshots, 40 without snapshots/ })).toBeVisible()
+    await user.click(screen.getByRole('button', { name: 'Hitachi VSP' }))
+    expect(within(protection).getByRole('img', { name: /460 with snapshots, 40 without snapshots/ })).toBeVisible()
+    await user.click(screen.getByRole('button', { name: 'All' }))
+    expect(within(protection).getByRole('img', { name: /1,280 with snapshots, 80 without snapshots/ })).toBeVisible()
+    expect(within(screen.getByRole('region', { name: 'Recovery Overview' })).getByText('24')).toBeVisible()
+    client.clear()
   })
 
-  it('keeps focus inside a dialog during resize and returns to the visible pager after close', async () => {
-    let size = { width: 1534, height: 950 }
-    let notify: (() => void) | undefined
-    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(() => DOMRect.fromRect(size))
-    vi.stubGlobal('ResizeObserver', class {
-      constructor(callback: () => void) { notify = callback }
-      observe() { /* Controlled host resize. */ }
-      disconnect() { /* No external resource in this controlled observer. */ }
-    })
-    const user = userEvent.setup()
-    render(<OverviewPage />)
-    await user.click(screen.getByRole('button', { name: /IBM Power partitions.*32/ }))
-    const dialog = screen.getByRole('dialog', { name: 'IBM Power partitions' })
-    act(() => { size = { width: 288, height: 384 }; notify?.() })
-    expect(dialog).toContainElement(document.activeElement as HTMLElement)
-    await user.keyboard('{Escape}')
-    expect(screen.getByRole('combobox', { name: 'Dashboard section' })).toHaveFocus()
+  it('handles zero volume totals without division by zero', () => {
+    const zero = { ...overallPreviewFixture, vendors: [] }
+    expect(selectOverallProtection(zero, 'all')).toEqual({ withSnapshots: 0, withoutSnapshots: 0, total: 0, percent: 0 })
   })
 })
