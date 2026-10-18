@@ -1,80 +1,32 @@
-# Úlohy: Scroll tabuľky Resources
+﻿# Úlohy: Preklady Overview a HTML PageHeader
 
-Plán: [plan.md](plan.md). Stav: T1 až T4, schválené T2b aj oba kontrolné body dokončené. Finálna matica: 105 PASS, 0 FAIL. Výsledky: [merania](resources-table-scroll-measurements.md).
-Predchádzajúci obsah bol nahradený so súhlasom používateľa, ktorý potvrdil jeho dokončenie. Tento lokálny checklist je pre túto úlohu výslovne vyžiadaný; nevytvára duplicitné GitHub issues.
+Plán: [plan.md](plan.md).
 
-## T1: Reprodukovateľná Playwright regresia
+- [x] T1: EN/SK/CS katalógy, komponenty, čísla a dátum; test pre prepínanie jazyka a zachovanie filtra.
+- [x] Kontrolný bod: focused testy OverviewPage a katalógov, ESLint zmenených TS/TSX prejdú.
+- [x] T2: Samostatný HTML návrh v prototypes/dashboard-modern/overview-pageheader.html; titulok/popis/actions podľa PageHeader, existujúci obsah pod hlavičkou.
+- [x] Kontrolný bod: browser kontrola desktop/mobil, screenshoty, žiadne vodorovné pretečenie ani runtime chyby.
+- [x] T3: Kontrola diffu a uloženie overených zmien do commitu tejto úlohy.
 
-Opis: pripraviť opakovateľné meranie skutočnej aplikácie na izolovaných testovacích dátach.
-Závislosti: žiadne. Rozsah: malý, 1 nový skript.
-Súbor: scripts/qa/verify-resources-table-scroll.mjs.
+## Výsledky
 
-Kritériá prijatia:
+- 7 testov / 3 súbory: existujúce správanie Overview, SK → CS so zachovaním filtra, lokalizované čísla a skloňovanie, konzistentné kľúče a parametre katalógov.
+- Regresný test pred implementáciou zlyhal na chýbajúcom slovenskom názve Prehľad ochrany.
+- ESLint dotknutých komponentov, modelu, testu a QA skriptu: bez chýb.
+- Izolovaný headless Edge: 1440×1000, 1280×600, 768×1024, 390×844, 320×740; svetlý aj tmavý režim. Funkčný filter, stabilné počty obnovy/poskytovateľov, ovládanie klávesnicou, bez horizontálneho pretečenia, orezaných kontrolovaných názvov a konzolových chýb.
+- Screenshoty a výsledky: node_modules/.cache/overview-pageheader/. Desktopové, mobilné a tmavé tabletové zobrazenie boli vizuálne skontrolované.
+- HTML používa snapshot existujúcich komponentov, lokálne vložené CSS/SVG a jednoduchý JS pre filter; nevyžaduje server, CDN ani backend. Zobrazuje simulované údaje. PageHeader v aplikácii zostáva samostatným komponentom; jeho zasadenie je predmetom tejto HTML ukážky.
 
-- [x] Izolovaný browser používa validné fixture, 232 VM, štyri provider taby a zbalené metriky; nečíta prihlasovacie údaje.
-- [x] Pred opravou reprodukuje layoutové zlyhanie pri 1366x768 alebo 1280x600; príčina zlyhania je zaznamenaná.
-- [x] Zachytí výšky, overflow, scrollTop a pozície ovládania; spustenie a Playwright runtime sú zdokumentované.
+## Príkazy overenia
 
-Overenie: node scripts/qa/verify-resources-table-scroll.mjs; očakávané zlyhanie pred opravou.
+```powershell
+npm.cmd exec vitest run src/features/dashboard/pages/OverviewPage.test.tsx src/features/dashboard/pages/OverviewPage.translations.test.tsx src/locales/dashboardConsoleTranslations.test.ts
+npm.cmd exec eslint -- src/features/dashboard/components/overall src/features/dashboard/pages/OverviewPage.tsx src/features/dashboard/pages/OverviewPage.translations.test.tsx src/features/dashboard/model/overallPreviewMetrics.ts scripts/qa/verify-overview-pageheader.mjs
+node scripts/qa/verify-overview-pageheader.mjs
+git diff --check
+git diff --cached --check
+```
 
-## T2: Oprava Resources flex obalu
+Browser skript používa lokálny playwright-core z node_modules/.cache/scroll-probe/node_modules/playwright-core/index.mjs a inštalovaný Edge. Cestu k inému existujúcemu Playwright runtime možno zadať cez PLAYWRIGHT_MODULE. Skript používa izolovaný profil a otvára iba lokálne HTML.
 
-Opis: obnoviť štandardný zmenšiteľný layout InventoryShell a odstrániť Resources-only minimum 480 px.
-Závislosti: T1. Rozsah: malý, 2 súbory; pri preukázanej potrebe ďalšiu zmenu frame oddeliť do malej nadväzujúcej úlohy.
-Súbory: src/features/discovery-inventory/resources/components/ResourceInventoryShell.tsx a ResourceInventoryShell.test.tsx.
-
-Kritériá prijatia:
-
-- [x] Resources používa min-h-0 cez rodiča aj kartu a nevyžaduje 480 px.
-- [x] Existujúci DataTableSurface vlastní scroll riadkov; metriky, preference a dátové operácie sú zachované.
-- [x] Cielené component testy, lint a browser regresia z T1 po oprave prejdú.
-
-Overenie: focused Vitest/ESLint príkazy v plan.md a Playwright skript. jsdom test nenahrádza browser meranie.
-
-## Kontrolný bod A
-
-- [x] Pri 1366x768 aj 1280x600 nepreteká desktopová route a wheel posúva oblasť riadkov.
-- [x] Stránkovanie je v okne; nestačí iba skryť vonkajšie pretečenie.
-- [x] Zásah do ContainedViewportFrame je buď nepotrebný, alebo podložený samostatným meraním a cielenými testmi.
-
-## T2b: Schválené odsadenia Resources
-
-Opis a súbory: doplnenie v plan.md. Závislosti: T2 a zistenia T3. Rozsah: malý, 3 súbory.
-
-- [x] Compact spacing je zapnutý iba cez ResourceInventoryShell, od lg; hustota riadkov, metriky a mobilné odsadenia sú zachované.
-- [x] Comfortable + rozbalené metriky a cached-error pri 1280x600 prešli po oprave; pred opravou mali 0 celých riadkov.
-- [x] Existujúce focused testy a ESLint prešli; celá browser matica v T3 prešla (105/105).
-
-## T3: Overenie flow a použiteľnosti
-
-Opis: rozšíriť QA skript na dotknuté stránky a zapísať merania pred/po.
-Závislosti: T2 a kontrolný bod A. Rozsah: stredný, 2 súbory.
-Súbory: scripts/qa/verify-resources-table-scroll.mjs a tasks/resources-table-scroll-measurements.md.
-
-Kritériá prijatia:
-
-- [x] VMware, FlashSystem, IBM Power a Resources ISE prejdú desktopovou maticou; Providers a mobil 390x844 nemajú regresiu.
-- [x] Overené compact/comfortable, 10/25/50 riadkov, sidebar, taby, zbalené/rozbalené metriky a loading/empty/error/cached-error stavy podľa plan.md.
-- [x] Wheel a klávesnica dosiahnu riadky aj stránkovanie; pri 1280x600 je zdokumentovaný počet celých viditeľných riadkov. Ak nie je viditeľný ani jeden, úloha zostáva otvorená a uvedie sa konkrétny návrh malej úpravy.
-
-Overenie: Playwright skript, merania geometrie pred/po scrollovaní a screenshoty; zaznamenať aj runtime chyby. Odlišné výsledky pri zoome neodhadovať z fyzických pixelov screenshotu.
-
-## T4: Kontroly a commit
-
-Opis: overiť konečný diff a uložiť hotovú opravu s dôkazmi.
-Závislosti: T3. Rozsah: malý, aktualizácia tohto checklistu a záznamu meraní.
-Súbory: tasks/todo.md a tasks/resources-table-scroll-measurements.md.
-
-Kritériá prijatia:
-
-- [x] Focused Vitest a ESLint dotknutých súborov, Playwright a git diff --check prejdú; presné výsledky sú zapísané.
-- [x] Commit obsahuje iba zmeny tejto úlohy; existujúce cudzie zmeny zostávajú nedotknuté.
-- [x] Odovzdanie uvádza commit, verifikáciu a limity; celý suite ani build sa nespúšťajú bez dôvodu podľa AGENTS.md.
-
-Overenie: git diff --cached --stat, git diff --cached --check a git log -1 po úspešnom commite.
-
-## Kontrolný bod B: Dokončenie
-
-- [x] Všetky otvorené kritériá T1 až T4 sú splnené; oprava nie je vyhlásená za hotovú iba na základe testov CSS tried.
-- [x] Merania potvrdzujú scroll v tabuľke, stabilné ovládanie a použiteľnosť nízkych okien.
-- [x] Výsledná oprava je overená a commitnutá; push a merge nie sú súčasťou zadania.
+Celý test suite, globálny typecheck ani produkčný build sa nespúšťali; overenie bolo cielené na túto zmenu. Živý backend nebol súčasťou overenia.

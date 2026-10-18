@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from '@/hooks/useTranslation'
 import { useInitialResourcePrefetch } from '@/features/discovery-inventory/resources/hooks/useInitialResourcePrefetch'
 import { OverallToolbar } from '../components/overall/OverallToolbar'
 import { OverallKpis } from '../components/overall/OverallKpis'
@@ -11,13 +12,14 @@ import { selectOverallProtection, type StorageVendor } from '../model/overallPre
 import './overview.css'
 
 export function OverviewPage() {
+  const { t } = useTranslation()
   const [vendor, setVendor] = useState<StorageVendor>('all')
   useInitialResourcePrefetch(true)
   const data = overallPreviewFixture
   const protection = selectOverallProtection(data, vendor)
-  const scope = vendor === 'all' ? 'all storage vendors' : data.vendors.find(item => item.id === vendor)?.name ?? 'all storage vendors'
+  const scope = vendor === 'all' ? t('overview.allVendors') : data.vendors.find(item => item.id === vendor)?.name ?? t('overview.allVendors')
 
-  return <div className="overall-page" aria-label="Overall dashboard">
+  return <div className="overall-page" aria-label={t('overview.dashboard')}>
     <OverallToolbar vendor={vendor} onVendorChange={setVendor} />
     <OverallKpis data={data} protection={protection} />
     <div className="overall-panels">
@@ -26,6 +28,6 @@ export function OverviewPage() {
       <InfrastructureOverviewPanel data={data} />
       <DeploymentCoverage data={data} />
     </div>
-    <footer className="overall-footer"><span><b>ABCO</b> Business continuity, in focus.</span><span>STATIC PREVIEW · DEMO DATA</span></footer>
+    <footer className="overall-footer"><span><b>ABCO</b> {t('overview.tagline')}</span><span>{t('overview.demoData')}</span></footer>
   </div>
 }

@@ -16,4 +16,4 @@ export function selectOverallProtection(data: OverallPreviewData, vendor: Storag
   return { withSnapshots, withoutSnapshots, total, percent: total ? Math.round(withSnapshots * 100 / total) : 0 }
 }
 
-export const overallNumber = (value: number) => new Intl.NumberFormat('en-US').format(value)
+export const overallNumber = (value: number, language: string) => new Intl.NumberFormat(language).format(value)

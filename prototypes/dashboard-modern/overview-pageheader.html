@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ABCO · Prehľad s PageHeader</title>
+<!-- Samostatný návrh. Snapshot existujúcich komponentov Overview a PageHeader.
+     Ukážkové dáta, bez backendu. Otvorte priamo v prehliadači; nevyžaduje server ani CDN. -->
+<style>
+:root {
+  --app-page: #f7f9fc;
+  --app-surface: #ffffff;
+  --app-surface-subtle: #fbfdff;
+  --app-surface-muted: #f1f6fb;
+  --app-surface-hover: #e8f2fa;
+  --app-text-primary: #17233d;
+  --app-text-secondary: #3b4763;
+  --app-text-muted: #71819a;
+  --app-text-subtle: #93a0b5;
+  --app-border: #dbe7f2;
+  --app-border-strong: #c8d7e7;
+  --app-control: #ffffff;
+  --app-accent: #0d91d7;
+  --app-accent-hover: #087fca;
+  --app-accent-soft: #e8f6fd;
+  --app-focus: #1596dd;
+  --app-inverse-surface: #17233d;
+  --app-inverse-control: #33425d;
+  --app-inverse-text: #f8fafc;
+  --app-inverse-muted: #a8b4c6;
+  --app-topology-mask: rgba(226, 235, 244, 0.72);
+  --app-page-glow-primary: rgba(211, 238, 255, 0.72);
+  --app-page-glow-secondary: rgba(255, 242, 211, 0.5);
+}
+
+.dark {
+  --app-page: #09111f;
+  --app-surface: #111c2f;
+  --app-surface-subtle: #152238;
+  --app-surface-muted: #1a2941;
+  --app-surface-hover: #22344f;
+  --app-text-primary: #edf4ff;
+  --app-text-secondary: #c5d1e2;
+  --app-text-muted: #98a8bf;
+  --app-text-subtle: #75869f;
+  --app-border: #293b56;
+  --app-border-strong: #3a506f;
+  --app-control: #152238;
+  --app-accent: #43b2ec;
+  --app-accent-hover: #70c8f3;
+  --app-accent-soft: #123854;
+  --app-focus: #5bc0f2;
+  --app-inverse-surface: #050b16;
+  --app-inverse-control: #263750;
+  --app-inverse-text: #f8fafc;
+  --app-inverse-muted: #aebbcf;
+  --app-topology-mask: rgba(5, 11, 22, 0.72);
+  --app-page-glow-primary: rgba(25, 93, 132, 0.22);
+  --app-page-glow-secondary: rgba(117, 83, 28, 0.12);
+}
+
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--app-page); color: var(--app-text-primary); font: 14px/1.5 'Segoe UI', Arial, sans-serif; }
+h1, h2, h3, p { margin: 0; }
+button { font: inherit; }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--app-focus); outline-offset: 3px; }
+.preview-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 24px; border-bottom: 1px solid var(--app-border); background: var(--app-surface); }
+.brand { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.brand strong { letter-spacing: 2px; color: var(--app-accent); }
+.brand span { color: var(--app-text-secondary); font-size: 12px; }
+.theme-toggle { padding: 6px 12px; border: 1px solid var(--app-border); border-radius: 6px; color: var(--app-text-primary); background: var(--app-surface); cursor: pointer; }
+main { max-width: 1480px; margin: 24px auto; padding: 0 24px; }
+.breadcrumb { margin-bottom: 16px; color: var(--app-text-secondary); font-size: 12px; }
+.breadcrumb span { margin: 0 8px; color: var(--app-text-muted); }
+.page-surface { border: 1px solid var(--app-border); border-radius: 12px; background: var(--app-surface); padding: 20px; }
+/* Mirrors PageHeader: title/description, then actions; stacked below sm (640px). */
+.page-header > div { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.page-header > div > div { min-width: 0; }
+.page-header h1 { font-size: 20px; font-weight: 600; line-height: 36px; letter-spacing: -.01em; }
+.page-header p { max-width: 48rem; font-size: 14px; color: var(--app-text-muted); }
+.header-actions { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.filter-label { color: var(--app-text-secondary); font-size: 11px; }
+/* Agreed Overall dashboard inside the existing ABCO shell.
+   Design-only demo: reuse native light/dark app tokens, not prototype globals. */
+.overall-page {
+  --overall-blue: #246ebc;
+  --overall-teal: #11857e;
+  --overall-amber: #996008;
+  --overall-good: #348051;
+  --overall-red: #bc3950;
+  --overall-ink: var(--app-text-primary);
+  --overall-muted: var(--app-text-secondary);
+  --overall-line: var(--app-border);
+  --overall-surface: var(--app-surface);
+  --overall-raised: var(--app-surface-muted);
+  --overall-blue-soft: var(--app-accent-soft);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  gap: 10px;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 11px;
+  color: var(--overall-ink);
+}
+.dark .overall-page {
+  --overall-blue: #62cbf1;
+  --overall-teal: #4dcbb8;
+  --overall-amber: #eeb063;
+  --overall-good: #81c49a;
+  --overall-red: #f2839b;
+}
+.overall-page * { box-sizing: border-box; }
+.overall-toolbar { display: flex; flex: none; justify-content: space-between; align-items: center; gap: 12px; min-width: 0; min-height: 30px; }
+.overall-scope { display: inline-flex; align-items: center; gap: 9px; color: var(--overall-muted); white-space: nowrap; }
+.overall-scope i { flex: none; width: 6px; height: 6px; background: var(--overall-blue); border-radius: 50%; }
+.overall-toolbar-right { display: flex; align-items: center; justify-content: flex-end; gap: 16px; min-width: 0; }
+.overall-date { white-space: nowrap; color: var(--overall-muted); }
+.overall-date b { margin: 0 6px; }
+.overall-vendor-switch { display: flex; flex: none; align-items: center; gap: 2px; padding: 3px; border: 1px solid var(--overall-line); background: var(--overall-surface); border-radius: 7px; }
+.overall-vendor-switch button { padding: 5px 9px; border: 0; border-radius: 4px; background: transparent; color: var(--overall-muted); cursor: pointer; font: inherit; white-space: nowrap; }
+.overall-vendor-switch button[aria-pressed="true"] { color: var(--overall-blue); background: var(--overall-blue-soft); }
+.overall-vendor-switch button:focus-visible { outline: 2px solid var(--app-focus); outline-offset: 2px; }
+.overall-kpis { flex: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.overall-kpi { display: flex; flex-direction: column; justify-content: space-between; gap: 6px; min-width: 0; border: 1px solid var(--overall-line); border-radius: 11px; background: var(--overall-surface); padding: 11px 12px; }
+.overall-kpi-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; font-size: 11px; line-height: 1.25; }
+.overall-kpi-icon { display: grid; place-items: center; flex: 0 0 23px; height: 23px; border-radius: 5px; background: var(--overall-blue-soft); color: var(--overall-blue); }
+.overall-kpi-icon svg { width: 14px; height: 14px; }
+.overall-kpi-value { display: flex; flex-wrap: wrap; align-items: baseline; gap: 3px 7px; min-width: 0; }
+.overall-kpi-value strong { font-size: clamp(24px, 2.15vw, 34px); font-weight: 500; line-height: 1; letter-spacing: -.7px; font-variant-numeric: tabular-nums; }
+.overall-kpi-value > span { font-size: 11px; color: var(--overall-muted); }
+.overall-kpi-track { display: flex; gap: 3px; height: 4px; }
+.overall-kpi-track span { border-radius: 3px; }
+.overall-kpi-foot { min-width: 0; color: var(--overall-muted); font-size: 9px; line-height: 1.3; }
+.overall-kpi-chip { display: inline-block; margin-right: 5px; padding: 3px 5px; border-radius: 3px; background: var(--overall-blue-soft); color: var(--overall-blue); }
+.overall-panels { display: grid; flex: 1; min-height: 0; grid-template-columns: repeat(12, minmax(0, 1fr)); grid-template-rows: repeat(2,minmax(0,1fr)); gap: 12px; }
+.overall-panel { display: flex; flex-direction: column; min-width: 0; min-height: 0; border: 1px solid var(--overall-line); border-radius: 11px; background: var(--overall-surface); overflow: hidden; }
+.overall-protection { grid-column: span 5; border-color: var(--app-border-strong); }
+.overall-recovery { grid-column: span 7; }
+.overall-infrastructure { grid-column: span 7; }
+.overall-deployment { grid-column: span 5; }
+.overall-panel-header { flex: none; display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 12px 13px 7px; }
+.overall-panel-header h2 { margin: 0; font-weight: 600; font-size: 13px; line-height: 1.22; }
+.overall-panel-header p { margin: 3px 0 0; color: var(--overall-muted); font-size: 9px; line-height: 1.4; }
+.overall-simulated { flex: none; color: var(--app-text-muted); font: 7px/1.3 Consolas, monospace; letter-spacing: 1px; }
+.overall-panel-content { display: flex; flex: 1; min-height: 0; min-width: 0; padding: 0 13px 11px; }
+.overall-protection-chart { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); align-items: center; gap: 12px; flex: 1; min-width: 0; min-height: 0; container-type: size; }
+.overall-donut { width: min(100%, 100cqh, 210px); aspect-ratio: 1; position: relative; margin: auto; }
+.overall-donut svg { width: 100%; height: 100%; transform: rotate(-90deg); display: block; }
+.overall-donut circle { fill: none; }
+.overall-donut-guide { stroke: var(--app-border-strong); stroke-width: 1; stroke-dasharray: 1 4; }
+.overall-donut-track { stroke: var(--overall-raised); stroke-width: 10; }
+.overall-donut-arc { stroke-width: 10; }
+.overall-donut-arc-blue { stroke: var(--overall-blue); }
+.overall-donut-arc-amber { stroke: var(--overall-amber); }
+.overall-donut-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
+.overall-donut-center svg { width: 16px; height: 16px; color: var(--overall-blue); transform: none; }
+.overall-donut-center strong { font-size: clamp(22px, 2.4vw, 34px); font-weight: 500; line-height: 1.08; letter-spacing: -1px; }
+.overall-donut-center span { max-width: 58%; text-align: center; color: var(--overall-muted); font-size: 9px; line-height: 1.2; overflow-wrap: anywhere; }
+.overall-protection-legend { min-width: 0; }
+.overall-legend-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--overall-line); font-size: 10px; }
+.overall-legend-row:last-child { border-bottom: none; }
+.overall-legend-row > span { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.overall-legend-row strong { text-align: right; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.overall-legend-row small { display: block; color: var(--overall-muted); font-size: 8px; font-weight: 400; margin-top: 2px; }
+.overall-swatch { display: inline-block; width: 7px; height: 7px; border-radius: 3px; flex: none; }
+.overall-swatch.blue { background: var(--overall-blue); }
+.overall-swatch.teal { background: var(--overall-teal); }
+.overall-swatch.amber { background: var(--overall-amber); }
+.overall-recovery-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); align-items: center; gap: 12px; flex: 1; min-width: 0; min-height: 0; }
+.overall-recovery-tile { display: flex; flex-direction: column; justify-content: center; gap: 7px; min-width: 0; min-height: 0; height: 100%; border: 1px solid var(--overall-line); border-radius: 7px; padding: 11px 12px; background: var(--app-surface-subtle); }
+.overall-recovery-title { display: flex; align-items: center; min-width: 0; gap: 9px; }
+.overall-recovery-icon { display: grid; place-items: center; flex: 0 0 24px; height: 24px; border-radius: 5px; background: var(--overall-blue-soft); color: var(--overall-blue); }
+.overall-recovery-icon svg { width: 15px; height: 15px; }
+.overall-recovery-title h3 { font-size: 11px; font-weight: 600; line-height: 1.2; }
+.overall-recovery-total { display: flex; align-items: baseline; gap: 8px; }
+.overall-recovery-total strong { font-size: clamp(24px, 2.1vw, 30px); font-weight: 500; line-height: 1; font-variant-numeric: tabular-nums; }
+.overall-recovery-total > span { color: var(--overall-muted); font-size: 10px; }
+.overall-progress { display: flex; gap: 3px; width: 100%; height: 7px; background: var(--overall-raised); border-radius: 7px; overflow: hidden; }
+.overall-progress span { min-width: 0; }
+.overall-recovery-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 12px; color: var(--overall-muted); font-size: 9px; }
+.overall-recovery-legend > span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.overall-infrastructure-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); grid-template-rows: repeat(2,minmax(0,1fr)); flex: 1; gap: 9px; min-width: 0; min-height: 0; }
+.overall-resource { display: flex; flex-direction: column; justify-content: center; min-width: 0; min-height: 0; gap: 5px; padding: 8px 10px; border: 1px solid var(--overall-line); border-radius: 7px; background: var(--overall-raised); }
+.overall-resource-top { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.overall-resource-symbol { display: grid; flex: 0 0 27px; place-items: center; width: 27px; height: 27px; border-radius: 6px; background: var(--overall-blue-soft); color: var(--overall-blue); font-size: 9px; }
+.overall-resource-symbol.power { color: #6973b1; }
+.overall-resource-symbol.flash { color: var(--overall-teal); }
+.overall-resource-symbol.hitachi { color: var(--overall-red); }
+.overall-resource-name { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.overall-resource-name strong { font-size: 10px; font-weight: 600; line-height: 1.1; }
+.overall-resource-name small { color: var(--overall-muted); font: 7px Consolas,monospace; letter-spacing: .4px; }
+.overall-resource-status { flex: none; font-size: 8px; padding: 3px 5px; border-radius: 3px; }
+.overall-resource-status.good { background: color-mix(in srgb, var(--overall-good) 12%, transparent); color: var(--overall-good); }
+.overall-resource-status.warn { background: color-mix(in srgb, var(--overall-amber) 13%, transparent); color: var(--overall-amber); }
+.overall-resource-count { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 9px; color: var(--overall-muted); }
+.overall-resource-count span { white-space: nowrap; }
+.overall-resource-count strong { font-size: 20px; font-weight: 500; color: var(--overall-ink); }
+.overall-resource-count small { font-size: 8px; white-space: nowrap; }
+.overall-resource-meter { display: flex; gap: 4px; height: 4px; }
+.overall-resource-meter span { flex: 1; border-radius: 3px; }
+.overall-resource-meter .available { background: var(--overall-good); }
+.overall-resource-meter .offline { background: var(--overall-red); }
+.overall-deployment-grid { display: grid; flex: 1; align-content: center; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px 15px; min-width: 0; min-height: 0; }
+.overall-deployment-metric { min-width: 0; }
+.overall-deployment-label { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 3px 8px; margin-bottom: 7px; }
+.overall-deployment-label strong { font-size: 11px; font-weight: 600; white-space: nowrap; }
+.overall-deployment-label small { font-size: 9px; font-weight: 400; color: var(--overall-muted); }
+.overall-deployment-track { height: 8px; border-radius: 4px; background: var(--overall-raised); overflow: hidden; }
+.overall-deployment-track span { display: block; height: 100%; }
+.overall-deployment-summary { grid-column: 1/-1; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; padding-top: 10px; border-top: 1px solid var(--overall-line); }
+.overall-deployment-summary > span { color: var(--overall-muted); font-size: 10px; }
+.overall-deployment-summary strong { display: block; color: var(--overall-ink); font-size: 19px; font-weight: 500; margin-top: 6px; }
+.overall-footer { flex: none; display: flex; justify-content: space-between; gap: 10px; align-items: center; color: var(--app-text-muted); font-size: 8px; letter-spacing: .5px; }
+.overall-footer b { color: var(--overall-blue); margin-right: 12px; font-size: 10px; font-weight: 500; letter-spacing: 1px; }
+
+@media (min-width: 950px) {
+  .overall-page { overflow: hidden; }
+  .overall-kpis { gap: 10px; }
+  .overall-kpi { padding: 8px 12px; gap: 4px; }
+  .overall-panels { gap: 10px; }
+  .overall-panel-header { padding: 9px 12px 5px; }
+  .overall-panel-content { padding: 0 12px 8px; }
+  .overall-recovery-tile { padding: 7px 10px; gap: 5px; }
+  .overall-recovery-icon { flex-basis: 21px; height: 21px; }
+  .overall-recovery-icon svg { width: 13px; height: 13px; }
+  .overall-resource { padding: 5px 8px; gap: 4px; }
+  .overall-resource-symbol { flex-basis: 24px; width: 24px; height: 24px; }
+  .overall-resource-count strong { font-size: 18px; }
+}
+@media (max-width: 1280px) and (min-width: 950px) {
+  .overall-protection, .overall-recovery, .overall-infrastructure, .overall-deployment { grid-column: span 6; }
+  .overall-recovery-grid { gap: 9px; }
+  .overall-recovery-tile { padding: 6px 8px; }
+  .overall-recovery-title { gap: 6px; }
+  .overall-recovery-title h3 { font-size: 10px; }
+  .overall-recovery-legend { font-size: 8px; gap: 2px 7px; }
+  .overall-protection-chart { gap: 7px; }
+}
+@media (max-width: 949px) {
+  .overall-page { flex: 1; height: 100%; min-height: 0; max-height: 100%; overflow-x: hidden; overflow-y: auto; }
+  .overall-panels { flex: none; min-height: auto; grid-template-columns: repeat(2,minmax(0,1fr)); grid-template-rows: auto; }
+  .overall-protection, .overall-recovery, .overall-infrastructure, .overall-deployment { grid-column: auto; min-height: 280px; }
+  .overall-kpis { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .overall-donut { width: min(100%, 190px); }
+  .overall-protection-chart { container-type: normal; }
+}
+@media (max-width: 700px) {
+  .overall-toolbar { align-items: flex-start; flex-wrap: wrap; }
+  .overall-toolbar-right { width: 100%; flex-wrap: wrap; justify-content: flex-start; }
+  .overall-panels { grid-template-columns: minmax(0,1fr); }
+  .overall-protection, .overall-recovery, .overall-infrastructure, .overall-deployment { min-height: 260px; }
+  .overall-protection-chart { grid-template-columns: minmax(0, .85fr) minmax(0,1.15fr); }
+  .overall-recovery-tile { min-height: 165px; }
+}
+@media (max-width: 450px) {
+  .overall-kpi { padding: 10px; }
+  .overall-kpi-value strong { font-size: 25px; }
+  .overall-kpi-title { font-size: 10px; }
+  .overall-vendor-switch button { padding: 5px 7px; font-size: 10px; }
+  .overall-protection-chart { min-height: 175px; gap: 7px; }
+  .overall-protection-legend .overall-legend-row { font-size: 9px; }
+  .overall-donut-center strong { font-size: 23px; }
+  .overall-donut-center span { font-size: 8px; }
+  .overall-recovery-grid { grid-template-columns: minmax(0,1fr); }
+  .overall-infrastructure-grid { grid-template-columns: minmax(0,1fr); grid-template-rows: auto; }
+  .overall-deployment-grid { align-content: start; padding-top: 15px; }
+  .overall-footer { flex-wrap: wrap; }
+}
+
+/* Let this standalone page grow with its content, including short viewports. */
+.overall-page { overflow: visible; height: auto; max-height: none; }
+.overall-panels { flex: none; grid-template-rows: auto auto; }
+.overall-panel { min-height: 270px; }
+.overall-kpi { padding: 14px; gap: 8px; }
+.overall-panel-header { padding: 16px 16px 12px; }
+.overall-panel-content { padding: 0 16px 16px; }
+.overall-resource-name { flex: 1; }
+.overview-context { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 16px; color: var(--app-text-secondary); margin-bottom: 4px; }
+.overall-footer { margin-top: 8px; }
+.overall-vendor-switch { flex-wrap: wrap; }
+.page-header .overall-vendor-switch { --overall-line: var(--app-border); --overall-surface: var(--app-surface); --overall-muted: var(--app-text-secondary); --overall-blue: var(--app-accent); --overall-blue-soft: var(--app-accent-soft); }
+.overall-scope { white-space: normal; }
+.overall-resource-status { white-space: normal; text-align: center; }
+@media (max-width: 949px) { .overall-panels { grid-template-columns: minmax(0, 1fr); } }
+@media (min-width: 640px) { .page-header > div { flex-direction: row; align-items: flex-start; justify-content: space-between; gap: 16px; } .page-header > div > div:last-child { flex-shrink: 0; } .header-actions { align-items: flex-end; } }
+@media (max-width: 700px) { main { margin: 16px auto; padding: 0 12px; } .page-surface { padding: 14px; } .preview-bar { padding: 12px; } .overall-resource-top { flex-wrap: wrap; } }
+</style>
+</head>
+<body>
+<header class="preview-bar"><div class="brand"><strong>ABCO</strong><span>Návrh · Overview s PageHeader</span></div><button type="button" class="theme-toggle" aria-pressed="false">Tmavý režim</button></header>
+<main>
+<div class="breadcrumb">ABCO <span aria-hidden="true">/</span> Prehľad</div>
+<div class="page-surface">
+<div class="page-header">
+<div class="mb-4 flex shrink-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+<div class="min-w-0">
+<h1 class="text-xl font-semibold leading-9 tracking-[-0.01em] text-text-primary">Prehľad</h1>
+<p class="max-w-3xl text-sm text-text-muted">Ochrana dát, obnova a infraštruktúra na jednom mieste.</p>
+</div>
+<div class="flex shrink-0 flex-wrap items-center gap-3">
+<div class="header-actions">
+<span class="filter-label" id="filter-label">Výrobca úložiska</span>
+<div class="overall-vendor-switch" role="group" aria-labelledby="filter-label">
+<button type="button" data-vendor="all" aria-pressed="true">Všetci</button>
+<button type="button" data-vendor="ibm" aria-pressed="false">IBM FlashSystem</button>
+<button type="button" data-vendor="hitachi" aria-pressed="false">Hitachi VSP</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="overall-page">
+<div class="overview-context">
+<span class="overall-scope" id="scope" aria-live="polite">Všetci výrobcovia úložísk · filter ochrany</span>
+<span>16. 10. 2026 · Ukážkový inventár</span>
+</div>
+<section class="overall-kpis" aria-label="Kľúčové štatistiky">
+<article class="overall-kpi">
+<div class="overall-kpi-title">
+<span>Registrovaní poskytovatelia</span>
+<span class="overall-kpi-icon">
+<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+<path d="M4.167 4.167h11.666v4.166H4.167V4.167ZM4.167 11.667h11.666v4.166H4.167v-4.166Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+</path>
+<path d="M6.667 6.25h.008M6.667 13.75h.008" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+</path>
+</svg>
+</span>
+</div>
+<div class="overall-kpi-value">
+<strong>13</strong>
+<span>poskytovateľov</span>
+</div>
+<div class="overall-kpi-foot">
+<span class="overall-kpi-chip">Technológie: 4</span> VMware · Power · IBM · Hitachi</div>
+</article>
+<article class="overall-kpi">
+<div class="overall-kpi-title">
+<span>Zväzky so snímkami</span>
+<span class="overall-kpi-icon">
+<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+<path d="M10 1.667 3.75 4.5v4.167c0 4.583 6.25 8.333 6.25 8.333s6.25-3.75 6.25-8.333V4.5L10 1.667Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+</path>
+<path d="m7.5 10 1.667 1.667 3.333-3.334" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+</path>
+</svg>
+</span>
+</div>
+<div class="overall-kpi-value">
+<strong>1 280</strong>
+<span>/ 1 360</span>
+</div>
+<div class="overall-kpi-track" aria-hidden="true">
+<span style="flex:1280;background:var(--overall-blue)">
+</span>
+<span style="flex:80;background:var(--overall-amber)">
+</span>
+</div>
+<div class="overall-kpi-foot">Bez snímky: 80 · vybraný výrobca</div>
+</article>
+<article class="overall-kpi">
+<div class="overall-kpi-title">
+<span>Skupiny obnovy</span>
+<span class="overall-kpi-icon">
+<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+<path d="m10 2.5 7.5 3.75L10 10 2.5 6.25 10 2.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+</path>
+<path d="m2.5 10 7.5 3.75L17.5 10M2.5 13.75 10 17.5l7.5-3.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+</path>
+</svg>
+</span>
+</div>
+<div class="overall-kpi-value">
+<strong>24</strong>
+<span>skupín</span>
+</div>
+<div class="overall-kpi-track" aria-hidden="true">
+<span style="flex:16;background:var(--overall-blue)">
+</span>
+<span style="flex:8;background:var(--overall-teal)">
+</span>
+</div>
+<div class="overall-kpi-foot">Lokálne: 16 · Vzdialené: 8</div>
+</article>
+<article class="overall-kpi">
+<div class="overall-kpi-title">
+<span>Aplikácie obnovy</span>
+<span class="overall-kpi-icon">
+<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+<path d="M4.167 4.167h4.166v4.166H4.167V4.167ZM11.667 4.167h4.166v4.166h-4.166V4.167ZM4.167 11.667h4.166v4.166H4.167v-4.166ZM11.667 11.667h4.166v4.166h-4.166v-4.166Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+</path>
+</svg>
+</span>
+</div>
+<div class="overall-kpi-value">
+<strong>34</strong>
+<span>aplikácií</span>
+</div>
+<div class="overall-kpi-track" aria-hidden="true">
+<span style="flex:23;background:var(--overall-blue)">
+</span>
+<span style="flex:11;background:var(--overall-teal)">
+</span>
+</div>
+<div class="overall-kpi-foot">23 VMware · 11 IBM Power</div>
+</article>
+</section>
+<div class="overall-panels">
+<section class="overall-panel overall-protection" aria-labelledby="_R_1e_">
+<header class="overall-panel-header">
+<div>
+<h2 id="_R_1e_">Prehľad ochrany</h2>
+<p>Pokrytie zväzkov · Všetci výrobcovia úložísk</p>
+</div>
+<span class="overall-simulated">SIMULOVANÉ</span>
+</header>
+<div class="overall-panel-content">
+<div class="overall-protection-chart">
+<div class="overall-donut" role="img" aria-label="94% pokrytie snímkami; 1 280 so snímkami, 80 bez snímok">
+<svg viewBox="0 0 180 180" aria-hidden="true">
+<circle class="overall-donut-guide" cx="90" cy="90" r="83">
+</circle>
+<circle class="overall-donut-track" cx="90" cy="90" r="70">
+</circle>
+<circle class="overall-donut-arc overall-donut-arc-blue" cx="90" cy="90" r="70" pathLength="100" stroke-dasharray="94.11764705882352 5.882352941176478">
+</circle>
+<circle class="overall-donut-arc overall-donut-arc-amber" cx="90" cy="90" r="70" pathLength="100" stroke-dasharray="5.88235294117647 94.11764705882354" stroke-dashoffset="-94.11764705882352">
+</circle>
+</svg>
+<div class="overall-donut-center">
+<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+<path d="M10 1.667 3.75 4.5v4.167c0 4.583 6.25 8.333 6.25 8.333s6.25-3.75 6.25-8.333V4.5L10 1.667Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+</path>
+<path d="m7.5 10 1.667 1.667 3.333-3.334" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+</path>
+</svg>
+<strong>94%</strong>
+<span>pokrytie snímkami</span>
+</div>
+</div>
+<div class="overall-protection-legend">
+<div class="overall-legend-row">
+<span>
+<i class="overall-swatch blue">
+</i>So snímkami</span>
+<strong>1 280<small>94,1%</small>
+</strong>
+</div>
+<div class="overall-legend-row">
+<span>
+<i class="overall-swatch amber">
+</i>Bez snímok</span>
+<strong>80<small>5,9%</small>
+</strong>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class="overall-panel overall-recovery" aria-labelledby="_R_2e_">
+<header class="overall-panel-header">
+<div>
+<h2 id="_R_2e_">Prehľad obnovy</h2>
+<p>Konfigurácia obnovy · lokálna / vzdialená a výpočtová platforma</p>
+</div>
+<span class="overall-simulated">SIMULOVANÉ</span>
+</header>
+<div class="overall-panel-content">
+<div class="overall-recovery-grid">
+<article class="overall-recovery-tile" aria-label="Skupiny obnovy">
+<div class="overall-recovery-title">
+<span class="overall-recovery-icon">
+<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+<path d="m10 2.5 7.5 3.75L10 10 2.5 6.25 10 2.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+</path>
+<path d="m2.5 10 7.5 3.75L17.5 10M2.5 13.75 10 17.5l7.5-3.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+</path>
+</svg>
+</span>
+<h3>Skupiny obnovy</h3>
+</div>
+<div class="overall-recovery-total">
+<strong>24</strong>
+<span>skupín</span>
+</div>
+<div class="overall-progress" role="img" aria-label="16 Lokálne, 8 Vzdialené">
+<span style="flex:16;background:var(--overall-blue)">
+</span>
+<span style="flex:8;background:var(--overall-teal)">
+</span>
+</div>
+<div class="overall-recovery-legend">
+<span>
+<i class="overall-swatch blue">
+</i>16 Lokálne</span>
+<span>
+<i class="overall-swatch teal">
+</i>8 Vzdialené</span>
+</div>
+</article>
+<article class="overall-recovery-tile" aria-label="Aplikácie obnovy">
+<div class="overall-recovery-title">
+<span class="overall-recovery-icon">
+<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+<path d="M4.167 4.167h4.166v4.166H4.167V4.167ZM11.667 4.167h4.166v4.166h-4.166V4.167ZM4.167 11.667h4.166v4.166H4.167v-4.166ZM11.667 11.667h4.166v4.166h-4.166v-4.166Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+</path>
+</svg>
+</span>
+<h3>Aplikácie obnovy</h3>
+</div>
+<div class="overall-recovery-total">
+<strong>34</strong>
+<span>aplikácií</span>
+</div>
+<div class="overall-progress" role="img" aria-label="23 VMware, 11 IBM Power">
+<span style="flex:23;background:var(--overall-blue)">
+</span>
+<span style="flex:11;background:var(--overall-teal)">
+</span>
+</div>
+<div class="overall-recovery-legend">
+<span>
+<i class="overall-swatch blue">
+</i>23 VMware</span>
+<span>
+<i class="overall-swatch teal">
+</i>11 IBM Power</span>
+</div>
+</article>
+</div>
+</div>
+</section>
+<section class="overall-panel overall-infrastructure" aria-labelledby="_R_3e_">
+<header class="overall-panel-header">
+<div>
+<h2 id="_R_3e_">Prehľad infraštruktúry</h2>
+<p>Registrovaní poskytovatelia výpočtových platforiem a úložísk</p>
+</div>
+<span class="overall-simulated">SIMULOVANÉ</span>
+</header>
+<div class="overall-panel-content">
+<div class="overall-infrastructure-grid">
+<article class="overall-resource">
+<div class="overall-resource-top">
+<span class="overall-resource-symbol vmware">VM</span>
+<span class="overall-resource-name">
+<strong>VMware</strong>
+<small>VÝPOČTOVÁ PLATFORMA</small>
+</span>
+<span class="overall-resource-status good">Dostupné</span>
+</div>
+<div class="overall-resource-count">
+<span>
+<strong>6</strong> poskytovateľov</span>
+<small>Dostupné: 6/6</small>
+</div>
+<div class="overall-resource-meter" role="img" aria-label="VMware: dostupné 6 z 6 (simulované)">
+<span class="available">
+</span>
+<span class="available">
+</span>
+<span class="available">
+</span>
+<span class="available">
+</span>
+<span class="available">
+</span>
+<span class="available">
+</span>
+</div>
+</article>
+<article class="overall-resource">
+<div class="overall-resource-top">
+<span class="overall-resource-symbol power">P</span>
+<span class="overall-resource-name">
+<strong>IBM Power</strong>
+<small>VÝPOČTOVÁ PLATFORMA</small>
+</span>
+<span class="overall-resource-status warn">Vyžaduje pozornosť</span>
+</div>
+<div class="overall-resource-count">
+<span>
+<strong>3</strong> poskytovatelia</span>
+<small>Dostupné: 2/3</small>
+</div>
+<div class="overall-resource-meter" role="img" aria-label="IBM Power: dostupné 2 z 3 (simulované)">
+<span class="available">
+</span>
+<span class="available">
+</span>
+<span class="offline">
+</span>
+</div>
+</article>
+<article class="overall-resource">
+<div class="overall-resource-top">
+<span class="overall-resource-symbol flash">FS</span>
+<span class="overall-resource-name">
+<strong>IBM FlashSystem</strong>
+<small>ÚLOŽNÝ SYSTÉM</small>
+</span>
+<span class="overall-resource-status good">Dostupné</span>
+</div>
+<div class="overall-resource-count">
+<span>
+<strong>2</strong> poskytovatelia</span>
+<small>Dostupné: 2/2</small>
+</div>
+<div class="overall-resource-meter" role="img" aria-label="IBM FlashSystem: dostupné 2 z 2 (simulované)">
+<span class="available">
+</span>
+<span class="available">
+</span>
+</div>
+</article>
+<article class="overall-resource">
+<div class="overall-resource-top">
+<span class="overall-resource-symbol hitachi">HV</span>
+<span class="overall-resource-name">
+<strong>Hitachi VSP</strong>
+<small>ÚLOŽNÝ SYSTÉM</small>
+</span>
+<span class="overall-resource-status warn">Vyžaduje pozornosť</span>
+</div>
+<div class="overall-resource-count">
+<span>
+<strong>2</strong> poskytovatelia</span>
+<small>Dostupné: 1/2</small>
+</div>
+<div class="overall-resource-meter" role="img" aria-label="Hitachi VSP: dostupné 1 z 2 (simulované)">
+<span class="available">
+</span>
+<span class="offline">
+</span>
+</div>
+</article>
+</div>
+</div>
+</section>
+<section class="overall-panel overall-deployment" aria-labelledby="_R_4e_">
+<header class="overall-panel-header">
+<div>
+<h2 id="_R_4e_">Pokrytie nasadenia</h2>
+<p>Aplikácie označené ako odoslané do orchestrátora</p>
+</div>
+<span class="overall-simulated">SIMULOVANÉ</span>
+</header>
+<div class="overall-panel-content">
+<div class="overall-deployment-grid">
+<div class="overall-deployment-metric">
+<div class="overall-deployment-label">
+<span>VMware</span>
+<strong>18 <small>/ 23 aplikácií</small>
+</strong>
+</div>
+<div class="overall-deployment-track" role="progressbar" aria-label="VMware odoslané do orchestrátora (ukážka)" aria-valuemin="0" aria-valuemax="23" aria-valuenow="18">
+<span style="width:78.26086956521739%;background:var(--overall-blue)">
+</span>
+</div>
+</div>
+<div class="overall-deployment-metric">
+<div class="overall-deployment-label">
+<span>IBM Power</span>
+<strong>8 <small>/ 11 aplikácií</small>
+</strong>
+</div>
+<div class="overall-deployment-track" role="progressbar" aria-label="IBM Power odoslané do orchestrátora (ukážka)" aria-valuemin="0" aria-valuemax="11" aria-valuenow="8">
+<span style="width:72.72727272727273%;background:var(--overall-teal)">
+</span>
+</div>
+</div>
+<div class="overall-deployment-summary">
+<span>Produkcia<strong>20 / 25</strong>
+</span>
+<span>Test<strong>6 / 9</strong>
+</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+<footer class="overall-footer">
+<span>
+<b>ABCO</b>Kontinuita podnikania pod kontrolou.</span>
+<span>STATICKÁ UKÁŽKA · DEMO ÚDAJE</span>
+</footer>
+</div>
+</div>
+</main>
+<script>
+// Filter changes snapshot coverage only, matching the existing Overview.
+const number = value => new Intl.NumberFormat('sk').format(value);
+const decimal = value => new Intl.NumberFormat('sk', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(value);
+const vendors = { all: [1280, 80, 'Všetci výrobcovia úložísk'], ibm: [820, 40, 'IBM FlashSystem'], hitachi: [460, 40, 'Hitachi VSP'] };
+document.querySelectorAll('[data-vendor]').forEach(button => button.addEventListener('click', () => {
+  const [covered, missing, scope] = vendors[button.dataset.vendor];
+  const total = covered + missing;
+  const share = covered / total * 100;
+  document.querySelectorAll('[data-vendor]').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+  document.querySelector('#scope').textContent = scope + ' · filter ochrany';
+  const kpi = document.querySelectorAll('.overall-kpi')[1];
+  kpi.querySelector('.overall-kpi-value strong').textContent = number(covered);
+  kpi.querySelector('.overall-kpi-value > span').textContent = '/ ' + number(total);
+  kpi.querySelector('.overall-kpi-foot').textContent = 'Bez snímky: ' + number(missing) + ' · vybraný výrobca';
+  kpi.querySelectorAll('.overall-kpi-track span').forEach((part, i) => { part.style.flex = String(i ? missing : covered); });
+  const panel = document.querySelector('.overall-protection');
+  panel.querySelector('.overall-panel-header p').textContent = 'Pokrytie zväzkov · ' + scope;
+  panel.querySelector('.overall-donut').setAttribute('aria-label', Math.round(share) + '% pokrytie snímkami; ' + number(covered) + ' so snímkami, ' + number(missing) + ' bez snímok');
+  panel.querySelector('.overall-donut-center strong').textContent = Math.round(share) + '%';
+  panel.querySelector('.overall-donut-arc-blue').setAttribute('stroke-dasharray', share + ' ' + (100 - share));
+  panel.querySelector('.overall-donut-arc-amber').setAttribute('stroke-dasharray', (100 - share) + ' ' + share);
+  panel.querySelector('.overall-donut-arc-amber').setAttribute('stroke-dashoffset', -share);
+  panel.querySelectorAll('.overall-legend-row strong').forEach((label, i) => {
+    const value = i ? missing : covered;
+    label.firstChild.textContent = number(value);
+    label.querySelector('small').textContent = decimal(value / total * 100) + '%';
+  });
+}));
+document.querySelector('.theme-toggle').addEventListener('click', event => {
+  const dark = document.documentElement.classList.toggle('dark');
+  event.currentTarget.setAttribute('aria-pressed', String(dark));
+});
+</script>
+</body>
+</html>
