@@ -1,5 +1,6 @@
 {
   "overview.dashboard": "Celkový přehled",
+  "overview.description": "Stav ochrany, infrastruktury a obnovy",
   "overview.all": "Všichni",
   "overview.allVendors": "Všichni výrobci úložišť",
   "overview.storageVendor": "Výrobce úložiště",

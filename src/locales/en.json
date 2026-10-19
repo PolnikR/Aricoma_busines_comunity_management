@@ -1,5 +1,6 @@
 {
   "overview.dashboard": "Overall dashboard",
+  "overview.description": "Protection, infrastructure and recovery status",
   "overview.all": "All",
   "overview.allVendors": "All storage vendors",
   "overview.storageVendor": "Storage vendor",

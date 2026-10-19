@@ -31,17 +31,15 @@
   --overall-red: #f2839b;
 }
 .overall-page * { box-sizing: border-box; }
-.overall-toolbar { display: flex; flex: none; justify-content: space-between; align-items: center; gap: 12px; min-width: 0; min-height: 30px; }
-.overall-scope { display: inline-flex; align-items: center; gap: 9px; color: var(--overall-muted); white-space: nowrap; }
-.overall-scope i { flex: none; width: 6px; height: 6px; background: var(--overall-blue); border-radius: 50%; }
-.overall-toolbar-right { display: flex; align-items: center; justify-content: flex-end; gap: 16px; min-width: 0; }
-.overall-date { white-space: nowrap; color: var(--overall-muted); }
+.overall-header-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; min-width: 0; max-width: 100%; }
+.overall-vendor-filter { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 4px 8px; min-width: 0; max-width: 100%; color: var(--overall-muted); font-size: 10px; }
+.overall-date { color: var(--overall-muted); font-size: 9px; }
 .overall-date b { margin: 0 6px; }
-.overall-vendor-switch { display: flex; flex: none; align-items: center; gap: 2px; padding: 3px; border: 1px solid var(--overall-line); background: var(--overall-surface); border-radius: 7px; }
+.overall-vendor-switch { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; min-width: 0; max-width: 100%; padding: 3px; border: 1px solid var(--overall-line); background: var(--overall-surface); border-radius: 7px; }
 .overall-vendor-switch button { padding: 5px 9px; border: 0; border-radius: 4px; background: transparent; color: var(--overall-muted); cursor: pointer; font: inherit; white-space: nowrap; }
 .overall-vendor-switch button[aria-pressed="true"] { color: var(--overall-blue); background: var(--overall-blue-soft); }
 .overall-vendor-switch button:focus-visible { outline: 2px solid var(--app-focus); outline-offset: 2px; }
-.overall-kpis { flex: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.overall-kpis { flex: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 12px; }
 .overall-kpi { display: flex; flex-direction: column; justify-content: space-between; gap: 6px; min-width: 0; border: 1px solid var(--overall-line); border-radius: 11px; background: var(--overall-surface); padding: 11px 12px; }
 .overall-kpi-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; font-size: 11px; line-height: 1.25; }
 .overall-kpi-icon { display: grid; place-items: center; flex: 0 0 23px; height: 23px; border-radius: 5px; background: var(--overall-blue-soft); color: var(--overall-blue); }
@@ -131,11 +129,9 @@
 .overall-deployment-icon { display: grid; place-items: center; flex: 0 0 30px; height: 30px; border-radius: 6px; background: var(--overall-blue-soft); color: var(--overall-blue); }
 .overall-deployment-icon svg { width: 17px; height: 17px; }
 .overall-deployment-summary strong { display: block; color: var(--overall-ink); font-size: 19px; font-weight: 500; margin-top: 6px; }
-.overall-footer { flex: none; display: flex; justify-content: space-between; gap: 10px; align-items: center; color: var(--app-text-muted); font-size: 8px; letter-spacing: .5px; }
-.overall-footer b { color: var(--overall-blue); margin-right: 12px; font-size: 10px; font-weight: 500; letter-spacing: 1px; }
 
 @media (min-width: 950px) {
-  .overall-page { overflow: hidden; }
+  .overall-page { gap: 5px; overflow: hidden; }
   .overall-kpis { gap: 10px; }
   .overall-kpi { padding: 8px 12px; gap: 4px; }
   .overall-panels { gap: 10px; }
@@ -166,8 +162,8 @@
   .overall-protection-chart { container-type: normal; }
 }
 @media (max-width: 700px) {
-  .overall-toolbar { align-items: flex-start; flex-wrap: wrap; }
-  .overall-toolbar-right { width: 100%; flex-wrap: wrap; justify-content: flex-start; }
+  .overall-header-actions { align-items: flex-start; }
+  .overall-vendor-filter { justify-content: flex-start; }
   .overall-panels { grid-template-columns: minmax(0,1fr); }
   .overall-protection, .overall-recovery, .overall-infrastructure, .overall-deployment { min-height: 260px; }
   .overall-protection-chart { grid-template-columns: minmax(0, .85fr) minmax(0,1.15fr); }
@@ -185,5 +181,4 @@
   .overall-recovery-grid { grid-template-columns: minmax(0,1fr); }
   .overall-infrastructure-grid { grid-template-columns: minmax(0,1fr); grid-template-rows: auto; }
   .overall-deployment-grid { align-content: start; padding-top: 15px; }
-  .overall-footer { flex-wrap: wrap; }
 }

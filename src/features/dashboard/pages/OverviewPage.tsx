@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useInitialResourcePrefetch } from '@/features/discovery-inventory/resources/hooks/useInitialResourcePrefetch'
-import { OverallToolbar } from '../components/overall/OverallToolbar'
+import { PageHeader } from '@/shared/components/page/PageHeader'
+import { OverallVendorFilter } from '../components/overall/OverallVendorFilter'
 import { OverallKpis } from '../components/overall/OverallKpis'
 import { ProtectionOverview } from '../components/overall/ProtectionOverview'
 import { RecoveryOverview } from '../components/overall/RecoveryOverview'
@@ -12,15 +13,24 @@ import { selectOverallProtection, type StorageVendor } from '../model/overallPre
 import './overview.css'
 
 export function OverviewPage() {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const [vendor, setVendor] = useState<StorageVendor>('all')
   useInitialResourcePrefetch(true)
   const data = overallPreviewFixture
   const protection = selectOverallProtection(data, vendor)
   const scope = vendor === 'all' ? t('overview.allVendors') : data.vendors.find(item => item.id === vendor)?.name ?? t('overview.allVendors')
+  const date = new Intl.DateTimeFormat(language, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date('2026-10-16T00:00:00Z'))
 
   return <div className="overall-page" aria-label={t('overview.dashboard')}>
-    <OverallToolbar vendor={vendor} onVendorChange={setVendor} />
+    <PageHeader
+      variant="compact"
+      title={t('nav.overview')}
+      description={t('overview.description')}
+      actions={<div className="overall-header-actions">
+        <span className="overall-date">{date} <b>·</b> {t('overview.demoInventory')}</span>
+        <OverallVendorFilter vendor={vendor} onVendorChange={setVendor} />
+      </div>}
+    />
     <OverallKpis data={data} protection={protection} />
     <div className="overall-panels">
       <ProtectionOverview scope={scope} stats={protection} />
@@ -28,6 +38,5 @@ export function OverviewPage() {
       <InfrastructureOverviewPanel data={data} />
       <DeploymentCoverage data={data} />
     </div>
-    <footer className="overall-footer"><span><b>ABCO</b> {t('overview.tagline')}</span><span>{t('overview.demoData')}</span></footer>
   </div>
 }
