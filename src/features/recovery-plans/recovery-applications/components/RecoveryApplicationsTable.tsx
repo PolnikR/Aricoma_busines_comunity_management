@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { ExecutionIcon, GridIcon, ServerIcon } from '@/shared/icons/Icons'
 import { useNavigate } from 'react-router'
 import { routes } from '@/app/routes'
@@ -151,6 +151,7 @@ export function RecoveryApplicationsTable({
   const [deleteTarget, setDeleteTarget] = useState<RecoveryApplicationListItem | null>(null)
   const [rollbackResult, setRollbackResult] = useState<{ appName: string; report: RollbackReport } | null>(null)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+  const triggerRefForMenu = useRef<HTMLButtonElement | null>(null)
   const errorDescription = resolveUserFacingErrorMessage(error, '')
 
   const filterOptions = useMemo(() => ({
@@ -240,15 +241,23 @@ export function RecoveryApplicationsTable({
       header: t('tables.recovery.actions'),
       cell: (app: RecoveryApplicationListItem) => (
         <Button
-          data-recovery-application-menu-trigger={app.id}
-          size="xs"
-          variant="ghost"
-          onClick={(e: React.MouseEvent) => {
+          size="icon"
+          variant="primary"
+          className="min-h-11 min-w-11 cursor-pointer"
+          aria-label={`${t('tables.recovery.actions')}: ${app.data.application.name}`}
+          title={t('tables.recovery.actions')}
+          aria-haspopup="menu"
+          aria-expanded={openMenuId === app.id}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') event.stopPropagation()
+          }}
+          onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
             e.stopPropagation()
+            triggerRefForMenu.current = e.currentTarget
             setOpenMenuId(openMenuId === app.id ? null : app.id)
           }}
         >
-          ⋯
+          <span aria-hidden="true" className="text-2xl leading-none">⋯</span>
         </Button>
       ),
     }] : []),
@@ -258,18 +267,10 @@ export function RecoveryApplicationsTable({
     searchFields: ['id'],
   })
 
-  const triggerRefForMenu = useRef<HTMLButtonElement | null>(null)
-
   const currentMenuApp = useMemo(
     () => rows.find(app => app.id === openMenuId) ?? null,
     [rows, openMenuId],
   )
-
-  useEffect(() => {
-    if (!openMenuId) return
-    const button = document.querySelector(`[data-recovery-application-menu-trigger="${openMenuId}"]`)
-    triggerRefForMenu.current = button instanceof HTMLButtonElement ? button : null
-  }, [openMenuId])
 
   const prepareFilters = () => {
     setPendingFilters(filters)
@@ -397,6 +398,7 @@ export function RecoveryApplicationsTable({
 
       {openMenuId && currentMenuApp && onDelete ? (
         <RowActionsMenu
+          key={openMenuId}
           triggerRef={triggerRefForMenu}
           open={true}
           onClose={() => { setOpenMenuId(null) }}

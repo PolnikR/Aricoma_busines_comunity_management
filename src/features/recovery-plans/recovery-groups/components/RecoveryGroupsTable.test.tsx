@@ -105,6 +105,28 @@ function getDatabaseGroup(): RecoveryGroup {
 }
 
 describe('RecoveryGroupsTable', () => {
+  it('anchors the actions menu to the clicked row on first open and when switching rows', async () => {
+    const user = userEvent.setup()
+    renderTable(
+      <RecoveryGroupsTable groups={groups} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} />,
+    )
+    const triggers = screen.getAllByRole('button', { name: /^Actions:/ })
+    vi.spyOn(triggers[0], 'getBoundingClientRect').mockReturnValue(new DOMRect(600, 100, 44, 44))
+    vi.spyOn(triggers[1], 'getBoundingClientRect').mockReturnValue(new DOMRect(600, 200, 44, 44))
+
+    expect(triggers[0]).toHaveAttribute('aria-expanded', 'false')
+    await user.click(triggers[0])
+    expect(triggers[0]).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByRole('menu', { name: 'Actions for Database group' })).toHaveStyle({ top: '148px', left: '484px' })
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+
+    triggers[1].focus()
+    await user.keyboard('{Enter}')
+    expect(screen.getByRole('menu', { name: 'Actions for Power group' })).toHaveStyle({ top: '248px', left: '484px' })
+    await user.click(triggers[1])
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+  })
+
   it('shows nested backend detail in the localized retry state', () => {
     const error = new Error('Get recovery groups request failed', {
       cause: new OrvalApiError(503, 'Unavailable', { detail: 'The inventory service is unavailable.' }),
@@ -327,7 +349,7 @@ describe('RecoveryGroupsTable', () => {
       />,
     )
 
-    await user.click(screen.getByRole('button', { name: '⋯' }))
+    await user.click(screen.getByRole('button', { name: 'Actions: Database group' }))
     await user.click(screen.getByRole('menuitem', { name: 'Roll back' }))
     const confirmDialog = screen.getByRole('dialog', { name: 'Roll back orchestration?' })
     await user.click(within(confirmDialog).getByRole('button', { name: 'Roll back' }))
@@ -358,7 +380,7 @@ describe('RecoveryGroupsTable', () => {
       />,
     )
 
-    await user.click(screen.getByRole('button', { name: '⋯' }))
+    await user.click(screen.getByRole('button', { name: 'Actions: Database group' }))
     await user.click(screen.getByRole('menuitem', { name: 'Roll back' }))
     const confirmDialog = screen.getByRole('dialog', { name: 'Roll back orchestration?' })
     await user.click(within(confirmDialog).getByRole('button', { name: 'Roll back' }))

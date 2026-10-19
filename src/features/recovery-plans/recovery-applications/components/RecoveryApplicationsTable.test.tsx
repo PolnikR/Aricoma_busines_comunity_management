@@ -76,6 +76,28 @@ const developmentApplication: RecoveryApplicationListItem = {
 }
 
 describe('RecoveryApplicationsTable', () => {
+  it('anchors the actions menu to the clicked row on first open and when switching rows', async () => {
+    const user = userEvent.setup()
+    renderTable(
+      <RecoveryApplicationsTable applications={[application, developmentApplication]} onEdit={vi.fn()} onDelete={vi.fn()} />,
+    )
+    const triggers = screen.getAllByRole('button', { name: /^Actions:/ })
+    vi.spyOn(triggers[0], 'getBoundingClientRect').mockReturnValue(new DOMRect(600, 100, 44, 44))
+    vi.spyOn(triggers[1], 'getBoundingClientRect').mockReturnValue(new DOMRect(600, 200, 44, 44))
+
+    expect(triggers[0]).toHaveAttribute('aria-expanded', 'false')
+    await user.click(triggers[0])
+    expect(triggers[0]).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByRole('menu', { name: 'Actions for Finance Recovery' })).toHaveStyle({ top: '148px', left: '484px' })
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+
+    triggers[1].focus()
+    await user.keyboard('{Enter}')
+    expect(screen.getByRole('menu', { name: 'Actions for Development Recovery' })).toHaveStyle({ top: '248px', left: '484px' })
+    await user.click(triggers[1])
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+  })
+
   it('shows nested backend detail in the localized retry state', () => {
     const error = new Error('Get recovery applications request failed with status 503', {
       cause: new OrvalApiError(503, 'Unavailable', { detail: 'The recovery applications service is unavailable.' }),
@@ -136,7 +158,7 @@ describe('RecoveryApplicationsTable', () => {
 
     expect(screen.getByRole('columnheader', { name: 'Actions' })).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: '⋯' }))
+    await user.click(screen.getByRole('button', { name: 'Actions: Finance Recovery' }))
 
     const menu = screen.getByRole('menu', { name: 'Actions for Finance Recovery' })
     expect(screen.queryByRole('dialog', { name: 'Application detail' })).not.toBeInTheDocument()
@@ -152,7 +174,7 @@ describe('RecoveryApplicationsTable', () => {
       <RecoveryApplicationsTable applications={[application]} onEdit={vi.fn()} onDelete={vi.fn()} />,
     )
 
-    await user.click(screen.getByRole('button', { name: '⋯' }))
+    await user.click(screen.getByRole('button', { name: 'Actions: Finance Recovery' }))
     await user.click(screen.getByRole('menuitem', { name: 'Delete' }))
 
     const dialog = screen.getByRole('dialog', { name: 'Delete recovery application' })
