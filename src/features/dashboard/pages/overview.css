@@ -88,7 +88,8 @@
 .overall-swatch.teal { background: var(--overall-teal); }
 .overall-swatch.amber { background: var(--overall-amber); }
 .overall-recovery-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); align-items: center; gap: 12px; flex: 1; min-width: 0; min-height: 0; }
-.overall-recovery-tile { display: flex; flex-direction: column; justify-content: center; gap: 7px; min-width: 0; min-height: 0; height: 100%; border: 1px solid var(--overall-line); border-radius: 7px; padding: 11px 12px; background: var(--app-surface-subtle); }
+.overall-recovery-tile, .overall-resource { border: 1px solid var(--overall-line); border-radius: 7px; background: var(--app-surface-subtle); }
+.overall-recovery-tile { display: flex; flex-direction: column; justify-content: center; gap: 7px; min-width: 0; min-height: 0; height: 100%; padding: 11px 12px; }
 .overall-recovery-title { display: flex; align-items: center; min-width: 0; gap: 9px; }
 .overall-recovery-icon { display: grid; place-items: center; flex: 0 0 24px; height: 24px; border-radius: 5px; background: var(--overall-blue-soft); color: var(--overall-blue); }
 .overall-recovery-icon svg { width: 15px; height: 15px; }
@@ -101,12 +102,9 @@
 .overall-recovery-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 12px; color: var(--overall-muted); font-size: 9px; }
 .overall-recovery-legend > span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
 .overall-infrastructure-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); grid-template-rows: repeat(2,minmax(0,1fr)); flex: 1; gap: 9px; min-width: 0; min-height: 0; }
-.overall-resource { display: flex; flex-direction: column; justify-content: center; min-width: 0; min-height: 0; gap: 5px; padding: 8px 10px; border: 1px solid var(--overall-line); border-radius: 7px; background: var(--overall-raised); }
+.overall-resource { display: flex; flex-direction: column; justify-content: center; min-width: 0; min-height: 0; gap: 5px; padding: 8px 10px; }
 .overall-resource-top { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .overall-resource-symbol { display: grid; flex: 0 0 27px; place-items: center; width: 27px; height: 27px; border-radius: 6px; background: var(--overall-blue-soft); color: var(--overall-blue); font-size: 9px; }
-.overall-resource-symbol.power { color: #6973b1; }
-.overall-resource-symbol.flash { color: var(--overall-teal); }
-.overall-resource-symbol.hitachi { color: var(--overall-red); }
 .overall-resource-name { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .overall-resource-name strong { font-size: 10px; font-weight: 600; line-height: 1.1; }
 .overall-resource-name small { color: var(--overall-muted); font: 7px Consolas,monospace; letter-spacing: .4px; }
@@ -129,7 +127,9 @@
 .overall-deployment-track { height: 8px; border-radius: 4px; background: var(--overall-raised); overflow: hidden; }
 .overall-deployment-track span { display: block; height: 100%; }
 .overall-deployment-summary { grid-column: 1/-1; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; padding-top: 10px; border-top: 1px solid var(--overall-line); }
-.overall-deployment-summary > span { color: var(--overall-muted); font-size: 10px; }
+.overall-deployment-environment { display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--overall-muted); font-size: 10px; }
+.overall-deployment-icon { display: grid; place-items: center; flex: 0 0 30px; height: 30px; border-radius: 6px; background: var(--overall-blue-soft); color: var(--overall-blue); }
+.overall-deployment-icon svg { width: 17px; height: 17px; }
 .overall-deployment-summary strong { display: block; color: var(--overall-ink); font-size: 19px; font-weight: 500; margin-top: 6px; }
 .overall-footer { flex: none; display: flex; justify-content: space-between; gap: 10px; align-items: center; color: var(--app-text-muted); font-size: 8px; letter-spacing: .5px; }
 .overall-footer b { color: var(--overall-blue); margin-right: 12px; font-size: 10px; font-weight: 500; letter-spacing: 1px; }

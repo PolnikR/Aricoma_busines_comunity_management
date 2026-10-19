@@ -35,6 +35,14 @@ export function ServerIcon(props: IconProps) {
   )
 }
 
+export function FlaskIcon(props: IconProps) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
+      <path d="M7.5 2.5h5M8.333 2.5v5L3.75 15a1.667 1.667 0 0 0 1.417 2.5h9.666A1.667 1.667 0 0 0 16.25 15l-4.583-7.5v-5M6 11.667h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 export function SettingsIcon(props: IconProps) {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
