@@ -4,11 +4,20 @@ variables:
   IMAGE_NAME: abco-fe
   CONTAINER_NAME: abco-fe
   HOST_PORT: "8080"
-  DEPLOY_URL: "http://10.99.99.53:8080"
+  HTTPS_HOST_PORT: "8443"
+  # https | http | both (both: HTTP redirects to HTTPS). See docs/deployment.md.
+  TLS_MODE: "https"
+  APP_HOST: "abco.aricoma.local"
+  CERT_VOLUME: "abco-fe-certs"
+  DEPLOY_URL: "https://abco.aricoma.local:8443"
   # Keycloak config is injected into config.js at container startup (envsubst),
   # not baked into the bundle. Override these in Settings > CI/CD > Variables
   # to point a deployment at a different Keycloak.
-  KEYCLOAK_URL: "http://10.99.99.53:8081"
+  # With HTTPS the browser reaches Keycloak through the app's /auth proxy;
+  # KEYCLOAK_INTERNAL_URL is where nginx forwards it. For TLS_MODE=http use
+  # KEYCLOAK_URL "http://10.99.99.53:8081" and DEPLOY_URL "http://10.99.99.53:8080".
+  KEYCLOAK_URL: "https://abco.aricoma.local:8443/auth"
+  KEYCLOAK_INTERNAL_URL: "http://10.99.99.53:8081"
   KEYCLOAK_REALM: "aricoma"
   KEYCLOAK_CLIENT_ID: "abcm-fe"
   AUTH_ENABLED: "true"
@@ -31,8 +40,12 @@ build-and-deploy:
     - docker stop ${CONTAINER_NAME} || true
     - docker rm ${CONTAINER_NAME} || true
     - |
-      docker run -d --name ${CONTAINER_NAME} --restart unless-stopped -p ${HOST_PORT}:80 \
+      docker run -d --name ${CONTAINER_NAME} --restart unless-stopped -p ${HOST_PORT}:80 -p ${HTTPS_HOST_PORT}:443 \
+        -v ${CERT_VOLUME}:/etc/nginx/certs \
+        -e TLS_MODE=${TLS_MODE} \
+        -e HTTPS_PUBLIC_PORT=${HTTPS_HOST_PORT} \
         -e KEYCLOAK_URL=${KEYCLOAK_URL} \
+        -e KEYCLOAK_INTERNAL_URL=${KEYCLOAK_INTERNAL_URL} \
         -e KEYCLOAK_REALM=${KEYCLOAK_REALM} \
         -e KEYCLOAK_CLIENT_ID=${KEYCLOAK_CLIENT_ID} \
         -e AUTH_ENABLED=${AUTH_ENABLED} \
@@ -50,7 +63,10 @@ verify_deploy:
     - |
       echo "Cakam 10s..."
       sleep 10
-      STATUS=$(curl -s -o /dev/null -w "%{http_code}" ${DEPLOY_URL}/health)
+      # -k: self-signed certificate; --resolve: the runner is the deploy host, so
+      # abco.aricoma.local need not resolve there.
+      CURL="curl -sk --resolve ${APP_HOST}:${HTTPS_HOST_PORT}:127.0.0.1"
+      STATUS=$($CURL -o /dev/null -w "%{http_code}" ${DEPLOY_URL}/health)
       if [ "$STATUS" = "200" ]; then
         echo "OK: HTTP $STATUS"
       else
@@ -66,7 +82,7 @@ verify_deploy:
         || { echo "CHYBA: nasadeny config.js nema spravny Keycloak config"; exit 1; }
     - |
       echo "Overujem dostupnost Keycloak realmu..."
-      STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+      STATUS=$($CURL -o /dev/null -w "%{http_code}" \
         "${KEYCLOAK_URL}/realms/${KEYCLOAK_REALM}/.well-known/openid-configuration")
       if [ "$STATUS" = "200" ]; then
         echo "OK: realm ${KEYCLOAK_REALM} odpoveda"
