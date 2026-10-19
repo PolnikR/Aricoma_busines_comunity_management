@@ -17,6 +17,7 @@ import {
   DataTablePagination,
   DataTableRequestState,
   RowActionsMenu,
+  RowActionsTrigger,
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
@@ -240,13 +241,9 @@ export function RecoveryApplicationsTable({
       id: 'actions',
       header: t('tables.recovery.actions'),
       cell: (app: RecoveryApplicationListItem) => (
-        <Button
-          size="icon"
-          variant="primary"
-          className="min-h-11 min-w-11 cursor-pointer"
+        <RowActionsTrigger
           aria-label={`${t('tables.recovery.actions')}: ${app.data.application.name}`}
           title={t('tables.recovery.actions')}
-          aria-haspopup="menu"
           aria-expanded={openMenuId === app.id}
           onKeyDown={(event) => {
             if (event.key === 'Enter' || event.key === ' ') event.stopPropagation()
@@ -256,9 +253,7 @@ export function RecoveryApplicationsTable({
             triggerRefForMenu.current = e.currentTarget
             setOpenMenuId(openMenuId === app.id ? null : app.id)
           }}
-        >
-          <span aria-hidden="true" className="text-2xl leading-none">⋯</span>
-        </Button>
+        />
       ),
     }] : []),
   ], [t, providers, platformProviders, openMenuId, onDelete])

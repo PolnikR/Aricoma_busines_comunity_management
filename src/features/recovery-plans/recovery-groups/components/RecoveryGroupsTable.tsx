@@ -12,6 +12,7 @@ import {
   DataTableRequestState,
   DataTableToolbar,
   RowActionsMenu,
+  RowActionsTrigger,
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
@@ -237,13 +238,9 @@ export function RecoveryGroupsTable({
       id: 'actions',
       header: t('tables.recoveryGroups.actions'),
       cell: group => (
-        <Button
-          size="icon"
-          variant="primary"
-          className="min-h-11 min-w-11 cursor-pointer"
+        <RowActionsTrigger
           aria-label={`${t('tables.recoveryGroups.actions')}: ${group.name}`}
           title={t('tables.recoveryGroups.actions')}
-          aria-haspopup="menu"
           aria-expanded={openMenuId === group.id}
           onKeyDown={(event) => {
             if (event.key === 'Enter' || event.key === ' ') event.stopPropagation()
@@ -253,9 +250,7 @@ export function RecoveryGroupsTable({
             triggerRefForMenu.current = event.currentTarget
             setOpenMenuId(openMenuId === group.id ? null : group.id)
           }}
-        >
-          <span aria-hidden="true" className="text-2xl leading-none">⋯</span>
-        </Button>
+        />
       ),
     },
   ], [t, openMenuId, platformProviders])
