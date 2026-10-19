@@ -5,9 +5,11 @@ import type { OverallPreviewData } from '../../model/overallPreviewMetrics'
 import { overallNumber } from '../../model/overallPreviewMetrics'
 import { OverallPanel } from './OverallPanel'
 
+interface RecoveryPart { label: string; value: number; tone: 'blue' | 'teal' }
+
 function RecoveryTile({ title, unit, count, icon, parts }: {
   title: string; unit: string; count: number; icon: ReactNode
-  parts: { label: string; value: number; tone: 'blue' | 'teal' }[]
+  parts: RecoveryPart[]
 }) {
   const { language } = useTranslation()
   return <article className="overall-recovery-tile" aria-label={title}>
