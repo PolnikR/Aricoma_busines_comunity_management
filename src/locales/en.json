@@ -19,6 +19,8 @@
   "overview.withoutSnapshotSelected": "{{count}} without snapshot · selected vendor",
   "overview.recoveryGroups": "Recovery Groups",
   "overview.recoveryApplications": "Recovery Applications",
+  "overview.viewRecoveryGroups": "View groups",
+  "overview.viewRecoveryApplications": "View applications",
   "overview.groups": "groups",
   "overview.apps": "apps",
   "overview.local": "Local",

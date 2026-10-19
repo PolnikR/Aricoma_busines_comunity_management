@@ -2,6 +2,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter, Route, Routes } from 'react-router'
+import { routes } from '@/app/routes'
 import { OverviewPage } from './OverviewPage'
 import { overallPreviewFixture } from '../mocks/overallPreviewFixtures'
 import { selectOverallProtection } from '../model/overallPreviewMetrics'
@@ -13,7 +15,11 @@ vi.mock('@/features/discovery-inventory/resources/hooks/useInitialResourcePrefet
 
 function mount() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  const result = render(<QueryClientProvider client={client}><OverviewPage /></QueryClientProvider>)
+  const result = render(<QueryClientProvider client={client}><MemoryRouter initialEntries={[routes.home]}><Routes>
+    <Route path={routes.home} element={<OverviewPage />} />
+    <Route path={routes.recoveryGroups} element={<div>Groups destination</div>} />
+    <Route path={routes.recoveryApplications} element={<div>Applications destination</div>} />
+  </Routes></MemoryRouter></QueryClientProvider>)
   return { ...result, client }
 }
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
@@ -55,8 +61,15 @@ describe('Overall dashboard preview', () => {
     expect(within(metrics).getByText('1,280')).toBeVisible()
     expect(within(metrics).getByText('13')).toBeVisible()
     const recovery = screen.getByRole('region', { name: 'Recovery Overview' })
-    expect(within(recovery).getByText('24')).toBeVisible()
-    expect(within(recovery).getByText('34')).toBeVisible()
+    expect(within(recovery).getByText('67%')).toBeVisible()
+    expect(within(recovery).getByText('33%')).toBeVisible()
+    expect(within(recovery).getByText('68%')).toBeVisible()
+    expect(within(recovery).getByText('32%')).toBeVisible()
+    for (const partCount of ['16', '8', '23', '11']) {
+      expect(within(recovery).getByText(partCount)).toBeVisible()
+    }
+    expect(within(recovery).queryByText('24')).not.toBeInTheDocument()
+    expect(within(recovery).queryByText('34')).not.toBeInTheDocument()
     const deployment = screen.getByRole('region', { name: 'Deployment Coverage' })
     expect(within(deployment).getByRole('progressbar', { name: /VMware pushed/ })).toHaveAttribute('aria-valuenow', '18')
     expect(within(deployment).getByRole('progressbar', { name: /IBM Power pushed/ })).toHaveAttribute('aria-valuenow', '8')
@@ -76,11 +89,30 @@ describe('Overall dashboard preview', () => {
     expect(within(protection).getByRole('img', { name: /460 with snapshots, 40 without snapshots/ })).toBeVisible()
     await user.click(screen.getByRole('button', { name: 'All' }))
     expect(within(protection).getByRole('img', { name: /1,280 with snapshots, 80 without snapshots/ })).toBeVisible()
-    expect(within(screen.getByRole('region', { name: 'Recovery Overview' })).getByText('24')).toBeVisible()
+    expect(within(screen.getByRole('region', { name: 'Key statistics' })).getByText('24')).toBeVisible()
     expect(within(screen.getByRole('region', { name: 'Key statistics' })).getByText('13')).toBeVisible()
     expect(within(screen.getByRole('region', { name: 'Key statistics' })).getByText('34')).toBeVisible()
     expect(stableSections.map(section => section.textContent)).toEqual(initialContent)
     client.clear()
+  })
+
+  it('navigates from the group and application KPI links to their actual routes', async () => {
+    const user = userEvent.setup()
+    const { client, unmount } = mount()
+    const metrics = screen.getByRole('region', { name: 'Key statistics' })
+    const groupsLink = within(metrics).getByRole('link', { name: 'View groups' })
+    const appsLink = within(metrics).getByRole('link', { name: 'View applications' })
+    expect(groupsLink).toHaveAttribute('href', routes.recoveryGroups)
+    expect(appsLink).toHaveAttribute('href', routes.recoveryApplications)
+    await user.click(groupsLink)
+    expect(screen.getByText('Groups destination')).toBeVisible()
+    unmount()
+    client.clear()
+
+    const applicationPage = mount()
+    await user.click(screen.getByRole('link', { name: 'View applications' }))
+    expect(screen.getByText('Applications destination')).toBeVisible()
+    applicationPage.client.clear()
   })
 
   it('handles zero volume totals without division by zero', () => {

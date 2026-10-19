@@ -19,6 +19,8 @@
   "overview.withoutSnapshotSelected": "Bez snímku: {{count}} · vybraný výrobce",
   "overview.recoveryGroups": "Skupiny obnovy",
   "overview.recoveryApplications": "Aplikace obnovy",
+  "overview.viewRecoveryGroups": "Zobrazit skupiny",
+  "overview.viewRecoveryApplications": "Zobrazit aplikace",
   "overview.groups": "skupin",
   "overview.apps": "aplikací",
   "overview.local": "Lokální",
