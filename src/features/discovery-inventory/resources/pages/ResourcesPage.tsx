@@ -32,6 +32,10 @@ export function ResourcesPage() {
   )
   const visibleRoleTabs = providersSuccess ? roleTabs.filter(tab => tab.providerId !== null) : roleTabs
   const effectiveActiveTab = resolveActiveResourceTab(roleTabs, resourceTab, providerId, providersSuccess)
+  const vmwareTabs = roleTabs.filter(tab => tab.resourceTab === 'vmware' && tab.providerId !== null)
+  const backgroundPrefetchProvider = providersSuccess && effectiveActiveTab === vmwareTabs[0]
+    ? providers.find(provider => provider.id === vmwareTabs[1]?.providerId && provider.credentialStatus !== 'missing')
+    : undefined
 
   const tabs = (
     <Tabs
@@ -81,6 +85,6 @@ export function ResourcesPage() {
     case 'ibm-power':
       return <IbmPowerResourcesPage {...rolePageProps} />
     case 'vmware':
-      return <VmwareResourcesPage {...rolePageProps} />
+      return <VmwareResourcesPage {...rolePageProps} {...(backgroundPrefetchProvider ? { backgroundPrefetchProvider } : {})} />
   }
 }

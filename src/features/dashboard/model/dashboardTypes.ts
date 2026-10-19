@@ -31,7 +31,11 @@ export interface DashboardResource {
   metricKey: string
   detailKey: string
 }
+export interface DashboardRecoveryApplication { id: string; platform: 'VMWARE' | 'IBM_POWER'; deployed: boolean }
+export interface DashboardSnapshotSummary { flashCopyMappings: number; groupsWithSnapshotPolicy: number }
 export interface DashboardData {
+  applications?: DashboardRecoveryApplication[]
+  snapshotSummary?: DashboardSnapshotSummary
   issues: DashboardIssue[]
   groups: { id: string; topology: 'local' | 'metro_mirror' }[]
   incidents: DashboardIncident[]

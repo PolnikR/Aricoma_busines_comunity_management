@@ -3,11 +3,11 @@ import { useTranslation } from '@/hooks/useTranslation'
 import type { DashboardResource, DashboardState } from '../model/dashboardTypes'
 import { DashboardPanel, DashboardStatePlaceholder } from './DashboardPanel'
 
-export function InfrastructureOverview({ resources, state, onDetail }: { resources: DashboardResource[]; state: DashboardState; onDetail: (resource: DashboardResource) => void }) {
+export function InfrastructureOverview({ resources, state, onDetail, activeIndex }: { resources: DashboardResource[]; state: DashboardState; onDetail: (resource: DashboardResource) => void; activeIndex?: number | undefined }) {
   const { t, language } = useTranslation()
   const number = new Intl.NumberFormat(language)
   return <DashboardPanel title={t('dashboard.infrastructure')} subtitle={t('dashboard.infrastructureSubtitle')} icon={<ServerIcon className="icon" />}>
-    {state === 'loading' || state === 'unknown' || resources.length === 0 ? <DashboardStatePlaceholder state={state === 'demo' ? 'empty' : state} /> : <div className="resources">{resources.map(resource => {
+    {state === 'loading' || state === 'unknown' || resources.length === 0 ? <DashboardStatePlaceholder state={state === 'demo' ? 'empty' : state} /> : <div className="resources">{resources.filter((_, index) => activeIndex === undefined || index === activeIndex).map(resource => {
       const missing = state === 'partial' && resource.id === 'hitachi'
       return <button key={resource.id} type="button" className="resource" onClick={() => { onDetail(resource) }}>
         <span className="resource-top"><span className="resource-icon">{resource.id === 'vmware' ? <ServerIcon className="icon" /> : resource.id === 'power' ? <LayersIcon className="icon" /> : <StorageIcon className="icon" />}</span><span><span className="resource-title">{t(`dashboard.${resource.titleKey}`)}</span><span className="resource-sub">{resource.technology}</span></span></span>

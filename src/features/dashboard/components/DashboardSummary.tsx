@@ -16,10 +16,10 @@ const cards = [
   { key: 'missingVolumes', code: '04', tone: 'warning', status: 'missing' },
 ] as const
 
-export function DashboardSummary({ counts, state, density, onSelect }: { counts: DashboardCounts | null; state: DashboardState; density: DashboardDensity; onSelect: (key: DashboardIssueKind) => void }) {
+export function DashboardSummary({ counts, state, density, onSelect, activeIndex }: { counts: DashboardCounts | null; state: DashboardState; density: DashboardDensity; onSelect: (key: DashboardIssueKind) => void; activeIndex?: number | undefined }) {
   const { t, language } = useTranslation()
   return <section className="kpis health-kpis" data-density={density} aria-label={t('dashboard.indicators')}>
-    {cards.map(card => <DashboardMetricCard
+    {cards.filter((_, index) => activeIndex === undefined || index === activeIndex).map(card => <DashboardMetricCard
       key={card.key}
       code={card.code}
       category={t(`dashboard.${card.key}Category`)}

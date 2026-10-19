@@ -1,8 +1,11 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { act, cleanup, render as renderUi, screen, fireEvent, waitFor } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { VmwareResourcesPage } from './VmwareResourcesPage'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import type { VirtualMachine } from '../../types/virtualMachineTypes'
+import { STANDARD_QUERY_OPTIONS } from '@/shared/query/cachePolicy'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
@@ -20,10 +23,16 @@ const vm: VirtualMachine = {
 let inventory: { reportedCount: number; virtualMachines: VirtualMachine[] }
 let inventoryBackgroundFetching = false
 let inventoryError = false
+let inventoryReadiness = { isSuccess: true, isPlaceholderData: false, isDebouncing: false }
 let forceRefreshError: Error | null = null
 let forceRefreshPending = false
 const refetchInventory = vi.fn()
 const forceRefreshInventory = vi.fn().mockResolvedValue(undefined)
+let client: QueryClient
+
+function render(ui: ReactNode) {
+  return renderUi(ui, { wrapper: ({ children }) => <QueryClientProvider client={client}>{children}</QueryClientProvider> })
+}
 
 vi.mock('../../hooks/useVirtualMachineSearchParams', () => ({
   useVirtualMachineSearchParams: () => ({
@@ -37,6 +46,7 @@ vi.mock('@/generated/query/providers/providers.gen', async (importOriginal) => (
 }))
 vi.mock('../../hooks/useVmwareResourceInventory', () => ({
   useVmwareResourceInventory: () => ({
+    ...inventoryReadiness,
     data: inventory, isInitialLoading: false, isFetching: inventoryBackgroundFetching, isBackgroundFetching: inventoryBackgroundFetching,
     isError: inventoryError, isEmpty: inventory.virtualMachines.length === 0, refetch: refetchInventory,
     forceRefresh: forceRefreshInventory, isForceRefreshing: forceRefreshPending, forceRefreshError,
@@ -44,6 +54,7 @@ vi.mock('../../hooks/useVmwareResourceInventory', () => ({
 }))
 vi.mock('@/features/discovery-inventory/resources/hooks/useVmwareResourceInventory', () => ({
   useVmwareResourceInventory: () => ({
+    ...inventoryReadiness,
     data: inventory, isInitialLoading: false, isFetching: inventoryBackgroundFetching, isBackgroundFetching: inventoryBackgroundFetching,
     isError: inventoryError, isEmpty: inventory.virtualMachines.length === 0, refetch: refetchInventory,
     forceRefresh: forceRefreshInventory, isForceRefreshing: forceRefreshPending, forceRefreshError,
@@ -82,13 +93,15 @@ const props = {
 }
 
 beforeEach(() => {
+  client = new QueryClient({ defaultOptions: { queries: { ...STANDARD_QUERY_OPTIONS, retry: false } } })
+  inventoryReadiness = { isSuccess: true, isPlaceholderData: false, isDebouncing: false }
   inventory = { reportedCount: 1, virtualMachines: [vm] }
   inventoryBackgroundFetching = false
   inventoryError = false
   forceRefreshError = null
   forceRefreshPending = false
 })
-afterEach(() => { vi.clearAllMocks() })
+afterEach(() => { cleanup(); client.clear(); vi.clearAllMocks(); vi.unstubAllGlobals() })
 
 describe('VmwareResourcesPage', () => {
   it('passes background fetching to the table without replacing the inventory shell', () => {
@@ -144,4 +157,35 @@ describe('VmwareResourcesPage', () => {
     expect(screen.getByTestId('vm-table')).toBeInTheDocument()
     expect(screen.getByRole('alert')).toHaveTextContent('pages.virtualMachines.error.latestFailed')
   })
+
+  it.each(['pending', 'error', 'placeholder', 'debouncing', 'fetching', 'force refresh', 'providers pending', 'disabled'])(
+    'defers background prefetch while active inventory is %s', async state => {
+      const candidate = { ...provider, id: 'vmware-02' }
+      const idle = vi.fn<() => number>().mockReturnValue(1)
+      let scheduled: () => void = vi.fn()
+      vi.stubGlobal('requestIdleCallback', (callback: () => void) => { scheduled = callback; return idle() })
+      vi.stubGlobal('cancelIdleCallback', vi.fn())
+      const fetchMock = vi.fn(() => Promise.resolve(new Response(JSON.stringify({ count: 0, vms: [] }))))
+      vi.stubGlobal('fetch', fetchMock)
+      if (state === 'pending') inventoryReadiness.isSuccess = false
+      if (state === 'error') { inventoryReadiness.isSuccess = false; inventoryError = true }
+      if (state === 'placeholder') inventoryReadiness.isPlaceholderData = true
+      if (state === 'debouncing') inventoryReadiness.isDebouncing = true
+      if (state === 'fetching') inventoryBackgroundFetching = true
+      if (state === 'force refresh') forceRefreshPending = true
+      const view = render(<VmwareResourcesPage {...props} backgroundPrefetchProvider={candidate}
+        providersPending={state === 'providers pending'} providersSuccess={state !== 'disabled'} />)
+      expect(idle).not.toHaveBeenCalled()
+      expect(fetchMock).not.toHaveBeenCalled()
+      inventoryReadiness = { isSuccess: true, isPlaceholderData: false, isDebouncing: false }
+      inventoryError = false
+      inventoryBackgroundFetching = false
+      forceRefreshPending = false
+      view.rerender(<VmwareResourcesPage {...props} backgroundPrefetchProvider={candidate} />)
+      expect(idle).toHaveBeenCalledOnce()
+      await act(async () => { scheduled(); await Promise.resolve() })
+      await waitFor(() => { expect(fetchMock).toHaveBeenCalledOnce() })
+      expect(fetchMock).toHaveBeenCalledWith('/api/vms/search?provider_id=vmware-02', expect.objectContaining({ method: 'POST', body: '{}' }))
+    },
+  )
 })

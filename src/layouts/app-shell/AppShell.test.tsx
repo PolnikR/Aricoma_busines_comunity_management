@@ -52,6 +52,21 @@ describe('AppShell', () => {
     expect(outletParent).not.toHaveClass('lg:min-h-0')
   })
 
+  it('limits viewport fitting to the opted-in route and releases it on navigation', () => {
+    routeMatches.current = [{ handle: { contentScroll: 'contained', contentFit: 'viewport' } }]
+    const { container, rerender } = render(<AppShell />)
+    expect(container.firstElementChild).toHaveAttribute('data-content-fit', 'viewport')
+    expect(container.firstElementChild).toHaveClass('h-dvh', 'min-h-0')
+    expect(container.querySelector('main')).toHaveClass('min-h-0', 'overflow-hidden')
+    expect(container.querySelector('main')?.firstElementChild).toHaveClass('min-h-0')
+
+    routeMatches.current = []
+    rerender(<AppShell />)
+    expect(container.firstElementChild).not.toHaveClass('h-dvh')
+    expect(container.querySelector('main')).not.toHaveClass('overflow-hidden')
+    expect(container.querySelector('main')).toHaveClass('lg:overflow-auto')
+  })
+
   describe('content surface contract', () => {
     let rect = { left: 0, width: 0 }
     let observed: Element | undefined

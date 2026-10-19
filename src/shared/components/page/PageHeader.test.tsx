@@ -3,6 +3,18 @@ import { describe, expect, it } from 'vitest'
 import { PageHeader } from './PageHeader'
 
 describe('PageHeader', () => {
+  it('offers a compact wrapping header without changing its heading and action semantics', () => {
+    render(<PageHeader variant="compact" title="Overview" description="Protection status" actions={<button type="button">All</button>} />)
+
+    const heading = screen.getByRole('heading', { name: 'Overview', level: 1 })
+    const header = heading.parentElement?.parentElement
+    expect(heading).toHaveClass('text-xl', 'leading-6')
+    expect(header).toHaveClass('flex-wrap')
+    expect(header).not.toHaveClass('mb-4')
+    expect(header).toContainElement(screen.getByText('Protection status'))
+    expect(header).toContainElement(screen.getByRole('button', { name: 'All' }))
+  })
+
   it('renders a compact title row with description and actions', () => {
     render(
       <PageHeader

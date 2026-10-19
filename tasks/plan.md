@@ -1,245 +1,174 @@
-# Plán: Recovery Group topology UI a backend integrácia
+# Plán: Overview so spoločným kompaktným PageHeader
 
-## Aktívne rozšírenie — Metro Mirror lookup (2026-09-30)
+Dátum: 2026-10-19. Repozitár: ABCO FE (`abcm-fe`). Vetva: `spike/ant-design-shell`.
+Stav: schválené cez executing-plans inline, implementované a overené. Checklist: [todo.md](todo.md). Výsledky: [overview-pageheader-verification.md](overview-pageheader-verification.md).
 
-Nasledujúca fáza MM1–MM7 rozširuje pôvodnú implementáciu. Je autoritatívna pre umiestnenie Consistency Group ID, automatické predvyplnenie a ručné opravy; pre tieto body nahrádza staršie rozhodnutia nižšie. Pôvodné úlohy a nedokončené browserové overenie zostávajú zachované. Tento dodatok je plán, nie vykonaná implementácia.
+## Zadanie a hranice
 
-### Schválený výsledok
+Nahradiť horný riadok Overview spoločným PageHeader s názvom **Prehľad**, podnadpisom **Stav ochrany, infraštruktúry a obnovy** a filtrom Všetci / IBM FlashSystem / Hitachi VSP vpravo. Zachovať štyri KPI, štyri panely, dáta, prefetch, light/dark a mobilné scrollovanie. Na podporovanom desktopovom rozložení zachovať celý dashboard v dostupnom viewporte bez vertikálneho scrollovania a bez orezania obsahu.
 
-- Topology obsahuje iba topology, Source, odvodený Target a Metro Mirror mode. Consistency Group ID sa tu nezobrazuje ani nevyžaduje pre Next.
-- Pri VM skupine sa editable Consistency Group ID zobrazí nad vybranými volumes v Related storage. Pri samostatných volumes sa zobrazí v Resources. Existujúce auxiliary inputy zostanú priamo v kompaktných drag-and-drop riadkoch.
-- Pre `metro_mirror` / `existing` API automaticky predvyplní CG a auxiliary names. Používateľ môže každú hodnotu opraviť vrátane vymazania. Ručné zmeny ani hodnoty načítané z uloženej skupiny nesmie background refetch prepísať.
-- Local zostáva bez lookupu a Metro polí. Počet krokov, automatický volume provider, VM → volume discovery, payload a orchestration sa nemenia.
+Tento dokument aktualizuje predchádzajúci plán toho istého rozpracovaného zadania. Nahrádza jeho návrh dodatočného kontextového riadka, desktopového scrollu, panelov s minimálnou výškou 270 px a starého podnadpisu. Statický `prototypes/dashboard-modern/overview-pageheader.html` nie je záväzná geometria ani dôkaz integrácie.
 
-### Overený integračný bod
+Pôvodná fáza plánovania menila iba `tasks/plan.md` a `tasks/todo.md`; následnú implementáciu používateľ schválil cez executing-plans inline. Zákaz stagingu, commitu, merge a push zostáva v platnosti. **Pracovný strom už nie je čistý**: na `spike/ant-design-shell` sú rozpracované úpravy `OverallKpis.tsx`, `RecoveryOverview.tsx`, `OverviewPage.test.tsx`, `overview.css`, prekladov EN/SK/CS a týchto dvoch plánovacích súborov. Žiadne existujúce zmeny nepovažovať automaticky za súčasť PageHeader úlohy; pred realizáciou zaznamenať baseline (HEAD aj working tree) a zachovať ich bez resetu či prepisu. Realizácia následne prebehla na schválený pokyn používateľa; presná evidencia je vo výsledkovom reporte.
 
-Generated `useGetMetroMirrorRelationships` už existuje v `src/generated/query/storage-volumes/storage-volumes.gen.ts`. Parametre sú `provider_id: string` a `volume_names: string[]`. Posiela sa Source FlashSystem a názvy aktuálne vybraných source volumes: `relatedVolumes` pri VM, `resources` pri volume-only. Neposiela sa compute provider ani Target. Generated serializácia rieši opakované `volume_names` parametre aj abort signal.
+## 1. Zistený stav a závislosti
 
-Response obsahuje `provider_id`, `volumes[]` s `name`, `status: ok | not_mirrored | ambiguous`, voliteľnými `auxiliary_name` a `consistency_group_id`, plus spoločné `consistency_group_id` a `warning`. Spoločný CG sa berie z top-level hodnoty, nikdy svojvoľne z prvého volume. Aktuálna generated schéma stačí; Orval regenerovať iba pri preukázanej zmene kontraktu, neupravovať generated súbory ručne.
+| Miesto | Skutočný stav a dôsledok |
+|---|---|
+| `src/shared/components/page/PageHeader.tsx:3` | API: `title: ReactNode`, voliteľné `description` a `actions`. Variant ani `className` nemá. Actions už umožňujú vložiť filter bez nového slotu. |
+| `PageHeader.tsx:12` | Koreň má `mb-4`, `shrink-0`, pod 640 px stĺpec, od 640 px riadok; actions majú `shrink-0` a vnútorné zalamovanie. H1 má 36 px riadok; popis štandardne 20 px. Bežná nezalomená hlavička teda zaberá približne 72 px vrátane spodného marginu. To je odhad zo štýlov, nie nové browser meranie. |
+| `src/shared/components/page/PageHeader.test.tsx` | Chráni nadpis, popis, actions, dnešné triedy aj variant bez voliteľných props. Slovo „compact“ v názve existujúceho testu neznamená existenciu variantového API. |
+| `src/shared/components/table/TableToolbar.tsx:28` | Deleguje nadpis, popis, obnovovanie a akcie na PageHeader. Zmena predvolenej geometrie by sa preniesla aj na tabuľkové stránky. |
+| `InfrastructurePage.tsx:108`, `RecoveryActionsPageShell.tsx:55` | Používajú title/description/actions s malým tlačidlom obnovy. Potvrdzujú vhodnosť existujúcej kompozície. CodeGraph uvádza 27 odkazov na PageHeader; nejde o 27 nezávislých stránok. |
+| `src/features/dashboard/pages/OverviewPage.tsx:14` | Vlastní `vendor`, volá `useInitialResourcePrefetch(true)`, používa fixture a `selectOverallProtection`. Renderuje OverallToolbar, OverallKpis, štyri panely a footer. PageHeader chýba. |
+| `components/overall/OverallToolbar.tsx` | Spája kontext filtra, lokalizovaný pevný dátum 2026-10-16, označenie demo inventára a jediné tri tlačidlá filtra s `aria-pressed`. |
+| `components/overall/` | OverallKpis, ProtectionOverview, RecoveryOverview, InfrastructureOverviewPanel, DeploymentCoverage a OverallPanel už majú oddelené zodpovednosti. Ich dátovú logiku netreba meniť. |
+| `components/overall/OverallKpis.tsx`, `src/app/routes.ts` | Aktuálne rozpracované KPI už majú navigačné odkazy „Zobraziť skupiny“ a „Zobraziť aplikácie“ cez `Link`, `routes.recoveryGroups` a `routes.recoveryApplications`. Pri PageHeader zmene tieto odkazy, ich lokalizáciu, pozíciu a navigáciu zachovať; na tento účel neprepisovať KPI komponent. |
+| `src/features/dashboard/pages/OverviewPage.translations.test.tsx` | Jazykový test vykresľuje `OverviewPage` bez React Router kontextu, zatiaľ čo aktuálne KPI obsahujú `Link`. Pri predchádzajúcej cielenej kontrole kombinovaný Vitest beh skončil `exit code 1`; konkrétnu príčinu potvrdiť uloženým testovacím logom. Testovací baseline stabilizovať **pred** prácou na PageHeader, napr. použitím `MemoryRouter` v testovacom obale, bez zmeny produkčného routovania. |
+| `pages/overview.css` | `.overall-page`: flex stĺpec, gap 10 px, min-height: 0, lokálne tokeny a 11 px písmo. Toolbar: min-height 30 px. Panely: 12 stĺpcov, dva pružné riadky; desktop skrýva overflow. Šírky 950–1280 px majú všetky panely cez 6 stĺpcov. Pod 950 px má stránka vlastný vertikálny scroll a prirodzené riadky; pod 700 px jeden stĺpec panelov. |
+| `src/app/AppRoutes.tsx:23` | Overview je index route `/`, s `contentScroll: 'contained'` aj `contentFit: 'viewport'`. |
+| `src/layouts/app-shell/AppShell.tsx:16` | Viewport režim znamená `h-dvh`, min-height: 0 a skrytý overflow v main; automaticky zahŕňa contained režim. `contentScroll: contained` samo osebe povoľuje spravovať scroll vnútornému obsahu, negarantuje viditeľnosť obsahu. |
+| `AppShell.tsx:47`, `AppHeader.tsx:16`, `AppSidebar.tsx:130` | Shell od lg pridáva vonkajší padding a sidebar; AppHeader má 56 px. Main má 40 px vertikálny padding. Sidebar má od lg šírku aspoň 272 px, pri zbalení 72 px; viditeľný desktopový prepínač je až od xl. |
+| `src/index.css:86` | sm=640, lg=1024, xl=1280. Dashboardový breakpoint 950 px sa nezhoduje so shellovým lg: pri 950 px ešte sidebar nie je v toku; pri 1024 px zrazu výrazne zúži obsah. Nestačí preveriť len šírku okna. |
+| `src/locales/{en,sk,cs}.json` | `nav.overview` je Overview / Prehľad / Přehled, filter je preložený. `overview.description` zatiaľ chýba. |
+| `package.json` | `typecheck` = `tsc -b`. `build` navyše spúšťa globálny lint, celý Vitest a API kontroly pred Vite buildom; na požadovaný TypeScript build použiť `npm.cmd run typecheck`. |
+| `scripts/qa/verify-overview-pageheader.mjs` | Používa Playwright/Edge, ale otvára HTML cez file://. Jeho úspech neoveruje React, AppShell, autentifikáciu ani požadovanú maticu. |
 
-### Pravidlá predvyplnenia a validácie
+Historický plán `tasks/compact-page-header-plan.md` opisuje už vykonané globálne zmenšenie hlavičky. Jeho výsledok je dnešný default; túto globálnu úpravu neopakovať. Staršie reporty v `tasks/dashboard/` opisujú aj predošlé dashboard komponenty a nie sú baseline terajšieho Overall dashboardu.
 
-1. Query je enabled iba pri Existing Metro Mirror, validnom Source a neprázdnom aktuálnom výbere. Počas nevyriešeného VM discovery počká; chyba discovery naďalej používa existujúcu blokujúcu validáciu. Názvy pre query deduplikovať a zoradiť, nemení sa poradie UI.
-2. Auxiliary doplniť iba pre presnú zhodu vybraného názvu, `status=ok` a neprázdnu hodnotu. Chýbajúci alebo nejednoznačný záznam zostáva označený na ručné doplnenie. `warning` zobraziť ako text, nie HTML.
-3. Pôvod hodnôt evidovať lokálne vo FE: automatický, ručne upravený alebo načítaný zo záznamu. Nepridávať tieto metadáta do backend payloadu. Úmyselne vymazané pole je ručná úprava a nesmie sa okamžite znovu vyplniť.
-4. Pri zmene výberu prepočítať automatický spoločný CG a odstrániť automatické hodnoty, ktoré nový výsledok už nepotvrdzuje. Ručné/persistované hodnoty zachovaných volumes a CG pri rovnakom Source zachovať; upozorniť, ak sa líšia od discovery. Odstránený volume stratí mapping aj príznak ručnej úpravy. Pri zmene Source alebo opustení Metro režimu resetovať celý Metro kontext. Zmeny compute/workload rešpektujú existujúci reset výberu a odstránia príslušnú provenance.
-5. Odpoveď pre starý Source alebo starý výber nesmie meniť aktuálny draft. Overiť aj response `provider_id`; pri zmene kontextu nezobraziť staré výsledky ako aktuálne. Použiť generated query key/cancellation a explicitnú identitu kontextu, bez časovačov na synchronizáciu stavu.
-6. Topology gate overuje topology, source/partner a Existing mode. Storage gate vyžaduje vybrané volumes, neprázdny trimmed CG a auxiliary pre každý vybraný volume. Submit aj edit save musia stále overiť kompletný draft; presun poľa nesmie oslabiť doménovú validáciu ani umožniť obísť ju cez sidebar.
-7. Navrhnuté správanie pri zlyhaní lookupu: zobraziť chybu a Retry, ponechať ručnú opravu. Samotná lookup chyba neblokuje validne ručne vyplnený draft; existujúce discovery/provider chyby zostávajú blokujúce. Loading neblokuje už kompletné ručné hodnoty. Lookup je pomoc s predvyplnením, nie záruka funkčnej replikácie. Chýbajúci spoločný CG alebo rozdielne skupiny sa nesmú potichu považovať za úspech; zobraziť upozornenie a vyžadovať explicitné ručné doplnenie chýbajúcej hodnoty.
+Závislosti: route handles → AppShell → dostupný obsahový obdĺžnik → Overview → PageHeader/filter + KPI + panely + footer. Stav filtra a výpočty zostávajú v Overview; hlavička ani filter nezískajú dátovú zodpovednosť.
 
-### Implementačné úlohy
+**Východiskový kontrolný bod:** T0 najprv zopakuje `OverviewPage.test.tsx` a `OverviewPage.translations.test.tsx` samostatne aj spolu, uloží presný výstup a rozlíši chybu existujúceho router test harnessu od zmien PageHeader. Oprava neplatného testovacieho obalu patrí do T0, pred T1; neprisudzovať existujúcu chybu novej implementácii. Zachovať súčasné rozdelenie 16/8 a 23/11, percentá a KPI navigáciu.
 
-Všetky cesty nižšie sú relatívne k `src/features/recovery-plans/recovery-groups`, pokiaľ nie je uvedené inak. Každá úloha končí focused overením, `git diff --check` a atomickým commitom na `prototype/recovery-group-topology`. Žiadny automatický merge/push.
+## 2. Varianty a odporúčanie
 
-#### MM1 — Lookup cez generated hook (malá; bez závislosti)
+| Možnosť | Konzistentnosť UI | Zložitosť | Riziko regresií | Záver |
+|---|---|---|---|---|
+| A: Existujúce API bez zmeny | Spoločný komponent aj štandardný vzhľad. Filter v actions funguje ihneď. | Najnižšia, kým sa nemusí obchádzať geometria. | Ostatné stránky bez zásahu; dashboard spotrebuje približne o 42 px viac než minimálny toolbar, ešte pred rodičovskými medzerami. | Funkčne stačí, pri požadovanom výškovom rozpočte nie je preferované. Lokálne zásahy do vnútorných elementov PageHeader by boli krehké. |
+| **B: Opt-in kompaktný variant** | Stále ten istý PageHeader, s explicitnou hustotou pre dashboard. | Malé aditívne API a cielené testy. | Riadené: default zostane presne dnešný, variant zapne iba Overview; treba overiť spoločný komponent aj jeho spotrebiteľov. | **Odporúčané.** Umožňuje nahradiť toolbar pri zachovaní dostupnej výšky. |
+| C: Bez PageHeader | Dashboard zostane výnimkou, chýba požadovaná jednotná hlavička. | Najnižšia. | Malé pri ponechaní stavu, ale nesplní hlavný cieľ. | Neodporúčané. |
 
-Súbory: nový `hooks/useRecoveryGroupMetroMirrorRelationships.ts` a jeho test.
+Navrhnuté jediné nové API: `variant?: 'default' | 'compact'`, predvolene `default`. Nemení sa typ title/description/actions, DOM hierarchia defaultu ani správanie existujúcich volaní. Nevytvárať CompactPageHeader, ďalší všeobecný slot či verejné konfigurovateľné rozmery.
 
-- Tenký feature hook používa existujúci generated hook, Source a normalizovaný výber; nevytvára paralelný HTTP klient ani cache.
-- Testy pokrývajú enabled podmienky, správne parametre, zmenu Source/výberu, loading/error/retry a nesprávny provider odpovede.
-- Overenie: `npm exec vitest run src/features/recovery-plans/recovery-groups/hooks/useRecoveryGroupMetroMirrorRelationships.test.tsx` a ESLint týchto súborov.
+### Kompaktná kompozícia
 
-#### MM2 — Pravidlá vlastníctva predvyplnených hodnôt (stredná; MM1)
+- PageHeader vložiť **namiesto** OverallToolbar ako prvého potomka `.overall-page`, nie ako ďalší blok nad ním. Tokeny filtra tak zostanú v dnešnom lokálnom scope.
+- Nadpis: `t('nav.overview')`. Nový `overview.description`: SK „Stav ochrany, infraštruktúry a obnovy“, EN „Protection, infrastructure and recovery status“, CS „Stav ochrany, infrastruktury a obnovy“.
+- Variant compact: cieľový h1 20 px / 24 px, popis 12 px / 16 px, bez spodného marginu; nezalomený textový blok približne 40 px. Default zostáva 36 + 20 + 16 px. Na compact zachovať štandardné písmo hlavičky, nepoužiť zdedených 11 px dashboardu pre nadpis.
+- **Flex kontrakt compact variantu:** neupravovať default. V compact variante riešiť vonkajší `sm:flex-row`, textový `min-w-0`, rozmery `actions` a možnosť jeho zalomenia/presunu na ďalší riadok pri nedostatku priestoru. Samotné `flex-wrap` na vnútornej skupine pri rodičovi `shrink-0` nestačí. Použiť cielené `min-w-0`, bezpečné šírkové obmedzenia a shrink/wrap podľa nameranej šírky; pri zalomení nesmie filter prekryť nadpis, podnadpis ani okraj stránky. Testovať najmä 1024×768, 950×640 a SK/CS dlhé texty.
+- Extrahovať iba prepínač do `OverallVendorFilter.tsx`; zachovať props `vendor` a `onVendorChange`, natívne tlačidlá, group s prístupným názvom, aria-pressed a focus-visible. Viditeľný názov skupiny môže byť vedľa tlačidiel; na mobile sa zalomí. Filter bude vpravo cez actions, pri nedostatku miesta pod textom bez pretečenia.
+- Odstrániť použitie a po kontrole referencií aj osirelý OverallToolbar. Nenechať samostatný filter ani nový kontextový riadok. Scope už zostáva v podnadpise ProtectionOverview; nepridávať duplicitnú informáciu nad KPI.
+- **Dátum ukážky a označenie demo inventára nepresúvať automaticky.** Najprv overiť pri T0/T3, či ich súčasná prezentácia môže zostať v rámci compact hlavičky bez duplicity, pretečenia a zvýšenia výšky. Presun do existujúceho footeru je iba podmienená dizajnová alternatíva na výslovné potvrdenie používateľom, ak ho meranie ukáže ako potrebný. V oboch prípadoch zachovať lokalizáciu a pevný UTC dátum 2026-10-16 (nie čas synchronizácie), štyri SIMULOVANÉ označenia a dosiahnuteľný footer bez orezania.
+- Dátové komponenty, fixture, výpočty a prefetch bez zmeny. Zastaralé prekladové kľúče hromadne nečistiť.
 
-Súbory: nový úzky `utils/reconcileMetroMirrorPrefill.ts` a test; prípadné lokálne typy držať pri helperi.
+### Výškový rozpočet a responzivita
 
-- Čistá funkcia pre zlúčenie výsledku s aktuálnymi hodnotami a ich pôvodom; žiadny všeobecný form framework ani nové wire polia.
-- Testy: ok/missing/ambiguous/not_mirrored, spoločný CG/null/rozdielne CG, ručná oprava a vymazanie, edit prefill, refetch, odstránenie/pridanie volume, zmena Source a oneskorená odpoveď. Zachovať string ID `001`.
-- Overenie: focused Vitest helpera a ESLint. Kontrolný bod MM-A: jasné reset pravidlá a žiadne prepísanie ručných hodnôt.
+Prvým krokom realizácie bude baseline v reálnom AppShell. Meranie je súčasťou implementačného overenia; pri tejto analýze sa browser nespúšťal a žiadne rozlíšenie ešte neoznačujeme ako overené.
 
-#### MM3 — Oddelenie topology a storage validácie (stredná; MM2)
+Zmerať skutočnú výšku toolbaru, obsahový obdĺžnik main, KPI, oba riadky panelov, footer a všetky medzery. Pre nezalomený desktop cieliť na vzťah:
 
-Súbory: `utils/recoveryGroupTopology.ts`, jeho test, `api/recoveryGroupsValidation.test.ts`, `hooks/useRecoveryGroups.test.tsx` (produkčnú submit validáciu meniť iba ak test odhalí medzeru).
+`nová hlavička + nové medzery + nový footer <= pôvodný toolbar + pôvodné medzery + pôvodný footer`.
 
-- Topology helper už nevyžaduje CG; platnosť Source/Target, Existing mode a legacy Local správanie zachová.
-- Doménová submit validácia ďalej odmieta chýbajúci CG alebo auxiliary v oboch flow; Local ich nevyžaduje. Overiť save aj mimo wizard Next.
-- Overenie: uvedené tri testové súbory a focused lint. Do integrácie MM5 neposudzovať zmenu ako hotovú funkciu.
+Pri štyroch priamych potomkoch má stránka tri medzery. Návrh compact hlavičky 40 px namiesto min. 30 px toolbaru možno vykompenzovať lokálnym desktopovým gapom 6 px namiesto 10 px (úspora 12 px). Je to počiatočný návrh, nie preukázaný výsledok; zalomenie textu či prípadný schválený presun dátumu do footeru túto bilanciu zmení. Finálne hodnoty určí meranie. Nezmenšovať samotné KPI alebo texty panelov len na zamaskovanie nedostatku priestoru. Všetky štyri horné KPI musia zostať rovnako vysoké.
 
-#### MM4 — Presun polí a shared UI (stredná; MM3)
+Zachovať pružné dva riadky panelov, dnešné pomery stĺpcov a pravidlá vnútorných kariet. Nepridávať pevné výšky podľa monitora, JS výpočty viewportu ani minimálnu výšku panelov 270 px. AppShell, route handles a globálne tokeny sa nemenia. Pravidlá compact variantu musia dovoliť zalamovanie actions **aj vonkajšieho flex rozloženia**; pri malom dostupnom obsahovom obdĺžniku odstrániť konfliktné `shrink-0` iba pre compact. Kontrolovať skutočnú šírku rodiča (sidebar + padding), nie len viewport. Nesmie vzniknúť clipping z `overflow:hidden` ani zmena default variantu.
 
-Súbory: `components/RecoveryGroupTopologyStep.tsx`, jeho test, nový `components/RecoveryGroupMetroMirrorFields.tsx` a test.
+Od 950 px zachovať desktopový dashboard bez vertikálneho scrollu všade, kde je celý obsah skutočne zobraziteľný. Pri 950×640 a pri 1024×768 s rozbaleným sidebarom preveriť zalamovanie najskôr. Skrytý overflow bez viditeľnosti posledného obsahu nie je splnenie kritéria. Ak meranie ukáže fyzický nedostatok priestoru aj po odstránení duplicít a medzier, zdokumentovať konkrétnu kombináciu a pred rozšírením rozsahu vyžiadať rozhodnutie; nezaviesť potichu desktopový scroll alebo orezanie.
 
-- Odstrániť CG z Topology. Nový controlled feature komponent zobrazuje spoločný editable CG, stručný loading/warning/error stav a Retry; používa existujúce shared Input/Field/Alert/Button podľa reálne dostupných exportov.
-- Zachovať flexibilné rozmery, labely a prístupnosť; nepridávať vlastný dizajnový systém. Shared komponent doplniť iba ak chýba skutočne opakovateľný primitív; vtedy ho oddeliť do malej úlohy s vlastným testom.
-- Overenie: oba component testy a lint. Kontrolný bod MM-B: Topology ide ďalej bez CG; panel je controlled a nezavádza ďalší zdroj formulárového stavu.
+Pod 950 px zachovať dnešné vertikálne scrollovanie celej Overview vrátane hlavičky a footeru, bez druhého vnoreného scroll kontajnera. Pod 700 px zachovať jeden stĺpec panelov; malé KPI zostanú dvojstĺpcové. Mobilný filter nesmie vyžadovať horizontálne scrollovanie. Dlhé SK/CS/EN texty sa zalomia bez skrývania podnadpisu.
 
-#### MM5 — Zapojenie do oboch wizard flow (stredná; MM1–MM4)
+## 3. Súbory budúcej implementácie
 
-Súbory: `components/RecoveryGroupBuilder.tsx`, jeho test, podľa potreby `components/RecoveryGroupResourcesStep.tsx` a jeho test.
+| Súbory | Zásah |
+|---|---|
+| `src/shared/components/page/PageHeader.tsx`, `PageHeader.test.tsx` | Opt-in compact; zachovanie defaultu; testy oboch kontraktov. |
+| `src/locales/en.json`, `sk.json`, `cs.json` | Pridať iba `overview.description` s textami vyššie; zachovať všetky aktuálne kľúče vrátane `overview.viewRecoveryGroups` a `overview.viewRecoveryApplications`. |
+| `src/features/dashboard/pages/OverviewPage.translations.test.tsx` | Najprv v T0 stabilizácia router test harnessu a dôkaz východiskových testov, potom kontrakt nového popisu a prepínanie EN/SK/CS bez resetu výrobcu. |
+| `src/features/dashboard/components/overall/OverallVendorFilter.tsx` (nový) | Presunuté tlačidlá filtra bez novej logiky. |
+| `src/features/dashboard/components/overall/OverallToolbar.tsx` | Po presune zodpovedností odstrániť, ak už nemá referencie. |
+| `src/features/dashboard/pages/OverviewPage.tsx`, `overview.css`, `OverviewPage.test.tsx` | Kompozícia, podmienené premiestnenie informácie o demo dátume, lokálny výškový rozpočet a funkčné regresie; existujúce KPI navigačné odkazy zachovať a testovať, bez refaktoringu `OverallKpis.tsx`. |
+| `scripts/qa/verify-overview-pageheader-app.mjs` (nový) | Automatizácia nad skutočnou aplikáciou v Edge. Existujúci HTML skript neprezentovať ako integračný test. |
+| `tasks/overview-pageheader-verification.md` (nový), `tasks/todo.md` | Baseline, výsledky, screenshoty, limity a skutočný stav checklistu. |
 
-- VM panel je v Related storage, volume-only panel v Resources; rovnaká funkcionalita bez nového kroku. Auxiliary zostáva v existujúcom row slote, editácia označuje hodnotu ako ručnú.
-- Zapojenie query a reconciliácie rešpektuje efektívny výber vrátane automatického discovery a exclusions. Next/sidebar/create/save používajú správne oddelené gates, reset aj edit initialization čistia alebo zachovávajú provenance podľa pravidiel vyššie.
-- Overenie: Builder/Resources component testy vrátane oboch flow, návratu medzi krokmi, Local regresie, stale odpovede, retry a user edit počas requestu; focused lint. Ak rozsah prekročí približne päť súborov, rozdeliť integráciu VM a volume-only bez rozširovania scope.
+Bez plánovaného zásahu: AppShell/AppHeader/AppSidebar, AppRoutes, TableToolbar, ostatné stránky, existujúce KPI/panely/model/mocks, API/backend a závislosti. Existujúce skeletony patria štandardnému headeru; nemenia sa globálne kvôli opt-in variantu. Skontrolovať aj načítanie Overview a zaznamenať prípadný rozdiel dnešného generického fallbacku.
 
-#### MM6 — Preklady a uloženie ručných opráv (stredná; MM5)
+## 4. Postup a kontrolné body
 
-Súbory: príslušné recoveryGroups locales en/sk/cs, `locales/recoveryGroupTopologyTranslations.test.ts`, `helpers/mapRecoveryGroups.test.ts`.
+Podrobné úlohy T0–T6 sú v [todo.md](todo.md). Poradie: **T0 → T1 → T2 → T3 → T4 → T5 → T6**. Postupovať sekvenčne; jednotlivé kroky zdieľajú header, CSS a testy. Žiadne paralelné úpravy tých istých súborov.
 
-- Lokalizovať CG, stav predvyplnenia, nejednoznačnosť, nenájdený relationship, nesúlad ručných hodnôt a Retry; použiť existujúce kľúče, kde význam sedí. Odstrániť len kľúče osirelé touto zmenou.
-- Contract test dokazuje uloženie ručne opraveného CG/auxiliary bez provenance, správny Source a zachovanie hodnoty pri opätovnej editácii. Local payload bez Metro polí.
-- Overenie: locale a mapper testy, JSON parsing upravených locales, focused lint. Kontrolný bod MM-C: frontend → generated submit payload zachová presné ručné opravy.
-
-#### MM7 — Browser a read-only backend overenie (stredná; MM6)
-
-- Browser: VM aj volume-only, Local aj Metro, create aj edit; 0/1/100 volumes, dlhé názvy, warning/error/retry, úprava počas lookupu. Rozlíšenia 1920×1080, 1366×768, 1280×720, 768×1024, 390×844 a zoom 200 %. Žiadny horizontálny overflow; footer dostupný, zoznam má riadený vnútorný scroll. Na malej výške nevyžadovať nemožnú nulovú vertikálnu scroll plochu.
-- V autorizovanej prihlásenej session overiť read-only request: Source ID, aktuálne source názvy, skutočné statusy a spoločný CG. Nevytvárať mirroring, nespúšťať orchestration. Živý CRUD round-trip iba v samostatne autorizovanom testovacom prostredí; inak doložiť component/contract testom a uviesť limit.
-- Spustiť len dotknuté testové súbory z MM1–MM6 a existujúce BuilderPage/EditorPage testy; focused lint a typecheck vzhľadom na hook/model integráciu. Celý suite ani production build nie sú default. Chýbajúci browser/prístup zaznamenať ako neoverené, nie ako úspech. Výsledky a zostávajúce obmedzenia doplniť do checklistu; uzavrieť aj prekrývajúce sa staršie T8/C iba pri reálnom overení.
-
-### Mimo rozsahu a riziká
-
-Backend kontrakt, tvorba Metro vzťahov, Managed, Airflow, FlashCopy execution, nové VM mapovanie, provider formuláre a merge do test nie sú súčasťou. Najväčšie riziká sú prepísanie ručného vstupu, race medzi discovery a lookupom a oslabenie submit validácie presunom CG. Preto sú tieto prípady explicitné testy pred vizuálnym overením. Ak živý backend ukáže iný kontrakt, zaznamenať konkrétny rozdiel a upraviť plán/generovanie pred implementáciou obchádzky.
-
-## Rozsah a pracovisko
-
-Realizovať schválený návrh Local / Metro Mirror Existing v produkčnom Recovery Group wizarde, vrátane načítania, editácie a uloženia cez existujúce Orval-generated hooks. Zachovať vzhľad aplikácie a kompaktný drag-and-drop výber s auxiliary inputom priamo v riadku volume.
-
-Pracovať výhradne vo vetve `prototype/recovery-group-topology`, worktree `.worktrees/topology-preview`. Pred každou mutáciou Gitu overiť vetvu. Neprepínať hlavný checkout a nemeniť vetvu `test`. Tento dokument je plán; jeho vytvorenie nespúšťa implementáciu.
-
-Vizuálny podklad: `src/features/recovery-plans/recovery-groups/prototype/TopologyPreview.tsx` a `AuxiliaryVolumeDropZone.tsx`. Prototyp nepremiestňovať do produkcie ako hotový komponent; produkčná verzia použije shared primitíva a reálne dáta.
-
-Starý plán Compact Recovery Inventory bol dokončený (všetky úlohy v tasks/todo.md boli označené). Jeho história zostáva v Gite. Aktuálny checklist je `tasks/todo.md`.
-
-## Overený stav projektu
-
-- `src/generated/query/zod/recoveryGroup.gen.ts` a read schémy poznajú `topology: local | metro_mirror`, `metro_mirror.mode`, `consistency_group_id` a `volumes[].auxiliary_name`. Chýbajúca topology má default local.
-- Provider schéma a `selectProviders` zachovávajú `partnerProviderId` a `credentialStatus`.
-- `useRecoveryGroups.ts` používa `useGetRecoveryGroups`, `useSubmitRecoveryGroup`, generated delete/rollback hooks. Starý `api/recoveryGroupsApi.ts` už neexistuje; neobnovovať ho.
-- `mapRecoveryGroups.ts` uchováva rawRecord, ale draft/normalizovaný model a submit mapper nové hodnoty nepodporujú. `toRecoveryGroupJson` bez rawRecord má dokonca topology natvrdo local.
-- `useRecoveryGroupRelatedVolumes` už prijíma explicitný FlashSystem ID a používa existujúce query options z `inventoryQueries`. Nevracať starý defaultFlashcopyProviderId model.
-- Source sa dnes vyberá v Related storage; pri zmene/clear sa resetujú relatedVolumes. Presun do Topology musí tieto závislosti riešiť vedome.
-- Schéma povoľuje managed, ale zadanie povoľuje iba existing. Schéma sama nevynucuje povinný auxiliary názov ani consistency group; potrebná je frontend doménová validácia.
-
-## Rozhodnutia a dátový kontrakt
-
-### Topology a Source
-
-1. Topology dropdown: Local / Metro Mirror. Metro Mirror mode dropdown: Existing; Managed disabled s Coming soon. Target je odvodený zo Source.partnerProviderId, nikdy editable select ani samostatné uložené ID.
-2. Nová skupina začína bez zvolenej topology. Starý záznam bez topology sa načíta ako local. Načítaný managed záznam označiť ako nepodporovaný a zablokovať save; nesmie sa potichu konvertovať na existing.
-3. Výber Source: iba FLASHCOPY s credentialStatus ok. Na rozlíšenie partnera používať úplný zoznam providerov, nie len source-role filter. Partner musí existovať, byť iný FLASHCOPY a mať platné credentials. Missing/unknown/self/wrong-type partner a chyba načítania providerov blokujú Metro Mirror pokračovanie s konkrétnou správou.
-4. Provider status nie je dôkaz funkčnej replikácie. Nezavádzať health endpoint ani tvrdenie o overení relationship.
-5. Draft rozšíriť o topology, metroMirrorMode, consistencyGroupId a auxiliaryNamesByVolume. Typy topology/mode odvodiť z generated Output typov. Source ukladať v existujúcom draft.relatedVolumeProviderId (aj počas výberu topology pred workloadom); nový duplicitný Source stav nezavádzať.
-6. Pre VM skupinu je providerId compute provider a relatedVolumeProviderId Source. Pre volume-only flow sa pri zvolení storage workloadu providerId synchronizuje so Source; Provider krok môže zobraziť tento zdroj read-only. Neumožniť dve odlišné voľby storage providera. Načítanú volume-only skupinu inicializovať so Source z group.providerId.
-
-### Wire payload a round-trip
-
-- `provider_id_volume` je vždy SOURCE; pri Metro Mirror nikdy partner.
-- `provider_id_vm` je compute provider; pri volume-only skupine zostáva existujúca konvencia prázdnej hodnoty.
-- Local posiela topology local, volumes s name; vynechá metro_mirror aj auxiliary_name.
-- Metro Mirror posiela topology metro_mirror, metro_mirror `{ mode: 'existing', consistency_group_id: trimmedString }`; každý vybraný source volume posiela `{ name, auxiliary_name: trimmedString }`.
-- VM flow čerpá volumes z relatedVolumes; volume-only flow z resources. Mapovanie auxiliary musí podporovať oba.
-- Consistency Group ID je text, nie number: zachovať napr. `001`. Overiť neprázdnu trimmed hodnotu, nevymýšľať numerické obmedzenia.
-- Použiť súčasný submit hook a jeho query params provider_id / push_to_orchestrator; nemeniť význam orchestration.
-- GET → model → draft → submit aj model → JSON musia zachovať topology a auxiliary mapping. Zachovať VM metadata, orchestration údaje a rawRecord passthrough pri exporte. Existujúce podporované polia nesmú miznúť pri editácii len kvôli topológii.
-- Po úspešnom submit preferovať zodpovedajúci záznam servera podľa ID, ak je dostupný; fallback toRecoveryGroup musí zachovať nové polia. Overiť aktuálnu cache invalidáciu generated vrstvy, nevytvárať paralelnú cache.
-
-### Prechody a kompatibilita
-
-- Local → Metro Mirror: zachovať Source a source volumes, vyžadovať CG ID a auxiliary údaje. Metro Mirror → Local: vyčistiť CG ID aj auxiliary mapu; nič z nich neposlať do Local payloadu.
-- Zmena Source: vyčistiť source volume výber, auxiliary mapu, CG ID a discovery suppression/cache identitu v builderi. Zachovať compute provider, VM výber, Policy Set a orchestration. Znovu discoverovať len s novým Source.
-- Zmena VM/compute/workload: resetovať príslušné existujúce downstream údaje, odstrániť auxiliary údaje odstránených volumes. Platné mapovanie rovnakého volume na rovnakom Source zachovať pri návrate medzi krokmi.
-- Samotná zmena workload typu nesmie vymazať Topology ani zvolený Source. Oddeliť existujúci reset relatedVolumeProviderId od resetu relatedVolumes; pri volume-only synchronizovať providerId so Source.
-- Drop je idempotentný; odstránenie volume vymaže jeho auxiliary údaj. Opätovný drop neobnoví starý auxiliary názov. Clear selection nevymaže Source z Topology.
-- Manuálne pridané volumes nezmiznú pri refetchi; ručne odobraté discovered volumes sa nesmú okamžite vrátiť cez builder useMemo. Evidence výnimiek viazať na Source + compute + VM kontext. Neskorý výsledok starého dotazu nesmie prepísať novú voľbu.
-- Local si ponechá existujúci voliteľný Related storage. Legacy Local VM záznam bez storage môže zostať bez storage pri editácii, ak nemá volumes; netreba vymýšľať Source. Nový create flow vyžaduje Source v Topology. Pri Metro Mirror vyžadovať aspoň jeden source volume a auxiliary pre každý.
-- Next, sidebar aj Create/Save uplatnia rovnakú validáciu. Provider invalidácia počas editácie blokuje save bez straty zadaných hodnôt. Chyby BE ponechajú draft a existujúce error UI.
-
-## Shared UI a rozloženie
-
-- Použiť existujúce WizardSteps, Field, Select, Input, Button, Badge, ResourceSidebar, ResourceSelectionCard, EmptyState, ListSkeleton a FetchErrorAlert. Existujúce Policy Set/Orchestration komponenty zachovať a napojiť na reálne dáta.
-- Rozšíriť ResourceSelectionCard o voliteľný `renderItemContent?: (resource: string) => ReactNode`. Slot nahradí iba obsah vybraného riadku; shared komponent naďalej vlastní drop, scroll, empty state a remove. Predvolené renderovanie a checkbox režim zostanú bez zmeny. Nepoužiť tento slot na vnáranie ďalšieho remove buttonu.
-- Ak pre skrátený text s prístupným úplným názvom neexistuje vhodný shared prvok, vytvoriť `src/shared/components/truncated-text/TruncatedText.tsx` a test. Názov skracovať iba prezentačne, plná hodnota musí byť dostupná cez hover, focus aj touch a pre screen reader; nikdy nemení ID/payload. Bez kopírovania prototype drop handlerov do produkcie.
-- Feature ResourcesStep dostane voliteľný row-content prop a prepošle ho do shared selection card. Feature kompozícia riadku: Source názov, shared Input size sm pre Auxiliary, shared remove. Jeden volume = jeden riadok, bez duplicitnej tabuľky a bez badge pri každom inpute.
-- Local/Metro form je kompaktný: Source a read-only Target v jednom riadku, Mode a CG ID v ďalšom. Na úzkej obrazovke stĺpce prejdú pod seba.
-- Vyjsť z existujúceho aplikačného layoutu, nie z prototypového samostatného main h-dvh. Propagovať flex-1/min-h-0/overflow-hidden od page k wizardu; footer shrink-0. Scrollovať inventory a selection list v dostupnom priestore, nie celú stránku. Pri nedostatku výšky dovoliť scroll obsahu kroku, nikdy skryť tlačidlá.
-- VM flow: Details, Topology, Resource type, Provider, Resources, Related storage, Policy Set, Orchestration (8). Volume flow bez Related storage (7); inline auxiliary polia sú v Resources. Indexy centralizovať v existujúcom calculateRecoveryGroupStepIndices.
-- Všetok nový produkčný text lokalizovať v en/sk/cs. Nenosiť do produkcie mock toolbar, query-param shortcuts, demo payload ani sample providery.
-
-## Poradie a úlohy
-
-V cestách nižšie `RG/` = `src/features/recovery-plans/recovery-groups/`. Každá úloha: najprv relevantný failing test, minimálna implementácia, focused overenie, atomic commit. Úlohy vykonávať sekvenčne kvôli spoločnému builder/model stavu.
-
-### T1 — Model a čítanie Local/Metro Mirror (M)
-Opis: Rozšíriť normalizovaný read model a draft bez straty kontraktových hodnôt.
-Súbory: RG/model/recoveryGroupTypes.ts; RG/helpers/mapRecoveryGroups.ts; RG/helpers/mapRecoveryGroups.test.ts.
-Akceptácia: legacy default local; zachované CG/mode/auxiliary pre VM aj volume; rawRecord a VM metadata zostávajú zachované.
-Overenie: `npm.cmd exec vitest run src/features/recovery-plans/recovery-groups/helpers/mapRecoveryGroups.test.ts`.
-Závislosti: žiadne. Nové draft polia zaviesť kompatibilne s existujúcimi fixtures; pri integrácii builder inicializuje všetky explicitne.
-
-### T2 — Submit validácia a payload (M)
-Opis: Uložiť Local aj Metro Mirror cez existujúci typed mapper a blokovať neúplný draft.
-Súbory: RG/api/recoveryGroupsValidation.ts; nový RG/api/recoveryGroupsValidation.test.ts; RG/helpers/mapRecoveryGroups.ts; RG/helpers/mapRecoveryGroups.test.ts.
-Akceptácia: presné payloady pre oba režimy/oba resource typy; odmietnutie managed, prázdneho CG/auxiliary a duplicitných source names; Local zahodí Metro polia a zachová legacy optional storage.
-Overenie: explicitne oba test súbory. Testy zahŕňajú CG `001`, whitespace a normalizáciu názvov bez straty mapovania.
-Závislosti: T1.
-
-### Kontrolný bod A
-Read/write round-trip funguje na fixture kontraktoch; nebol zmenený generated kód ani wire endpoint. Skontrolovať model/mapper diff pred UI integráciou.
-
-### T3 — Reálny submit a načítanie (M)
-Opis: Pripojiť nové údaje v existujúcom useRecoveryGroups k generated mutácii, výsledku a refetchu.
-Súbory: RG/hooks/useRecoveryGroups.ts; RG/hooks/useRecoveryGroups.test.tsx.
-Akceptácia: create/update odovzdajú správne body a zachované query params; vyberie sa správny returned record; následné GET/edit obsahuje rovnakú topológiu a mapovanie. Chyba submit nič nevymaže. Pred mutateAsync znovu overiť zvolený Source/partner voči dostupným providers a zamedziť submitu počas načítania/chyby; zachovať výnimku legacy Local bez storage. Nepoliehať sa iba na disabled tlačidlo.
-Overenie: `npm.cmd exec vitest run src/features/recovery-plans/recovery-groups/hooks/useRecoveryGroups.test.tsx`; test s mock generated hook boundary, bez druhého API wrappera.
-Závislosti: T2.
-
-### T4 — Kompaktné shared resource riadky (M)
-Opis: Pridať obsahový slot do existujúcej drop zóny a shared prístupné skrátenie názvu.
-Súbory: src/shared/components/resource-selection/ResourceSelectionCard.tsx a .test.tsx; nový src/shared/components/truncated-text/TruncatedText.tsx a .test.tsx.
-Akceptácia: existujúce volania a checkbox režim bez regresie; jeden input na riadok s dostupným remove; úplný názov dostupný bez zmeny dát a bez závislosti len od hover.
-Overenie: focused testy oboch shared komponentov; 100 riadkov, dlhé názvy, keyboard focus, touch disclosure, drag/drop, empty state, removal.
-Závislosti: žiadne.
-
-### T5 — Topology formulár a provider pravidlá (M)
-Opis: Samostatný controlled feature komponent s dropdownmi a read-only partnerom.
-Súbory: nové RG/components/RecoveryGroupTopologyStep.tsx a .test.tsx; nové RG/utils/recoveryGroupTopology.ts a .test.ts; en/sk/cs kľúče zahrnúť v lokalizačnej úlohe T8.
-Akceptácia: Local/Existing/disabled Managed; spoľahlivé vyriešenie partnera z all providers; loading/error/missing credentials/partner bránia pokračovaniu, retry je dostupné.
-Overenie: explicitné dva nové test súbory; helper otestovať na source-role aj target-role providerovi. Komponent berie dáta a callbacks z buildera, nevytvára API hook.
-Závislosti: T1. Testy do T8 môžu overovať translation keys; hardcoded produkčné fallbacky nepridávať.
-
-### T6 — Zapojenie wizardu a závislostí (L, súdržná integrácia)
-Opis: Vložiť Topology krok, presunúť Source výber a zjednotiť gate/state transitions bez nového wizard frameworku.
-Súbory: RG/components/RecoveryGroupBuilder.tsx a .test.tsx; RG/utils/calculateRecoveryGroupStepIndices.ts a nový .test.ts; RG/hooks/useRecoveryGroupRelatedVolumes.ts.
-Akceptácia: 8/7 krokov a správne edit prefill; provider_id_volume/discovery vždy používajú Source; zmeny Source/VM/clear/remove nemiešajú inventory ani nevracajú odstránené volumes.
-Overenie: explicitné builder/index testy a regresia fixtures starých Local skupín. Overiť invalidáciu pri refetchi, neskorý discovery výsledok, dostupný Back, zakázaný sidebar bypass/save.
-Závislosti: T2, T3, T5. Rozšíriť hook iba o potrebné error/refetch signály zo súčasných generated query options; nevytvárať ručné fetch hooky.
-
-### Kontrolný bod B
-Reálny Local create/edit funguje s pôvodnými voľbami; Metro topology a Source riadia správny inventory query. Typecheck odhalí draft fixtures naprieč feature. Neopravovať nesúvisiace moduly.
-
-### T7 — Auxiliary priamo v drop riadku (M)
-Opis: Prepojiť shared slot so skutočným source inventory a auxiliary mapou.
-Súbory: RG/components/RecoveryGroupResourcesStep.tsx a .test.tsx; RG/components/RecoveryGroupBuilder.tsx a .test.tsx; nový RG/hooks/useRecoveryGroupRelatedVolumes.test.tsx.
-Akceptácia: drop/add/remove/clear aktualizuje mapu a payload, duplicity sú ignorované; Local nemá auxiliary inputs, Metro vyžaduje hodnotu pre každý vybraný volume; funguje VM aj volume-only flow.
-Overenie: explicitné tri test súbory; otestovať manuálny volume mimo discovered VM volumes, zmenu source, opätovný drop, zachovanie úprav pri refetchi. Mená sa neoverujú proti vzdialenému storage endpointu, ktorý kontrakt neposkytuje.
-Závislosti: T4, T6.
-
-### T8 — Lokalizácia a rozloženie v aplikácii (M)
-Opis: Dokončiť produkčný text a výškové obmedzenia vo vnútri existujúceho app shellu.
-Súbory: src/locales/en.json, sk.json, cs.json; RG/components/RecoveryGroupBuilder.tsx; nový src/locales/recoveryGroupTopologyTranslations.test.ts. Page súbory meniť iba ak meranie ukáže prerušený min-h-0 chain; potom samostatný drobný layout commit.
-Akceptácia: žiadne mock texty/ovládanie; footer dostupný, žiadny horizontálny page overflow; scroll je vo volume zozname a inventory, dlhé texty nezväčšujú riadky bez interakcie.
-Overenie: translation parity test; browser na 1920×1080, 1366×768, 1280×720, 768×1024, 390×844 a 200 % zoom; 0/1/100 volumes, dlhé mená, dark/light, otvorená chyba aj prázdne dáta. Na veľmi malej výške prípustný scroll obsahu, nie odrezané ovládanie. DOM test nie je dôkaz správneho layoutu.
-Závislosti: T5, T7.
-
-### T9 — Create/edit E2E kontrakt a finálne overenie (M)
-Opis: Preukázať, že nové UI používa reálny kontrakt a zachováva staré skupiny.
-Súbory: RG/pages/RecoveryGroupBuilderPage.test.tsx; RG/pages/RecoveryGroupEditorPage.test.tsx; RG/hooks/useRecoveryGroups.test.tsx; RG/helpers/mapRecoveryGroups.test.ts.
-Akceptácia: save → reload → edit → save round-trip pre Local, Metro VM a Metro volume-only; legacy Local bez topology bez dátovej straty; server error zobrazený s nevymazaným draftom a bez falošného success.
-Overenie: explicitné štyri test súbory, plus všetky zmenené focused testy z T1–T8; `npm.cmd exec tsc -- -p tsconfig.app.json --noEmit`; ESLint s explicitnými zmenenými cestami; `git diff --check`. Porovnať captured request s generated kontraktom, nie s mock payload viewerom.
-Závislosti: T3, T7, T8.
-
-### Kontrolný bod C — odovzdanie
-Prešli focused testy, typecheck a vizuálne overenie v app shelli. Backend smoke test robiť iba na explicitne dostupnom dev/test prostredí, bez push_to_orchestrator; neodosielať do produkcie. Ak prostredie nie je dostupné, uviesť, že overený bol request/response kontrakt v testoch, nie živý backend.
-
-Plný `npm.cmd run build` spúšťa aj celú suite a api:check. Podľa AGENTS.md ho nespúšťať automaticky; ak je potrebný samostatný bundling check, použiť `npm.cmd exec vite build` a uviesť presný rozsah. Generated súbory a backend sa ručne nemenia. Každý commit len v prototype worktree; merge/push do test nie je súčasťou plánu.
-
-## Riziká a hranice
-
-- Generated schéma je zdroj wire typov, nie dôkaz zapnutej podpory na nasadenom serveri. Reálny smoke test musí potvrdiť podporu topology/auxiliary a zachovanie polí pri GET.
-- partnerProviderId sa môže medzi editáciami zmeniť. Načítať aktuálny provider, zobraziť odvodený Target a zablokovať neplatného partnera; historický Target nevymýšľať.
-- Managed je v schéme, ale mimo rozsahu. Nedovoliť tichú degradáciu existujúceho záznamu.
-- Návrh riadkov musí zostať shared; nový feature-specific drop engine, duplicitný API wrapper a ručné generated úpravy sú mimo rozsahu.
-- Nepovažovať prázdny discovery výsledok pri chybe za úspešné načítanie; rozlišovať loading/error/empty a umožniť retry. Read-only source názov nemožno zameniť za editovateľný auxiliary názov.
-
-## Otvorené externé podmienky
-
-Pre napísanie kódu nie je potrebné meniť backend kontrakt. Pred živým smoke testom je potrebné identifikovať dev/test backend a existujúci pár FlashSystemov s Remote Copy skupinou. Kým nie sú dostupné, testovať generated request/response boundary bez tvrdenia o vykonanej replikácii či FlashCopy.
+- T0: odfotiť a zaznamenať aktuálny **dirty working tree** (vrátane KPI odkazov), uložiť presný výstup východiskových testov; stabilizovať chýbajúci router kontext v jazykovom testovacom obale a preukázať zelený baseline. Zmerať aktuálny AppShell a dostupnosť Edge/session; najprv riziko najmenšej výšky/šírky.
+- T1: aditívny variant PageHeader s ochranou defaultu.
+- T2: nový popis vo všetkých katalógoch.
+- Kontrolný bod A: cielené testy T1/T2 prechádzajú; default bez vizuálnej zmeny.
+- T3: presun filtra, náhrada toolbaru, zachovanie dát, KPI odkazov a prístupnosti. O umiestnení demo dátumu rozhodnúť podľa merania a používateľského potvrdenia; bez automatického presunu do footeru.
+- T4: lokálne doladenie výšky a mobilného scrollu podľa meraní.
+- Kontrolný bod B: najtesnejšie desktopové rozmery a oba mobily fungujú v reálnom AppShell pred rozšírením browser matice.
+- T5: jazykové regresie vrátane už existujúcej KPI navigácie a opakovateľný Edge/Playwright skript; všetky kombinácie automaticky otestovať, vizuálne screenshoty uchovávať cielene.
+- T6: celá požadovaná matica, TypeScript build a evidencia, záverečná kontrola rozsahu.
+
+## 5. Testovacia stratégia po schválenej implementácii
+
+**Pred prvým implementačným testom** vykonať samostatný a spoločný beh existujúcich Overview testov a zaznamenať úplnú diagnostiku. Aktuálny jazykový test neobsahuje router wrapper, hoci KPI renderujú `Link`; toto najprv stabilizovať pomocou `MemoryRouter` alebo ekvivalentného router kontextu v teste (bez zmeny produkčnej navigácie). Až po zdokumentovanom zelenom baseline doplniť zlyhávajúce testy nového variantu/hlavičky/popisu. Následne overiť jeden h1, filter v PageHeader iba raz, správne hodnoty, zachovaný výber a funkčné KPI odkazy na skutočné routy. JSDOM netestuje reálnu geometriu; o fit rozhoduje Edge.
+
+Príkazy z koreňa repozitára:
+
+```powershell
+npm.cmd run typecheck
+npm.cmd exec vitest run src/shared/components/page/PageHeader.test.tsx src/features/dashboard/pages/OverviewPage.test.tsx src/features/dashboard/pages/OverviewPage.translations.test.tsx src/locales/dashboardConsoleTranslations.test.ts src/shared/components/table/TableToolbar.test.tsx src/features/discovery-inventory/infrastructure/pages/InfrastructurePage.test.tsx
+npm.cmd exec eslint -- src/shared/components/page/PageHeader.tsx src/shared/components/page/PageHeader.test.tsx src/features/dashboard/pages/OverviewPage.tsx src/features/dashboard/pages/OverviewPage.test.tsx src/features/dashboard/pages/OverviewPage.translations.test.tsx src/features/dashboard/components/overall/OverallVendorFilter.tsx scripts/qa/verify-overview-pageheader-app.mjs
+npm.cmd run dev -- --host 127.0.0.1
+# V samostatnom termináli po sprístupnení vývojovej session:
+node scripts/qa/verify-overview-pageheader-app.mjs
+git diff --check
+```
+
+`npm.cmd run typecheck` je povinný požadovaný TypeScript build (`tsc -b`, v projekte s noEmit). Kompletný `npm.cmd run build` a celý suite sa pri tejto lokálnej zmene nespúšťajú automaticky; build má navyše nesúvisiace API kontroly. Ak sa zmení spoločný kontrakt nad plánovaný variant, prehodnotiť rozsah testov. Lint zoznam zodpovedá finálnym existujúcim zmeneným JS/TS súborom; odstránený toolbar nelintovať. JSON validovať parserom a testami katalógov.
+
+### Edge/Playwright a screenshoty
+
+Použiť Microsoft Edge cez Playwright `chromium.launch({ channel: 'msedge' })` nad HTTP URL skutočnej index route. V repozitári nie je Playwright deklarovanou závislosťou; existujúci QA skript podporuje `PLAYWRIGHT_MODULE`. Pri analýze existovala cache `node_modules/.cache/scroll-probe/node_modules/playwright-core/index.mjs` aj Edge executable; dostupnosť znovu preveriť pri realizácii. Nový skript nech podporí explicitné URL, runtime a storage state vývojovej session; nepísať tokeny/heslá do repozitára. Session nemožno predpokladať z existencie runtime.
+
+Povinná matica CSS viewportov (nie fyzických rozmerov monitora):
+
+| Rozmer | Očakávanie |
+|---|---|
+| 1920×1080 | Celý dashboard bez vertikálneho scrollu. |
+| 1440×900 | Celý dashboard bez vertikálneho scrollu. |
+| 1366×768 | Celý dashboard bez vertikálneho scrollu. |
+| 1100×700 | Celý dashboard; zvýšená kontrola šírky pri sidebare. |
+| 1024×768 | Celý dashboard; kritický prechod lg a šírka actions. |
+| 950×640 | Celý dashboard; kritický prechod do dvoch riadkov panelov. |
+| 390×844 | Jeden vertikálny scroll Overview, celý obsah a footer dosiahnuteľné. |
+| 320×700 | To isté, bez horizontálneho overflow a orezaného filtra. |
+
+**Automatické DOM/behaviorálne kontroly** spustiť v každej kombinácii ôsmich rozmerov, light/dark a EN/SK/CS (48 kombinácií); rozbalený desktopový sidebar je základ, zbalený overiť tam, kde ho UI podporuje (od xl). Pod lg preveriť mobilné otvorenie/zavretie sidebaru. Navyše hraničné šírky 639/640, 699/700/701, 949/950, 1023/1024 a 1279/1280 pri výške 700 px pre riziká zalamovania. Tieto kontroly neznamenajú povinnosť ukladať 48 screenshotov.
+
+Meranie musí overiť document/main/Overview a obsah panelov: scrollHeight voči clientHeight s toleranciou najviac 1 px, obdĺžnik footeru a posledných položiek v dostupnom viewporte, neorezané texty, žiadny horizontálny overflow. Nestačí nulový scrollbar pri overflow:hidden. Na mobile scrollom dosiahnuť footer a potvrdiť jediného vlastníka scrollu. Vyskúšať Tab, Enter/Space a viditeľný focus, všetky filtre, prechod na All aj zachovanie výberu pri zmene jazyka a témy. Samostatne otestovať obidva existujúce KPI odkazy: klik naviguje cez React Router na `routes.recoveryGroups` a `routes.recoveryApplications`, bez full-page reloadu; samotné `href` nie je dostatočný dôkaz.
+
+**Screenshoty ukladať cielene:** minimálne pred/po pre 1366×768 light/dark, najtesnejšie 1024×768 a 950×640 (vrátane dlhšieho SK/CS prekladu), 390×844 a 320×700 (vrch aj footer po scrollovaní). Ďalšie screenshoty len pre reálny problém, nezvyčajné zalomenie alebo hraničný stav. Vizuálne ich skontrolovať, s jasnými názvami/kontextom. Ostatné kombinácie pokrýva automatická DOM matica s výsledkami, nie 48 povinných obrazových súborov. Pred/po reprezentatívne porovnať default PageHeader na Platform providers (actions), Infrastructure (dlhší popis/obnova) a jednej Resources stránke cez TableToolbar, s light/dark a aspoň jedným užším viewportom. Tieto stránky sa nemenia.
+
+Artefakty do ignorovaného `node_modules/.cache/overview-pageheader-app/`; pred zápisom overiť ignorovanie. Report uvedie HEAD a preexistujúci working-tree diff baseline, presnú diagnostiku/opravu pôvodného testu, URL, runtime/session predpoklady, rozmer dostupného obsahu, výšky pred/po, výsledky všetkých automaticky testovaných kombinácií, vybrané screenshoty a súvisiace konzolové chyby. Ak chýba autentifikovaná session, browser body zostávajú neoverené; izolovaný komponent ani HTML tento dôkaz nenahrádzajú.
+
+## 6. Akceptačné kritériá
+
+1. Overview používa existujúci PageHeader s compact variantom; v SK má presne „Prehľad“ a „Stav ochrany, infraštruktúry a obnovy“. EN/CS sú preložené, bez surových kľúčov.
+2. Filter existuje iba raz v actions, na dostatočnej šírke vpravo; na mobile sa zalomí, je pomenovaný a ovládateľný klávesnicou. Samostatný toolbar/context riadok nezostane.
+3. Zostanú štyri **rovnako vysoké** KPI a štyri existujúce panely. Filter mení iba ochranu: All 1280/80, IBM 820/40, Hitachi 460/40 (so snímkami/bez snímok). Poskytovatelia 13, skupiny 24, aplikácie 34, aktuálne pomery Recovery Overview 16/8 a 23/11 i nasadenie 18/23, 8/11, 20/25, 6/9 zostávajú. Existujúce KPI odkazy „Zobraziť skupiny/aplikácie“ sa zobrazujú a navigujú správne; prefetch a demo označenia zostanú.
+4. Desktopová matica zobrazí všetok obsah bez scrollu a bez maskovaného orezania tam, kde existujúce podporované rozloženie fit umožňuje; každý prípadný limit bude konkrétne preukázaný a pred zmenou požiadavky predložený používateľovi. Mobil zachová jeden vertikálny scroll a dostupný footer.
+5. Default PageHeader a ostatné stránky majú nezmenený vzhľad; opt-in nemení AppShell, routovanie ani TableToolbar. Flex layout compact variantu bezpečne zalamuje vonkajšie actions bez kolízie/shrink-0 pretečenia; light/dark, EN/SK/CS a dlhé preklady sú overené. Zachovanie alebo prípadný presun demo dátumu sa riadi meraním a explicitným schválením, nie automaticky.
+6. Východiskové Overview testy sú najprv opravené na zelený baseline bez produkčných zmien. TypeScript build, cielený ESLint, relevantné testy a reálny Edge/Playwright prejdú; automatická matica sa vykoná v plnom rozsahu a vybrané reprezentatívne screenshoty sa skontrolujú. Neoverené body sa nevydávajú za splnené.
+
+## 7. Riziká a opatrenia
+
+| Riziko | Opatrenie |
+|---|---|
+| Compact stále zvýši spotrebu výšky pri zalomení. | Baseline najprv; celkový rozpočet header + gap + footer; skorý test 950×640 a 1024×768; žiadne orezanie ako náhrada fit. |
+| Globálna regresia cez spoločný komponent. | Variant iba opt-in, default bez zmeny DOM/tried; existujúce testy a pred/po screenshoty reprezentatívnych stránok. |
+| 950 px dashboard vs. 1024 px shell a šírka sidebaru. | Testovať obsahový obdĺžnik a oba zlomy, nie len media query okna. |
+| Malé dashboardové písmo zmení hlavičku alebo tokeny filtra. | Explicitná typografia variantu; filter pod .overall-page; existujúce light/dark tokeny. |
+| Dlhé preklady a rodičovské `sm:flex-row` / `shrink-0` actions pretečú. | Opt-in kompakt: limitovať šírku actions aj rodiča, `min-w-0` + adekvátny shrink/wrap, reálne merania s rozbaleným sidebarom; default sa nemení. |
+| Presun dátumu do footeru zvýši výšku alebo vytvorí nový problém. | Dátum nepremiestňovať automaticky; pred rozhodnutím merať a vyžiadať explicitné potvrdenie, výsledný footer musí zostať dostupný. |
+| Rozpracované zmeny KPI, lokalizácií a testov sa omylom prepíšu alebo sa ich chyba označí ako regresia PageHeader. | V T0 zapísať HEAD + working-tree diff a výsledok oboch testov, stabilizovať testovací router, zachovať KPI navigáciu, testovať ju po integrácii. |
+| Staré QA/reporty vytvoria falošný úspech. | Nové meranie nad React/AppShell, úplná viewport matica, jasne oddeliť staré HTML a chýbajúcu session. |
+
+**Jednoznačné odporúčanie: B — rozšíriť existujúci PageHeader o explicitný kompaktný variant, ktorý použije iba Overview.** Plán navrhuje nahradiť toolbar, zachovať existujúce KPI navigačné odkazy a podmieniť prípadný presun dátumu meraním a samostatným súhlasom používateľa. Realizácia je dokončená; výsledky a limity zachytáva prepojený overovací report.
