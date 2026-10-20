@@ -7,7 +7,8 @@
 import * as zod from 'zod';
 
 export const RollbackIbmSection = zod.object({
-  "status": zod.string(),
+  "status": zod.string().exactOptional(),
+  "hosts": zod.array(zod.unknown()).exactOptional(),
   "consistency_groups": zod.array(zod.unknown()).exactOptional(),
   "fcmaps": zod.array(zod.unknown()).exactOptional(),
   "volumes": zod.array(zod.unknown()).exactOptional(),

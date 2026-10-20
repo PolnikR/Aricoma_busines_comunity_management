@@ -57,6 +57,10 @@ test('types rollback report sections', () => {
   const report = schemas().RollbackReport
   assert.equal(report.properties.airflow.anyOf[0].$ref, '#/components/schemas/RollbackAirflowSection')
   assert.equal(report.additionalProperties, true)
+  const ibm = schemas().RollbackIbmSection
+  assert.equal(ibm.required?.includes('status') ?? false, false)
+  assert.equal(ibm.properties.hosts.type, 'array')
+  assert.equal(ibm.properties.errors.type, 'array')
 })
 
 test('adds recovery VM metadata', () => {
