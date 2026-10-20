@@ -134,40 +134,52 @@ fi
 # not visible there.
 
 RUN_ARGS=()
-if ! is_ipv4 "$BACKEND_HOST"; then
-    HOST_IP=$(getent hosts "$BACKEND_HOST" | awk '{print $1; exit}' || true)
+
+# check_container_dns HOST ROLE STRICT
+# Makes HOST resolvable inside the container: pins the host's address with --add-host
+# when the container cannot resolve it. STRICT=true asks before continuing on problems,
+# otherwise they are only reported.
+check_container_dns() {
+    local name="$1" role="$2" strict="$3" host_ip host_ipv4
+    host_ip=$(getent hosts "$name" | awk '{print $1; exit}' || true)
     # A link-local IPv6 address (fe80::, typical for a .local name answered over mDNS)
     # is unusable without a zone, so nginx would answer every /api/ request with 502.
     # Prefer the host's IPv4 address and pin it when the container cannot get one itself.
-    HOST_IPV4=$(getent ahostsv4 "$BACKEND_HOST" | awk '{print $1; exit}' || true)
-    if [ -n "$HOST_IPV4" ] &&
-       ! docker run --rm --entrypoint getent "$DOCKER_IMAGE" ahostsv4 "$BACKEND_HOST" >/dev/null 2>&1; then
-        echo "Backend $BACKEND_HOST has no IPv4 address inside the container, but resolves to $HOST_IPV4 on this host;"
+    host_ipv4=$(getent ahostsv4 "$name" | awk '{print $1; exit}' || true)
+    if [ -n "$host_ipv4" ] &&
+       ! docker run --rm --entrypoint getent "$DOCKER_IMAGE" ahostsv4 "$name" >/dev/null 2>&1; then
+        echo "$role $name has no IPv4 address inside the container, but resolves to $host_ipv4 on this host;"
         echo "adding it to the container with --add-host."
-        RUN_ARGS+=(--add-host "${BACKEND_HOST}:${HOST_IPV4}")
-    elif docker run --rm --entrypoint getent "$DOCKER_IMAGE" hosts "$BACKEND_HOST" >/dev/null 2>&1; then
-        echo "Backend $BACKEND_HOST resolves to ${HOST_IPV4:-${HOST_IP:-an address}} (host and container)."
-        if [ -z "$HOST_IPV4" ]; then
-            echo "WARNING: backend DNS name '$BACKEND_HOST' has no IPv4 address; link-local IPv6 addresses cannot be reached."
-            confirm "Continue anyway?" || exit 1
+        RUN_ARGS+=(--add-host "${name}:${host_ipv4}")
+    elif docker run --rm --entrypoint getent "$DOCKER_IMAGE" hosts "$name" >/dev/null 2>&1; then
+        echo "$role $name resolves to ${host_ipv4:-${host_ip:-an address}} (host and container)."
+        if [ -z "$host_ipv4" ]; then
+            echo "WARNING: $role DNS name '$name' has no IPv4 address; link-local IPv6 addresses cannot be reached."
+            [ "$strict" = "true" ] && { confirm "Continue anyway?" || exit 1; }
         fi
-    elif [ -n "$HOST_IP" ]; then
-        echo "Backend $BACKEND_HOST resolves to $HOST_IP on this host but not inside the container;"
+    elif [ -n "$host_ip" ]; then
+        echo "$role $name resolves to $host_ip on this host but not inside the container;"
         echo "adding it to the container with --add-host."
-        RUN_ARGS+=(--add-host "${BACKEND_HOST}:${HOST_IP}")
+        RUN_ARGS+=(--add-host "${name}:${host_ip}")
     else
-        echo "WARNING: backend DNS name '$BACKEND_HOST' does not resolve (host or container)."
-        echo "nginx will fail to start with 'host not found in upstream'."
-        confirm "Continue anyway?" || exit 1
+        echo "WARNING: $role DNS name '$name' does not resolve (host or container)."
+        if [ "$strict" = "true" ]; then
+            echo "nginx will fail to start with 'host not found in upstream'."
+            confirm "Continue anyway?" || exit 1
+        else
+            echo "         users need a DNS or hosts entry pointing it to this server."
+        fi
     fi
+}
+
+if ! is_ipv4 "$BACKEND_HOST"; then
+    check_container_dns "$BACKEND_HOST" "Backend" true
 fi
 
 if [ "$TLS_ENABLED" = "true" ]; then
+    check_container_dns "$APP_HOST" "Frontend" false
     APP_IP=$(getent hosts "$APP_HOST" | awk '{print $1; exit}' || true)
-    if [ -z "$APP_IP" ]; then
-        echo "WARNING: frontend DNS name '$APP_HOST' does not resolve on this host;"
-        echo "         users need a DNS or hosts entry pointing it to this server."
-    elif ! hostname -I 2>/dev/null | tr ' ' '\n' | grep -qx "$APP_IP"; then
+    if [ -n "$APP_IP" ] && ! hostname -I 2>/dev/null | tr ' ' '\n' | grep -qx "$APP_IP"; then
         echo "WARNING: $APP_HOST resolves to $APP_IP, which is not an address of this host."
     fi
 fi
