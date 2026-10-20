@@ -54,11 +54,16 @@
     <tbody>${['db-primary-01', 'db-replica-01', 'db-reporting-01'].map((name, index) => `<tr data-vm="${name}"><td><input type="checkbox" name="resource" value="${name}" aria-label="Include ${name}" ${index < 2 ? 'checked' : ''}></td><td class="mono">${name}</td><td>8</td><td>32 GiB</td></tr>`).join('')}</tbody></table></div>
     <p id="no-results" role="status" hidden>No matching virtual machines. Try a different name.</p>
     <p class="hint">Illustrative inventory. Metadata availability depends on the provider response.</p>`;
-  const related = `<div class="notice info">Illustrative storage mapping for the sample database VMs. Discovery runs in the production application.</div>
-    <div class="table-scroll" tabindex="0" role="region" aria-label="Related storage"><table><thead><tr><th scope="col">Volume</th><th scope="col">Provider</th></tr></thead><tbody>
-    <tr><td class="mono">db_data_01</td><td class="mono">flashsystem_prg_01</td></tr>
-    <tr><td class="mono">db_logs_01</td><td class="mono">flashsystem_prg_01</td></tr></tbody></table></div>
-    <p class="hint">For volume-only groups this step is omitted. Existing Metro Mirror also requires auxiliary volume mappings.</p>`;
+  const related = `<div class="notice info">Volumes linked to your selected VMs are included automatically. Add other volumes from the same storage provider when needed.</div>
+    <div class="toolbar"><div><h3>Included volumes</h3><span class="hint">Storage provider: <code>flashsystem_prg_01</code></span></div>
+      <button type="button" id="add-volumes" class="primary">+ Add volumes</button></div>
+    <p id="storage-count" class="hint" role="status"></p>
+    <div class="table-scroll" tabindex="0" role="region" aria-label="Included storage volumes"><table>
+      <thead><tr><th scope="col">Volume</th><th scope="col">Included via</th><th scope="col">Action</th></tr></thead>
+      <tbody id="storage-rows"></tbody></table></div>
+    <p id="storage-empty" hidden>No volumes included. Add volumes from the provider inventory.</p>
+    <p class="hint">Removing a volume excludes it from this group; it does not delete it from storage. You can add it again.</p>
+    <p class="hint">Sample discovery follows VM selection in Resources. No live API calls are made. Existing Metro Mirror additionally requires auxiliary mappings.</p>`;
   const tiers = `<div class="toolbar"><span class="tag">3 configured tiers</span><span class="hint">Use ↑ / ↓ to change order</span></div><div id="tiers">
     ${['Database', 'Services', 'Web'].map((name, index) => `<article class="tier" data-tier="${name.toLowerCase()}">
       <span class="ordinal">${index + 1}</span><div><h3>${name}</h3>
@@ -113,6 +118,7 @@
     q('#summary-push').textContent = q('#push').checked ? 'Push requested' : 'Save configuration only';
     q('#change-status').textContent = locked ? 'Read-only configuration' : dirty ? 'Unsaved sample changes' : 'Sample configuration';
     if (isGroup) {
+      storageSelection.refresh();
       q('#selection-count').textContent = `${checkedResources().length} selected`;
       q('#mirror').hidden = value('topology') !== 'Metro Mirror';
       q('#topology-destination').textContent = value('topology') === 'Metro Mirror' ? 'Partner: flashsystem_brq_01' : 'Local recovery';
@@ -143,7 +149,7 @@
       previewOnly: true, entity, scenario: mode, identity: value('identity'), name: value('name'),
       description: value('description'), policySet: value('policy'), pushToOrchestrator: q('#push').checked,
       orchestrationProvider: value('orchestrator'),
-      ...(isGroup ? { topology: value('topology'), storageProvider: value('storage'), resources: checkedResources() }
+      ...(isGroup ? { topology: value('topology'), storageProvider: value('storage'), resources: checkedResources(), relatedVolumes: storageSelection.names() }
         : { environment: value('environment'), source: value('source'), target: value('target'), tiers: tierValues() }),
     }, null, 2);
     q('dialog').showModal();
@@ -190,6 +196,91 @@
       if (button.disabled) tier.querySelector('button:not(:disabled)')?.focus();
     };
   }
+  function setupStorageSelection() {
+    // Fixture relationships emulate VM discovery; inventory also contains unrelated volumes.
+    const inventory = [
+      { name: 'db_data_01', vms: ['db-primary-01'] },
+      { name: 'db_logs_01', vms: ['db-primary-01', 'db-replica-01'] },
+      { name: 'db_replica_01', vms: ['db-replica-01'] },
+      { name: 'reporting_data_01', vms: ['db-reporting-01'] },
+      { name: 'shared_archive_01', vms: [] },
+      { name: 'audit_logs_01', vms: [] },
+    ];
+    const manual = new Set();
+    const excluded = new Set();
+    let context = '';
+    let pending = new Set();
+    const vmLinks = volume => volume.vms.filter(vm => checkedResources().includes(vm));
+    const included = () => inventory.filter(volume => manual.has(volume.name) || (vmLinks(volume).length && !excluded.has(volume.name)));
+    document.body.insertAdjacentHTML('beforeend', `<dialog id="volume-picker" aria-labelledby="picker-title" aria-describedby="picker-description">
+      <h2 id="picker-title">Add volumes</h2><p id="picker-description">Select additional volumes from <code>flashsystem_prg_01</code>. Already included volumes cannot be added twice.</p>
+      <label for="volume-search">Search provider inventory</label><input id="volume-search" type="search" placeholder="Volume name" autofocus>
+      <div id="volume-options" class="volume-options"></div><p id="picker-empty" hidden>No matching volumes.</p>
+      <div class="toolbar"><span id="pending-count" role="status"></span><div>
+        <button type="button" id="cancel-volumes">Cancel</button> <button type="button" id="confirm-volumes" class="primary" disabled>Add selected</button>
+      </div></div></dialog>`);
+    const picker = q('#volume-picker');
+    function refresh() {
+      const key = JSON.stringify(checkedResources());
+      if (context !== key) { excluded.clear(); context = key; }
+      const selected = included();
+      const discoveredCount = selected.filter(volume => vmLinks(volume).length && !excluded.has(volume.name)).length;
+      q('#storage-count').textContent = `${selected.length} included · ${discoveredCount} from selected VMs · ${selected.length - discoveredCount} added manually`;
+      q('#storage-empty').hidden = selected.length > 0;
+      q('#storage-rows').innerHTML = selected.map(volume => {
+        const links = !excluded.has(volume.name) ? vmLinks(volume) : [];
+        return `<tr><td class="mono">${volume.name}</td><td><span class="tag">${links.length ? 'From VM' : 'Manual'}</span>
+          ${links.length ? `<small class="volume-link">${links.join(', ')}</small>` : ''}</td>
+          <td><button type="button" data-remove-volume="${volume.name}" aria-label="Remove ${volume.name}" ${locked ? 'disabled' : ''}>Remove</button></td></tr>`;
+      }).join('');
+    }
+    function pendingCount() {
+      q('#pending-count').textContent = `${pending.size} selected to add`;
+      q('#confirm-volumes').disabled = pending.size === 0 || locked;
+    }
+    function renderOptions() {
+      const names = new Set(included().map(volume => volume.name));
+      const filtered = inventory.filter(volume => volume.name.includes(value('volume-search').trim().toLowerCase()));
+      q('#picker-empty').hidden = filtered.length > 0;
+      q('#volume-options').innerHTML = filtered.map(volume => `<label class="choice">
+        <input type="checkbox" data-add-volume="${volume.name}" ${names.has(volume.name) || locked ? 'disabled' : ''} ${names.has(volume.name) || pending.has(volume.name) ? 'checked' : ''}>
+        <span><strong class="mono">${volume.name}</strong><small>${names.has(volume.name) ? 'Already included' : vmLinks(volume).length ? 'Linked to selected VMs · available to add again' : 'Additional provider volume'}</small></span></label>`).join('');
+      pendingCount();
+    }
+    q('#add-volumes').onclick = () => {
+      if (locked) return;
+      pending = new Set();
+      q('#volume-search').value = '';
+      renderOptions();
+      picker.showModal();
+    };
+    q('#volume-search').oninput = renderOptions;
+    q('#volume-options').onchange = event => {
+      const name = event.target.dataset.addVolume;
+      if (!name || locked) return;
+      if (event.target.checked) pending.add(name); else pending.delete(name);
+      pendingCount();
+    };
+    q('#cancel-volumes').onclick = () => picker.close();
+    q('#confirm-volumes').onclick = () => {
+      if (locked) return;
+      pending.forEach(name => manual.add(name));
+      dirty = true;
+      update();
+      picker.close();
+    };
+    q('#storage-rows').onclick = event => {
+      const name = event.target.closest('[data-remove-volume]')?.dataset.removeVolume;
+      if (!name || locked) return;
+      manual.delete(name);
+      excluded.add(name);
+      dirty = true;
+      update();
+      q('#add-volumes').focus();
+    };
+    return { refresh, names: () => included().map(volume => volume.name) };
+  }
+  const storageSelection = isGroup ? setupStorageSelection() : null;
   update();
-  showStep(0, false);
+  showStep(isGroup && params.get('step') === 'related-storage' ? 5 : 0, false);
 })();

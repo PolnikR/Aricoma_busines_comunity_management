@@ -14,6 +14,9 @@ Otvoriť priamo v prehliadači alebo cez existujúci Vite server:
 - http://localhost:5173/prototypes/recovery-builders-technical/groups.html
 - http://localhost:5173/prototypes/recovery-builders-technical/apps.html
 
+Priamo na nový návrh Related storage:
+http://localhost:5173/prototypes/recovery-builders-technical/groups.html?step=related-storage
+
 Prepínač **Scenario** obsahuje Create, Edit a nasadenú konfiguráciu.
 Prepnutie načíta nový vzorový formulár; pri zmenách žiada potvrdenie ich zahodenia.
 Všetky dáta sú fiktívne. Šablóny neposielajú požiadavky, neukladajú dáta a nepoužívajú CDN.
@@ -66,8 +69,47 @@ group s provisioned identifikátormi po neúplnom rollbacku.
 
 Prototyp interaktívne pokrýva VMware VM cestu, výber resources a Local/Metro Mirror.
 Ďalšie workloady, skutočné discovery, consistency group override a auxiliary mapping
-editory sú opísané v návrhu, nie implementované v HTML. Related storage je explicitne
-statická ilustrácia; nepredstiera prepočet podľa výberu VM.
+editory sú opísané v návrhu, nie implementované v HTML.
+
+### Related storage: tabuľka a výber ďalších volumes
+
+Táto úprava návrhu sa týka iba Related storage. Existujúci produkčný krok Resources
+je vyhovujúci a jeho drag-and-drop workflow sa nemá meniť. Pôvodná zjednodušená
+HTML ukážka Resources nie je požiadavka na jeho náhradu.
+
+Related storage nahrádza drop zónu tabuľkou **Included volumes**:
+
+1. Pri vstupe načítať volumes patriace k vybraným VM a automaticky ich zahrnúť.
+   Zdieľaný volume z viacerých VM zobraziť iba raz.
+2. Zobraziť názov volume, pôvod **From VM** s názvami VM alebo **Manual**,
+   a akciu **Remove**. Provider je spoločný kontext nad tabuľkou.
+3. **Add volumes** otvorí výberový dialóg nad inventárom zvoleného storage providera,
+   nie iba nad výsledkom VM discovery. Obsahuje vyhľadávanie a checkboxy.
+4. Už zahrnuté položky sú označené a nedajú sa znovu pridať. Počet nových výberov
+   zostáva viditeľný aj pri filtrovaní. **Add selected** ich zlúči s existujúcimi.
+   **Cancel** alebo Escape neaplikuje rozpracovaný výber.
+5. **Remove** odstráni iba zaradenie do skupiny. Automatický refresh ho nemá okamžite
+   pridať späť; opätovné pridanie je dostupné cez ten istý dialóg.
+
+Príklad: VM discovery predvyplní `db_data_01`, `db_logs_01`, `db_replica_01`.
+Operátor pridá `shared_archive_01` cez Add volumes. Výsledná tabuľka má štyri riadky,
+z toho tri z VM a jeden ručný. Žiadne presúvanie položiek nie je potrebné.
+
+HTML simuluje discovery pomocou explicitných vzorových VM–volume väzieb. Zmena VM
+výberu prepočíta automatické volumes; ručné pridania zostávajú. Vylúčenia automatických
+volumes sa resetujú pri zmene VM kontextu, v súlade so súčasným builderom.
+Produkčné `useRecoveryGroupRelatedVolumes` a `RecoveryGroupBuilder` už zabezpečujú
+discovery aj zlúčenie ručných výberov; návrh mení ich prezentáciu.
+
+Pôvod položky je pomocná informácia UI, nie nové API pole. Pri editácii existujúceho
+záznamu bez historického pôvodu zobraziť **Saved selection**, kým sa nepotvrdí VM väzba;
+neoznačiť uložené položky automaticky ako ručne pridané. HTML používa známe fixture
+väzby, preto tento neznámy historický pôvod nesimuluje.
+
+Pri discovery chybe zachovať doterajší výber, ukázať Retry a nehlásiť „nenájdené“
+ako úspešný výsledok. Inventár pre ručné pridanie má samostatný loading/error/empty
+stav. Pri Existing Metro Mirror zachovať auxiliary mapping v riadku vybraného
+volume; pri Managed zachovať existujúce read-only pravidlá.
 
 ## Recovery Apps
 
@@ -99,7 +141,8 @@ v prípadnej následnej implementácii.
 | `RecoveryGroupBuilder`, `RecoveryAppBuilder` | Layout s navigáciou, editorom a odvodeným súhrnom |
 | `WizardSteps` | Kompaktný vzhľad, čísla, `aria-current="step"`; zachovať disabled pravidlá |
 | `RecoveryGroupDetailsStep`, `AppMetadataForm` | Dvojstĺpcové polia a explicitné vysvetlenia zámkov |
-| Resource a storage kroky | Jednotná hustota tabuliek, identifikátory monospace |
+| Resources | Zachovať existujúci drag-and-drop workflow |
+| Related storage | Predvyplnená tabuľka a Add volumes výber nad inventárom providera |
 | `TierCanvas` a group selector | Kompaktné očíslované tiers, viditeľné priradenia a poradie |
 | Existujúce form controls a tokeny | Znovu použiť; globálny radius ani témy nemení návrh automaticky |
 
@@ -136,6 +179,7 @@ git diff --check -- prototypes/recovery-builders-technical
 ```
 
 DOM kontrola pokrýva šesť scenárov, kroky, zámky, filter, výber, základnú validáciu,
+VM discovery vo fixture, pridanie/odobratie volumes, zrušenie výberu, deduplikáciu,
 priradenie a poradie tiers, aktualizáciu súhrnu a review. JSDOM nenahrádza render
 prehliadača; natívny dialog je v kontrole simulovaný.
 

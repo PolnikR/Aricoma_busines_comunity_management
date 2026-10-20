@@ -15,6 +15,7 @@ for (const page of ['groups', 'apps']) {
     });
     const { window } = dom;
     window.HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', ''); };
+    window.HTMLDialogElement.prototype.close = function () { this.removeAttribute('open'); };
     window.eval(script);
     const q = selector => window.document.querySelector(selector);
     const all = selector => [...window.document.querySelectorAll(selector)];
@@ -36,6 +37,8 @@ for (const page of ['groups', 'apps']) {
     if (mode === 'locked' && group) {
       assert.equal(q('#next').disabled, true);
       assert.ok(all('.editor input, .editor select, .editor textarea').every(input => input.matches(':disabled')));
+      q('#add-volumes').click();
+      assert.equal(q('#volume-picker').open, false);
     } else {
       q('[data-step="0"]').click();
       change('#name', '');
@@ -48,6 +51,37 @@ for (const page of ['groups', 'apps']) {
       assert.equal(q('[data-step="1"]').getAttribute('aria-current'), 'step');
     }
     if (group && mode !== 'locked') {
+      q('[data-step="5"]').click();
+      assert.equal(all('#storage-rows tr').length, 3, 'VM discovery includes shared volumes only once');
+      q('#add-volumes').click();
+      assert.equal(q('#volume-picker').open, true);
+      assert.equal(q('[data-add-volume="db_data_01"]').disabled, true);
+      change('#volume-search', 'archive');
+      q('[data-add-volume="shared_archive_01"]').click();
+      change('#volume-search', 'audit');
+      q('[data-add-volume="audit_logs_01"]').click();
+      assert.match(q('#pending-count').textContent, /^2 /);
+      q('#cancel-volumes').click();
+      assert.equal(all('#storage-rows tr').length, 3, 'Cancel leaves selection unchanged');
+      q('#add-volumes').click();
+      assert.equal(q('#confirm-volumes').disabled, true, 'Cancelled choices are discarded');
+      q('[data-add-volume="shared_archive_01"]').click();
+      q('#confirm-volumes').click();
+      assert.equal(q('#volume-picker').open, false);
+      assert.equal(all('#storage-rows tr').length, 4);
+      assert.match(q('#storage-count').textContent, /1 added manually/);
+      q('#add-volumes').click();
+      assert.equal(q('[data-add-volume="shared_archive_01"]').disabled, true);
+      change('#volume-search', 'not-found');
+      assert.equal(q('#picker-empty').hidden, false);
+      q('#cancel-volumes').click();
+      q('[data-remove-volume="db_data_01"]').click();
+      change('#name', 'Unrelated metadata edit');
+      assert.equal(q('[data-remove-volume="db_data_01"]'), null, 'Excluded discovery does not immediately reappear');
+      q('#add-volumes').click();
+      q('[data-add-volume="db_data_01"]').click();
+      q('#confirm-volumes').click();
+      assert.ok(q('[data-remove-volume="db_data_01"]'), 'Excluded volume can be manually restored');
       q('[data-step="4"]').click();
       change('#search', 'not-found');
       assert.equal(q('#no-results').hidden, false);
@@ -60,6 +94,7 @@ for (const page of ['groups', 'apps']) {
       assert.match(q('#summary-count').textContent, /^1 /);
       change('#topology', 'Metro Mirror', 'change');
       assert.equal(q('#mirror').hidden, false);
+      assert.ok(q('[data-remove-volume="shared_archive_01"]'), 'Manual additions survive VM selection changes');
     }
     if (!group) {
       q('[data-step="1"]').click();
@@ -77,6 +112,7 @@ for (const page of ['groups', 'apps']) {
     assert.equal(q('dialog').open, true);
     const preview = JSON.parse(q('#review-data').textContent);
     assert.equal(preview.previewOnly, true);
+    if (group && mode !== 'locked') assert.ok(preview.relatedVolumes.includes('shared_archive_01'));
     if (!group) {
       assert.equal(preview.tiers[1].tier, 'database');
       assert.equal(preview.tiers[1].group, 'rg_web_prod');
@@ -89,4 +125,4 @@ for (const page of ['groups', 'apps']) {
     scenarios++;
   }
 }
-console.log(`PASS: ${scenarios} scenarios; navigation, locks, validation, filtering, selection, tier ordering, summary and review. Browser layout not tested.`);
+console.log(`PASS: ${scenarios} scenarios; navigation, locks, validation, VM discovery, volume picker/cancel/deduplication/removal, filtering, tier ordering and review. Browser layout not tested.`);
