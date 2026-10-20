@@ -1270,6 +1270,8 @@
   "recovery.application.rollback.resultStatusSection": "Stav",
   "recovery.application.rollback.resultAirflowSection": "Airflow",
   "recovery.application.rollback.resultIbmSection": "IBM FlashCopy",
+  "recovery.application.rollback.resultComputeSection": "IBM Power LPAR",
+  "recovery.application.rollback.resultVcenterSection": "VMware vCenter",
   "recovery.application.rollback.resultErrors": "Chyby",
   "recovery.application.rollback.resultRawDetails": "Odpoveď v surovej podobe",
   "recovery.application.errors.noAirflowProvider": "Žiadny poskytovateľ Airflow dostupný na vrátenie.",

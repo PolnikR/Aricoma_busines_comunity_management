@@ -1304,6 +1304,8 @@
   "recovery.application.rollback.resultStatusSection": "Status",
   "recovery.application.rollback.resultAirflowSection": "Airflow",
   "recovery.application.rollback.resultIbmSection": "IBM FlashCopy",
+  "recovery.application.rollback.resultComputeSection": "IBM Power LPAR",
+  "recovery.application.rollback.resultVcenterSection": "VMware vCenter",
   "recovery.application.rollback.resultErrors": "Errors",
   "recovery.application.rollback.resultRawDetails": "Raw response",
   "recovery.application.errors.noAirflowProvider": "No AIRFLOW provider available for rollback.",

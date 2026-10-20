@@ -21,6 +21,8 @@ export function RecoveryApplicationRollbackResultModal({
   if (!report) return null
 
   const isClean = isRollbackClean(report)
+  const sectionStatus = (section: { status?: string; errors?: unknown[] }) =>
+    section.errors?.length ? 'partial' : (section.status ?? (report.status === 'ok' ? 'ok' : 'unknown'))
 
   const checks: CheckItem[] = []
 
@@ -40,10 +42,31 @@ export function RecoveryApplicationRollbackResultModal({
 
   if (report.ibm) {
     const errorCount = report.ibm.errors?.length ?? 0
+    const status = sectionStatus(report.ibm)
     checks.push({
       name: t('recovery.application.rollback.resultIbmSection'),
-      detail: `${report.ibm.status}${errorCount > 0 ? ` - ${String(errorCount)} errors` : ''}`,
-      status: report.ibm.status === 'ok' ? 'ok' : 'warning',
+      detail: `${status}${errorCount > 0 ? ` - ${String(errorCount)} errors` : ''}`,
+      status: status === 'ok' ? 'ok' : 'warning',
+    })
+  }
+
+  if (report.compute) {
+    const errorCount = report.compute.errors?.length ?? 0
+    const status = sectionStatus(report.compute)
+    checks.push({
+      name: t('recovery.application.rollback.resultComputeSection'),
+      detail: `${status}${errorCount > 0 ? ` - ${String(errorCount)} errors` : ''}`,
+      status: status === 'ok' ? 'ok' : 'warning',
+    })
+  }
+
+  if (report.vcenter) {
+    const errorCount = report.vcenter.errors?.length ?? 0
+    const status = sectionStatus(report.vcenter)
+    checks.push({
+      name: t('recovery.application.rollback.resultVcenterSection'),
+      detail: `${status}${errorCount > 0 ? ` - ${String(errorCount)} errors` : ''}`,
+      status: status === 'ok' ? 'ok' : 'warning',
     })
   }
 

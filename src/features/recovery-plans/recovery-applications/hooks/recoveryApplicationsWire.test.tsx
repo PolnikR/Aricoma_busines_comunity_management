@@ -3,6 +3,7 @@ import { act, renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { RecoveryApplicationData, RecoveryApplicationListItem } from '../model/recoveryApplicationTypes'
+import { RollbackReport as rollbackReportSchema } from '@/generated/query/zod/rollbackReport.gen'
 import { useDeleteRecoveryApplication } from './useDeleteRecoveryApplication'
 import { useSubmitRecoveryApplication } from './useRecoveryApplications'
 
@@ -66,7 +67,17 @@ describe('recovery applications wire contract', () => {
   })
 
   it('rolls back an orchestrated application on its orchestrator and target vCenter', async () => {
-    const report = { status: 'ok', airflow: { status: 'ok' }, ibm: { status: 'ok', errors: [] } }
+    const report = {
+      status: 'ok',
+      airflow: { status: 'ok' },
+      vcenter: {
+        datastores: ['recovered-datastore'],
+        vms_removed: ['finance-db-01'],
+        target_vdisks: ['snapshot-vdisk'],
+        errors: [],
+      },
+      ibm: { status: 'ok', volumes: ['snapshot-vdisk'], unmapped: ['snapshot-vdisk:host'], errors: [] },
+    }
     const mock = stubFetch({ applications: [], rollback: report })
     const { result } = renderHook(() => useDeleteRecoveryApplication(), { wrapper })
 
@@ -85,11 +96,30 @@ describe('recovery applications wire contract', () => {
   })
 
   it('rolls back an orchestrated IBM Power application on its stored target IBM Power provider', async () => {
-    const mock = stubFetch({ applications: [], rollback: { status: 'ok' } })
+    const report = {
+      status: 'ok',
+      airflow: {
+        status: 'ok',
+        dag_id: 'dag_261020065027_42e616ff',
+        paused: 'paused',
+        failed_runs: ['scheduled__2026-10-01T00:00:00+00:00'],
+        dag_file: 'removed',
+        dag_record: 'deleted',
+      },
+      compute: {
+        lpars: [{ name: 'dr_aix2source', removed: true, wwpns: ['C0507607D7F70392'] }],
+        errors: [],
+      },
+      ibm: { hosts: [{ host: 'h42e616ff_dr_aix2source', unmapped: ['0', '1'], removed: true }], errors: [] },
+      warnings: [],
+      notes: ['zoning is not undone'],
+    }
+    const mock = stubFetch({ applications: [], rollback: report })
     const { result } = renderHook(() => useDeleteRecoveryApplication(), { wrapper })
 
+    let returned: { rollback: unknown } | undefined
     await act(async () => {
-      await result.current.mutateAsync({
+      returned = await result.current.mutateAsync({
         ...application,
         pushToOrchestrator: true,
         orchestrationProviderId: 'airflow-01',
@@ -97,7 +127,21 @@ describe('recovery applications wire contract', () => {
       })
     })
 
+    expect(returned?.rollback).toEqual(report)
     expect(request(mock).params).toMatchObject({ rollback_from_orchestrator: 'true', compute_provider_id: 'ibm-power-02' })
+  })
+
+  it('accepts partial rollback with incomplete nested BE objects', () => {
+    const report = {
+      status: 'partial',
+      airflow: { status: 'ok' },
+      compute: { lpars: [{ name: 'dr_aix2source' }], errors: ['could not remove LPAR'] },
+      ibm: { hosts: [{ host: 'h42e616ff_dr_aix2source' }], errors: ['unmap failed'] },
+      vcenter: { datastores: [{}], errors: ['unregister VM failed'] },
+    }
+    // These nested fields are untyped in BE OpenAPI. Zod must not require
+    // wwPNs, host unmapped lists or vCenter datastore details on failures.
+    expect(rollbackReportSchema.safeParse(report).success).toBe(true)
   })
 
   it('does not send the rollback request when the application has no stored target provider', async () => {

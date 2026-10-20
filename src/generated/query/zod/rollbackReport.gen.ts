@@ -23,6 +23,14 @@ export const RollbackReport = zod.object({
   "fcmaps": zod.array(zod.unknown()).exactOptional(),
   "volumes": zod.array(zod.unknown()).exactOptional(),
   "errors": zod.array(zod.unknown()).exactOptional()
+}),zod.null()]).exactOptional(),
+  "compute": zod.union([zod.object({
+  "status": zod.string().exactOptional(),
+  "errors": zod.array(zod.unknown()).exactOptional()
+}),zod.null()]).exactOptional(),
+  "vcenter": zod.union([zod.object({
+  "status": zod.string().exactOptional(),
+  "errors": zod.array(zod.unknown()).exactOptional()
 }),zod.null()]).exactOptional()
 }).describe('recovery/rollback.py\'s report: shape varies a lot by status (see\nrollback_recovery_group\'s docstring), so only `status` is pinned down.')
 

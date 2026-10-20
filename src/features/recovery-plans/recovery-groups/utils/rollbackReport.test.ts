@@ -12,6 +12,11 @@ describe('isRollbackClean', () => {
     expect(isRollbackClean(report)).toBe(true)
   })
 
+  it('accepts an IBM cleanup report without optional status', () => {
+    const report: RollbackReport = { status: 'ok', airflow: { status: 'ok' }, ibm: { errors: [] } }
+    expect(isRollbackClean(report)).toBe(true)
+  })
+
   it('returns true when airflow and ibm are absent', () => {
     const report: RollbackReport = { status: 'ok' }
     expect(isRollbackClean(report)).toBe(true)
