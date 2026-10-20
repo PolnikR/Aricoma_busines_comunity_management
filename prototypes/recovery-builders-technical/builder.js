@@ -64,14 +64,18 @@
     <p id="storage-empty" hidden>No volumes included. Add volumes from the provider inventory.</p>
     <p class="hint">Removing a volume excludes it from this group; it does not delete it from storage. You can add it again.</p>
     <p class="hint">Sample discovery follows VM selection in Resources. No live API calls are made. Existing Metro Mirror additionally requires auxiliary mappings.</p>`;
-  const tiers = `<div class="toolbar"><span class="tag">3 configured tiers</span><span class="hint">Use ↑ / ↓ to change order</span></div><div id="tiers">
-    ${['Database', 'Services', 'Web'].map((name, index) => `<article class="tier" data-tier="${name.toLowerCase()}">
+  const tierMarkup = (name, index, group = '') => `<article class="tier" data-tier="${name.toLowerCase().replaceAll(' ', '_')}">
       <span class="ordinal">${index + 1}</span><div><h3>${name}</h3>
-      <label for="tier-${index}">Recovery group</label><select id="tier-${index}" name="tier-${index}">
-      ${['database', 'services', 'web'].map(group => `<option value="rg_${group}_prod" ${group === name.toLowerCase() ? 'selected' : ''}>rg_${group}_prod</option>`).join('')}</select>
+      <label for="tier-${index}">Recovery group *</label><select id="tier-${index}" name="tier-${index}" required>
+      <option value="" ${group ? '' : 'selected'} disabled>Select a recovery group</option>
+      ${['database', 'services', 'web'].map(option => `<option value="rg_${option}_prod" ${option === group ? 'selected' : ''}>rg_${option}_prod</option>`).join('')}</select>
       <p class="hint">One recovery group per tier</p></div><div><button type="button" data-move="-1" aria-label="Move ${name} up">↑</button>
-      <button type="button" data-move="1" aria-label="Move ${name} down">↓</button></div></article>`).join('')}</div>
-      <p class="hint">The numbers represent configured order, not runtime progress. VM selection, tier creation and removal remain part of the existing builder; this sample demonstrates assignment and ordering.</p>`;
+      <button type="button" data-move="1" aria-label="Move ${name} down">↓</button>
+      <button type="button" data-remove-tier aria-label="Remove ${name} tier">Remove</button></div></article>`;
+  const tiers = `<div class="toolbar"><span id="tier-count" class="tag" role="status"></span><button type="button" id="add-tier" class="primary">+ Add tier</button></div><div id="tiers">
+    ${['Database', 'Services', 'Web'].map((name, index) => tierMarkup(name, index, name.toLowerCase())).join('')}</div>
+      <p id="tiers-empty" class="notice info" hidden>No recovery tiers configured. Add a tier and assign a recovery group to continue.</p>
+      <p class="hint">Use ↑ / ↓ to change order. Removing a tier only removes its assignment here, not the recovery group. VM selection is not simulated in this prototype.</p>`;
   const policy = `${select('policy', 'Policy set *', ['production_recovery', 'test_recovery'])}
     <div class="notice info">Policy set IDs are references. Resolve policy names and details from the existing policy-set query.</div>
     <p class="hint">No RPO/RTO or readiness rating is inferred from the selected policy.</p>`;
@@ -123,6 +127,8 @@
       q('#mirror').hidden = value('topology') !== 'Metro Mirror';
       q('#topology-destination').textContent = value('topology') === 'Metro Mirror' ? 'Partner: flashsystem_brq_01' : 'Local recovery';
     } else {
+      q('#tier-count').textContent = `${tierValues().length} configured tiers`;
+      q('#tiers-empty').hidden = tierValues().length > 0;
       document.querySelectorAll('[data-tier]').forEach((tier, index, all) => {
         tier.querySelector('.ordinal').textContent = String(index + 1);
         tier.querySelector('[data-move="-1"]').disabled = index === 0;
@@ -163,13 +169,21 @@
     const invalid = [...q(`[data-panel="${current}"]`).querySelectorAll('input, textarea, select')].find(input => !input.checkValidity());
     if (invalid) {
       q('#validation').hidden = false;
-      q('#validation').textContent = 'Complete the required fields. Identifiers accept letters, numbers, underscores and hyphens.';
+      q('#validation').textContent = !isGroup && current === 1
+        ? 'Assign a recovery group to every tier before continuing.'
+        : 'Complete the required fields. Identifiers accept letters, numbers, underscores and hyphens.';
       invalid.focus();
       return;
     }
     if (isGroup && current === 4 && checkedResources().length === 0) {
       q('#validation').hidden = false;
       q('#validation').textContent = 'Select at least one virtual machine.';
+      return;
+    }
+    if (!isGroup && current === 1 && tierValues().length === 0) {
+      q('#validation').hidden = false;
+      q('#validation').textContent = 'Add at least one recovery tier and assign a recovery group.';
+      q('#add-tier').focus();
       return;
     }
     if (current < steps.length - 1) showStep(current + 1); else review();
@@ -182,10 +196,27 @@
       q('#no-results').hidden = rows.some(row => !row.hidden);
     };
   } else {
+    let nextTierIndex = 3;
+    q('#add-tier').onclick = () => {
+      const index = nextTierIndex++;
+      q('#tiers').insertAdjacentHTML('beforeend', tierMarkup(`Tier ${index + 1}`, index));
+      dirty = true;
+      update();
+      q(`#tier-${index}`).focus();
+    };
     q('#tiers').onclick = event => {
-      const button = event.target.closest('[data-move]');
+      const button = event.target.closest('[data-move], [data-remove-tier]');
       if (!button) return;
       const tier = button.closest('[data-tier]');
+      if (button.hasAttribute('data-remove-tier')) {
+        const focusTarget = tier.nextElementSibling?.querySelector('select')
+          ?? tier.previousElementSibling?.querySelector('select') ?? q('#add-tier');
+        tier.remove();
+        dirty = true;
+        update();
+        focusTarget.focus();
+        return;
+      }
       const previous = tier.previousElementSibling;
       const next = tier.nextElementSibling;
       if (button.dataset.move === '-1' && previous) tier.parentNode.insertBefore(tier, previous);
@@ -282,5 +313,5 @@
   }
   const storageSelection = isGroup ? setupStorageSelection() : null;
   update();
-  showStep(isGroup && params.get('step') === 'related-storage' ? 5 : 0, false);
+  showStep(isGroup && params.get('step') === 'related-storage' ? 5 : !isGroup && params.get('step') === 'tiers' ? 1 : 0, false);
 })();

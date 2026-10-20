@@ -103,6 +103,18 @@ for (const page of ['groups', 'apps']) {
       assert.equal(q('[data-tier="database"] .ordinal').textContent, '2');
       assert.match(q('.rail .flow').textContent, /services → database → web/);
       change('#tier-0', 'rg_web_prod', 'change');
+      q('#add-tier').click();
+      assert.equal(all('[data-tier]').length, 4);
+      assert.equal(window.document.activeElement, q('#tier-3'));
+      assert.match(q('#summary-count').textContent, /^4 /);
+      q('#next').click();
+      assert.equal(q('#validation').hidden, false, 'New tier requires a group');
+      change('#tier-3', 'rg_services_prod', 'change');
+      q('[data-tier="tier_4"] [data-move="-1"]').click();
+      assert.equal(q('[data-tier="tier_4"] .ordinal').textContent, '3');
+      q('[data-tier="tier_4"] [data-remove-tier]').click();
+      assert.equal(all('[data-tier]').length, 3);
+      assert.equal(q('#tier-0').value, 'rg_web_prod', 'Other assignments survive removal');
       if (mode === 'locked') {
         assert.equal(q('#push').disabled, true);
         assert.equal(q('#push').checked, true);
@@ -116,6 +128,21 @@ for (const page of ['groups', 'apps']) {
     if (!group) {
       assert.equal(preview.tiers[1].tier, 'database');
       assert.equal(preview.tiers[1].group, 'rg_web_prod');
+      q('dialog').close();
+      for (const button of all('[data-remove-tier]')) button.click();
+      assert.equal(q('#tiers-empty').hidden, false);
+      assert.equal(window.document.activeElement, q('#add-tier'));
+      q('#next').click();
+      assert.match(q('#validation').textContent, /at least one recovery tier/);
+      q('#add-tier').click();
+      assert.ok(q('#tier-4'), 'New controls keep unique IDs after deletion');
+      assert.equal(q('[data-tier] .ordinal').textContent, '1', 'Order is contiguous after deletion');
+      change('#tier-4', 'rg_database_prod', 'change');
+      q('#review').click();
+      const addedPreview = JSON.parse(q('#review-data').textContent);
+      assert.equal(addedPreview.tiers.length, 1);
+      assert.equal(addedPreview.tiers[0].group, 'rg_database_prod');
+      assert.equal(addedPreview.tiers[0].order, 1);
     }
     const ids = all('[id]').map(element => element.id);
     assert.equal(ids.length, new Set(ids).size, 'IDs must be unique');
@@ -125,4 +152,4 @@ for (const page of ['groups', 'apps']) {
     scenarios++;
   }
 }
-console.log(`PASS: ${scenarios} scenarios; navigation, locks, validation, VM discovery, volume picker/cancel/deduplication/removal, filtering, tier ordering and review. Browser layout not tested.`);
+console.log(`PASS: ${scenarios} scenarios; navigation, locks, validation, VM discovery, volume picker, filtering, tier add/remove/order/empty state and review. Browser layout not tested.`);

@@ -14,6 +14,9 @@ Otvoriť priamo v prehliadači alebo cez existujúci Vite server:
 - http://localhost:5173/prototypes/recovery-builders-technical/groups.html
 - http://localhost:5173/prototypes/recovery-builders-technical/apps.html
 
+Priamo na interaktívne Recovery tiers:
+http://localhost:5173/prototypes/recovery-builders-technical/apps.html?step=tiers
+
 Priamo na nový návrh Related storage:
 http://localhost:5173/prototypes/recovery-builders-technical/groups.html?step=related-storage
 
@@ -130,9 +133,12 @@ neplatný uložený provider nesmie byť potichu nahradený. Pri nasadenej aplik
 zostáva push zapnutý podľa `lockPushToOrchestrator`. Zmena source v Create musí
 zachovať existujúce potvrdenie odpojenia groups z tiers.
 
-HTML demonštruje priradenie groups a zmenu poradia troch vzorových tiers.
-Pridávanie, odstraňovanie a per-VM výber sa prenesú z existujúceho buildera
-v prípadnej následnej implementácii.
+HTML začína tromi vzorovými tiers. **Add tier** pridá nový tier na koniec a presunie
+focus na povinný výber recovery group. **Remove** odstráni tier iba z lokálnej
+ukážky; samotnú recovery group nemení. Poradie, počítadlá, súhrn a review sa
+aktualizujú aj po pridávaní, odstraňovaní a presúvaní. Pri odstránení všetkých tiers
+sa zobrazí prázdny stav; Continue vyžaduje aspoň jeden tier s priradenou group.
+Per-VM výber sa prenesie z existujúceho buildera v prípadnej následnej implementácii.
 
 ## Prenesenie do Reactu
 
@@ -180,7 +186,8 @@ git diff --check -- prototypes/recovery-builders-technical
 
 DOM kontrola pokrýva šesť scenárov, kroky, zámky, filter, výber, základnú validáciu,
 VM discovery vo fixture, pridanie/odobratie volumes, zrušenie výberu, deduplikáciu,
-priradenie a poradie tiers, aktualizáciu súhrnu a review. JSDOM nenahrádza render
+pridávanie/odstraňovanie/priradenie/poradie tiers a ich prázdny stav,
+aktualizáciu súhrnu a review. JSDOM nenahrádza render
 prehliadača; natívny dialog je v kontrole simulovaný.
 
 V tejto relácii nie je pripojený žiadny browser cez dostupné browser tools.
