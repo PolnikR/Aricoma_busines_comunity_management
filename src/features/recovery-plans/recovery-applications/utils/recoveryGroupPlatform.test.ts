@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isRecoveryGroupCompatible } from './recoveryGroupPlatform'
+import { isRecoveryGroupCompatible, isRecoveryGroupEligible } from './recoveryGroupPlatform'
 
 const vmwareGroup = { sourceCategory: 'backup_system_workload', workloadType: 'vmware_virtual_machines' } as const
 const powerGroup = { sourceCategory: 'backup_system_workload', workloadType: 'ibm_power_virtual_machines' } as const
@@ -19,5 +19,21 @@ describe('isRecoveryGroupCompatible', () => {
 
   it.each([undefined, '', 'HITACHI'])('matches no group without a supported platform (%s)', (platform) => {
     expect([vmwareGroup, powerGroup].some(group => isRecoveryGroupCompatible(group, platform))).toBe(false)
+  })
+})
+
+describe.each([
+  ['VMWARE', vmwareGroup, powerGroup],
+  ['IBM_POWER', powerGroup, vmwareGroup],
+] as const)('eligibility for %s', (platform, compatible, incompatible) => {
+  it.each([
+    [true, 'run-1', true], [false, 'run-1', false], [true, null, false],
+    [true, '', false], [true, '   ', false], [true, undefined, false],
+    [undefined, 'run-1', false],
+  ] as const)('requires publication and an identifier (%s, %s)', (pushToOrchestrator, airflowRunId, expected) => {
+    expect(isRecoveryGroupEligible({ ...compatible, pushToOrchestrator, airflowRunId }, platform)).toBe(expected)
+  })
+  it('rejects a published group of another platform', () => {
+    expect(isRecoveryGroupEligible({ ...incompatible, pushToOrchestrator: true, airflowRunId: 'run-1' }, platform)).toBe(false)
   })
 })

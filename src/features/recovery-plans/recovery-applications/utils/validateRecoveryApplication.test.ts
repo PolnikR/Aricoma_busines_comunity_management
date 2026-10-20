@@ -117,8 +117,8 @@ describe('validateRecoveryApplication', () => {
 
   describe('recovery groups', () => {
     const groups = [
-      { id: 'vm_group', sourceCategory: 'backup_system_workload', workloadType: 'vmware_virtual_machines' },
-      { id: 'lpar_group', sourceCategory: 'backup_system_workload', workloadType: 'ibm_power_virtual_machines' },
+      { pushToOrchestrator: true, airflowRunId: 'run-1', id: 'vm_group', sourceCategory: 'backup_system_workload', workloadType: 'vmware_virtual_machines' },
+      { pushToOrchestrator: true, airflowRunId: 'run-2', id: 'lpar_group', sourceCategory: 'backup_system_workload', workloadType: 'ibm_power_virtual_machines' },
     ] as const
     const powerProviders = [provider('power-hmc', 'IBM_POWER', 'source')]
 
@@ -133,6 +133,32 @@ describe('validateRecoveryApplication', () => {
         }]]),
       }
     }
+
+    describe.each(['VMWARE', 'IBM_POWER'] as const)('publication for %s', platform => {
+      it.each([
+        [true, 'run-1', true], [false, 'run-1', false], [true, null, false],
+        [true, '', false], [true, '   ', false], [true, undefined, false], [undefined, 'run-1', false],
+      ] as const)('validates pushed=%s and run ID=%s', (pushToOrchestrator, airflowRunId, allowed) => {
+        const power = platform === 'IBM_POWER'
+        const current = { ...groups[power ? 1 : 0], pushToOrchestrator, airflowRunId }
+        const state = withGroup(current.id, ['db01'], power ? { platform: 'power-hmc', targetProviderId: 'power-hmc' } : {})
+        const before = structuredClone(state)
+        for (const locked of [false, true]) {
+          for (const push of [false, true]) {
+            const result = validateRecoveryApplication({ ...state, pushToOrchestrator: push, orchestrationProviderId: 'airflow-01' }, providers,
+              [{ id: 'airflow-01', type: 'AIRFLOW', credentialStatus: 'ok' }] as PlatformProviderRecord[], {
+                groups: [current],
+                lockedProviders: locked ? { platform, sourceProviderId: state.platform, targetProviderId: state.targetProviderId } : null,
+              })
+            expect(result).toEqual(allowed ? null : {
+              field: 'recoveryGroup', messageKey: 'recovery.application.validation.recoveryGroupNotPublished',
+              params: { tier: 'database', group: current.id + ' name' },
+            })
+          }
+        }
+        expect(state).toEqual(before)
+      })
+    })
 
     it('accepts groups of the application platform', () => {
       expect(validateRecoveryApplication(withGroup('vm_group', ['db 01']), providers, [], { groups: [...groups] })).toBeNull()

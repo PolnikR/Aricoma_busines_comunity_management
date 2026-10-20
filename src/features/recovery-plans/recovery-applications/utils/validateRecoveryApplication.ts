@@ -4,7 +4,7 @@ import type { LockedProviders, RecoveryApplicationFormState } from '../model/rec
 import { isValidRecoveryApplicationFileName, isValidRecoveryApplicationName } from './recoveryApplicationFileName'
 import type { RecoveryGroup } from '../../recovery-groups/model/recoveryGroupTypes'
 import { getEligibleTargetProviders, isEligiblePlatformProvider, isEligibleSourceProvider } from './eligibleProviders'
-import { isRecoveryGroupCompatible } from './recoveryGroupPlatform'
+import { isRecoveryGroupCompatible, isRecoveryGroupEligible } from './recoveryGroupPlatform'
 
 export interface ValidationError {
   field: 'fileName' | 'name' | 'description' | 'policySet' | 'platform' | 'targetProvider' | 'recoveryGroup'
@@ -52,7 +52,7 @@ export function validateRecoveryApplication(
     lockedProviders?: LockedProviders | null
     // The current recovery groups; the sidebar filter alone does not cover
     // groups stored on a saved application.
-    groups?: Pick<RecoveryGroup, 'id' | 'sourceCategory' | 'workloadType'>[]
+    groups?: Pick<RecoveryGroup, 'id' | 'sourceCategory' | 'workloadType' | 'pushToOrchestrator' | 'airflowRunId'>[]
   } = {},
 ): ValidationError | null {
   if (!isValidRecoveryApplicationFileName(formState.fileName)) {
@@ -148,6 +148,13 @@ export function validateRecoveryApplication(
       return {
         field: 'recoveryGroup',
         messageKey: 'recovery.application.validation.recoveryGroupPlatformMismatch',
+        params: { tier: tierId, group: group.name },
+      }
+    }
+    if (!isRecoveryGroupEligible(current, platform)) {
+      return {
+        field: 'recoveryGroup',
+        messageKey: 'recovery.application.validation.recoveryGroupNotPublished',
         params: { tier: tierId, group: group.name },
       }
     }

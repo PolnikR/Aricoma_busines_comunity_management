@@ -83,6 +83,8 @@ const recoveryGroupsQuery = vi.hoisted(() => ({
       resources: ['DB-01', 'DB-02'],
       resourceCount: 2,
       status: 'Active',
+      pushToOrchestrator: true,
+      airflowRunId: 'run-1',
     }] as RecoveryGroup[],
     isLoading: false,
     isFetching: false,
@@ -114,7 +116,10 @@ vi.mock('@/generated/query/recovery-app-policies/recovery-app-policies.gen', () 
 vi.mock('@/generated/query/clean-room-policies/clean-room-policies.gen', () => ({
   useGetCleanRoomPolicies: () => ({ data: [], isLoading: false, error: null }),
 }))
-vi.mock('./TierCanvas', () => ({
+const canvasMode = vi.hoisted(() => ({ real: false }))
+vi.mock('./TierCanvas', async (importOriginal) => {
+  const { TierCanvas: ActualTierCanvas } = await importOriginal<typeof import('./TierCanvas')>()
+  return {
   TierCanvas: ({
     tiers,
     recoveryGroupVmOptions,
@@ -127,7 +132,15 @@ vi.mock('./TierCanvas', () => ({
     onRecoveryGroupAdded?: (tierId: string, groupId: string) => void
     onRecoveryGroupRemoved?: (tierId: string) => void
     onRecoveryVmSelectionChange?: (tierId: string, vmName: string, selected: boolean) => void
-  }) => (
+  }) => canvasMode.real ? (
+    <ActualTierCanvas
+      tiers={tiers}
+      {...(recoveryGroupVmOptions ? { recoveryGroupVmOptions } : {})}
+      {...(onRecoveryGroupAdded ? { onRecoveryGroupAdded } : {})}
+      {...(onRecoveryGroupRemoved ? { onRecoveryGroupRemoved } : {})}
+      {...(onRecoveryVmSelectionChange ? { onRecoveryVmSelectionChange } : {})}
+    />
+  ) : (
     <div>
       <span>Tier count: {Object.keys(tiers).length}</span>
       <span>Database VMs: {tiers['tier_id']?.recovery_group?.vms.length ?? 0}</span>
@@ -152,7 +165,8 @@ vi.mock('./TierCanvas', () => ({
       </button>
     </div>
   ),
-}))
+  }
+})
 
 function fillDetails(sourceId = 'vmware-01', targetId = 'vmware-target-01') {
   fireEvent.change(screen.getByLabelText('ID *'), { target: { value: 'finance_recovery' } })
@@ -179,6 +193,7 @@ afterEach(() => {
 
 describe('RecoveryAppBuilder', () => {
   beforeEach(() => {
+    canvasMode.real = false
     recoveryGroupsQuery.current.groups = [{
       id: 'database_group',
       name: 'Database Group',
@@ -189,6 +204,8 @@ describe('RecoveryAppBuilder', () => {
       resources: ['DB-01', 'DB-02'],
       resourceCount: 2,
       status: 'Active',
+      pushToOrchestrator: true,
+      airflowRunId: 'run-1',
     }, {
       id: 'lpar_group',
       name: 'LPAR Group',
@@ -199,6 +216,8 @@ describe('RecoveryAppBuilder', () => {
       resources: ['aix2source'],
       resourceCount: 1,
       status: 'Active',
+      pushToOrchestrator: true,
+      airflowRunId: 'run-1',
     }, {
       id: 'unresolved_group',
       name: 'Unresolved Group',
@@ -209,6 +228,8 @@ describe('RecoveryAppBuilder', () => {
       resources: ['ghost-01'],
       resourceCount: 1,
       status: 'Active',
+      pushToOrchestrator: true,
+      airflowRunId: 'run-1',
     }] as RecoveryGroup[]
     recoveryGroupsQuery.current.isLoading = false
     recoveryGroupsQuery.current.isFetching = false
@@ -239,6 +260,17 @@ describe('RecoveryAppBuilder', () => {
     fillDetails()
     fireEvent.change(screen.getByLabelText('Target provider ID *'), { target: { value: '' } })
     expect(screen.getByRole('button', { name: 'Recovery groups & tiers' })).toBeDisabled()
+  })
+
+  it.each([
+    [false, 'run-1'], [true, null], [true, ''], [true, '   '], [undefined, 'run-1'],
+  ] as const)('excludes unpublished groups and rejects direct assignment (%s, %s)', async (pushToOrchestrator, airflowRunId) => {
+    recoveryGroupsQuery.current.groups = recoveryGroupsQuery.current.groups.map(group => ({ ...group, pushToOrchestrator, airflowRunId }))
+    render(<RecoveryAppBuilder />)
+    await openTiers()
+    expect(screen.getByText('No VMware recovery groups are available')).toBeInTheDocument()
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Add test group' }))
+    expect(screen.getByText('Group id: none')).toBeInTheDocument()
   })
 
   it('offers only VMware recovery groups for a VMware source', async () => {
@@ -297,6 +329,39 @@ describe('RecoveryAppBuilder', () => {
       await user.click(screen.getByRole('button', { name: 'Save Application' }))
       return { onSave, alert }
     }
+
+    it.each([
+      ['vmware-01', 'vmware-target-01', 'database_group', 'Database Group', 'DB-01'],
+      ['power-01', 'power-01', 'lpar_group', 'LPAR Group', 'aix2source'],
+    ])('preserves stored configuration across rollback and republish for %s', async (source, target, groupId, groupName, vmName) => {
+      canvasMode.real = true
+      const initialData = savedApplication(source, target, groupId, groupName, [vmName])
+      initialData.tiers.set('tier_id', {
+        order: 1, description: 'Custom tier',
+        recovery_group: { id: groupId, name: groupName, vms: [{ name: vmName, order: 1, hostname: 'custom-host', cpu: 8 }] },
+      })
+      const before = structuredClone(initialData)
+      const onSave = vi.fn()
+      const alert = vi.fn()
+      vi.stubGlobal('alert', alert)
+      const props = { initialData, onSave, lockedProviders: { platform: source === 'power-01' ? 'IBM_POWER' : 'VMWARE', sourceProviderId: source, targetProviderId: target } }
+      const { rerender } = render(<RecoveryAppBuilder {...props} />)
+      const user = userEvent.setup()
+      await user.click(screen.getByRole('button', { name: 'Recovery groups & tiers' }))
+      recoveryGroupsQuery.current.groups = recoveryGroupsQuery.current.groups.map(group => ({ ...group, pushToOrchestrator: false }))
+      rerender(<RecoveryAppBuilder {...props} />)
+      expect(screen.getByText(vmName)).toBeInTheDocument()
+      expect(screen.getByText('Recovery group: ' + groupName)).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Orchestration' }))
+      await user.click(screen.getByRole('button', { name: 'Save Application' }))
+      expect(onSave).not.toHaveBeenCalled()
+      expect(alert).toHaveBeenCalledWith(expect.stringContaining('"' + groupName + '" in tier "tier_id"'))
+      expect(initialData).toEqual(before)
+      recoveryGroupsQuery.current.groups = recoveryGroupsQuery.current.groups.map(group => ({ ...group, pushToOrchestrator: true }))
+      rerender(<RecoveryAppBuilder {...props} />)
+      await user.click(screen.getByRole('button', { name: 'Save Application' }))
+      expect(onSave).toHaveBeenCalledWith(before)
+    })
 
     it('blocks saving a VMware application with an IBM Power recovery group', async () => {
       const { onSave, alert } = await trySave(savedApplication('vmware-01', 'vmware-target-01', 'lpar_group', 'LPAR Group', ['aix2source']))

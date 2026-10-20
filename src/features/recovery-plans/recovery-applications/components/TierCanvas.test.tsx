@@ -111,7 +111,7 @@ describe('TierCanvas', () => {
     render(
       <TierCanvas
         tiers={mockTiers}
-        recoveryGroupVmOptions={{ Database: ['DB-01', 'DB-02'] }}
+        recoveryGroupVmOptions={{ database_group: ['DB-01', 'DB-02'] }}
         onRecoveryVmSelectionChange={onRecoveryVmSelectionChange}
       />,
     )
@@ -119,6 +119,47 @@ describe('TierCanvas', () => {
     await user.click(screen.getByRole('checkbox', { name: 'DB-02' }))
 
     expect(onRecoveryVmSelectionChange).toHaveBeenCalledWith('database', 'DB-02', true)
+  })
+
+  it('keeps an unchecked VM visible when the recovery group name differs from its ID', async () => {
+    const user = userEvent.setup()
+    const onRecoveryVmSelectionChange = vi.fn()
+    const databaseTier = mockTiers['database']
+    if (!databaseTier?.recovery_group) throw new Error('Missing database recovery group fixture')
+
+    const recoveryGroupVmOptions = { database_group: ['DB-01', 'DB-02'] }
+    const { rerender } = render(
+      <TierCanvas
+        tiers={{ database: databaseTier }}
+        recoveryGroupVmOptions={recoveryGroupVmOptions}
+        onRecoveryVmSelectionChange={onRecoveryVmSelectionChange}
+      />,
+    )
+
+    expect(screen.getByRole('checkbox', { name: 'DB-01' })).toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'DB-02' })).not.toBeChecked()
+
+    await user.click(screen.getByRole('checkbox', { name: 'DB-01' }))
+    expect(onRecoveryVmSelectionChange).toHaveBeenCalledWith('database', 'DB-01', false)
+
+    rerender(
+      <TierCanvas
+        tiers={{
+          database: {
+            ...databaseTier,
+            recovery_group: { ...databaseTier.recovery_group, vms: [] },
+          },
+        }}
+        recoveryGroupVmOptions={recoveryGroupVmOptions}
+        onRecoveryVmSelectionChange={onRecoveryVmSelectionChange}
+      />,
+    )
+
+    expect(screen.getByRole('checkbox', { name: 'DB-01' })).not.toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'DB-02' })).not.toBeChecked()
+
+    await user.click(screen.getByRole('checkbox', { name: 'DB-01' }))
+    expect(onRecoveryVmSelectionChange).toHaveBeenNthCalledWith(2, 'database', 'DB-01', true)
   })
 
   it('calls onTierAdd when new tier created', async () => {
