@@ -1,0 +1,41 @@
+# Shared by every server block generated in 30-configure-tls.sh.
+location = /health {
+    access_log off;
+    default_type text/plain;
+    return 200 "ok\n";
+}
+
+location /assets/ {
+    try_files $uri =404;
+    expires 1y;
+    add_header Cache-Control "public, immutable";
+}
+
+location = /index.html {
+    add_header Cache-Control "no-store";
+}
+
+location /api/ {
+    proxy_pass ${BACKEND_URL}/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+
+# Keycloak under the app origin: with HTTPS on, the browser cannot call a plain-HTTP
+# Keycloak (mixed content), and a second origin would need its own certificate trust.
+location /auth/ {
+    proxy_pass ${KEYCLOAK_INTERNAL_URL}/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Forwarded-Port $server_port;
+    proxy_buffer_size 16k;
+    proxy_buffers 8 16k;
+}
+
+location / {
+    try_files $uri $uri/ /index.html;
+}
