@@ -136,21 +136,20 @@ fi
 RUN_ARGS=()
 if ! is_ipv4 "$BACKEND_HOST"; then
     HOST_IP=$(getent hosts "$BACKEND_HOST" | awk '{print $1; exit}' || true)
-    if docker run --rm --entrypoint getent "$DOCKER_IMAGE" hosts "$BACKEND_HOST" >/dev/null 2>&1; then
-        echo "Backend $BACKEND_HOST resolves to ${HOST_IP:-an address} (host and container)."
-        # A link-local IPv6 address (fe80::) is unusable without a zone, so nginx would
-        # answer every /api/ request with 502 Bad Gateway.
-        if ! docker run --rm --entrypoint getent "$DOCKER_IMAGE" ahostsv4 "$BACKEND_HOST" >/dev/null 2>&1; then
-            HOST_IPV4=$(getent ahostsv4 "$BACKEND_HOST" | awk '{print $1; exit}' || true)
-            if [ -n "$HOST_IPV4" ]; then
-                echo "Backend $BACKEND_HOST has no IPv4 address inside the container, but resolves to $HOST_IPV4 on this host;"
-                echo "adding it to the container with --add-host."
-                RUN_ARGS+=(--add-host "${BACKEND_HOST}:${HOST_IPV4}")
-            else
-                echo "WARNING: backend DNS name '$BACKEND_HOST' has no IPv4 address (host or container)."
-                echo "Link-local IPv6 addresses cannot be reached; use the backend's IPv4 address instead."
-                confirm "Continue anyway?" || exit 1
-            fi
+    # A link-local IPv6 address (fe80::, typical for a .local name answered over mDNS)
+    # is unusable without a zone, so nginx would answer every /api/ request with 502.
+    # Prefer the host's IPv4 address and pin it when the container cannot get one itself.
+    HOST_IPV4=$(getent ahostsv4 "$BACKEND_HOST" | awk '{print $1; exit}' || true)
+    if [ -n "$HOST_IPV4" ] &&
+       ! docker run --rm --entrypoint getent "$DOCKER_IMAGE" ahostsv4 "$BACKEND_HOST" >/dev/null 2>&1; then
+        echo "Backend $BACKEND_HOST has no IPv4 address inside the container, but resolves to $HOST_IPV4 on this host;"
+        echo "adding it to the container with --add-host."
+        RUN_ARGS+=(--add-host "${BACKEND_HOST}:${HOST_IPV4}")
+    elif docker run --rm --entrypoint getent "$DOCKER_IMAGE" hosts "$BACKEND_HOST" >/dev/null 2>&1; then
+        echo "Backend $BACKEND_HOST resolves to ${HOST_IPV4:-${HOST_IP:-an address}} (host and container)."
+        if [ -z "$HOST_IPV4" ]; then
+            echo "WARNING: backend DNS name '$BACKEND_HOST' has no IPv4 address; link-local IPv6 addresses cannot be reached."
+            confirm "Continue anyway?" || exit 1
         fi
     elif [ -n "$HOST_IP" ]; then
         echo "Backend $BACKEND_HOST resolves to $HOST_IP on this host but not inside the container;"
