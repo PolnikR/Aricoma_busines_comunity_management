@@ -1,73 +1,141 @@
-﻿# Úlohy: Recovery Group eligibility pre Recovery Applications
+﻿# Úlohy: technický dizajn Create/Edit Recovery Group
 
-Dátum: 2026-10-20. Stav: návrh na schválenie. Plán: [plan.md](plan.md).
-Žiadna implementácia, commit ani push nie sú vykonané. Predchádzajúci checklist Overview bol dokončený.
+Dátum: 2026-10-20. Plán: [plan.md](plan.md). Stav: pripravené na realizáciu; nižšie nie je implementácia označená ako hotová.
+Rozsah: iba Group builder. Recovery Apps/tiers a Resources drag-and-drop sa nemenia.
+Všetky relatívne feature cesty nižšie majú prefix `src/features/recovery-plans/recovery-groups/`.
 
-## T0: Schválenie a baseline
+## T1: VM pôvod objavených volumes
 
-**Popis:** Schváliť plán a pred realizáciou znovu skontrolovať stav dotknutých súborov a call sites validátora.
+**Popis:** Rozšíriť existujúci discovery hook o odvodené väzby volume → VM bez nových requestov alebo zmeny query keys.
+**Súbory:** `hooks/useRecoveryGroupRelatedVolumes.ts`, `hooks/useRecoveryGroupRelatedVolumes.test.tsx`.
 **Akceptácia:**
-- [x] Používateľ schválil plán.
-- [x] Zaznamenané existujúce worktree zmeny; prototypy ani cudzie úpravy sa nemenia.
-- [x] Potvrdená cesta Builder → validátor s úplným groups.
-**Overenie:** `git status --short`, focused kontrola call sites a diffu. **Závislosti:** žiadne. **Rozsah:** XS, bez implementačných zmien.
+- [ ] Zdieľaný volume má jeden názov a všetky príslušné VM; podporené VMware aj IBM Power odpovede.
+- [ ] Loading/error/disabled stavy nemenia doterajší query kontrakt a čiastočné discovery sa nepovažuje za úplné potvrdenie pôvodu.
+- [ ] Po zmene VM/provider kontextu nie sú prezentované staré väzby; počet requestov ostáva ako predtým.
+**Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-groups/hooks/useRecoveryGroupRelatedVolumes.test.tsx`.
+**Závislosti:** žiadne. **Rozsah:** S, 2 súbory.
 
-## T1: Spoločné eligibility pravidlo
+## T2: Lokalizácie nových ovládacích prvkov
 
-**Popis:** Pridať malý helper do existujúceho platformového utility a testy pravidla aj existujúceho mapovania.
-**Súbory:** `recovery-applications/utils/recoveryGroupPlatform.ts`, jeho `.test.ts`, `recovery-groups/helpers/mapRecoveryGroups.test.ts` (všetky pod `src/features/recovery-plans/`).
+**Popis:** Pripraviť texty Related storage, pickeru a súhrnu v existujúcich namespaces; znovu použiť spoločné Add/Cancel/Remove/Retry.
+**Súbory:** `src/locales/en.json`, `src/locales/sk.json`, `src/locales/cs.json`.
 **Akceptácia:**
-- [x] Pôvodná kompatibilita je nezmenená; helper navyše vyžaduje striktne true a neprázdny string run ID.
-- [x] Celá matica z plánu vrátane whitespace a oboch platforiem prejde.
-- [x] Mapper test dokazuje false + zachované ID aj null → undefined; produkčný mapper/model sa nemení.
-**Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-applications/utils/recoveryGroupPlatform.test.ts src/features/recovery-plans/recovery-groups/helpers/mapRecoveryGroups.test.ts`.
-**Závislosti:** T0. **Rozsah:** M, 3 súbory.
+- [ ] Rovnaké kľúče v troch jazykoch pre included volumes, From VM/Manual/Saved selection, Add volumes/Add selected, included/pending counts, empty/no matches a storage-provider kontext.
+- [ ] Súhrn používa preklady existujúcich typov/topológie a texty pre chýbajúcu hodnotu; žiadny text neoznačuje push ako úspešný recovery run.
+- [ ] Interpolácie počtov a názvov majú zhodné parametre; text Remove vysvetlí odstránenie zo skupiny, nie storage objektu.
+**Overenie:** `node -e "for (const l of ['en','sk','cs']) JSON.parse(require('fs').readFileSync('src/locales/'+l+'.json','utf8')); console.log('JSON OK')"`; content assertion zhodnosti pridaných kľúčov a placeholderov; `git diff --check`.
+**Závislosti:** žiadne. **Rozsah:** M, 3 súbory.
 
-## T2: Blokovanie neplatného uloženia
+## T3: Výber ďalších volumes
 
-**Popis:** Rozšíriť Pick existujúcej validácie a použiť eligibility helper po missing/platform kontrolách. Zachovať existujúce poradie ostatných kontrol a alert mechanizmus.
-**Súbory:** `src/features/recovery-plans/recovery-applications/utils/validateRecoveryApplication.ts`, jeho `.test.ts`, `src/locales/en.json`, `src/locales/sk.json`, `src/locales/cs.json`.
+**Popis:** Pridať feature picker cez existujúci Modal a inventory hook pre FlashSystem providera. Pending výber je lokálny a potvrdenie je batch.
+**Súbory (nové):** `components/RecoveryGroupVolumePickerModal.tsx`, `components/RecoveryGroupVolumePickerModal.test.tsx`.
 **Akceptácia:**
-- [x] Matica platí pre nové aj locked aplikácie a nezávisí od push flagu aplikácie.
-- [x] Chyba obsahuje tier/skupinu a validátor nemení vstupné tiers ani VM metadata.
-- [x] Nový preklad existuje v EN/SK/CS, vysvetľuje publikovanie aj integritu ID; pôvodné missing/platform/LPAR chyby zostali.
-**Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-applications/utils/validateRecoveryApplication.test.ts`; JSON assertion z plánu.
-**Závislosti:** T1. **Rozsah:** M, 5 súborov.
+- [ ] Search a checkboxy umožnia vybrať viac volumes vrátane takých, ktoré discovery pre VM nenašlo; included položky sú disabled a pending prežije filtrovanie.
+- [ ] Add selected vráti deduplikovaný batch; Cancel/Escape/zatvorenie nič nemení. Zmena providera/readOnly kontextu zahodí pending; prázdny výber nemožno potvrdiť.
+- [ ] Loading/error/Retry/empty/no matches sú rozlíšené; chybné dáta neumožnia potvrdenie nového výberu. Focus, popisy a návrat na opener používajú spoločný Modal.
+**Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-groups/components/RecoveryGroupVolumePickerModal.test.tsx`.
+**Závislosti:** T2. **Rozsah:** S, 2 súbory.
 
-## Kontrolný bod A
+## Checkpoint 1: dátové a výberové základy
 
-- [x] Helper, mapper a validátor testy prešli; rovnaké pravidlo sa používa bez duplicity.
-- [x] Neboli pridané modelové polia, API zmeny ani kontrola snapshotov či DAG statusov.
+- [ ] Testy T1 a T3 prešli, JSON je validný; žiadne zmeny query keys/API.
+- [ ] Picker test dokazuje batch, Cancel a provider/readOnly zmenu, nie iba samotné zobrazenie.
 
-## T3: Ponuka Buildera bez straty konfigurácie
+## T4: Tabuľka Related storage
 
-**Popis:** Oddeliť kompatibilné skupiny pre VM dáta od eligible skupín pre sidebar a add handler. Zachovať úplný groups vstup validátora a form state existujúcich tiers.
-**Súbory:** `src/features/recovery-plans/recovery-applications/components/RecoveryAppBuilder.tsx`, jeho `.test.tsx`.
+**Popis:** Pridať prezentačný krok s Included volumes a pickerom; na tomto kroku nebude drop zóna. DOM komponent nebude vlastniť potvrdený draft.
+**Súbory (nové):** `components/RecoveryGroupRelatedStorageStep.tsx`, `components/RecoveryGroupRelatedStorageStep.test.tsx`.
 **Akceptácia:**
-- [x] Sidebar aj add/drop callback odmietajú neeligible skupiny; platformový výber ostáva rovnaký.
-- [x] Existujúca nepublikovaná skupina zostane v tieri, Save zobrazí chybu a onSave sa nevolá.
-- [x] Zmena true → false po refetchi nestratí VM výber, metadata ani tier konfiguráciu; po platnom republish/refetchi je uloženie opäť možné bez resetu.
-**Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-applications/components/RecoveryAppBuilder.test.tsx`; testy zachovajú rozdiel medzi ID a názvom skupiny a nepovažujú mock canvas za dôkaz reálneho vykreslenia.
-**Závislosti:** T1, T2, kontrolný bod A. **Rozsah:** S, 2 súbory.
+- [ ] Riadky zobrazia názov, pôvod/VM väzby a Remove; provider a počty sú mimo opakovaných riadkov. Saved selection sa nevydáva za Manual.
+- [ ] Add volumes, Remove a Clear selection používajú callbacky, readOnly blokuje akcie; loading/error nie je prázdny úspešný výsledok.
+- [ ] Existing má auxiliary editor pre každý volume a jeho chybu; Managed zobrazuje generované hodnoty read-only. Zachované miesto pre consistency group informácie a warningy.
+**Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-groups/components/RecoveryGroupRelatedStorageStep.test.tsx`.
+**Závislosti:** T1, T2, T3. **Rozsah:** S, 2 súbory.
 
-## T4: Focused regresia a manuálne overenie
+## T5: Zapojenie do Create/Edit a Metro Mirror
 
-**Popis:** Overiť kombinovaný tok, lokalizácie a rozsah diffu. BE odporúčanie evidovať samostatne; BE nemeníme.
-**Súbory:** bez ďalších plánovaných produkčných zmien; výsledky zaznamenať do tohto checklistu.
+**Popis:** Vymeniť iba compact Related storage vetvu Buildera. Použiť existujúci selectionDraft, exclusions, prefill a validáciu. Pôvod uložených položiek sledovať len na prezentačné účely.
+**Súbory:** `components/RecoveryGroupBuilder.tsx`, `components/RecoveryGroupBuilder.test.tsx`, podľa potreby `components/RecoveryGroupBuilder.prefetch.test.tsx`.
 **Akceptácia:**
-- [x] Štyri focused test súbory, focused ESLint, JSON assertion a diff check prešli.
-- [x] Reálny Builder s TierCanvas/TierCard zachová konfiguráciu pri editácii aj rollback/refetchi; manuálne overené VMware a IBM Power, vrátane aplikácie bez vlastného pushu.
-- [x] Diff obsahuje iba plánovaných 10 implementačných/test súborov a príslušnú evidenciu; BE, generated kód a nesúvisiace zmeny sú nedotknuté.
-**Overenie:** presné príkazy v sekcii 7 plánu; manuálne create/edit, odmietnutie Save, obnovenie dát. Full suite/build len pri explicitnom dôvode alebo pokyne; nespustenie uviesť v reporte.
-**Závislosti:** T3. **Rozsah:** S, overenie.
+- [ ] Automatic + manual výber sa deduplikuje; viac additions prejde jednou funkčnou aktualizáciou. Remove/Clear nezmaže storage objekt a refetch v rovnakom kontexte nevráti vylúčenú položku; explicitné pridanie ju obnoví.
+- [ ] Existing prefill/override/consistency validation aj Managed/pushed locks ostávajú; pending/error discovery nemaže uložené výbery/overrides. Provider/VM zmeny rešpektujú doterajší reset a prefetch.
+- [ ] Payload, submit, 7/8 krokov a Resources workflow sú nezmenené; volume-only skupina nemá Related storage. Zrušený picker nemení dirty stav.
+**Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-groups/components/RecoveryGroupBuilder.test.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupBuilder.prefetch.test.tsx src/features/recovery-plans/recovery-groups/utils/reconcileMetroMirrorPrefill.test.ts`.
+**Závislosti:** T4. **Rozsah:** M, najviac 3 súbory.
 
-## Kontrolný bod B: Definition of Done
+## Checkpoint A: správanie Related storage
 
-- [x] Splnené všetky akceptačné kritériá v pláne.
-- [x] Review nepotvrdil tiché odstraňovanie, odvodenie publikovania iba z run ID alebo zmenu kompatibility.
-- [x] Explicitne uvedená zostávajúca BE medzera a obmedzenie cached dát; FE úspech sa nevydáva za serverovú garanciu.
-- [x] Výsledky testov a prípadné blokované manuálne kroky sú pravdivo zaznamenané.
+- [ ] Vytvoriť a editovať VM skupinu; automatic + manual volumes sa dostanú do existujúceho payloadu bez straty.
+- [ ] Resources je stále pôvodný drag-and-drop a volume-only vetva funguje.
+- [ ] Local/Existing/Managed, neúplný rollback a discovery/inventory chyby majú regresné pokrytie.
 
-## Overenie plánovacieho výstupu
+## T6: Kompaktné kroky ako opt-in variant
 
-Plán je pripravený, implementácia čaká na schválenie. Kontrola dokumentov neznamená úspech budúcich implementačných testov. Zákaz commitu a pushu zostáva v platnosti.
+**Popis:** Rozšíriť existujúci WizardSteps o malý explicitný kompaktný variant, bez globálneho preštýlovania ostatných wizardov.
+**Súbory:** `src/shared/components/wizard-steps/WizardSteps.tsx`, `src/shared/components/wizard-steps/WizardSteps.test.tsx`.
+**Akceptácia:**
+- [ ] Nový variant má kompaktné technické číslovanie a aktívny pruh podľa návrhu; default variant ostáva nezmenený.
+- [ ] Disabled/aria-current/onStepChange a klávesnica fungujú identicky v oboch variantoch.
+- [ ] Horizontálny mobilný zoznam zostáva dostupný; kroky ani completion indikácia netvrdia runtime recovery stav.
+**Overenie:** `npm.cmd exec vitest run src/shared/components/wizard-steps/WizardSteps.test.tsx` a vizuálne porovnanie oboch variantov.
+**Závislosti:** checkpoint A. **Rozsah:** S, 2 súbory.
+
+## T7: Layout a priebežný súhrn Group buildera
+
+**Popis:** Zapnúť kompaktné kroky iba pre Group a pridať pravý kontextový súhrn odvodený z draftu. Zachovať page shell, lifecycle alerty a päty.
+**Súbory:** `components/RecoveryGroupBuilder.tsx`, `components/RecoveryGroupBuilder.test.tsx`, nové `components/RecoveryGroupConfigurationSummary.tsx`, `components/RecoveryGroupConfigurationSummary.test.tsx`.
+**Akceptácia:**
+- [ ] Súhrn reaguje na názov, identitu, typ, počty, topológiu, policy a push bez nových requestov alebo kópie form state.
+- [ ] Pri úzkom obsahu ide súhrn pod formulár, mobilné polia sú jednosĺpcové; Resources a storage mappingy zostávajú použiteľné aj pri globálnom sidebare.
+- [ ] Create/Edit, Cancel guard, validation, lifecycle lock, Back/Next a finálne submit akcie ostávajú; nevloží sa prototype Review ani scenario prepínač.
+**Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-groups/components/RecoveryGroupConfigurationSummary.test.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupBuilder.test.tsx`; browser layout pri 320/768/1024/1440 px a nízkej výške.
+**Závislosti:** T6. **Rozsah:** M, 4 súbory.
+
+## T8: Kompaktné Details a Provider
+
+**Popis:** Preniesť hustotu, dvojstĺpcové rozloženie a typografiu tam, kde sú údaje skutočne súvisiace. Výber resource type zachováva existujúce voľby a správanie v novom shelli.
+**Súbory:** `components/RecoveryGroupDetailsStep.tsx`, `components/RecoveryGroupProviderStep.tsx` a ich existujúce `.test.tsx`.
+**Akceptácia:**
+- [ ] ID/názov sú pri dostatku miesta vedľa seba, popis cez celú šírku; technické ID monospace, správne labely a required chyby.
+- [ ] Edit ID lock, provider eligibility, scope a loading/error/retry sú zachované; žiadne globálne form control zmeny.
+- [ ] Mobile, light/dark a dlhé hodnoty sú čitateľné; type/provider voľby nie sú zúžené na VMware z prototypu.
+**Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-groups/components/RecoveryGroupDetailsStep.test.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupProviderStep.test.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupTypeStep.test.tsx`.
+**Závislosti:** T7. **Rozsah:** M, najviac 4 súbory.
+
+## T9: Kompaktná topológia, Policy set a Orchestration
+
+**Popis:** Zjednotiť technický vzhľad zvyšných konfiguračných krokov pri zachovaní ich doménových pravidiel.
+**Súbory:** `components/RecoveryGroupTopologyStep.tsx`, `components/RecoveryGroupPolicySetStep.tsx`, `components/RecoveryGroupOrchestrationStep.tsx`; najviac dva relevantné existujúce test súbory podľa zmeneného správania.
+**Akceptácia:**
+- [ ] Local/Metro Mirror, partner provider a Existing/Managed voľby aj ich edit locks sú zachované; každý nový layout ukazuje tie isté údaje.
+- [ ] Policy set a Airflow eligibility/sole provider/push ostávajú nezmenené; uloženie konfigurácie sa neprezentuje ako úspešná obnova.
+- [ ] Styling používa existujúce tokeny, pokrýva light/dark a neodstraňuje loading/error/empty/disabled vysvetlenia.
+**Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-groups/components/RecoveryGroupTopologyStep.test.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupPolicySetStep.test.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupOrchestrationStep.test.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupMetroMirrorFields.test.tsx`.
+**Závislosti:** T8. **Rozsah:** M, najviac 5 súborov; prípadné ďalšie zmeny testov rozdeliť na následný malý krok.
+
+## Checkpoint B: dizajn celého Create/Edit
+
+- [ ] Všetky kroky zodpovedajú schválenému technickému smeru; Resources si zachoval pôvodný workflow.
+- [ ] Recovery Apps a default WizardSteps sa vizuálne ani funkčne nezmenili.
+- [ ] Žiadne fixture hodnoty, prototype controls, nové endpointy ani generated zmeny.
+
+## T10: Záverečné focused a browser overenie
+
+**Popis:** Overiť celú dotknutú cestu, zaznamenať konkrétne výsledky a limity. Neoznačiť chýbajúci browser test za úspešný.
+**Súbory:** `tasks/todo.md` na evidenciu; neočakávajú sa ďalšie implementačné zmeny.
+**Akceptácia:**
+- [ ] Nové komponentové testy, regresný príkaz zo sekcie 6 plánu, focused ESLint zmenených TS/TSX, JSON kontrola a diff check prešli.
+- [ ] Browser matica z plánu prešla vrátane modal focusu/Escape, Resources drag-and-drop, responsive/light/dark, retry a dlhých názvov; screenshoty alebo presný blokér sú zaznamenané.
+- [ ] Diff obsahuje iba schválený rozsah; overené zmeny sú atomicky commitnuté. Bez automatického pushu/deploy; úplná suite/build len pri zdokumentovanom dôvode alebo explicitnom pokyne.
+**Overenie:** focused regresia z plan.md; `npm.cmd exec eslint -- <skutocne-zmenene-TS-TSX-subory> --max-warnings 0`; `git diff --check`; browser matica. Placeholder v lint príkaze nahradiť presnými cestami z diffu.
+**Závislosti:** checkpoint B. **Rozsah:** S, evidencia a overenie.
+
+## Odovzdanie
+
+- [ ] Každá vyššie uvedená úloha má zaznamenaný výsledok; nesplnené kontroly zostali explicitne otvorené.
+- [ ] Report obsahuje reálne spustené príkazy, commity a stav vizuálneho overenia; nepredstiera beh plnej suite/build.
+
+## Overenie tohto plánovacieho výstupu
+
+Dokumenty sú plán, nie dôkaz úspechu budúcej implementácie. Teraz sa vykoná iba obsahová kontrola plánovacích súborov a Git diff check. Produkčný kód ani HTML prototyp sa v tejto úlohe nemenia.
