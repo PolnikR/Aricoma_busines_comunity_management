@@ -5,18 +5,20 @@ variables:
   CONTAINER_NAME: abco-fe
   HOST_PORT: "8080"
   HTTPS_HOST_PORT: "8443"
-  # https | http | both (both: HTTP redirects to HTTPS). See docs/deployment.md.
-  TLS_MODE: "https"
+  # Pipeline default is plain HTTP with a direct Keycloak, as before TLS support.
+  # To deploy over HTTPS set, in Settings > CI/CD > Variables (or here), together:
+  #   TLS_MODE=https (or both)
+  #   DEPLOY_URL=https://abco.aricoma.local:8443
+  #   KEYCLOAK_URL=https://abco.aricoma.local:8443/auth   (nginx proxies /auth to KEYCLOAK_INTERNAL_URL)
+  # and prepare Keycloak per docs/keycloak-https-setup.md. See docs/deployment.md.
+  TLS_MODE: "http"
   APP_HOST: "abco.aricoma.local"
   CERT_VOLUME: "abco-fe-certs"
-  DEPLOY_URL: "https://abco.aricoma.local:8443"
+  DEPLOY_URL: "http://10.99.99.53:8080"
   # Keycloak config is injected into config.js at container startup (envsubst),
   # not baked into the bundle. Override these in Settings > CI/CD > Variables
   # to point a deployment at a different Keycloak.
-  # With HTTPS the browser reaches Keycloak through the app's /auth proxy;
-  # KEYCLOAK_INTERNAL_URL is where nginx forwards it. For TLS_MODE=http use
-  # KEYCLOAK_URL "http://10.99.99.53:8081" and DEPLOY_URL "http://10.99.99.53:8080".
-  KEYCLOAK_URL: "https://abco.aricoma.local:8443/auth"
+  KEYCLOAK_URL: "http://10.99.99.53:8081"
   KEYCLOAK_INTERNAL_URL: "http://10.99.99.53:8081"
   KEYCLOAK_REALM: "aricoma"
   KEYCLOAK_CLIENT_ID: "abcm-fe"
