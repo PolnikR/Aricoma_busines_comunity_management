@@ -81,20 +81,21 @@ describe('RecoveryApplicationsTable', () => {
     renderTable(
       <RecoveryApplicationsTable applications={[application, developmentApplication]} onEdit={vi.fn()} onDelete={vi.fn()} />,
     )
-    const triggers = screen.getAllByRole('button', { name: /^Actions:/ })
-    vi.spyOn(triggers[0], 'getBoundingClientRect').mockReturnValue(new DOMRect(600, 100, 44, 44))
-    vi.spyOn(triggers[1], 'getBoundingClientRect').mockReturnValue(new DOMRect(600, 200, 44, 44))
+    const [firstTrigger, secondTrigger] = screen.getAllByRole('button', { name: /^Actions:/ })
+    if (!firstTrigger || !secondTrigger) throw new Error('Expected actions buttons for both recovery applications')
+    vi.spyOn(firstTrigger, 'getBoundingClientRect').mockReturnValue(new DOMRect(600, 100, 44, 44))
+    vi.spyOn(secondTrigger, 'getBoundingClientRect').mockReturnValue(new DOMRect(600, 200, 44, 44))
 
-    expect(triggers[0]).toHaveAttribute('aria-expanded', 'false')
-    await user.click(triggers[0])
-    expect(triggers[0]).toHaveAttribute('aria-expanded', 'true')
+    expect(firstTrigger).toHaveAttribute('aria-expanded', 'false')
+    await user.click(firstTrigger)
+    expect(firstTrigger).toHaveAttribute('aria-expanded', 'true')
     expect(screen.getByRole('menu', { name: 'Actions for Finance Recovery' })).toHaveStyle({ top: '148px', left: '484px' })
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
 
-    triggers[1].focus()
+    secondTrigger.focus()
     await user.keyboard('{Enter}')
     expect(screen.getByRole('menu', { name: 'Actions for Development Recovery' })).toHaveStyle({ top: '248px', left: '484px' })
-    await user.click(triggers[1])
+    await user.click(secondTrigger)
     expect(screen.queryByRole('menu')).not.toBeInTheDocument()
   })
 
