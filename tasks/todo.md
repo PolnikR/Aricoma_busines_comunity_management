@@ -2,6 +2,7 @@
 
 Dátum: 2026-10-20. Plán: [plan.md](plan.md). Stav: pripravené na realizáciu; nižšie nie je implementácia označená ako hotová.
 Rozsah: iba Group builder. Recovery Apps/tiers a Resources drag-and-drop sa nemenia.
+Záväzná podmienka všetkých úloh: zachovať aplikačné štýly a komponenty aj existujúce doménové správanie. HTML je referencia rozloženia a ovládania; jeho samostatné CSS sa nekopíruje. Nepridávať nové validačné ani lifecycle pravidlá.
 Všetky relatívne feature cesty nižšie majú prefix `src/features/recovery-plans/recovery-groups/`.
 
 ## T1: VM pôvod objavených volumes
@@ -33,7 +34,7 @@ Všetky relatívne feature cesty nižšie majú prefix `src/features/recovery-pl
 **Akceptácia:**
 - [ ] Search a checkboxy umožnia vybrať viac volumes vrátane takých, ktoré discovery pre VM nenašlo; included položky sú disabled a pending prežije filtrovanie.
 - [ ] Add selected vráti deduplikovaný batch; Cancel/Escape/zatvorenie nič nemení. Zmena providera/readOnly kontextu zahodí pending; prázdny výber nemožno potvrdiť.
-- [ ] Loading/error/Retry/empty/no matches sú rozlíšené; chybné dáta neumožnia potvrdenie nového výberu. Focus, popisy a návrat na opener používajú spoločný Modal.
+- [ ] Loading/error/Retry/empty/no matches sú rozlíšené pri zachovaní existujúcej politiky dostupných dát; žiadne nové doménové blokovanie. Focus, popisy a návrat na opener používajú spoločný Modal a existujúce aplikačné controls.
 **Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-groups/components/RecoveryGroupVolumePickerModal.test.tsx`.
 **Závislosti:** T2. **Rozsah:** S, 2 súbory.
 
@@ -117,6 +118,7 @@ Všetky relatívne feature cesty nižšie majú prefix `src/features/recovery-pl
 ## Checkpoint B: dizajn celého Create/Edit
 
 - [ ] Všetky kroky zodpovedajú schválenému technickému smeru; Resources si zachoval pôvodný workflow.
+- [ ] Štýly vychádzajú z existujúcej aplikácie; rovnaké funkčné scenáre dávajú zhodný výber, validáciu a submit payload pred/po úprave UI.
 - [ ] Recovery Apps a default WizardSteps sa vizuálne ani funkčne nezmenili.
 - [ ] Žiadne fixture hodnoty, prototype controls, nové endpointy ani generated zmeny.
 

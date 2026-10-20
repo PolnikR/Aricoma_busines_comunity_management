@@ -11,6 +11,8 @@ Priamy náhľad: http://localhost:5173/prototypes/recovery-builders-technical/gr
 Zapracovať technický vizuálny štýl do celého Create/Edit Recovery Group: kompaktné kroky a formuláre, monospace identifikátory, tenké deliace čiary, menšie zaoblenia, odvodený súhrn konfigurácie. Existujúci aplikačný shell zostáva. Najvýraznejšia interakčná zmena je Related storage: predvyplnená tabuľka a Add volumes namiesto drag-and-drop zóny.
 
 Záväzné upresnenia používateľa:
+- Zachovať dizajnový systém aplikácie: používať existujúce komponenty Button, form controls, tabuľky, Modal a aplikačné tokeny farieb, typografie, zaoblení a stavov. Z HTML preniesť informačné rozloženie a schválené ovládanie, nie jeho samostatné CSS, fonty alebo pevné farebné hodnoty.
+- Zachovať existujúcu doménovú funkcionalitu: rovnaké vstupy a používateľské voľby majú viesť k rovnakému potvrdenému výberu, validačnému výsledku a submit payloadu. Nový picker mení spôsob výberu, nie oprávnené volumes, pravidlá topológie alebo podmienky uloženia.
 - Resources je funkčne správny: zachovať dostupné resources, drag-and-drop, odstránenie, filter a discovery scope. Checkboxová tabuľka v HTML nie je predpis na jeho náhradu.
 - Related storage automaticky zahrnie volumes vybraných VM a dovolí pridať ďalšie z inventára storage providera cez vyhľadávanie a checkboxy.
 - Recovery Apps ani tiers nie sú súčasťou tohto plánu.
@@ -47,7 +49,7 @@ Picker má vlastný dočasný výber a filter, ale nie druhú kópiu celého dra
 3. Add selected vykoná jediný batch callback `onAddVolumes(names)`; Builder zlúči názvy jednou funkčnou aktualizáciou. Nevolať starý onAdd v slučke nad zastaraným draftState.
 4. Cancel, Escape a zatvorenie zahodia pending výber. Focus sa vráti na Add volumes. Bez nového dirty stavu pri samotnom hľadaní alebo Cancel.
 5. Pri zmene providera alebo readOnly stavu počas otvorenia picker zavrieť a zahodiť pending výber. Pri potvrdení znovu overiť aktuálny kontext a oprávnenie; deduplikovať voči aktuálnemu výberu.
-6. Pri chybnom inventári nedovoliť potvrdenie neovereného nového výberu. Zobraziť Retry; doterajší potvrdený výber nevymazať. Rozlíšiť empty inventory od no search matches.
+6. Zachovať existujúcu politiku loading/error a práce s dostupnými dátami inventára; nepridávať nové doménové blokovanie iba pre zmenu UI. Zobraziť Retry; doterajší potvrdený výber nevymazať. Rozlíšiť empty inventory od no search matches. Pending položky z iného providera sa nikdy nepotvrdzujú.
 
 Rozšíriť výsledok existujúceho discovery hooku o odvodenú mapu názov volume → mená vybraných VM. Bez API/DTO zmeny a bez per-volume requestov. Nepredstierať úspešné discovery pri loading/error ani nepoužívať čiastočnú mapu ako dôkaz neprítomnosti väzby.
 
@@ -68,7 +70,7 @@ Desktop: navigácia približne 200 px, pružný editor, súhrn približne 280 px
 
 Súhrn (`RecoveryGroupConfigurationSummary.tsx`) odvodzovať z aktuálneho draftu a už načítaných provider/policy dát: ID, názov, workload/resource type, počet resources/volumes, topológia, policy set, push. Nezavádzať query ani nový stav formulára. Dlhé ID zalamovať; chýbajúce údaje pomenovať; push nevydávať za úspešný recovery run.
 
-Zachovať aplikačné tokeny a obe témy. Žiadne globálne prepisy form controls alebo radius. Opt-in kompaktný WizardSteps sa použije iba v Group builderi. Aktívny krok nie je dôkaz vykonanej obnovy. Päta má Back/Continue/Create alebo Save a Cancel; nezakrýva posledné pole ani validačnú chybu.
+Zachovať aplikačné tokeny a obe témy. Vizuálne hodnoty z HTML sú orientačné; menšie zaoblenia a hustotu voliť iba z existujúcich aplikačných variantov, bez zavádzania druhého dizajnového systému. Žiadne globálne prepisy form controls alebo radius. Opt-in kompaktný WizardSteps sa použije iba v Group builderi. Aktívny krok nie je dôkaz vykonanej obnovy. Päta má Back/Continue/Create alebo Save a Cancel; nezakrýva posledné pole ani validačnú chybu.
 
 ## 4. Poradie a závislosti
 
@@ -105,6 +107,8 @@ npm.cmd exec vitest run src/features/recovery-plans/recovery-groups/components/R
 Spustiť ESLint iba na skutočne zmenené TS/TSX, validáciu JSON pre en/sk/cs a `git diff --check`. Kompletná suite, full typecheck ani production build sa nespúšťajú automaticky; iba pri konkrétnom dôvode súvisiacom so zmenou alebo na pokyn používateľa.
 
 Browser matica: Create/Edit, VMware/IBM Power VM a FlashSystem volume-only, Local/Existing/Managed, pushed a partially rolled-back lock; light/dark; 320/768/1024/1440 px a nízky viewport. Overiť natívny focus trap a návrat focusu, Escape/Cancel, klávesnicu, no console errors, dlhé ID, provider/inventory/discovery chyby, retry, prázdny výber a filter. Resources drag-and-drop musí fungovať rovnako ako pred zmenou. DOM test nenahrádza vizuálnu kontrolu.
+
+Regresné kritérium zachovania funkcionality: porovnať rovnaké scenáre pred/po zmene UI vrátane finálneho výberu a submit payloadu. Nepridávať nové required polia, validačné pravidlá, obmedzenia oprávnených resources alebo zmeny lifecycle. Nové informácie o pôvode a súhrn sú iba prezentačné. Odlišný doménový výsledok sa považuje za regresiu; prípadnú opravu preexistujúcej chyby riešiť samostatne.
 
 ## 7. Rozhodnutia a stav
 
