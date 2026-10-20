@@ -129,6 +129,46 @@ for (const page of ['groups', 'apps']) {
       assert.equal(preview.tiers[1].tier, 'database');
       assert.equal(preview.tiers[1].group, 'rg_web_prod');
       q('dialog').close();
+      const edited = q('[data-tier="services"]');
+      edited.querySelector('[data-edit-tier]').click();
+      change('#tier-id-1', 'cancelled_id');
+      edited.querySelector('[data-cancel-tier]').click();
+      assert.equal(edited.dataset.tier, 'services', 'Cancel preserves committed tier metadata');
+      edited.querySelector('[data-edit-tier]').click();
+      change('#tier-id-1', 'database');
+      edited.querySelector('[data-confirm-tier]').click();
+      assert.match(edited.querySelector('[data-edit-error]').textContent, /unique/);
+      change('#tier-id-1', 'core_services');
+      change('#tier-description-1', ' ');
+      edited.querySelector('[data-confirm-tier]').click();
+      assert.equal(edited.querySelector('[data-edit-error]').hidden, false);
+      change('#tier-description-1', 'Recover <services> after database.');
+      q('#next').click();
+      assert.match(q('#validation').textContent, /Confirm or cancel/);
+      edited.querySelector('[data-confirm-tier]').click();
+      assert.equal(edited.dataset.tier, 'core_services');
+      assert.equal(edited.querySelector('.tier-description').textContent, 'Recover <services> after database.');
+      assert.equal(edited.querySelector('.tier-description').children.length, 0);
+      const drag = (source, target, after) => {
+        const dataTransfer = { setData() {}, effectAllowed: '', dropEffect: '' };
+        target.getBoundingClientRect = () => ({ top: 0, height: 100 });
+        q('#tiers').ondragstart({ target: source.querySelector('[data-drag-tier]'), dataTransfer });
+        q('#tiers').ondragover({ target, clientY: after ? 80 : 20, dataTransfer, preventDefault() {} });
+        assert.ok(target.classList.contains(after ? 'drop-after' : 'drop-before'));
+        q('#tiers').ondrop({ target, clientY: after ? 80 : 20, preventDefault() {} });
+        assert.equal(all('.drop-before, .drop-after').length, 0);
+      };
+      drag(edited, q('[data-tier="web"]'), true);
+      assert.equal(all('[data-tier]').at(-1), edited, 'Drop below places tier after target');
+      assert.equal(edited.querySelector('select').value, 'rg_services_prod');
+      drag(edited, q('[data-tier="database"]'), false);
+      assert.equal(q('[data-tier]'), edited, 'Drop above places tier before target');
+      assert.deepEqual(all('.ordinal').map(node => node.textContent), ['1', '2', '3']);
+      q('#review').click();
+      const editedPreview = JSON.parse(q('#review-data').textContent);
+      assert.equal(editedPreview.tiers[0].tier, 'core_services');
+      assert.equal(editedPreview.tiers[0].description, 'Recover <services> after database.');
+      q('dialog').close();
       for (const button of all('[data-remove-tier]')) button.click();
       assert.equal(q('#tiers-empty').hidden, false);
       assert.equal(window.document.activeElement, q('#add-tier'));
@@ -152,4 +192,4 @@ for (const page of ['groups', 'apps']) {
     scenarios++;
   }
 }
-console.log(`PASS: ${scenarios} scenarios; navigation, locks, validation, VM discovery, volume picker, filtering, tier add/remove/order/empty state and review. Browser layout not tested.`);
+console.log(`PASS: ${scenarios} scenarios; navigation, locks, validation, storage selection, tier add/remove/edit/cancel/unique IDs, simulated drag/drop above/below, empty state and review. Browser layout and native drag/drop not tested.`);

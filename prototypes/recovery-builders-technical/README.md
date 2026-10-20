@@ -140,6 +140,17 @@ aktualizujú aj po pridávaní, odstraňovaní a presúvaní. Pri odstránení v
 sa zobrazí prázdny stav; Continue vyžaduje aspoň jeden tier s priradenou group.
 Per-VM výber sa prenesie z existujúceho buildera v prípadnej následnej implementácii.
 
+Úchyt **Move** umožňuje presun tier potiahnutím nad alebo pod iný tier.
+Horná/dolná polovica cieľového bloku určuje pozíciu, modrá čiara ukazuje miesto
+vloženia. Šípky ostávajú alternatívou pre klávesnicu a dotykové zariadenia.
+Presun zachová ID, popis a priradenú recovery group; mení iba poradie.
+
+**Edit** otvorí v tieri polia **ID** a **Tier description** s **Confirm / Cancel**.
+Confirm vyžaduje neprázdny popis a unikátne ID (písmená, číslice, `_`, `-`).
+Cancel ponechá pôvodné hodnoty. Rozpracované úpravy treba potvrdiť alebo zrušiť
+pred Continue. Súhrn a Review používajú potvrdené hodnoty, vrátane nového popisu.
+Tieto interakcie sú výhradne v HTML šablóne.
+
 ## Prenesenie do Reactu
 
 | Súčasná časť | Navrhovaná úprava |
@@ -186,12 +197,15 @@ git diff --check -- prototypes/recovery-builders-technical
 
 DOM kontrola pokrýva šesť scenárov, kroky, zámky, filter, výber, základnú validáciu,
 VM discovery vo fixture, pridanie/odobratie volumes, zrušenie výberu, deduplikáciu,
-pridávanie/odstraňovanie/priradenie/poradie tiers a ich prázdny stav,
+pridávanie/odstraňovanie/priradenie/poradie tiers, editáciu ID a popisu, Cancel,
+duplicitné ID, simulovaný drop nad/pod cieľ a prázdny stav,
 aktualizáciu súhrnu a review. JSDOM nenahrádza render
 prehliadača; natívny dialog je v kontrole simulovaný.
 
 V tejto relácii nie je pripojený žiadny browser cez dostupné browser tools.
 Vizuálna kontrola pri 320/768/1024/1440 px, skutočný keyboard/focus priechod,
 natívny dialog a meranie kontrastu preto zostávajú neoverené.
+Presuny sú overené simuláciou event handlerov; natívne drag-and-drop v prehliadači
+nie je touto kontrolou overené.
 Pred produkčnou implementáciou treba návrh vizuálne posúdiť. Kompletná test suite
 ani produkčný build nie sú potrebné pre tento izolovaný návrhový artefakt.

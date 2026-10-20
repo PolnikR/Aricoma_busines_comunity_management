@@ -66,16 +66,27 @@
     <p class="hint">Sample discovery follows VM selection in Resources. No live API calls are made. Existing Metro Mirror additionally requires auxiliary mappings.</p>`;
   const tierMarkup = (name, index, group = '') => `<article class="tier" data-tier="${name.toLowerCase().replaceAll(' ', '_')}">
       <span class="ordinal">${index + 1}</span><div><h3>${name}</h3>
+      <p class="tier-description">${name} recovery tier</p>
+      <div class="tier-edit" hidden>
+        <label for="tier-id-${index}">ID *</label><input id="tier-id-${index}" data-edit-id class="mono">
+        <label for="tier-description-${index}">Tier description *</label><textarea id="tier-description-${index}" data-edit-description></textarea>
+        <p class="notice" data-edit-error role="alert" hidden></p>
+        <button type="button" data-confirm-tier class="primary">Confirm</button>
+        <button type="button" data-cancel-tier>Cancel</button>
+      </div>
       <label for="tier-${index}">Recovery group *</label><select id="tier-${index}" name="tier-${index}" required>
       <option value="" ${group ? '' : 'selected'} disabled>Select a recovery group</option>
       ${['database', 'services', 'web'].map(option => `<option value="rg_${option}_prod" ${option === group ? 'selected' : ''}>rg_${option}_prod</option>`).join('')}</select>
-      <p class="hint">One recovery group per tier</p></div><div><button type="button" data-move="-1" aria-label="Move ${name} up">↑</button>
+      <p class="hint">One recovery group per tier</p></div><div class="tier-actions">
+      <button type="button" draggable="true" data-drag-tier aria-label="Drag ${name} to reorder; alternatively use the arrow buttons">⠿ Move</button>
+      <button type="button" data-edit-tier>Edit</button>
+      <button type="button" data-move="-1" aria-label="Move ${name} up">↑</button>
       <button type="button" data-move="1" aria-label="Move ${name} down">↓</button>
       <button type="button" data-remove-tier aria-label="Remove ${name} tier">Remove</button></div></article>`;
   const tiers = `<div class="toolbar"><span id="tier-count" class="tag" role="status"></span><button type="button" id="add-tier" class="primary">+ Add tier</button></div><div id="tiers">
     ${['Database', 'Services', 'Web'].map((name, index) => tierMarkup(name, index, name.toLowerCase())).join('')}</div>
       <p id="tiers-empty" class="notice info" hidden>No recovery tiers configured. Add a tier and assign a recovery group to continue.</p>
-      <p class="hint">Use ↑ / ↓ to change order. Removing a tier only removes its assignment here, not the recovery group. VM selection is not simulated in this prototype.</p>`;
+      <p class="hint">Drag the Move handle above or below another tier, or use ↑ / ↓. Edit changes the tier ID and description. Removing a tier only removes its assignment here, not the recovery group. VM selection is not simulated in this prototype.</p>`;
   const policy = `${select('policy', 'Policy set *', ['production_recovery', 'test_recovery'])}
     <div class="notice info">Policy set IDs are references. Resolve policy names and details from the existing policy-set query.</div>
     <p class="hint">No RPO/RTO or readiness rating is inferred from the selected policy.</p>`;
@@ -113,7 +124,7 @@
   };
   const value = id => document.getElementById(id)?.value ?? '';
   const checkedResources = () => [...document.querySelectorAll('[name="resource"]:checked')].map(input => input.value);
-  const tierValues = () => [...document.querySelectorAll('[data-tier]')].map((tier, index) => ({ order: index + 1, tier: tier.dataset.tier, group: tier.querySelector('select').value }));
+  const tierValues = () => [...document.querySelectorAll('[data-tier]')].map((tier, index) => ({ order: index + 1, tier: tier.dataset.tier, description: tier.querySelector('.tier-description').textContent, group: tier.querySelector('select').value }));
   function update() {
     q('#summary-name').textContent = value('name') || 'Unnamed configuration';
     q('#summary-id').textContent = value('identity') || 'Not set';
@@ -161,11 +172,17 @@
     q('dialog').showModal();
   }
   q('.editor').onsubmit = event => event.preventDefault();
-  q('.editor').oninput = event => { if (event.target.id !== 'search') dirty = true; update(); };
-  q('.editor').onchange = () => { dirty = true; update(); };
+  q('.editor').oninput = event => { if (event.target.closest('.tier-edit')) return; if (event.target.id !== 'search') dirty = true; update(); };
+  q('.editor').onchange = event => { if (event.target.closest('.tier-edit')) return; dirty = true; update(); };
   document.querySelectorAll('[data-step]').forEach(button => { button.onclick = () => showStep(Number(button.dataset.step)); });
   q('#back').onclick = () => showStep(Math.max(0, current - 1));
   q('#next').onclick = () => {
+    if (!isGroup && current === 1 && q('.tier-edit:not([hidden])')) {
+      q('#validation').hidden = false;
+      q('#validation').textContent = 'Confirm or cancel the tier edits before continuing.';
+      q('.tier-edit:not([hidden]) input').focus();
+      return;
+    }
     const invalid = [...q(`[data-panel="${current}"]`).querySelectorAll('input, textarea, select')].find(input => !input.checkValidity());
     if (invalid) {
       q('#validation').hidden = false;
@@ -198,16 +215,55 @@
   } else {
     let nextTierIndex = 3;
     q('#add-tier').onclick = () => {
-      const index = nextTierIndex++;
+      let index = nextTierIndex++;
+      while (tierValues().some(tier => tier.tier === `tier_${index + 1}`)) index = nextTierIndex++;
       q('#tiers').insertAdjacentHTML('beforeend', tierMarkup(`Tier ${index + 1}`, index));
       dirty = true;
       update();
       q(`#tier-${index}`).focus();
     };
     q('#tiers').onclick = event => {
-      const button = event.target.closest('[data-move], [data-remove-tier]');
+      const button = event.target.closest('[data-move], [data-remove-tier], [data-edit-tier], [data-confirm-tier], [data-cancel-tier]');
       if (!button) return;
       const tier = button.closest('[data-tier]');
+      const editor = tier.querySelector('.tier-edit');
+      if (button.hasAttribute('data-edit-tier')) {
+        editor.hidden = false;
+        editor.querySelector('[data-edit-id]').value = tier.dataset.tier;
+        editor.querySelector('[data-edit-description]').value = tier.querySelector('.tier-description').textContent;
+        editor.querySelector('[data-edit-error]').hidden = true;
+        editor.querySelector('input').focus();
+        return;
+      }
+      if (button.hasAttribute('data-cancel-tier')) {
+        editor.hidden = true;
+        tier.querySelector('[data-edit-tier]').focus();
+        return;
+      }
+      if (button.hasAttribute('data-confirm-tier')) {
+        const id = editor.querySelector('[data-edit-id]').value.trim();
+        const description = editor.querySelector('[data-edit-description]').value.trim();
+        const duplicate = [...document.querySelectorAll('[data-tier]')].some(other => other !== tier && other.dataset.tier === id);
+        if (!/^[a-zA-Z0-9_-]+$/.test(id) || !description || duplicate) {
+          const error = editor.querySelector('[data-edit-error]');
+          error.textContent = duplicate ? 'Tier ID must be unique.' : 'Enter an ID (letters, numbers, _ or -) and a description.';
+          error.hidden = false;
+          editor.querySelector(!description && id ? 'textarea' : 'input').focus();
+          return;
+        }
+        tier.dataset.tier = id;
+        tier.querySelector('h3').textContent = id;
+        tier.querySelector('.tier-description').textContent = description;
+        tier.querySelector('[data-move="-1"]').setAttribute('aria-label', `Move ${id} up`);
+        tier.querySelector('[data-move="1"]').setAttribute('aria-label', `Move ${id} down`);
+        tier.querySelector('[data-remove-tier]').setAttribute('aria-label', `Remove ${id} tier`);
+        tier.querySelector('[data-drag-tier]').setAttribute('aria-label', `Drag ${id} to reorder; alternatively use the arrow buttons`);
+        editor.hidden = true;
+        dirty = true;
+        update();
+        tier.querySelector('[data-edit-tier]').focus();
+        return;
+      }
       if (button.hasAttribute('data-remove-tier')) {
         const focusTarget = tier.nextElementSibling?.querySelector('select')
           ?? tier.previousElementSibling?.querySelector('select') ?? q('#add-tier');
@@ -226,6 +282,40 @@
       // Keep focus usable when the moved tier reaches an edge.
       if (button.disabled) tier.querySelector('button:not(:disabled)')?.focus();
     };
+    let draggedTier = null;
+    const clearDropMarkers = () => q('#tiers').querySelectorAll('.drop-before, .drop-after')
+      .forEach(tier => tier.classList.remove('drop-before', 'drop-after'));
+    q('#tiers').ondragstart = event => {
+      const handle = event.target.closest('[data-drag-tier]');
+      if (!handle) { event.preventDefault(); return; }
+      draggedTier = handle.closest('[data-tier]');
+      event.dataTransfer.setData('text/plain', draggedTier.querySelector('select').id);
+      event.dataTransfer.effectAllowed = 'move';
+    };
+    q('#tiers').ondragover = event => {
+      clearDropMarkers();
+      const target = event.target.closest('[data-tier]');
+      if (!draggedTier || !target || target === draggedTier) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'move';
+      const rect = target.getBoundingClientRect();
+      target.classList.add(event.clientY < rect.top + rect.height / 2 ? 'drop-before' : 'drop-after');
+    };
+    q('#tiers').ondrop = event => {
+      const target = event.target.closest('[data-tier]');
+      if (draggedTier && target && target !== draggedTier) {
+        event.preventDefault();
+        const rect = target.getBoundingClientRect();
+        target.parentNode.insertBefore(draggedTier, event.clientY < rect.top + rect.height / 2 ? target : target.nextElementSibling);
+        dirty = true;
+        update();
+        draggedTier.querySelector('[data-drag-tier]').focus();
+      }
+      draggedTier = null;
+      clearDropMarkers();
+    };
+    q('#tiers').ondragend = () => { draggedTier = null; clearDropMarkers(); };
+    q('#tiers').ondragleave = event => { if (!q('#tiers').contains(event.relatedTarget)) clearDropMarkers(); };
   }
   function setupStorageSelection() {
     // Fixture relationships emulate VM discovery; inventory also contains unrelated volumes.

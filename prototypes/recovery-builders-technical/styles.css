@@ -83,6 +83,15 @@ td label { font-weight: 400; }
 .tier p { margin: 4px 0; }
 .tier select { margin-top: 8px; }
 .tier button { padding: 4px 8px; }
+.tier-actions { display: flex; flex-wrap: wrap; align-content: start; gap: 4px; max-width: 160px; }
+.tier-description { color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; }
+.tier h3 { overflow-wrap: anywhere; }
+.tier-edit { border: 1px solid var(--border); background: var(--muted-surface); padding: 12px; margin: 12px 0; }
+.tier-edit label { display: block; margin: 8px 0 4px; }
+.tier-edit textarea { margin-bottom: 8px; }
+[data-drag-tier] { cursor: grab; }
+.tier.drop-before { box-shadow: 0 -3px var(--accent); }
+.tier.drop-after { box-shadow: 0 3px var(--accent); }
 .rail { padding: 24px; border-left: 1px solid var(--border); background: #fbfdff; }
 .rail h2 { font-size: 14px; margin-bottom: 16px; }
 .rail dl { margin: 0; }
