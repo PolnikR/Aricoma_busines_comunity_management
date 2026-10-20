@@ -142,7 +142,7 @@ describe('RecoveryGroupsListPage', () => {
       </QueryClientProvider>,
     )
 
-    await user.click(await screen.findByRole('button', { name: '⋯' }))
+    await user.click(await screen.findByRole('button', { name: 'Actions: Database group' }))
     await user.click(screen.getByRole('menuitem', { name: 'Delete' }))
     await user.click(screen.getByRole('button', { name: 'Delete' }))
 
