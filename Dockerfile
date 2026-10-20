@@ -10,24 +10,31 @@ RUN npm run lint && npm run typecheck && npm run test && npx vite build
 
 FROM nginx:1.27.5-alpine AS runtime
 
-RUN apk add --no-cache bash vim busybox-extras && \
+RUN apk add --no-cache bash vim busybox-extras openssl && \
     sed -i 's#/bin/sh#/bin/bash#' /etc/passwd
 
 SHELL ["/bin/bash", "-c"]
 
-COPY docker/nginx.conf.template /etc/nginx/templates/default.conf.template
+COPY docker/locations.inc.template /etc/nginx/templates/locations.inc.template
 COPY docker/config.js.template /etc/nginx/app-templates/config.js.template
+COPY docker/30-configure-tls.sh /docker-entrypoint.d/30-configure-tls.sh
 COPY docker/40-generate-config.sh /docker-entrypoint.d/40-generate-config.sh
-RUN chmod +x /docker-entrypoint.d/40-generate-config.sh
+COPY docker/healthcheck.sh /usr/local/bin/healthcheck.sh
+RUN chmod +x /docker-entrypoint.d/30-configure-tls.sh /docker-entrypoint.d/40-generate-config.sh /usr/local/bin/healthcheck.sh
 COPY --from=build /app/dist /usr/share/nginx/html
 
 ENV BACKEND_URL=http://10.99.99.53:8000
-ENV KEYCLOAK_URL=http://10.99.99.53:8081
+ENV KEYCLOAK_URL=https://abco.aricoma.local:8443/auth
 ENV KEYCLOAK_REALM=aricoma
 ENV KEYCLOAK_CLIENT_ID=abcm-fe
 ENV AUTH_ENABLED=true
+ENV KEYCLOAK_INTERNAL_URL=http://10.99.99.53:8081
+ENV TLS_MODE=https
+ENV HTTPS_PUBLIC_PORT=8443
 
-EXPOSE 80
+VOLUME /etc/nginx/certs
+
+EXPOSE 80 443
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget -qO- http://127.0.0.1/health || exit 1
+    CMD /usr/local/bin/healthcheck.sh || exit 1

@@ -115,9 +115,9 @@ export function TierCanvas({
             onRecoveryGroupRemoved(id)
           }
         }
-        const recoveryGroupName = tier.recovery_group?.name
-        const recoveryGroupVms = recoveryGroupName
-          ? recoveryGroupVmOptions?.[recoveryGroupName]
+        const recoveryGroupId = tier.recovery_group?.id
+        const recoveryGroupVms = recoveryGroupId
+          ? recoveryGroupVmOptions?.[recoveryGroupId]
           : undefined
         if (recoveryGroupVms) {
           tierCardProps.recoveryGroupVms = recoveryGroupVms

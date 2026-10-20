@@ -17,3 +17,14 @@ export function isRecoveryGroupCompatible(
     && workloadType !== undefined
     && group.workloadType === workloadType
 }
+
+// A retained run id alone does not mean the group is still published after rollback.
+export function isRecoveryGroupEligible(
+  group: Pick<RecoveryGroup, 'sourceCategory' | 'workloadType' | 'pushToOrchestrator' | 'airflowRunId'>,
+  platform: string | undefined,
+): boolean {
+  return isRecoveryGroupCompatible(group, platform)
+    && group.pushToOrchestrator === true
+    && typeof group.airflowRunId === 'string'
+    && group.airflowRunId.trim().length > 0
+}

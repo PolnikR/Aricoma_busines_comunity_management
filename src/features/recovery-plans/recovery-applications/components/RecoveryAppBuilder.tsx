@@ -18,7 +18,7 @@ import { selectProviders } from '@/features/providers-connectors/providers/model
 import { useGetPolicySets } from '@/generated/query/policy-sets/policy-sets.gen'
 import { selectPolicySets } from '@/features/recovery-plans/policy-sets/model/selectPolicySets'
 import { useRecoveryGroups } from '../../recovery-groups/hooks/useRecoveryGroups'
-import { isRecoveryGroupCompatible } from '../utils/recoveryGroupPlatform'
+import { isRecoveryGroupCompatible, isRecoveryGroupEligible } from '../utils/recoveryGroupPlatform'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { AppMetadataForm } from './AppMetadataForm'
 import { TierCanvas } from './TierCanvas'
@@ -120,17 +120,21 @@ export function RecoveryAppBuilder({
   // saved application, whose provider may be gone); without one no group fits.
   const platform = lockedProviders?.platform
     ?? providersQuery.data?.find(provider => provider.id === formState.platform)?.type
-  const availableGroups = useMemo(
+  const compatibleGroups = useMemo(
     () => groups.filter(group => isRecoveryGroupCompatible(group, platform)),
     [groups, platform],
+  )
+  const availableGroups = useMemo(
+    () => compatibleGroups.filter(group => isRecoveryGroupEligible(group, platform)),
+    [compatibleGroups, platform],
   )
   const groupLabels = useMemo(
     () => Object.fromEntries(availableGroups.map(group => [group.id, group.name])),
     [availableGroups],
   )
   const recoveryGroupVmOptions = useMemo(
-    () => Object.fromEntries(availableGroups.map(group => [group.id, group.resources])),
-    [availableGroups],
+    () => Object.fromEntries(compatibleGroups.map(group => [group.id, group.resources])),
+    [compatibleGroups],
   )
   const groupsErrorDescription = resolveUserFacingErrorMessage(groupsError, '')
   const displayedGroupsError = groupsError ? new Error(groupsErrorDescription) : null
@@ -224,7 +228,7 @@ export function RecoveryAppBuilder({
       const alreadySelected = tier.recovery_group.vms.some(vm => vm.name === vmName)
       if (alreadySelected === selected) return prev
 
-      const selectedGroup = availableGroups.find(group => group.id === tier.recovery_group?.id)
+      const selectedGroup = compatibleGroups.find(group => group.id === tier.recovery_group?.id)
       const nextVms = selected
         ? [...tier.recovery_group.vms, { name: vmName, ...selectedGroup?.vmMetadataByName?.[vmName] }]
         : tier.recovery_group.vms.filter(vm => vm.name !== vmName)
@@ -240,7 +244,7 @@ export function RecoveryAppBuilder({
       return { ...prev, tiers: newTiers }
     })
     onDirtyChange?.(true)
-  }, [availableGroups, onDirtyChange])
+  }, [compatibleGroups, onDirtyChange])
 
   const handleTierEdit = useCallback((tierId: string, newTierId: string, updates: { tierDescription: string }) => {
     setFormState(prev => {

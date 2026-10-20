@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { ExecutionIcon, GridIcon, ServerIcon } from '@/shared/icons/Icons'
 import { useNavigate } from 'react-router'
 import { routes } from '@/app/routes'
@@ -12,6 +12,7 @@ import {
   DataTableRequestState,
   DataTableToolbar,
   RowActionsMenu,
+  RowActionsTrigger,
   useTableState,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
@@ -109,6 +110,7 @@ export function RecoveryGroupsTable({
   const [rollbackTarget, setRollbackTarget] = useState<RecoveryGroup | null>(null)
   const [rollbackResult, setRollbackResult] = useState<{ groupName: string; report: RollbackReport } | null>(null)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+  const triggerRefForMenu = useRef<HTMLButtonElement | null>(null)
   const [isRollingBack, setIsRollingBack] = useState(false)
 
   const filterOptions = useMemo(() => ({
@@ -236,17 +238,19 @@ export function RecoveryGroupsTable({
       id: 'actions',
       header: t('tables.recoveryGroups.actions'),
       cell: group => (
-        <Button
-          data-recovery-group-menu-trigger={group.id}
-          size="xs"
-          variant="ghost"
-          onClick={(event: React.MouseEvent) => {
+        <RowActionsTrigger
+          aria-label={`${t('tables.recoveryGroups.actions')}: ${group.name}`}
+          title={t('tables.recoveryGroups.actions')}
+          aria-expanded={openMenuId === group.id}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') event.stopPropagation()
+          }}
+          onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
             event.stopPropagation()
+            triggerRefForMenu.current = event.currentTarget
             setOpenMenuId(openMenuId === group.id ? null : group.id)
           }}
-        >
-          ⋯
-        </Button>
+        />
       ),
     },
   ], [t, openMenuId, platformProviders])
@@ -254,8 +258,6 @@ export function RecoveryGroupsTable({
   const prepareFilters = () => {
     setPendingFilters(filters)
   }
-
-  const triggerRefForMenu = useRef<HTMLButtonElement | null>(null)
 
   const clearFilters = () => {
     setFilters(EMPTY_FILTERS)
@@ -267,12 +269,6 @@ export function RecoveryGroupsTable({
     () => rows.find(g => g.id === openMenuId) ?? null,
     [rows, openMenuId],
   )
-
-  useEffect(() => {
-    if (!openMenuId) return
-    const button = document.querySelector(`[data-recovery-group-menu-trigger="${openMenuId}"]`)
-    triggerRefForMenu.current = button instanceof HTMLButtonElement ? button : null
-  }, [openMenuId])
 
   const toolbar = (
     <DataTableToolbar
@@ -388,6 +384,7 @@ export function RecoveryGroupsTable({
 
       {openMenuId && currentMenuGroup && (
         <RowActionsMenu
+          key={openMenuId}
           triggerRef={triggerRefForMenu}
           open={true}
           onClose={() => { setOpenMenuId(null) }}

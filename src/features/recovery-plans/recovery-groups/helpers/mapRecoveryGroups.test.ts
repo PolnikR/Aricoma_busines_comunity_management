@@ -367,6 +367,19 @@ describe('mapRecoveryGroupApiRecord', () => {
     })
   })
 
+  it.each([
+    [false, 'run-1', false], [null, 'run-1', undefined],
+    [true, null, true], [true, '', true],
+  ] as const)('preserves publication independently of run ID (%s, %s)', (pushed, run_id, expectedPushed) => {
+    const record = readRecord({
+      id: 'database_group', name: 'Database', provider_id_vm: 'vmware-vcenter-01',
+      vms: [{ name: 'DB01' }], volumes: [], orchestration: { pushed, run_id },
+    })
+    const group = mapRecoveryGroupApiRecord(record, [vmwareProvider])
+    expect(group.pushToOrchestrator).toBe(expectedPushed)
+    expect(group.airflowRunId).toBe(run_id)
+  })
+
   it('carries orchestration run id and pushed flag through for a VM group', () => {
     const record = readRecord({
       id: 'database_group2',

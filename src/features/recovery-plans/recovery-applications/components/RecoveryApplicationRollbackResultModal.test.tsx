@@ -37,11 +37,10 @@ const completeReport = {
     volumes: ['recovery-volume-01'],
     errors: [],
   },
-  vmware: {
-    status: 'ok',
-    removed_vms: ['finance-db-01'],
+  vcenter: {
+    errors: [],
   },
-} satisfies RollbackReport & { vmware: unknown }
+} satisfies RollbackReport
 
 describe('RecoveryApplicationRollbackResultModal', () => {
   it('shows known checks and the complete rollback response', () => {
@@ -61,10 +60,44 @@ describe('RecoveryApplicationRollbackResultModal', () => {
     expect(within(dialog).getByText('Status')).toBeInTheDocument()
     expect(within(dialog).getByText('Airflow')).toBeInTheDocument()
     expect(within(dialog).getByText('IBM FlashCopy')).toBeInTheDocument()
-    expect(within(dialog).getByText('3 / 3 passed')).toBeInTheDocument()
-    expect(dialog).toHaveTextContent('"vmware"')
-    expect(dialog).toHaveTextContent('"removed_vms"')
-    expect(dialog).toHaveTextContent('"finance-db-01"')
+    expect(within(dialog).getByText('4 / 4 passed')).toBeInTheDocument()
+    expect(dialog).toHaveTextContent('"vcenter"')
+    expect(dialog).toHaveTextContent('"errors"')
+  })
+
+  it('marks successful IBM Power cleanup without ibm.status as passed', () => {
+    const report: RollbackReport = {
+      status: 'ok',
+      airflow: { status: 'ok' },
+      compute: { errors: [] },
+      ibm: { hosts: [{ host: 'h42e616ff_dr_aix2source', removed: true, unmapped: ['0', '1'] }], errors: [] },
+    }
+    renderInLanguage(
+      <RecoveryApplicationRollbackResultModal open onClose={vi.fn()} applicationName="Power Recovery" report={report} />,
+      'sk',
+    )
+    const dialog = screen.getByRole('dialog', { name: 'Výsledok odstránenia aplikácie obnovy' })
+    expect(within(dialog).getByText('4 / 4 passed')).toBeInTheDocument()
+    expect(within(dialog).getByText('IBM Power LPAR')).toBeInTheDocument()
+    expect(within(dialog).getByText('IBM FlashCopy')).toBeInTheDocument()
+    expect(dialog).not.toHaveTextContent('undefined')
+  })
+
+  it('shows VMware vCenter errors even when nested objects are absent', () => {
+    const report: RollbackReport = {
+      status: 'partial',
+      airflow: { status: 'ok' },
+      vcenter: { errors: ['could not remove datastore'] },
+      ibm: { status: 'ok', errors: [] },
+    }
+    renderInLanguage(
+      <RecoveryApplicationRollbackResultModal open onClose={vi.fn()} applicationName="VMware Recovery" report={report} />,
+      'en',
+    )
+    const dialog = screen.getByRole('dialog', { name: 'Recovery application deletion result' })
+    expect(within(dialog).getByText('VMware vCenter')).toBeInTheDocument()
+    expect(within(dialog).getByText('Deletion partially completed')).toBeInTheDocument()
+    expect(within(dialog).getByText('2 / 4 passed')).toBeInTheDocument()
   })
 
   it.each([

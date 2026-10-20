@@ -1,7 +1,7 @@
 import type { RollbackReport } from '../model/recoveryGroupTypes'
 
 export function isRollbackClean(report: RollbackReport): boolean {
-  const sectionOk = (section: { status: string } | null | undefined) => !section || section.status === 'ok'
+  const sectionOk = (section: { status?: string } | null | undefined) => (section?.status ?? 'ok') === 'ok'
   return report.status === 'ok'
     && sectionOk(report.airflow)
     && sectionOk(report.ibm)

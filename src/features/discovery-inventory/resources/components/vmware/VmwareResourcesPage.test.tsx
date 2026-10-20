@@ -28,9 +28,11 @@ let forceRefreshError: Error | null = null
 let forceRefreshPending = false
 const refetchInventory = vi.fn()
 const forceRefreshInventory = vi.fn().mockResolvedValue(undefined)
-let client: QueryClient
+const clients = new Set<QueryClient>()
 
-function render(ui: ReactNode) {
+function renderWithQueryClient(ui: ReactNode) {
+  const client = new QueryClient({ defaultOptions: { queries: { ...STANDARD_QUERY_OPTIONS, retry: false } } })
+  clients.add(client)
   return renderUi(ui, { wrapper: ({ children }) => <QueryClientProvider client={client}>{children}</QueryClientProvider> })
 }
 
@@ -93,7 +95,6 @@ const props = {
 }
 
 beforeEach(() => {
-  client = new QueryClient({ defaultOptions: { queries: { ...STANDARD_QUERY_OPTIONS, retry: false } } })
   inventoryReadiness = { isSuccess: true, isPlaceholderData: false, isDebouncing: false }
   inventory = { reportedCount: 1, virtualMachines: [vm] }
   inventoryBackgroundFetching = false
@@ -101,13 +102,19 @@ beforeEach(() => {
   forceRefreshError = null
   forceRefreshPending = false
 })
-afterEach(() => { cleanup(); client.clear(); vi.clearAllMocks(); vi.unstubAllGlobals() })
+afterEach(() => {
+  cleanup()
+  clients.forEach(client => { client.clear() })
+  clients.clear()
+  vi.clearAllMocks()
+  vi.unstubAllGlobals()
+})
 
 describe('VmwareResourcesPage', () => {
   it('passes background fetching to the table without replacing the inventory shell', () => {
     inventoryBackgroundFetching = true
 
-    render(<VmwareResourcesPage {...props} />)
+    renderWithQueryClient(<VmwareResourcesPage {...props} />)
 
     expect(screen.getByTestId('vm-table')).toHaveAttribute('data-loading', 'true')
     expect(screen.getByRole('searchbox', { name: 'Search virtual machines' })).toBeInTheDocument()
@@ -115,7 +122,7 @@ describe('VmwareResourcesPage', () => {
   })
 
   it('closes the detail drawer when the selected VM disappears from the provider dataset', () => {
-    const view = render(<VmwareResourcesPage {...props} />)
+    const view = renderWithQueryClient(<VmwareResourcesPage {...props} />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Select vm-01' }))
     expect(screen.getByRole('dialog')).toHaveTextContent('VM 01')
@@ -129,7 +136,7 @@ describe('VmwareResourcesPage', () => {
   it('uses the live force refresh command from the page header', () => {
     forceRefreshPending = true
 
-    render(<VmwareResourcesPage {...props} />)
+    renderWithQueryClient(<VmwareResourcesPage {...props} />)
 
     expect(screen.getByText('Updating')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Refresh' }))
@@ -141,7 +148,7 @@ describe('VmwareResourcesPage', () => {
   it('keeps inventory query-error retry on ordinary refetch', () => {
     inventoryError = true
 
-    render(<VmwareResourcesPage {...props} />)
+    renderWithQueryClient(<VmwareResourcesPage {...props} />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
 
@@ -152,7 +159,7 @@ describe('VmwareResourcesPage', () => {
   it('keeps cached inventory visible when live refresh fails', () => {
     forceRefreshError = new Error('Live refresh failed')
 
-    render(<VmwareResourcesPage {...props} />)
+    renderWithQueryClient(<VmwareResourcesPage {...props} />)
 
     expect(screen.getByTestId('vm-table')).toBeInTheDocument()
     expect(screen.getByRole('alert')).toHaveTextContent('pages.virtualMachines.error.latestFailed')
@@ -173,7 +180,7 @@ describe('VmwareResourcesPage', () => {
       if (state === 'debouncing') inventoryReadiness.isDebouncing = true
       if (state === 'fetching') inventoryBackgroundFetching = true
       if (state === 'force refresh') forceRefreshPending = true
-      const view = render(<VmwareResourcesPage {...props} backgroundPrefetchProvider={candidate}
+      const view = renderWithQueryClient(<VmwareResourcesPage {...props} backgroundPrefetchProvider={candidate}
         providersPending={state === 'providers pending'} providersSuccess={state !== 'disabled'} />)
       expect(idle).not.toHaveBeenCalled()
       expect(fetchMock).not.toHaveBeenCalled()

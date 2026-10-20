@@ -13,11 +13,23 @@ export default definePatch({
         status: { type: 'string' }, dag_id: { type: 'string' }, paused: { type: 'string' },
         failed_runs: list, dag_file: { type: 'string' }, dag_record: { type: 'string' },
       }, ['status']),
-      RollbackIbmSection: loose({ status: { type: 'string' }, consistency_groups: list, fcmaps: list, volumes: list, errors: list }, ['status']),
+      // Power rollback returns { hosts, errors } without status; group rollback may include status.
+      // Inner records stay unknown: failed or partial cleanup need not include every field.
+      RollbackIbmSection: loose({ status: { type: 'string' }, hosts: list, consistency_groups: list, fcmaps: list, volumes: list, errors: list }, []),
+      // These fields are not present in BE OpenAPI today; preserve BE response
+      // extensions through Orval regeneration without enforcing nested shapes.
+      RollbackComputeSection: loose({ status: { type: 'string' }, errors: list }),
+      RollbackVcenterSection: loose({ status: { type: 'string' }, errors: list }),
       RollbackReport: {
         ...report,
         additionalProperties: true,
-        properties: { ...report.properties, airflow: optional('RollbackAirflowSection'), ibm: optional('RollbackIbmSection') },
+        properties: {
+          ...report.properties,
+          airflow: optional('RollbackAirflowSection'),
+          ibm: optional('RollbackIbmSection'),
+          compute: optional('RollbackComputeSection'),
+          vcenter: optional('RollbackVcenterSection'),
+        },
       },
     })
   },

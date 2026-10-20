@@ -361,6 +361,25 @@ describe('HelpPopover', () => {
       expect(panel()).toHaveStyle({ left: '477px' })
     })
 
+    it.each(['panel', 'content'])('keeps its height constraint untouched when the %s scrolls', (target) => {
+      layout({ left: 400, top: 40 })
+      renderHelp()
+      fireEvent.click(trigger())
+      const dialog = screen.getByRole('dialog', { name: 'How a recovery group works' })
+      const observer = new MutationObserver(() => undefined)
+      observer.observe(dialog, { attributes: true, attributeFilter: ['style'] })
+
+      try {
+        fireEvent.scroll(target === 'panel' ? dialog : screen.getByText('Resources recovered together.'))
+
+        // Removing the height cap even briefly resets the browser's scroll position.
+        expect(observer.takeRecords()).toHaveLength(0)
+        expect(dialog).toHaveStyle({ top: '80px', left: '132px', maxHeight: '512px' })
+      } finally {
+        observer.disconnect()
+      }
+    })
+
     it('follows the trigger on resize and on scroll', () => {
       layout({ left: 400, top: 40 })
       renderHelp()

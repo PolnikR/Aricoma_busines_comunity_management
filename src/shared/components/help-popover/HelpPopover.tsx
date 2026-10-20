@@ -121,13 +121,18 @@ export function HelpPopover({ triggerLabel, title, closeLabel, width = 'default'
       const left = Math.min(Math.max(VIEWPORT_GAP, anchor.right - width), viewportWidth - VIEWPORT_GAP - width)
       setPlacement({ top, left: Math.max(VIEWPORT_GAP, left), maxHeight, placed: true })
     }
+    const onScroll = (event: Event) => {
+      // Measuring removes the height cap and resets scrolling inside the panel.
+      if (event.target instanceof Node && panelRef.current?.contains(event.target)) return
+      place()
+    }
     place()
     window.addEventListener('resize', place)
-    // Capture: scrolling any container (e.g. a DetailView section) moves the trigger.
-    window.addEventListener('scroll', place, true)
+    // Capture: scrolling outside the panel (e.g. a DetailView section) can move the trigger.
+    window.addEventListener('scroll', onScroll, true)
     return () => {
       window.removeEventListener('resize', place)
-      window.removeEventListener('scroll', place, true)
+      window.removeEventListener('scroll', onScroll, true)
     }
   }, [open])
 
