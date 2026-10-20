@@ -3,6 +3,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
+import { getGetRecoveryGroupInventoryQueryKey, useGetRecoveryGroupInventory } from '@/generated/query/recovery-groups/recovery-groups.gen'
+import { STANDARD_QUERY_OPTIONS } from '@/shared/query/cachePolicy'
 import { useRecoveryGroups } from './useRecoveryGroups'
 
 const mocks = vi.hoisted(() => ({ useProviders: vi.fn() }))
@@ -82,8 +84,7 @@ const calls = (mock: ReturnType<typeof stubFetch>, path: string) => mock.mock.ca
   .map(([input, init]) => ({ url: new URL(input, 'http://localhost'), init }))
   .filter(call => call.url.pathname === path)
 
-function createWrapper() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+function createWrapper(client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })) {
   return function Wrapper({ children }: { children: ReactNode }) {
     return <QueryClientProvider client={client}>{children}</QueryClientProvider>
   }
@@ -368,5 +369,91 @@ describe('useRecoveryGroups', () => {
     expect(Object.fromEntries(rollback?.url.searchParams ?? [])).toEqual({ recovery_group_id: 'database_group', provider_id: 'airflow-01' })
     expect(returned).toMatchObject(report)
     await waitFor(() => { expect(calls(mock, '/api/get_recovery_groups')).toHaveLength(2) })
+  })
+
+  it.each([
+    { operation: 'rollback', status: 'ok' },
+    { operation: 'rollback', status: 'partial' },
+    { operation: 'delete', status: 'ok' },
+    { operation: 'delete', status: 'partial' },
+  ])('refreshes only the affected inventory after $operation with $status report', async ({ operation, status }) => {
+    const client = new QueryClient({ defaultOptions: { queries: { ...STANDARD_QUERY_OPTIONS, retry: false }, mutations: { retry: false } } })
+    const inventory = (groupId: string, runId: string) => ({
+      recovery_group_id: groupId, recovery_group_name: groupId, run_id: runId,
+      volumes: { 'VOL-01': { found: true, relations: [{ role: 'source', mapping: { id: 'fc-1' }, paired_volume: { name: 'snapshot-1' } }] } },
+    })
+    const key = getGetRecoveryGroupInventoryQueryKey({ run_id: 'run-1' })
+    const previousKey = getGetRecoveryGroupInventoryQueryKey({ run_id: 'previous-run' })
+    const otherKey = getGetRecoveryGroupInventoryQueryKey({ run_id: 'other-run' })
+    client.setQueryData(key, inventory(wireGroup.id, 'run-1'))
+    client.setQueryData(previousKey, inventory(wireGroup.id, 'previous-run'))
+    client.setQueryData(otherKey, inventory('other-group', 'other-run'))
+    client.setQueryData(['unrelated'], { recovery_group_id: wireGroup.id })
+    const report = { status }
+    const mock = stubFetch({
+      '/api/rollback_group_from_orchestrator': () => ({ recovery_groups: [wireGroup], rollback: report }),
+      '/api/delete_recovery_group': () => ({ recovery_groups: [], rollback: report }),
+      '/api/get_recovery_group_inventory': () => ({
+        ...inventory(wireGroup.id, 'run-1'), volumes: { 'VOL-01': { found: true, relations: [] } },
+      }),
+    })
+    const { result } = renderHook(() => ({
+      groups: useRecoveryGroups(),
+      inventory: useGetRecoveryGroupInventory({ run_id: 'run-1' }),
+      otherInventory: useGetRecoveryGroupInventory({ run_id: 'other-run' }),
+    }), { wrapper: createWrapper(client) })
+    await waitFor(() => { expect(result.current.groups.groups).toHaveLength(1) })
+    expect(result.current.inventory.data?.volumes['VOL-01']?.relations).toHaveLength(1)
+    expect(calls(mock, '/api/get_recovery_group_inventory')).toHaveLength(0)
+
+    await act(async () => {
+      if (operation === 'rollback') await result.current.groups.rollback(wireGroup.id, 'airflow-01')
+      else await result.current.groups.remove({ ...loadedGroup(result.current.groups.groups), pushToOrchestrator: true, orchestrationProviderId: 'airflow-01' })
+    })
+
+    await waitFor(() => { expect(result.current.inventory.data?.volumes['VOL-01']?.relations).toHaveLength(0) })
+    expect(calls(mock, '/api/get_recovery_group_inventory').map(call => call.url.searchParams.get('run_id'))).toEqual(['run-1'])
+    expect(client.getQueryState(previousKey)?.isInvalidated).toBe(true)
+    expect(client.getQueryState(otherKey)?.isInvalidated).toBe(false)
+    expect(result.current.otherInventory.data?.volumes['VOL-01']?.relations).toHaveLength(1)
+    expect(client.getQueryState(['unrelated'])?.isInvalidated).toBe(false)
+    if (operation === 'rollback') {
+      expect(result.current.groups.groups[0]?.id).toBe(wireGroup.id)
+      expect(calls(mock, '/api/delete_recovery_group')).toHaveLength(0)
+    }
+    client.clear()
+  })
+
+  it.each(['rollback', 'delete'])('restarts a pending first inventory load after %s', async operation => {
+    const client = new QueryClient({ defaultOptions: { queries: { ...STANDARD_QUERY_OPTIONS, retry: false }, mutations: { retry: false } } })
+    let releaseInventory: (response: Response) => void = () => { throw new Error('Inventory request has not started') }
+    const pendingInventory = new Promise<Response>(resolve => { releaseInventory = resolve })
+    const group = { ...wireGroup, orchestration: { run_id: 'run-1', pushed: true, provider_id: 'airflow-01' } }
+    const freshInventory = { recovery_group_id: wireGroup.id, recovery_group_name: wireGroup.name, run_id: 'run-1', volumes: { 'VOL-01': { found: true, relations: [] } } }
+    const mock = stubFetch()
+    mock.mockImplementation(input => {
+      const url = new URL(input, 'http://localhost')
+      if (url.pathname === '/api/get_recovery_group_inventory') {
+        return calls(mock, url.pathname).length === 1 ? pendingInventory : Promise.resolve(new Response(JSON.stringify(freshInventory)))
+      }
+      const body = url.pathname === '/api/get_recovery_groups'
+        ? { recovery_groups: [group] }
+        : { recovery_groups: operation === 'rollback' ? [wireGroup] : [], rollback: { status: 'ok' } }
+      return Promise.resolve(new Response(JSON.stringify(body), { headers: { 'Content-Type': 'application/json' } }))
+    })
+    const { result } = renderHook(() => ({ groups: useRecoveryGroups(), inventory: useGetRecoveryGroupInventory({ run_id: 'run-1' }) }), { wrapper: createWrapper(client) })
+    await waitFor(() => { expect(result.current.groups.groups).toHaveLength(1) })
+    expect(result.current.inventory.data).toBeUndefined()
+    expect(calls(mock, '/api/get_recovery_group_inventory')).toHaveLength(1)
+
+    await act(async () => {
+      if (operation === 'rollback') await result.current.groups.rollback(wireGroup.id, 'airflow-01')
+      else await result.current.groups.remove(loadedGroup(result.current.groups.groups))
+      releaseInventory(new Response(JSON.stringify({ ...freshInventory, volumes: { 'VOL-01': { found: true, relations: [{ role: 'source', mapping: {}, paired_volume: { name: 'deleted-snapshot' } }] } } })))
+    })
+
+    await waitFor(() => { expect(result.current.inventory.data?.volumes['VOL-01']?.relations).toHaveLength(0) })
+    expect(calls(mock, '/api/get_recovery_group_inventory')).toHaveLength(2)
+    client.clear()
   })
 })

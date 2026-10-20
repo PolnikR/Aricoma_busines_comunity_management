@@ -1,12 +1,14 @@
 import { useCallback } from 'react'
+import { useQueryClient, type Query } from '@tanstack/react-query'
 import { useGetProviders } from '@/generated/query/providers/providers.gen'
 import {
+  getGetRecoveryGroupInventoryQueryKey,
   useDeleteRecoveryGroup,
   useGetRecoveryGroups,
   useRollbackGroupFromOrchestrator,
   useSubmitRecoveryGroup,
 } from '@/generated/query/recovery-groups/recovery-groups.gen'
-import type { RecoveryGroupsResponse, RecoveryGroupsResponseOutput } from '@/generated/query/zod'
+import type { RecoveryGroupInventoryResponse, RecoveryGroupsResponse, RecoveryGroupsResponseOutput } from '@/generated/query/zod'
 import { selectProviders } from '@/features/providers-connectors/providers/model/selectProviders'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import { toProgrammaticId } from '@/shared/utils/programmaticId'
@@ -37,6 +39,7 @@ function requireRollback(response: RecoveryGroupsResponse, operation: string): R
 // providers (workload type and provider resolution), so its select is rebuilt
 // when the provider set changes.
 export function useRecoveryGroups() {
+  const queryClient = useQueryClient()
   const providerQuery = useGetProviders({ role: 'all' }, { query: { select: selectProviders } })
   const providers = providerQuery.data
   const selectGroups = useCallback(
@@ -51,6 +54,22 @@ export function useRecoveryGroups() {
   const updateMutation = useSubmitRecoveryGroup()
   const deleteMutation = useDeleteRecoveryGroup()
   const rollbackMutation = useRollbackGroupFromOrchestrator()
+
+  // Inventory keys contain run_id; the cached response identifies the group.
+  // This scoped invalidation cannot be expressed by Orval's static invalidation rules.
+  const invalidateInventory = async (groupId: string, runId?: string | null) => {
+    const currentInventory = runId ? queryClient.getQueryCache().find({
+      queryKey: getGetRecoveryGroupInventoryQueryKey({ run_id: runId }), exact: true,
+    }) : undefined
+    const filters = {
+      queryKey: getGetRecoveryGroupInventoryQueryKey(),
+      predicate: (inventoryQuery: Query) => inventoryQuery === currentInventory
+        || (inventoryQuery.state.data as RecoveryGroupInventoryResponse | undefined)?.recovery_group_id === groupId,
+    }
+    // A first load has no data to identify its group yet; cancel it before refetching.
+    await queryClient.cancelQueries(filters)
+    await queryClient.invalidateQueries(filters)
+  }
 
   const submit = async (
     mutation: typeof createMutation,
@@ -111,13 +130,16 @@ export function useRecoveryGroups() {
     const response = await deleteMutation.mutateAsync({
       params: { recovery_group_id: group.id, rollback_from_orchestrator: true, provider_id: providerId },
     })
+    await invalidateInventory(group.id, group.airflowRunId)
     return requireRollback(response, 'DELETE /delete_recovery_group')
   }
 
   const rollback = async (groupId: string, providerId: string): Promise<RollbackReport> => {
+    const runId = query.data?.find(group => group.id === groupId)?.airflowRunId
     const response = await rollbackMutation.mutateAsync({
       params: { recovery_group_id: groupId, provider_id: providerId },
     })
+    await invalidateInventory(groupId, runId)
     return requireRollback(response, 'POST /rollback_group_from_orchestrator')
   }
 
