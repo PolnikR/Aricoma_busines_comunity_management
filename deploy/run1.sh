@@ -174,6 +174,17 @@ if [ "$TLS_ENABLED" = "true" ]; then
         fi
     done
 
+    # The container runs as root, so a certificate it created earlier is root-owned and
+    # would block this copy and later renewal by $REQUIRED_USER. Reclaim ownership first
+    # (through a throwaway container, since $REQUIRED_USER is in the docker group).
+    echo "Reclaiming ownership of $CERT_DIR for $REQUIRED_USER ..."
+    if ! docker run --rm --entrypoint chown \
+            -v "$CERT_DIR:/etc/nginx/certs" \
+            "$DOCKER_IMAGE" -R "$(id -u):$(id -g)" /etc/nginx/certs; then
+        echo "ERROR: could not reclaim ownership of $CERT_DIR."
+        exit 1
+    fi
+
     # Optional files shipped next to the script (e.g. your own tls.crt / tls.key).
     if [ -n "$(ls -A "$SCRIPT_DIR/persistency" 2>/dev/null)" ]; then
         cp -r "$SCRIPT_DIR/persistency/." "$CERT_DIR/"
@@ -209,6 +220,18 @@ if [ "$TLS_ENABLED" = "true" ]; then
             echo "WARNING: the existing certificate in $CERT_DIR is not valid for $APP_HOST."
             echo "         To issue a new one: delete $CERT_DIR/tls.crt and tls.key, then rerun."
         fi
+    fi
+
+    # Same check as $REQUIRED_USER on the host: every file/dir must be owned by and
+    # writable for this user, so the certificate can be renewed (deleted) without sudo.
+    BLOCKED=$(find "$CERT_DIR" \( ! -user "$REQUIRED_USER" -o ! -readable -o ! -writable \) 2>/dev/null | head -n 5)
+    if ! { touch "$CERT_DIR/.perm_check_user_$$" && rm "$CERT_DIR/.perm_check_user_$$"; }; then
+        BLOCKED="$BLOCKED"$'\n'"$CERT_DIR (cannot create/delete as $REQUIRED_USER)"
+    fi
+    if [ -n "$BLOCKED" ]; then
+        echo "ERROR: '$REQUIRED_USER' does not have full access to everything under $CERT_DIR:"
+        echo "$BLOCKED"
+        exit 1
     fi
 fi
 
