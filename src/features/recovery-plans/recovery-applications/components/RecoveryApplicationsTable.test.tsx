@@ -76,6 +76,21 @@ const developmentApplication: RecoveryApplicationListItem = {
 }
 
 describe('RecoveryApplicationsTable', () => {
+  it('finds the displayed name as well as ID without searching the description', async () => {
+    const user = userEvent.setup()
+    renderTable(<RecoveryApplicationsTable applications={[application, developmentApplication]} />)
+    const search = screen.getByRole('searchbox')
+    await user.type(search, '  FINANCE RECOVERY  ')
+    expect(screen.getByText('Finance Recovery')).toBeInTheDocument()
+    expect(screen.queryByText('Development Recovery')).not.toBeInTheDocument()
+    await user.clear(search)
+    await user.type(search, 'finance-app')
+    expect(screen.getByText('Finance Recovery')).toBeInTheDocument()
+    await user.clear(search)
+    await user.type(search, 'Finance workloads')
+    expect(screen.queryByText('Finance Recovery')).not.toBeInTheDocument()
+  })
+
   it('anchors the actions menu to the clicked row on first open and when switching rows', async () => {
     const user = userEvent.setup()
     renderTable(

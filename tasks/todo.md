@@ -192,15 +192,17 @@ Návrh a hranice: [plan.md, sekcia 8](plan.md#8-opravy-funkčného-auditu). Úlo
 **Popis:** Feature-local search adaptér pre ID a zobrazovaný názov, bez zmeny shared search kontraktu.
 **Súbory:** `src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.tsx`, jeho `.test.tsx`. **Rozsah:** S, 2 súbory. **Závislosti:** žiadne.
 **Akceptácia:**
-- [ ] Rozdielne ID a názov sa dajú vyhľadať oba, case-insensitive a s trimovaním search.
-- [ ] Search funguje s environment/platform filtrami, resetom stránky a no-match stavom.
-- [ ] Delete/edit/detail dostanú pôvodný záznam; description sa bez požiadavky neprehľadáva.
+- [x] Rozdielne ID a názov sa dajú vyhľadať oba, case-insensitive a s trimovaním search.
+- [x] Search funguje s environment/platform filtrami, resetom stránky a no-match stavom.
+- [x] Delete/edit/detail dostanú pôvodný záznam; description sa bez požiadavky neprehľadáva.
 **Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.test.tsx`.
+
+**A4 vysledok (2026-10-21):** red search-name regresia zlyhala; green 26/26 cez node Vitest CLI s cestou uvedenou v A4. Focused ESLint oboch zmenenych suborov presiel. A3 commit: 6466d4bb.
 
 ## Checkpoint D: Runs a search
 
-- [ ] A3–A4 majú opravený používateľský výsledok a zelené regresné testy.
-- [ ] Horný Refresh a filtre fungujú; focused lint a diff check prešli.
+- [x] A3–A4 majú opravený používateľský výsledok a zelené regresné testy.
+- [x] Horný Refresh a filtre fungujú; focused lint a diff check prešli.
 
 ## A5: Texty neaktuálneho inventára a chýbajúceho reportu
 

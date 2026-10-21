@@ -258,8 +258,9 @@ export function RecoveryApplicationsTable({
     }] : []),
   ], [t, providers, platformProviders, openMenuId, onDelete])
 
-  const table = useTableState(rows, {
-    searchFields: ['id'],
+  const searchableRows = useMemo(() => rows.map(application => ({ id: application.id, name: application.data.application.name, application })), [rows])
+  const table = useTableState(searchableRows, {
+    searchFields: ['id', 'name'],
   })
 
   const currentMenuApp = useMemo(
@@ -378,7 +379,7 @@ export function RecoveryApplicationsTable({
       >
         <DataTable
           columns={columns}
-          rows={table.pageItems}
+          rows={table.pageItems.map(row => row.application)}
           isLoading={isLoading}
           rowKey={(app) => app.id}
           density={table.density}
