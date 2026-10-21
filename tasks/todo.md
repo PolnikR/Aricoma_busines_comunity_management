@@ -151,10 +151,12 @@ Návrh a hranice: [plan.md, sekcia 8](plan.md#8-opravy-funkčného-auditu). Úlo
 **Popis:** Zaviesť cielenú success politiku sekcie 8.2 a zapojiť submit/delete infra aj platform providerov; zachovať generated vlastné invalidácie aj lokálne callbacky. Aplikácia aj integračné testy použijú spoločnú factory QueryClient s rovnakou MutationCache politikou; každý test má vlastnú novú inštanciu s cleanupom. Testové overrides nesmú nahradiť invalidáciu.
 **Súbory:** nové/plánované `src/shared/query/createAppQueryClient.ts`, `src/shared/query/providerMutationInvalidation.ts`, `src/shared/query/providerMutationInvalidation.test.tsx`; `src/app/providers.tsx`. **Rozsah:** M, 4 súbory. **Závislosti:** žiadne.
 **Akceptácia:**
-- [ ] Generated submit mutácia na klientovi zo spoločnej aplikačnej factory invaliduje čerstvú cache a vyvolá skutočný refetch aktívneho dotknutého inventára/search vrátane agregovaných variantov; test overí nový request aj aktualizované dáta. Neaktívna query je invalidovaná a refetchne sa po pripojení observera; iný explicitný provider zostáva nedotknutý.
-- [ ] Delete neponechá staré dáta po dobehnutí pending requestu; platform provider sa nezamieňa s infra ID a obnoví svoje skutočné závislé orchestration queries.
-- [ ] Error nespustí success invalidáciu; callbacky a relevantné skipInvalidation správanie ostávajú. Bez ručných generated úprav a refetch all.
+- [x] Generated submit mutácia na klientovi zo spoločnej aplikačnej factory invaliduje čerstvú cache a vyvolá skutočný refetch aktívneho dotknutého inventára/search vrátane agregovaných variantov; test overí nový request aj aktualizované dáta. Neaktívna query je invalidovaná a refetchne sa po pripojení observera; iný explicitný provider zostáva nedotknutý.
+- [x] Delete neponechá staré dáta po dobehnutí pending requestu; platform provider sa nezamieňa s infra ID a obnoví svoje skutočné závislé orchestration queries.
+- [x] Error nespustí success invalidáciu; callbacky a relevantné skipInvalidation správanie ostávajú. Bez ručných generated úprav a refetch all.
 **Overenie:** `npm.cmd exec vitest run src/shared/query/providerMutationInvalidation.test.tsx src/features/providers-connectors/providers/model/providersWire.test.tsx`.
+
+**A1 výsledok (2026-10-21):** baseline providersWire 3/3; spoločný beh cache + wire 14/14; po doplnení pending-delete cache 12/12. Spustené cez `node node_modules/vitest/vitest.mjs run` s presnými cestami uvedenými vyššie. Infra rodiny: get_power_vm, get_volumes, get_volume_tree, tags, vdisks_by_vm a POST vms/search; platform závislosť: get_orchestrator_runs. Existujúce call sites mimo generated nepoužívajú skipInvalidation; generated vlastné callbacky/invalidácie ostali bez zmien. Full suite/build nebol spustený.
 
 ## A2: F-04 — závislosti credentials
 
