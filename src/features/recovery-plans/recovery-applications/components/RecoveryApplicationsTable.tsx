@@ -124,12 +124,13 @@ function getBaseColumns(t: ReturnType<typeof useTranslation>['t'], providers?: {
     },
   },
   {
-    id: 'submission',
-    header: t('tables.recovery.submission'),
-    cell: (app) => {
-      if (!app.submission) return <span className="text-text-subtle">—</span>
-      return <Badge color={getSubmissionBadgeColor(app.submission.status)} size="sm">{app.submission.status}</Badge>
-    },
+    id: 'orchestration',
+    header: t('tables.recoveryGroups.orchestration'),
+    cell: (app) => (
+      <Badge color={app.pushToOrchestrator ? 'success' : 'light'} size="sm">
+        {t(app.pushToOrchestrator ? 'common.yes' : 'common.no')}
+      </Badge>
+    ),
   },
   ]
 }
