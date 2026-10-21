@@ -1,5 +1,5 @@
 import type { ComponentProps, ReactElement } from 'react'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -76,6 +76,34 @@ const developmentApplication: RecoveryApplicationListItem = {
 }
 
 describe('RecoveryApplicationsTable', () => {
+  it.each(['ok', 'partial', 'failed', 'skipped'] as const)('continues to show the actual %s rollback report', async status => {
+    const user = userEvent.setup()
+    const onDelete = vi.fn().mockResolvedValue({ applications: [], rollback: { status } })
+    renderTable(<RecoveryApplicationsTable applications={[application]} onDelete={onDelete} />)
+    await user.click(screen.getByText('Finance Recovery'))
+    await user.click(within(screen.getByRole('dialog', { name: 'Application detail' })).getByRole('button', { name: 'Delete' }))
+    await user.click(within(screen.getByRole('dialog', { name: /Delete recovery application/i })).getByRole('button', { name: 'Delete' }))
+    expect(await screen.findByRole('dialog', { name: 'Recovery application deletion result' })).toBeInTheDocument()
+    expect(screen.queryByText(/The rollback outcome cannot be confirmed/)).not.toBeInTheDocument()
+    expect(onDelete).toHaveBeenCalledOnce()
+  })
+
+  it.each([true, false])('reports unavailable rollback details only for orchestrated deletion: %s', async orchestrated => {
+    const user = userEvent.setup()
+    const onDelete = vi.fn().mockResolvedValue({ applications: [], rollback: null })
+    renderTable(<RecoveryApplicationsTable applications={[{ ...application, pushToOrchestrator: orchestrated }]} onDelete={onDelete} />)
+    await user.click(screen.getByText('Finance Recovery'))
+    await user.click(within(screen.getByRole('dialog', { name: 'Application detail' })).getByRole('button', { name: 'Delete' }))
+    const confirmation = screen.getByRole('dialog', { name: /Delete recovery application/i })
+    await user.click(within(confirmation).getByRole('button', { name: 'Delete' }))
+    await waitFor(() => { expect(screen.queryByRole('dialog', { name: /Delete recovery application/i })).not.toBeInTheDocument() })
+    if (orchestrated) {
+      expect(screen.getByRole('alert')).toHaveTextContent('The rollback outcome cannot be confirmed.')
+      expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument()
+    } else expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(onDelete).toHaveBeenCalledOnce()
+  })
+
   it('finds the displayed name as well as ID without searching the description', async () => {
     const user = userEvent.setup()
     renderTable(<RecoveryApplicationsTable applications={[application, developmentApplication]} />)

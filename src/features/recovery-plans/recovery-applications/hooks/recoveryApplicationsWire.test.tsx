@@ -49,6 +49,18 @@ function wrapper({ children }: { children: ReactNode }) {
 }
 
 describe('recovery applications wire contract', () => {
+  it.each([undefined, null])('accepts an optional rollback report from an orchestrated delete: %s', async rollback => {
+    const mock = stubFetch({ applications: [], ...(rollback === undefined ? {} : { rollback }) })
+    const { result } = renderHook(() => useDeleteRecoveryApplication(), { wrapper })
+    let returned: unknown
+    await act(async () => {
+      returned = await result.current.mutateAsync({ ...application, pushToOrchestrator: true, orchestrationProviderId: 'airflow-01' })
+    })
+    expect(returned).toEqual({ applications: [], rollback: null })
+    expect(request(mock).params['rollback_from_orchestrator']).toBe('true')
+    expect(mock).toHaveBeenCalledOnce()
+  })
+
   afterEach(() => { vi.unstubAllGlobals() })
 
   it('deletes a local application without rollback parameters', async () => {

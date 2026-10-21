@@ -274,15 +274,17 @@ Návrh a hranice: [plan.md, sekcia 8](plan.md#8-opravy-funkčného-auditu). Úlo
 **Popis:** Reprodukovať optional odpoveď a po orchestrated delete bez reportu ukázať neutrálne varovanie, bez zmeny backendového kontraktu.
 **Súbory:** `src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.tsx`, jeho `.test.tsx`; `src/features/recovery-plans/recovery-applications/hooks/recoveryApplicationsWire.test.tsx`; podľa potreby `src/features/recovery-plans/recovery-applications/hooks/useDeleteRecoveryApplication.ts`. **Rozsah:** M, najviac 4 súbory. **Závislosti:** A5, A4 kvôli zdieľaným súborom.
 **Akceptácia:**
-- [ ] Wire stub HTTP success bez/null reportu prejde kontraktom; orchestrated app zobrazí oznámenie o nedostupnom výsledku rollbacku.
-- [ ] Local delete bez reportu ostáva úspešný bez varovania; ok/partial/failed/skipped reporty sa naďalej zobrazujú.
-- [ ] Nevznikne druhý delete ani zavádzajúci výsledok rollbacku; zoznam sa obnoví a HTTP error ostane samostatnou chybou.
+- [x] Wire stub HTTP success bez/null reportu prejde kontraktom; orchestrated app zobrazí oznámenie o nedostupnom výsledku rollbacku.
+- [x] Local delete bez reportu ostáva úspešný bez varovania; ok/partial/failed/skipped reporty sa naďalej zobrazujú.
+- [x] Nevznikne druhý delete ani zavádzajúci výsledok rollbacku; zoznam sa obnoví a HTTP error ostane samostatnou chybou.
 **Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.test.tsx src/features/recovery-plans/recovery-applications/hooks/recoveryApplicationsWire.test.tsx`.
+
+**A10 vysledok (2026-10-21):** red chybajuceho oznamenia potvrdeny; green 47/47 v app table, wire a rollback result modal testoch cez node Vitest CLI s explicitnymi cestami. Optional undefined/null report aj ok/partial/failed/skipped su pokryte; local delete bez varovania a bez druheho delete. Focused ESLint 3 zmenenych suborov presiel. A9 commit: 499c2742.
 
 ## Checkpoint F: konfigurácia a podmienečné scenáre
 
-- [ ] A8–A10 majú reprodukciu a nápravu; optional rollback kontrakt ostal zachovaný.
-- [ ] Edit iného provider poľa zachová tagy; navigácia histórie nepoužíva starý offset.
+- [x] A8–A10 majú reprodukciu a nápravu; optional rollback kontrakt ostal zachovaný.
+- [x] Edit iného provider poľa zachová tagy; navigácia histórie nepoužíva starý offset.
 
 ## A11: Odovzdanie opráv a dôkazy
 
