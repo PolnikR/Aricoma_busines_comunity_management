@@ -1,340 +1,205 @@
-﻿# Úlohy: dizajn Recovery Group a opravy funkčného auditu
+# Úlohy: IBM Power Manual WWPN Entry
 
-Dátum: 2026-10-20. Plán: [plan.md](plan.md). Stav: pripravené na realizáciu; nižšie nie je implementácia označená ako hotová.
-Rozsah T1–T10: iba Group builder. V tomto pôvodnom bloku sa Recovery Apps/tiers a Resources drag-and-drop nemenia. Rozšírenie 2026-10-21: A1–A11 pokrývajú výhradne funkčné opravy sekcie 8 plánu; pôvodné otvorené úlohy zostávajú zachované.
-Záväzná podmienka T1–T10: zachovať aplikačné štýly a komponenty aj existujúce doménové správanie. HTML je referencia rozloženia a ovládania; jeho samostatné CSS sa nekopíruje. Nepridávať nové validačné ani lifecycle pravidlá.
-Relatívne feature cesty v T1–T10 majú prefix `src/features/recovery-plans/recovery-groups/`. Blok A používa explicitné cesty od koreňa repozitára.
+Dátum: 2026-10-21. Stav: implementované a overené inline, 2026-10-21. Kontext a návrh: [plan.md](plan.md).
+Používateľ schválil prepísanie plánu a následne vykonanie inline; W1–W5 sú dokončené. Pôvodné Recovery Group T1–T10 sa tým neoznačujú za dokončené.
 
-## T1: VM pôvod objavených volumes
+## W1: Preklady manuálneho režimu
 
-**Popis:** Rozšíriť existujúci discovery hook o odvodené väzby volume → VM bez nových requestov alebo zmeny query keys.
-**Súbory:** `hooks/useRecoveryGroupRelatedVolumes.ts`, `hooks/useRecoveryGroupRelatedVolumes.test.tsx`.
+**Popis a konkrétne zmeny:** Doplniť rovnaké ploché kľúče do troch locales: recoveryAppPolicies.form.manualWwpnEntry, recoveryAppPolicies.form.manualFrequencyInfo, recoveryAppPolicies.validation.manualModesExclusive, orchestratorPush.manualOnlyTitle, orchestratorPush.manualOnlyPushed, orchestratorPush.manualOnlyInstructions, orchestratorPush.backendNotes. Existujúce názvy sekcií a View in Airflow opätovne použiť. manualOnlyTitle/instructions budú neutrálne, aby sa dali použiť aj pri skipped; manualOnlyPushed iba pre pushed.
+
 **Akceptácia:**
-- [ ] Zdieľaný volume má jeden názov a všetky príslušné VM; podporené VMware aj IBM Power odpovede.
-- [ ] Loading/error/disabled stavy nemenia doterajší query kontrakt a čiastočné discovery sa nepovažuje za úplné potvrdenie pôvodu.
-- [ ] Po zmene VM/provider kontextu nie sú prezentované staré väzby; počet requestov ostáva ako predtým.
-**Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-groups/hooks/useRecoveryGroupRelatedVolumes.test.tsx`.
-**Závislosti:** žiadne. **Rozsah:** S, 2 súbory.
-
-## T2: Lokalizácie nových ovládacích prvkov
-
-**Popis:** Pripraviť texty Related storage, pickeru a súhrnu v existujúcich namespaces; znovu použiť spoločné Add/Cancel/Remove/Retry.
-**Súbory:** `src/locales/en.json`, `src/locales/sk.json`, `src/locales/cs.json`.
-**Akceptácia:**
-- [ ] Rovnaké kľúče v troch jazykoch pre included volumes, From VM/Manual/Saved selection, Add volumes/Add selected, included/pending counts, empty/no matches a storage-provider kontext.
-- [ ] Súhrn používa preklady existujúcich typov/topológie a texty pre chýbajúcu hodnotu; žiadny text neoznačuje push ako úspešný recovery run.
-- [ ] Interpolácie počtov a názvov majú zhodné parametre; text Remove vysvetlí odstránenie zo skupiny, nie storage objektu.
-**Overenie:** `node -e "for (const l of ['en','sk','cs']) JSON.parse(require('fs').readFileSync('src/locales/'+l+'.json','utf8')); console.log('JSON OK')"`; content assertion zhodnosti pridaných kľúčov a placeholderov; `git diff --check`.
-**Závislosti:** žiadne. **Rozsah:** M, 3 súbory.
-
-## T3: Výber ďalších volumes
-
-**Popis:** Pridať feature picker cez existujúci Modal a inventory hook pre FlashSystem providera. Pending výber je lokálny a potvrdenie je batch.
-**Súbory (nové):** `components/RecoveryGroupVolumePickerModal.tsx`, `components/RecoveryGroupVolumePickerModal.test.tsx`.
-**Akceptácia:**
-- [ ] Search a checkboxy umožnia vybrať viac volumes vrátane takých, ktoré discovery pre VM nenašlo; included položky sú disabled a pending prežije filtrovanie.
-- [ ] Add selected vráti deduplikovaný batch; Cancel/Escape/zatvorenie nič nemení. Zmena providera/readOnly kontextu zahodí pending; prázdny výber nemožno potvrdiť.
-- [ ] Loading/error/Retry/empty/no matches sú rozlíšené pri zachovaní existujúcej politiky dostupných dát; žiadne nové doménové blokovanie. Focus, popisy a návrat na opener používajú spoločný Modal a existujúce aplikačné controls.
-**Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-groups/components/RecoveryGroupVolumePickerModal.test.tsx`.
-**Závislosti:** T2. **Rozsah:** S, 2 súbory.
-
-## Checkpoint 1: dátové a výberové základy
-
-- [ ] Testy T1 a T3 prešli, JSON je validný; žiadne zmeny query keys/API.
-- [ ] Picker test dokazuje batch, Cancel a provider/readOnly zmenu, nie iba samotné zobrazenie.
-
-## T4: Tabuľka Related storage
-
-**Popis:** Pridať prezentačný krok s Included volumes a pickerom; na tomto kroku nebude drop zóna. DOM komponent nebude vlastniť potvrdený draft.
-**Súbory (nové):** `components/RecoveryGroupRelatedStorageStep.tsx`, `components/RecoveryGroupRelatedStorageStep.test.tsx`.
-**Akceptácia:**
-- [ ] Riadky zobrazia názov, pôvod/VM väzby a Remove; provider a počty sú mimo opakovaných riadkov. Saved selection sa nevydáva za Manual.
-- [ ] Add volumes, Remove a Clear selection používajú callbacky, readOnly blokuje akcie; loading/error nie je prázdny úspešný výsledok.
-- [ ] Existing má auxiliary editor pre každý volume a jeho chybu; Managed zobrazuje generované hodnoty read-only. Zachované miesto pre consistency group informácie a warningy.
-**Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-groups/components/RecoveryGroupRelatedStorageStep.test.tsx`.
-**Závislosti:** T1, T2, T3. **Rozsah:** S, 2 súbory.
-
-## T5: Zapojenie do Create/Edit a Metro Mirror
-
-**Popis:** Vymeniť iba compact Related storage vetvu Buildera. Použiť existujúci selectionDraft, exclusions, prefill a validáciu. Pôvod uložených položiek sledovať len na prezentačné účely.
-**Súbory:** `components/RecoveryGroupBuilder.tsx`, `components/RecoveryGroupBuilder.test.tsx`, podľa potreby `components/RecoveryGroupBuilder.prefetch.test.tsx`.
-**Akceptácia:**
-- [ ] Automatic + manual výber sa deduplikuje; viac additions prejde jednou funkčnou aktualizáciou. Remove/Clear nezmaže storage objekt a refetch v rovnakom kontexte nevráti vylúčenú položku; explicitné pridanie ju obnoví.
-- [ ] Existing prefill/override/consistency validation aj Managed/pushed locks ostávajú; pending/error discovery nemaže uložené výbery/overrides. Provider/VM zmeny rešpektujú doterajší reset a prefetch.
-- [ ] Payload, submit, 7/8 krokov a Resources workflow sú nezmenené; volume-only skupina nemá Related storage. Zrušený picker nemení dirty stav.
-**Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-groups/components/RecoveryGroupBuilder.test.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupBuilder.prefetch.test.tsx src/features/recovery-plans/recovery-groups/utils/reconcileMetroMirrorPrefill.test.ts`.
-**Závislosti:** T4. **Rozsah:** M, najviac 3 súbory.
-
-## Checkpoint A: správanie Related storage
-
-- [ ] Vytvoriť a editovať VM skupinu; automatic + manual volumes sa dostanú do existujúceho payloadu bez straty.
-- [ ] Resources je stále pôvodný drag-and-drop a volume-only vetva funguje.
-- [ ] Local/Existing/Managed, neúplný rollback a discovery/inventory chyby majú regresné pokrytie.
-
-## T6: Kompaktné kroky ako opt-in variant
-
-**Popis:** Rozšíriť existujúci WizardSteps o malý explicitný kompaktný variant, bez globálneho preštýlovania ostatných wizardov.
-**Súbory:** `src/shared/components/wizard-steps/WizardSteps.tsx`, `src/shared/components/wizard-steps/WizardSteps.test.tsx`.
-**Akceptácia:**
-- [ ] Nový variant má kompaktné technické číslovanie a aktívny pruh podľa návrhu; default variant ostáva nezmenený.
-- [ ] Disabled/aria-current/onStepChange a klávesnica fungujú identicky v oboch variantoch.
-- [ ] Horizontálny mobilný zoznam zostáva dostupný; kroky ani completion indikácia netvrdia runtime recovery stav.
-**Overenie:** `npm.cmd exec vitest run src/shared/components/wizard-steps/WizardSteps.test.tsx` a vizuálne porovnanie oboch variantov.
-**Závislosti:** checkpoint A. **Rozsah:** S, 2 súbory.
-
-## T7: Layout a priebežný súhrn Group buildera
-
-**Popis:** Zapnúť kompaktné kroky iba pre Group a pridať pravý kontextový súhrn odvodený z draftu. Zachovať page shell, lifecycle alerty a päty.
-**Súbory:** `components/RecoveryGroupBuilder.tsx`, `components/RecoveryGroupBuilder.test.tsx`, nové `components/RecoveryGroupConfigurationSummary.tsx`, `components/RecoveryGroupConfigurationSummary.test.tsx`.
-**Akceptácia:**
-- [ ] Súhrn reaguje na názov, identitu, typ, počty, topológiu, policy a push bez nových requestov alebo kópie form state.
-- [ ] Pri úzkom obsahu ide súhrn pod formulár, mobilné polia sú jednosĺpcové; Resources a storage mappingy zostávajú použiteľné aj pri globálnom sidebare.
-- [ ] Create/Edit, Cancel guard, validation, lifecycle lock, Back/Next a finálne submit akcie ostávajú; nevloží sa prototype Review ani scenario prepínač.
-**Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-groups/components/RecoveryGroupConfigurationSummary.test.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupBuilder.test.tsx`; browser layout pri 320/768/1024/1440 px a nízkej výške.
-**Závislosti:** T6. **Rozsah:** M, 4 súbory.
-
-## T8: Kompaktné Details a Provider
-
-**Popis:** Preniesť hustotu, dvojstĺpcové rozloženie a typografiu tam, kde sú údaje skutočne súvisiace. Výber resource type zachováva existujúce voľby a správanie v novom shelli.
-**Súbory:** `components/RecoveryGroupDetailsStep.tsx`, `components/RecoveryGroupProviderStep.tsx` a ich existujúce `.test.tsx`.
-**Akceptácia:**
-- [ ] ID/názov sú pri dostatku miesta vedľa seba, popis cez celú šírku; technické ID monospace, správne labely a required chyby.
-- [ ] Edit ID lock, provider eligibility, scope a loading/error/retry sú zachované; žiadne globálne form control zmeny.
-- [ ] Mobile, light/dark a dlhé hodnoty sú čitateľné; type/provider voľby nie sú zúžené na VMware z prototypu.
-**Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-groups/components/RecoveryGroupDetailsStep.test.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupProviderStep.test.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupTypeStep.test.tsx`.
-**Závislosti:** T7. **Rozsah:** M, najviac 4 súbory.
-
-## T9: Kompaktná topológia, Policy set a Orchestration
-
-**Popis:** Zjednotiť technický vzhľad zvyšných konfiguračných krokov pri zachovaní ich doménových pravidiel.
-**Súbory:** `components/RecoveryGroupTopologyStep.tsx`, `components/RecoveryGroupPolicySetStep.tsx`, `components/RecoveryGroupOrchestrationStep.tsx`; najviac dva relevantné existujúce test súbory podľa zmeneného správania.
-**Akceptácia:**
-- [ ] Local/Metro Mirror, partner provider a Existing/Managed voľby aj ich edit locks sú zachované; každý nový layout ukazuje tie isté údaje.
-- [ ] Policy set a Airflow eligibility/sole provider/push ostávajú nezmenené; uloženie konfigurácie sa neprezentuje ako úspešná obnova.
-- [ ] Styling používa existujúce tokeny, pokrýva light/dark a neodstraňuje loading/error/empty/disabled vysvetlenia.
-**Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-groups/components/RecoveryGroupTopologyStep.test.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupPolicySetStep.test.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupOrchestrationStep.test.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupMetroMirrorFields.test.tsx`.
-**Závislosti:** T8. **Rozsah:** M, najviac 5 súborov; prípadné ďalšie zmeny testov rozdeliť na následný malý krok.
-
-## Checkpoint B: dizajn celého Create/Edit
-
-- [ ] Všetky kroky zodpovedajú schválenému technickému smeru; Resources si zachoval pôvodný workflow.
-- [ ] Štýly vychádzajú z existujúcej aplikácie; rovnaké funkčné scenáre dávajú zhodný výber, validáciu a submit payload pred/po úprave UI.
-- [ ] Recovery Apps a default WizardSteps sa vizuálne ani funkčne nezmenili.
-- [ ] Žiadne fixture hodnoty, prototype controls, nové endpointy ani generated zmeny.
-
-## T10: Záverečné focused a browser overenie
-
-**Popis:** Overiť celú dotknutú cestu, zaznamenať konkrétne výsledky a limity. Neoznačiť chýbajúci browser test za úspešný.
-**Súbory:** `tasks/todo.md` na evidenciu; neočakávajú sa ďalšie implementačné zmeny.
-**Akceptácia:**
-- [ ] Nové komponentové testy, regresný príkaz zo sekcie 6 plánu, focused ESLint zmenených TS/TSX, JSON kontrola a diff check prešli.
-- [ ] Browser matica z plánu prešla vrátane modal focusu/Escape, Resources drag-and-drop, responsive/light/dark, retry a dlhých názvov; screenshoty alebo presný blokér sú zaznamenané.
-- [ ] Diff obsahuje iba schválený rozsah; overené zmeny sú atomicky commitnuté. Bez automatického pushu/deploy; úplná suite/build len pri zdokumentovanom dôvode alebo explicitnom pokyne.
-**Overenie:** focused regresia z plan.md; `npm.cmd exec eslint -- <skutocne-zmenene-TS-TSX-subory> --max-warnings 0`; `git diff --check`; browser matica. Placeholder v lint príkaze nahradiť presnými cestami z diffu.
-**Závislosti:** checkpoint B. **Rozsah:** S, evidencia a overenie.
-
-## Odovzdanie
-
-- [ ] Každá vyššie uvedená úloha má zaznamenaný výsledok; nesplnené kontroly zostali explicitne otvorené.
-- [ ] Report obsahuje reálne spustené príkazy, commity a stav vizuálneho overenia; nepredstiera beh plnej suite/build.
-
-## Overenie tohto plánovacieho výstupu
-
-Dokumenty sú plán, nie dôkaz úspechu budúcej implementácie. Teraz sa vykoná iba obsahová kontrola plánovacích súborov a Git diff check. Produkčný kód ani HTML prototyp sa v tejto úlohe nemenia.
-
-## Opravy funkčného auditu: A1–A11
-
-Návrh a hranice: [plan.md, sekcia 8](plan.md#8-opravy-funkčného-auditu). Úlohy predstavujú opravy; testy overujú ich výsledok. Pri každej úlohe najprv reprodukcia, potom implementácia a focused zelené overenie, lint zmenených súborov a atomic commit. Používateľ následne povolil vykonanie inline; realizácia a dôkazy sú zaznamenané v tomto bloku.
-
-## A1: F-04 — invalidácia po zmene providera
-
-**Popis:** Zaviesť cielenú success politiku sekcie 8.2 a zapojiť submit/delete infra aj platform providerov; zachovať generated vlastné invalidácie aj lokálne callbacky. Aplikácia aj integračné testy použijú spoločnú factory QueryClient s rovnakou MutationCache politikou; každý test má vlastnú novú inštanciu s cleanupom. Testové overrides nesmú nahradiť invalidáciu.
-**Súbory:** nové/plánované `src/shared/query/createAppQueryClient.ts`, `src/shared/query/providerMutationInvalidation.ts`, `src/shared/query/providerMutationInvalidation.test.tsx`; `src/app/providers.tsx`. **Rozsah:** M, 4 súbory. **Závislosti:** žiadne.
-**Akceptácia:**
-- [x] Generated submit mutácia na klientovi zo spoločnej aplikačnej factory invaliduje čerstvú cache a vyvolá skutočný refetch aktívneho dotknutého inventára/search vrátane agregovaných variantov; test overí nový request aj aktualizované dáta. Neaktívna query je invalidovaná a refetchne sa po pripojení observera; iný explicitný provider zostáva nedotknutý.
-- [x] Delete neponechá staré dáta po dobehnutí pending requestu; platform provider sa nezamieňa s infra ID a obnoví svoje skutočné závislé orchestration queries.
-- [x] Error nespustí success invalidáciu; callbacky a relevantné skipInvalidation správanie ostávajú. Bez ručných generated úprav a refetch all.
-**Overenie:** `npm.cmd exec vitest run src/shared/query/providerMutationInvalidation.test.tsx src/features/providers-connectors/providers/model/providersWire.test.tsx`.
-
-**A1 výsledok (2026-10-21):** baseline providersWire 3/3; spoločný beh cache + wire 14/14; po doplnení pending-delete cache 12/12. Spustené cez `node node_modules/vitest/vitest.mjs run` s presnými cestami uvedenými vyššie. Infra rodiny: get_power_vm, get_volumes, get_volume_tree, tags, vdisks_by_vm a POST vms/search; platform závislosť: get_orchestrator_runs. Existujúce call sites mimo generated nepoužívajú skipInvalidation; generated vlastné callbacky/invalidácie ostali bez zmien. Full suite/build nebol spustený.
-
-## A2: F-04 — závislosti credentials
-
-**Popis:** Rozšíriť A1 o submit/delete credential; odvodiť dotknuté ID z cached provider zoznamov a ošetriť neúplnú znalosť závislostí. Integračné testy naďalej používajú spoločnú aplikačnú factory s MutationCache, pre každý test novú izolovanú inštanciu s cleanupom.
-**Súbory:** `src/shared/query/providerMutationInvalidation.ts`, `src/shared/query/providerMutationInvalidation.test.tsx`. **Rozsah:** S, 2 súbory. **Závislosti:** A1.
-**Akceptácia:**
-- [x] Credential success obnoví infra/platform statusy vo všetkých role/type variantoch a inventár známych súvisiacich infra providerov; pri úplnej znalosti nezneplatní nesúvisiacu explicitnú cache.
-- [x] Neúplná provider cache použije zdokumentovaný fallback iba na potrebné rodiny queries; nie globálny clear/refetch.
-- [x] Test dokazuje edit/delete a error bez invalidácie na klientovi zo spoločnej factory: aktívna cache v staleTime vykoná nový request a zobrazí nové dáta; neaktívna sa invaliduje a refetchne po pripojení observera. Samotný spy nie je dôkaz.
-**Overenie:** `npm.cmd exec vitest run src/shared/query/providerMutationInvalidation.test.tsx`.
-
-**A2 výsledok (2026-10-21):** cache testy 17/17 cez `node node_modules/vitest/vitest.mjs run src/shared/query/providerMutationInvalidation.test.tsx`; red fáza mala 3 očakávané zlyhania pre credential save/delete/fallback. Testy zahŕňajú skutočné generated provider zoznamy so zmenou credentialStatus, aktívne aj neaktívne inventáre a error vetvu. Fallback sa obmedzuje na inventory/orchestration rodiny pri chýbajúcom, prázdnom alebo stale úplnom zozname. A1 commit: `9dcbbde0`. Focused ESLint A1 prešiel; A2 sa overuje rovnakým príkazom na dvoch zmenených cache súboroch.
-
-## Checkpoint C: cache
-
-- [x] A1–A2 majú zelené focused testy a mapu závislostí; FE/BE cache politika sa nezamieňa.
-- [x] Zaznamenané výsledky, scope a atomic commity; infra/platform identity sú oddelené.
-
-## A3: F-01 — Retry konkrétneho latest runu
-
-**Popis:** Oddeliť kolekčné a entity-scoped Retry cez hook, page a tabuľku; zachovať horný Refresh.
-**Súbory:** `src/features/recovery-plans/recovery-runs/hooks/useOrchestratedEntityRuns.ts`, jeho `.test.tsx`; `src/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage.tsx`, jeho `.test.tsx`; `src/features/recovery-plans/recovery-runs/components/RecoveryRunsTable.tsx`. **Rozsah:** M, 5 súborov; potrebné ďalšie úpravy table testov oddeliť do malého nadväzujúceho commitu. **Závislosti:** žiadne.
-**Akceptácia:**
-- [x] Po 503 row Retry vyvolá get_orchestrator_runs pre správny provider/DAG a úspech odstráni chybu; nerefetchuje iba kolekcie ani iný úspešný riadok.
-- [x] Horný Refresh obnoví kolekcie aj viditeľné latest runs; app/group so zhodným ID sa rozlišujú.
-- [x] Zachované loading/empty/cached-error stavy a selection; page integračný test použije skutočný query hook so stub fetch.
-**Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-runs/hooks/useOrchestratedEntityRuns.test.tsx src/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage.test.tsx src/features/recovery-plans/recovery-runs/components/RecoveryRunsTable.test.tsx`.
-
-**A3 výsledok (2026-10-21):** oba nové testy najprv zlyhali (row Retry nezobrazil úspech; scoped hook obnovil oba riadky). Po oprave prešlo 26/26 testov v troch uvedených súboroch cez node Vitest CLI. Focused ESLint šiestich zmenených Runs TS/TSX prešiel. Table fixture si vyžiadala šiesty súbor; zmena je obmedzená na doplnenie providerId do dvoch riadkov. Kolekčné retry ostalo bez argumentu; row retry prenáša úplný riadok a hook filtruje typ/ID/provider/DAG. A2 commit: `e63ae390`.
-
-## A4: F-02 — vyhľadávanie podľa názvu
-
-**Popis:** Feature-local search adaptér pre ID a zobrazovaný názov, bez zmeny shared search kontraktu.
-**Súbory:** `src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.tsx`, jeho `.test.tsx`. **Rozsah:** S, 2 súbory. **Závislosti:** žiadne.
-**Akceptácia:**
-- [x] Rozdielne ID a názov sa dajú vyhľadať oba, case-insensitive a s trimovaním search.
-- [x] Search funguje s environment/platform filtrami, resetom stránky a no-match stavom.
-- [x] Delete/edit/detail dostanú pôvodný záznam; description sa bez požiadavky neprehľadáva.
-**Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.test.tsx`.
-
-**A4 vysledok (2026-10-21):** red search-name regresia zlyhala; green 26/26 cez node Vitest CLI s cestou uvedenou v A4. Focused ESLint oboch zmenenych suborov presiel. A3 commit: 6466d4bb.
-
-## Checkpoint D: Runs a search
-
-- [x] A3–A4 majú opravený používateľský výsledok a zelené regresné testy.
-- [x] Horný Refresh a filtre fungujú; focused lint a diff check prešli.
-
-## A5: Texty neaktuálneho inventára a chýbajúceho reportu
-
-**Popis:** Doplniť iba texty potrebné pre A6/A10 do existujúcich namespaces; využiť spoločné Retry/Close.
-**Súbory:** `src/locales/en.json`, `src/locales/sk.json`, `src/locales/cs.json`. **Rozsah:** M, 3 súbory. **Závislosti:** žiadne; nekonať súbežne s T2.
-**Akceptácia:**
-- [x] Zhodné nové kľúče a placeholdery v troch jazykoch.
-- [x] Refresh-failed text označí posledné známe dáta; missing-report text odlíši úspešný delete request od nepotvrdeného výsledku rollbacku.
-- [x] Text nenavádza na opakovaný delete ani netvrdí nepreukázaný rollback failure.
-**Overenie:** `node -e "for (const l of ['en','sk','cs']) JSON.parse(require('fs').readFileSync('src/locales/'+l+'.json','utf8')); console.log('JSON OK')"`; content assertion nových kľúčov/placeholderov; `git diff --check`.
-
-**A5 vysledok (2026-10-21):** JSON parse a kontrola oboch novych klucov a placeholderov v en/sk/cs presli; git diff --check presiel.
-
-## A6: F-03 — inventár pri background chybe
-
-**Popis:** Odlíšiť initial error od data + error v oboch inventároch a pripojiť neblokujúci alert/Retry.
-**Súbory:** `src/features/recovery-plans/recovery-applications/components/RecoveryApplicationInventory.tsx`, jeho `.test.tsx`; `src/features/recovery-plans/recovery-groups/components/RecoveryGroupInventory.tsx`, jeho `.test.tsx`. **Rozsah:** M, 4 súbory. **Závislosti:** A5.
-**Akceptácia:**
-- [x] Po úspešnom fetch a zlyhanom refetch zostanú dáta s varovaním; úspešný Retry ich obnoví a varovanie odstráni.
-- [x] Bez dát ostáva error placeholder; noRun, unsupported Power a target-error vetvy sú zachované.
-- [x] Zmena run/target kontextu neukáže cudzie cached dáta; test zahŕňa QueryClient background refetch.
-**Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-applications/components/RecoveryApplicationInventory.test.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupInventory.test.tsx`.
-
-**A6 vysledok (2026-10-21):** 2 regresie najprv zlyhali na chybe namiesto stale varovania; green 18/18 v oboch inventory test suboroch cez node Vitest CLI. Skutocny QueryClient/refetch/stub fetch pokryva success, background 503, Retry, app target a group run zmenu. Focused ESLint 4 suborov presiel. A4 commit: 5df30b53; A5: 7f76bd1d.
-
-## A7: Odstránenie nefunkčného infra Port poľa
-
-**Popis:** Odstrániť infra port input/state/dirty kontrolu/validáciu; zachovať infra payload aj funkčný Platform Provider port.
-**Súbory:** `src/features/providers-connectors/providers/components/ProviderCreateForm.tsx`, jeho `ProviderCreateForm.test.tsx`; `src/features/providers-connectors/providers/components/ProvidersCreateModal.tsx`, jeho `.test.tsx`. **Rozsah:** M, 4 súbory. **Závislosti:** žiadne.
-**Akceptácia:**
-- [x] Create/Edit infra providera neponúka neukladaný port a jeho odstránená validácia neblokuje submit; ProviderCreateForm.test.tsx má fixture bez portu a explicitnú kontrolu neprítomnosti Port inputu.
-- [x] Payload ostáva bez portu; ostatné validácie a dirty guard fungujú.
-- [x] PlatformProvidersModal/port a potrebné shared preklady sa nemenia.
-**Overenie:** `npm.cmd exec vitest run src/features/providers-connectors/providers/components/ProviderCreateForm.test.tsx src/features/providers-connectors/providers/components/ProvidersCreateModal.test.tsx src/features/platform-administration/platform-providers/components/PlatformProvidersModal.test.tsx`.
-
-**A7 vysledok (2026-10-21):** dve red regresie potvrdili nefunkcny Port input. Po odstraneni a uprave oboch starsich port assertions preslo 65/65 testov v troch uvedenych suboroch cez node Vitest CLI; platform port zostal pokryty. Focused ESLint 4 suborov presiel. A6 commit: 3ba70066.
-
-## Checkpoint E: inventár a formulár
-
-- [x] A5–A7 prešli focused kontrolami; en/sk/cs JSON je validný.
-- [x] Varovanie neskrýva inventár a odstránenie infra portu nezasiahlo platform port.
-
-## A8: Zachovanie uložených VM tagov
-
-**Popis:** Zachovať úplné vmTags pri inicializácii a uložení bez zmeny selectoru; nahradiť test tichej legacy normalizácie.
-**Súbory:** `src/features/providers-connectors/providers/components/ProvidersCreateModal.tsx`, jeho `.test.tsx`. **Rozsah:** S, 2 súbory. **Závislosti:** A7 kvôli zdieľaným súborom.
-**Akceptácia:**
-- [x] Edit providera s dvoma tagmi a zmena iba názvu odošle oba tagy v pôvodnom poradí.
-- [x] Explicitný výber/clear selectoru použije existujúcu jedno-tagovú semantiku; bez novej multi-tag funkcionality.
-- [x] Cancel/loading/error lookupu nemenia tagy; dirty guard rozlišuje nezmenený zoznam od vedomej úpravy.
-**Overenie:** `npm.cmd exec vitest run src/features/providers-connectors/providers/components/ProvidersCreateModal.test.tsx`.
-
-**A8 vysledok (2026-10-21):** red: nezmeneny aj lookup-error payload stratil druhy tag; green 47/47 ProvidersCreateModal testov cez node Vitest CLI. Explicitny replace/clear zostal zachovany; focused ESLint oboch suborov presiel. A7 commit: 7dba0ccf.
-
-## A9: R-01 — reset stránkovania histórie
-
-**Popis:** Reset podľa úplnej identity `entityType + id + providerId + dagId` aj close cez URL/back; prvý request novej entity má offset=0. Kľúč zostaviť v rodičovi alebo doplniť entityType do RecoveryRunHistoryEntity; nemení to automaticky API query key.
-**Súbory:** `src/features/recovery-plans/recovery-runs/components/RecoveryRunHistoryDetailView.tsx`, jeho `.test.tsx`; `src/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage.tsx`, jeho `.test.tsx`. **Rozsah:** M, najviac 4 súbory. **Závislosti:** A3 kvôli zdieľaným súborom.
-**Akceptácia:**
-- [x] Page=3 entity A a URL/entity zmena na B začne B s offset=0 aj pri jedinej strane histórie; samostatná regresia Application → Group so zhodným id, providerId aj dagId dokazuje reset iba pri zmene entityType.
-- [x] Close/open, URL/back odstránenie/obnovenie entity a zmena ktorejkoľvek časti identity entityType/id/providerId/dagId začínajú na strane 1.
-- [x] História, Airflow link a active-run polling fungujú; bez dát iného kontextu.
-**Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-runs/components/RecoveryRunHistoryDetailView.test.tsx src/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage.test.tsx src/features/recovery-plans/recovery-runs/hooks/useAppRunHistory.test.tsx`.
-
-**A9 vysledok (2026-10-21):** tri red scenare potvrdili pretrvanie page=3 pri zmene entityType/providerId/dagId. Green 25/25 v uvedenych 3 suboroch cez node Vitest CLI; focused ESLint page a jej testu presiel. Resetovaci key je JSON tuple entityType/id/providerId/dagId v rodicovi; query key ani typ detailu sa nemenil. URL close/reopen pokryte. A8 commit: e0547fa5.
-
-## A10: R-02 — oznámenie chýbajúceho rollback reportu
-
-**Popis:** Reprodukovať optional odpoveď a po orchestrated delete bez reportu ukázať neutrálne varovanie, bez zmeny backendového kontraktu.
-**Súbory:** `src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.tsx`, jeho `.test.tsx`; `src/features/recovery-plans/recovery-applications/hooks/recoveryApplicationsWire.test.tsx`; podľa potreby `src/features/recovery-plans/recovery-applications/hooks/useDeleteRecoveryApplication.ts`. **Rozsah:** M, najviac 4 súbory. **Závislosti:** A5, A4 kvôli zdieľaným súborom.
-**Akceptácia:**
-- [x] Wire stub HTTP success bez/null reportu prejde kontraktom; orchestrated app zobrazí oznámenie o nedostupnom výsledku rollbacku.
-- [x] Local delete bez reportu ostáva úspešný bez varovania; ok/partial/failed/skipped reporty sa naďalej zobrazujú.
-- [x] Nevznikne druhý delete ani zavádzajúci výsledok rollbacku; zoznam sa obnoví a HTTP error ostane samostatnou chybou.
-**Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.test.tsx src/features/recovery-plans/recovery-applications/hooks/recoveryApplicationsWire.test.tsx`.
-
-**A10 vysledok (2026-10-21):** red chybajuceho oznamenia potvrdeny; green 47/47 v app table, wire a rollback result modal testoch cez node Vitest CLI s explicitnymi cestami. Optional undefined/null report aj ok/partial/failed/skipped su pokryte; local delete bez varovania a bez druheho delete. Focused ESLint 3 zmenenych suborov presiel. A9 commit: 499c2742.
-
-## Checkpoint F: konfigurácia a podmienečné scenáre
-
-- [x] A8–A10 majú reprodukciu a nápravu; optional rollback kontrakt ostal zachovaný.
-- [x] Edit iného provider poľa zachová tagy; navigácia histórie nepoužíva starý offset.
-
-## A11: Odovzdanie opráv a dôkazy
-
-**Popis:** Skontrolovať výsledky A úloh a browser scenáre sekcie 8.4; checklist aktualizovať podľa vykonaných kontrol.
-**Súbory:** `tasks/todo.md` a `tasks/plan.md` na evidenciu; nový `scripts/qa/functional-audit-browser.mjs` na opakovateľné browser overenie. Záverečná typová kontrola vyžiadala iba bracket notation v nových cache/Runs test kódoch; bez zmeny správania. **Rozsah:** M. **Závislosti:** A1–A10 a checkpointy C–F.
-**Akceptácia:**
-- [x] Každá oprava má presný test príkaz, nenulový počet očakávaných testov, exit code a commit; passWithNoTests nesmie skryť chýbajúce súbory.
-- [x] Browser scenáre sekcie 8.4 majú výsledky/stub/live rozlíšenie alebo presný blokér; nevykonané kontroly ostávajú otvorené.
-- [x] Focused lint, JSON a diff check prešli; T úlohy sa neoznačili nesprávne ako hotové. Full suite/build iba pri konkrétnom dôvode alebo pokyne.
-**Overenie:** presné dotknuté testové príkazy A1–A10 podľa finálneho diffu; `npm.cmd exec eslint -- <skutocne-zmenene-TS-TSX-subory> --max-warnings 0`; JSON príkaz A5; `git diff --check`. Lint placeholder pred spustením nahradiť presnými cestami.
-
-## Stav rozšírenia 2026-10-21
-
-Používateľ schválil doplnenie existujúcich dokumentov a následne vykonanie inline. Blok A je realizovaný; pôvodný dizajnový blok T zostáva nedokončený a jeho checkboxy sa nemenili.
-
-## A11 — záverečné dôkazy 2026-10-21
-
-Záverečná focused regresia: **15 súborov, 192 testov, exit 0**. Presný príkaz:
+- [x] Všetky tri jazyky majú sedem zhodných nových kľúčov, bez duplicitných JSON kľúčov a neúmyselných zmien ostatných textov.
+- [x] Frequency text vysvetľuje IBM Power manuálny režim aj zachovanú VMware frekvenciu podľa presného slovenského znenia v pláne.
+- [x] Push text odlišuje odoslanie od spustenia a uvádza poradie Unpause a potom Trigger; konflikt má zrozumiteľnú validačnú správu.
+
+**Overenie:**
+- [x] JSON parse príkaz nižšie prejde; skontrolovať diff kvôli duplicitám a rovnakým siedmim kľúčom/parametrom v en/sk/cs.
+- [x] git diff --check prejde; implementačný commit obsahuje iba overený rozsah W1.
 
 ```powershell
-node node_modules/vitest/vitest.mjs run src/shared/query/providerMutationInvalidation.test.tsx src/features/providers-connectors/providers/model/providersWire.test.tsx src/features/recovery-plans/recovery-runs/hooks/useOrchestratedEntityRuns.test.tsx src/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage.test.tsx src/features/recovery-plans/recovery-runs/components/RecoveryRunsTable.test.tsx src/features/recovery-plans/recovery-runs/components/RecoveryRunHistoryDetailView.test.tsx src/features/recovery-plans/recovery-runs/hooks/useAppRunHistory.test.tsx src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.test.tsx src/features/recovery-plans/recovery-applications/hooks/recoveryApplicationsWire.test.tsx src/features/recovery-plans/recovery-applications/components/RecoveryApplicationRollbackResultModal.test.tsx src/features/recovery-plans/recovery-applications/components/RecoveryApplicationInventory.test.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupInventory.test.tsx src/features/providers-connectors/providers/components/ProviderCreateForm.test.tsx src/features/providers-connectors/providers/components/ProvidersCreateModal.test.tsx src/features/platform-administration/platform-providers/components/PlatformProvidersModal.test.tsx
+node -e "const fs=require('node:fs'); for(const l of ['en','sk','cs']) JSON.parse(fs.readFileSync('src/locales/'+l+'.json','utf8')); console.log('Locales JSON OK')"
 ```
 
-Focused lint a typová kontrola prešli (exit 0):
+**Závislosti:** schválenie implementácie. **Rozsah:** M, 3 súbory.
+**Súbory:** src/locales/en.json, src/locales/sk.json, src/locales/cs.json.
+
+## W2: Funkčný Manual WWPN Entry v Create/Edit Policy
+
+**Popis a konkrétne zmeny:** Rozšíriť form typ, EMPTY_FORM generated defaultom, toFormData a common submit mapper. Zobraziť nový bordered checkbox vedľa manual_zoning v existujúcej IBM Power sekcii. V handleChange urobiť atomické automatické prepínanie; vo validate blokovať true/true a zobraziť preklad chyby. Nezavádzať nový stav, effect, helper vrstvu ani generovaný validátor. Aktualizovať existujúce exact payload očakávania a fixtures v rovnakom focused test súbore.
+
+**Akceptácia:**
+- [x] Create má false; edit načíta true a nezmenené uloženie i úprava iného poľa zachovajú true. Payload vždy obsahuje manual_wwpn_entry ako boolean v latest/time_range/exact_time; starší response bez poľa sa cez existujúcu generated schému zmení na false.
+- [x] Oba checkboxy zostávajú viditeľné a použiteľné: zapnutie jedného vypne druhý jednou aktualizáciou, vypnutie umožní false/false. Konfliktný API record nevyvolá request pri uložení, zobrazí chybu a po vedomej oprave sa dá uložiť.
+- [x] Zachované existujúce polia a validácie, immutable ID pri edit, pending správanie, dirty/discard guard a reset draftu pri reopen. Žiadna zmena Edit Policy Set ani obmedzení VMware.
+
+**Overenie:**
+- [x] Najprv testy reprodukujú chýbajúci flag/prepínanie; potom celý dotknutý test súbor prejde vrátane pôvodných snapshot/IBM Power regresií.
+- [x] Testy overujú reálny request body, oba smery prepínania, false/false, konflikt bez requestu a edit round-trip; nestačí mock onChange.
+- [x] Focused ESLint štyroch uvedených TS/TSX a git diff --check prejdú; po overení atomický implementačný commit.
 
 ```powershell
-$auditChangedFiles = @(git diff --name-only bd99162f -- '*.ts' '*.tsx')
-node node_modules/eslint/bin/eslint.js @auditChangedFiles scripts/qa/functional-audit-browser.mjs --max-warnings 0
-node node_modules/typescript/bin/tsc -p tsconfig.app.json --noEmit --incremental false
+node node_modules/vitest/vitest.mjs run src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPolicyModal.test.tsx
 ```
 
-Typecheck bol odôvodnený spoločnou QueryClient factory a rozšíreným Runs row kontraktom. Zachytil noPropertyAccessFromIndexSignature v nových kódoch; opravené bracket notation, bez suppressions. Následná focused regresia týchto štyroch test súborov: 41/41, potom záverečných 192/192.
+**Závislosti:** W1. **Rozsah:** M, 4 súbory.
+**Súbory:**
+- src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPolicyForm.tsx
+- src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPolicyModal.tsx
+- src/features/recovery-plans/recovery-policies/application-recovery/model/recoveryAppPolicySubmit.ts
+- src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPolicyModal.test.tsx
 
-Browser: `node scripts/qa/functional-audit-browser.mjs`, **exit 0**, 51 stubovaných requestov, bez runtime výnimiek a console errors. Potrebný izolovaný headless Edge s CDP `127.0.0.1:9351` a Vite `127.0.0.1:5189`; použiť dočasný browser profil mimo Vite workspace. Spustenie servera: `node node_modules/vite/bin/vite.js --host 127.0.0.1 --port 5189 --strictPort`. Browser/config/API sú izolované; živý backend sa nepoužíva.
+## Checkpoint A: Policy dátový tok
 
-| Browser scenár | Výsledok |
-| --- | --- |
-| A4: názov odlišný od ID | Finance Recovery sa nájde cez FINANCE RECOVERY. |
-| A6: background error + dáta + Retry | App inventár zostal viditeľný so stale varovaním; Retry ho odstránil. Group vetva overená reálnym QueryClient integračným testom. |
-| A10: bez reportu | Neutrálne varovanie a práve jeden delete request. |
-| A3: latest-run 503 | Riadkové Retry obnovilo latest run. |
-| A9: URL zmena pri page=3 | Nová entita začala na strane 1. Úplná identita vrátane app/group kolízie je pokrytá regresnými testmi. |
-| A7/A8: infra edit | Port input chýba, payload port neobsahuje, rename zachoval oba tagy. |
-| A1: návrat do Resources | Po provider save vznikol nový vms/search request. |
-| A2: credential mutácia | Browser delete aktualizoval závislý provider status na missing; credential save je pokrytý generated integračnými testmi. |
+- [x] W1–W2 majú nenulové focused výsledky a zachovávajú true pri editácii; žiadny request neobsahuje true/true.
+- [x] Layout checkboxov zodpovedá existujúcemu formuláru; oba viditeľné aj bez kontextu konkrétnej platformy.
+- [x] Generated/OpenAPI/Policy Set produkčné súbory zostali nedotknuté. Zistený nesúlad vyriešiť pred ďalšou úlohou.
 
-Browser harness sleduje Runtime.exceptionThrown aj console.error. Pri cancel ignoruje iba presný CDP Invalid InterceptionId podložený Network.loadingFailed(canceled=true); iné protokolové chyby zostávajú zlyhaním. Dev warnings o zdieľanom DAG vo fixture a syntetickej POP navigácii sú limitom harnessu, nie tvrdením o nulových warnings. Headless browser a lokálny server boli po úspešnom behu ukončené.
+## W3: Informácia o ignorovanej frekvencii
 
-JSON parse/kľúče/placeholdery en/sk/cs, `node --check scripts/qa/functional-audit-browser.mjs` a `git diff --check` prešli. Inline kontrola diffu prešla pre správnosť, jednoduchosť, scope a zachovanie API/payload kontraktov; žiadne nové závislosti, generated úpravy ani oslabenie kontrol. Browser skript je testovací artefakt, nie produktový tok.
+**Popis a konkrétne zmeny:** Vložiť nenápadný lokalizovaný text hneď pod Frequency/Retention grid a pred Snapshot selection. Podmienka je priamo data.manual_zoning || data.manual_wwpn_entry. Nepridávať sekciu, modal ani nový stav. Doplniť testy do existujúceho modal test súboru.
 
-Atomic implementačné commity: A1 `9dcbbde0`, A2 `e63ae390`, A3 `6466d4bb`, A4 `5df30b53`, A5 `7f76bd1d`, A6 `3ba70066`, A7 `7dba0ccf`, A8 `e0547fa5`, A9 `499c2742`, A10 `6eb65918`. A11 evidencia, opakovateľný browser harness a typové opravy tvoria záverečný commit.
+**Akceptácia:**
+- [x] Text je na požadovanom mieste pri zoning-only aj WWPN-only, pri false/false chýba; testuje sa create, edit a živé prepínanie.
+- [x] Frequency aj unit zostávajú viditeľné a editovateľné, ich hodnota sa po prepínaní a odoslaní zachová; VMware platnosť je výslovne uvedená v texte.
+- [x] Nenápadná typografia a existujúce tokeny, bez výrazného warningu alebo novej sekcie; test poradia DOM medzi Frequency/Retention a Snapshot selection.
 
-Limity: kompletná suite, production build, živý BE/Keycloak a produkčné E2E neboli spustené. Opravy zostali na `spike/ant-design-shell`; bez pushu/deploy. Nevykonané dizajnové T1–T10 ostávajú otvorené.
+**Overenie:**
+- [x] Focused test príkaz W2 prejde, vrátane payload assertions frekvencie v oboch manuálnych režimoch.
+- [x] Focused ESLint týchto dvoch súborov a git diff --check prejdú; po overení atomický implementačný commit.
+- [x] Browser kontrola umiestnenia, čitateľnosti a editable frekvencie je zahrnutá vo W5.
+
+**Závislosti:** W2. **Rozsah:** S, 2 súbory.
+**Súbory:**
+- src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPolicyForm.tsx
+- src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPolicyModal.test.tsx
+
+## W4: Manual-only výsledok v spoločnom Push modale
+
+**Popis a konkrétne zmeny:** V OrchestratorPushResultDialog vložiť cez existujúci children slot preložený informačný blok pre schedule=manual_only. Pri pushed vysvetliť úspešné odoslanie bez spustenia a kroky Unpause→Trigger. Notes zobraziť ako označený escaped plain text podľa pravidiel plánu; zachovať originálny response viewer. Nové `manual_only` testy písať len pre `entityType=application`; existujúce Group regresie ponechať bez rozširovania.
+
+**Akceptácia:**
+- [x] `manual_only` ukáže vysvetlenie pre Application; pushed zostáva úspešný push, skipped sa nevydáva za úspešný. Bez/null/iný schedule nemení pôvodný layout ani výsledok. Existujúce Group pushed/skipped/link správanie sa nemení.
+- [x] null/undefined/prázdne notes nezrušia hlavnú FE inštrukciu; textové poznámky sa trimujú/deduplikujú, markup ostane textom, dlhý text sa zalomí. Celý pôvodný response zostáva viditeľný vo vieweri.
+- [x] Zachovaný spoločný komponent, počty kontrol, Close, View in Airflow s provider URL a pravidlom dag_id. Nevznikne request na Trigger ani nový modal/API.
+
+**Overenie:**
+- [x] Oba focused súbory prejdú vrátane pôvodných pushed/skipped/missing/DAG/link testov; nové schedule/notes varianty testovať iba pre Application.
+- [x] Focused ESLint uvedených troch TSX a git diff --check prejdú; po overení atomický implementačný commit.
+
+```powershell
+node node_modules/vitest/vitest.mjs run src/shared/components/modal/OrchestratorPushResultDialog.test.tsx src/shared/components/modal/OrchestratorPushResultDialog.response.test.tsx
+```
+
+**Závislosti:** W1. **Rozsah:** M, 3 súbory.
+**Súbory:**
+- src/shared/components/modal/OrchestratorPushResultDialog.tsx
+- src/shared/components/modal/OrchestratorPushResultDialog.test.tsx
+- src/shared/components/modal/OrchestratorPushResultDialog.response.test.tsx
+
+## Checkpoint B: Oba funkčné toky
+
+- [x] W2–W4 focused regresie prešli; frekvencia sa nemení a konflikt sa neodosiela.
+- [x] Úspešný push s manual_only vysvetľuje ďalšie kroky bez tvrdenia o spustenom recovery; pôvodné odpovede ostávajú kompatibilné.
+- [x] Zmeny nevyžadovali ChecklistResultDialog, backend ani generated úpravy. Ak sa ukáže potreba rozšírenia rozsahu, zaznamenať dôvod pred ďalšou úpravou.
+
+## W5: Integračná a browser regresia
+
+**Popis a konkrétne zmeny:** Rozšíriť iba dva Recovery Application Builder/Editor page testy o `manual_only` so schedule a notes odovzdanými do spoločného modalu. Existujúce Group Builder/Editor a PolicySetModal testy iba spustiť ako regresie, bez nových `manual_only` scenárov alebo úprav výberu policy. Produkčné stránky ani Policy Set nemení táto úloha. Browser výsledky zaznamenať pri realizácii, bez nového harnessu, ak postačujú existujúce nástroje.
+
+**Akceptácia:**
+- [x] Create/Edit Application zobrazia spoločný modal so správnym `manual_only` vysvetlením a Airflow linkom; Create/Edit Group si zachovajú pôvodný push výsledok, link a navigáciu bez nového `manual_only` scenára.
+- [x] Policy Set zostáva bez zmien a bez nových výberových obmedzení; iba spustiť existujúce regresné testy. Zachovať pôvodné policy validácie, snapshot režimy a frequency payload.
+- [x] Vykonané browser scenáre majú zaznamenaný výsledok a stub/live rozlíšenie; neoverené body sú výslovne limity. Nie je vykonaný reálny recovery run ani nový trigger request.
+
+**Overenie:**
+- [x] Nasledujúcich päť focused test súborov prejde: dva rozšírené Application testy a tri nezmenené regresné súbory (dva Group, jeden Policy Set); výstup potvrdzuje ich vykonanie a nenulový počet testov.
+- [x] Záverečná regresia použije aj tri existujúce test súbory z W2 a W4 (celkom osem), focused ESLint iba zmenených TS/TSX, JSON kontrolu W1 a git diff --check.
+- [x] Browser: create false; WWPN on/off a zoning prepínanie klávesnicou aj myšou; edit true/save/reopen; informácia pod Frequency a jej skrytie; mobilný layout, obe témy; stub push `manual_only` pre Application, pôvodný push bez `manual_only` pre Group.
+
+```powershell
+node node_modules/vitest/vitest.mjs run src/features/recovery-plans/recovery-applications/pages/RecoveryApplicationBuilderPage.test.tsx src/features/recovery-plans/recovery-applications/pages/RecoveryApplicationEditorPage.test.tsx src/features/recovery-plans/recovery-groups/pages/RecoveryGroupBuilderPage.test.tsx src/features/recovery-plans/recovery-groups/pages/RecoveryGroupEditorPage.test.tsx src/features/recovery-plans/policy-sets/components/PolicySetModal.test.tsx
+```
+
+**Závislosti:** W2, W3, W4; checkpointy A a B. **Rozsah:** M, 2 upravované test súbory + 3 nezmenené na regresné spustenie.
+**Upravované súbory:** RecoveryApplicationBuilderPage.test.tsx a RecoveryApplicationEditorPage.test.tsx (presné cesty vyššie). Group Builder/Editor a PolicySetModal testy sa iba spustia; tasks/todo.md slúži na evidenciu výsledkov.
+
+## Checkpoint C: Odovzdanie implementácie
+
+- [x] Všetky akceptačné kritériá W1–W5 splnené; obmedzenia zadania zachované.
+- [x] Evidované presné overovacie príkazy, počty testov, exit codes, browser výsledky a implementačné commity.
+- [x] Výslovne uvedené nevykonané kontroly: kompletná suite a produkčný build sa automaticky nespúšťajú; živý backend iba ak bol skutočne overený.
+- [x] Finálny diff obsahuje iba schválené zmeny; cudzie zmeny zachované, bez automatického push/deploy.
+
+## Stav plánovacieho výstupu
+
+- [x] Používateľ povolil prepísanie existujúcich tasks/plan.md a tasks/todo.md.
+- [x] Prečítané zadanie, aktuálny Git stav a relevantná implementácia vrátane shared modalu a generated kontraktu.
+- [x] Každá úloha má súbory, konkrétne zmeny, najviac tri akceptačné body, overenie a závislosti; medzi fázami sú checkpointy.
+- [x] Overená integrita dokumentov cez Node obsahovú kontrolu: 5 úloh, 3 checkpointy, 16 existujúcich zdrojových odkazov; exit 0. git diff --check prešiel. Zmenené iba dva plánovacie dokumenty; bez implementácie, commitu a pushu. Test suite ani build sa pri plánovaní nespúšťali.
+- [x] Používateľ schválil implementáciu pokynom executing-plans inline. Implementácia bola vykonaná s focused overením a atomickými commitmi; bez pushu.
+
+## Realizácia a dôkazy — 2026-10-21
+
+Používateľ schválil realizáciu príkazom executing-plans inline. Pracovalo sa v existujúcom checkout na spike/ant-design-shell podľa tohto pokynu, bez subagentov. Pri štarte boli necommitnuté iba task dokumenty; ich existujúci obsah vrátane obmedzenia nových manual_only scenárov na Applications zostal základom realizácie.
+
+### Výsledky úloh
+
+- W1: sedem nových kľúčov v en/sk/cs, JSON a unikátnosť/nonempty kontrola prešli, exit 0. Commit a44ee7b6.
+- W2: red 8 chýbajúcich WWPN scenárov; green 30/30 po doplnení aj dirty/discard/reopen regresie. Obsahuje create false, edit true, všetky snapshot režimy, explicitný payload, prepínanie oboma smermi, false/false, konflikt bez requestu a legacy default cez generated parse. Focused ESLint štyroch súborov prešiel, exit 0. Commit 731ccc53.
+- W3: red 3 frequency scenáre; green 33/33 v celom policy súbore. Text má správne DOM poradie a zachováva editovateľnú frekvenciu aj payload. Focused lint dvoch súborov prešiel, exit 0. Commit 27bc3dbf.
+- W4: red 6 chýbajúcich manual-only scenárov; green 17/17 v dvoch shared modal test súboroch. Notes absent/null/empty/trim/deduplikácia/markup/dlhý text, skipped neutralita a pôvodné schedule varianty sú pokryté. Focused lint zmenených súborov prešiel. Commit 139b8ebf.
+- W5: prenos schedule/notes cez create/edit Application odpoveď, dynamický Airflow link a Close navigácia. Päť plánovaných integračných/regresných súborov je zahrnutých do záverečného behu nižšie. Group a PolicySet test súbory sa nemenili. Commit 0de5c040.
+- Vizuálna kontrola zistila, že pri dlhých notes pôvodný autofocus na Copy odroloval úvod. Red focus test potvrdil problém. Informačný section má teraz tabIndex=0 a existujúci focus ring, takže ho zameria existujúci Modal bez úpravy jeho API alebo efektov. Po tejto oprave prešlo 67/67 v šiestich dotknutých shared/Application/Group test súboroch a focused lint, exit 0. Commit a7dc351c.
+
+### Presné focused test príkazy
+
+Pôvodný fork worker zostával bez výsledku aj mimo sandboxu. Jeden kontrolný shared test s thread workerom prešiel (5/5), preto sa používal iba CLI prepínač --pool=threads; konfigurácia projektu sa nemenila. Východiskový thread beh mal 8 súborov, 87/87 testov. Pri neskorších behoch rovnaké testovacie cesty ako v úlohách vyššie, s doplneným --pool=threads. Test runner použil nainštalovaný Vitest 4.1.11.
+
+Záverečná regresia pred vizuálnou opravou focusu: **8 súborov, 110/110 testov, exit 0**:
+
+```powershell
+node node_modules/vitest/vitest.mjs run --pool=threads src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPolicyModal.test.tsx src/shared/components/modal/OrchestratorPushResultDialog.test.tsx src/shared/components/modal/OrchestratorPushResultDialog.response.test.tsx src/features/recovery-plans/recovery-applications/pages/RecoveryApplicationBuilderPage.test.tsx src/features/recovery-plans/recovery-applications/pages/RecoveryApplicationEditorPage.test.tsx src/features/recovery-plans/recovery-groups/pages/RecoveryGroupBuilderPage.test.tsx src/features/recovery-plans/recovery-groups/pages/RecoveryGroupEditorPage.test.tsx src/features/recovery-plans/policy-sets/components/PolicySetModal.test.tsx
+```
+
+Po oprave focusu bola zopakovaná iba dotknutá regresia: **6 súborov, 67/67 testov, exit 0**; policy 33 a Policy Set 10 testov sa nemenili:
+
+```powershell
+node node_modules/vitest/vitest.mjs run --pool=threads src/shared/components/modal/OrchestratorPushResultDialog.test.tsx src/shared/components/modal/OrchestratorPushResultDialog.response.test.tsx src/features/recovery-plans/recovery-applications/pages/RecoveryApplicationBuilderPage.test.tsx src/features/recovery-plans/recovery-applications/pages/RecoveryApplicationEditorPage.test.tsx src/features/recovery-plans/recovery-groups/pages/RecoveryGroupBuilderPage.test.tsx src/features/recovery-plans/recovery-groups/pages/RecoveryGroupEditorPage.test.tsx
+```
+
+Záverečný focused lint ôsmich skutočne zmenených súborov prešiel, exit 0:
+
+```powershell
+node node_modules/eslint/bin/eslint.js src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPolicyForm.tsx src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPolicyModal.tsx src/features/recovery-plans/recovery-policies/application-recovery/model/recoveryAppPolicySubmit.ts src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPolicyModal.test.tsx src/shared/components/modal/OrchestratorPushResultDialog.tsx src/shared/components/modal/OrchestratorPushResultDialog.test.tsx src/features/recovery-plans/recovery-applications/pages/RecoveryApplicationBuilderPage.test.tsx src/features/recovery-plans/recovery-applications/pages/RecoveryApplicationEditorPage.test.tsx --max-warnings 0
+```
+
+Po následnej oprave focusu znovu prešiel focused lint iba dvoch zmenených shared súborov:
+
+```powershell
+node node_modules/eslint/bin/eslint.js src/shared/components/modal/OrchestratorPushResultDialog.tsx src/shared/components/modal/OrchestratorPushResultDialog.test.tsx --max-warnings 0
+git diff --check
+```
+
+JSON validácia z W1 bola zopakovaná aj na konci; Node kontrola navyše overila sedem nových kľúčov v každom jazyku ako neprázdne a uvedené práve raz. Bez zmien placeholders. Git hlási iba existujúce upozornenia na LF→CRLF a používateľský ignore súbor, nie chybu diffu.
+
+### Browser QA a hranice výsledku
+
+Samostatný headless Edge CDP 9352, Vite 5190, profil mimo workspace. Všetko lokálne API aj config boli stubované; žiadny živý BE alebo reálny recovery. Bežná aplikácia prešla create false, oba smery prepínania myšou aj Space, zobrazenie/skrytie a poradie frequency informácie, create payload true/false s frekvenciou 7, nezmenené edit uloženie a reopen s true. Desktop light 1440×1000 a mobile dark 390×844 vizuálne skontrolované.
+
+Skutočný shared Push komponent bol renderovaný v dočasnom Vite QA entry s reálnymi Theme/Language providers. Overené Application manual_only, hláška o nespustenom DAG, Unpause→Trigger, escaped/deduplikované/dlhé notes, Airflow tlačidlo, obidve témy/šírky a pôvodný Group push bez schedule. Po oprave focusu browser explicitne potvrdil zameraný informačný blok a jeho hlavičku viditeľnú pod nadpisom modalu. Vizuálne skontrolované screenshoty.
+
+Posledný runner: exit 0, **7 stubovaných requestov, bez runtime výnimiek a console errors, bez trigger requestu**. Application submit-to-modal flow je pokrytý page integračnými testmi; browser Push náhľad používa priamy vstup skutočného komponentu, nie plný Application wizard. Group create/edit a Policy Set sú nezmenené automatické regresie.
+
+Dočasný runner a screenshoty sú v lokálnom TEMP adresári abco-wwpn-qa-8382c79252374f6386f5e613e0a2faee. Príkaz úspešného behu:
+
+```powershell
+node "$env:TEMP/abco-wwpn-qa-8382c79252374f6386f5e613e0a2faee/browser.mjs" "$env:TEMP/abco-wwpn-qa-8382c79252374f6386f5e613e0a2faee"
+```
+
+Na zopakovanie treba obnoviť izolovaný Vite/Edge a dočasný QA entry; runner nie je trvalý projektový test. Počiatočné pokusy s ručne interceptovaným HTML zlyhali na Vite preamble/importoch a HMR; vyriešené použitím Vite spracovaného entry a vypnutým HMR iba na QA serveri. Prvé studené načítanie po štarte čakalo na optimalizáciu závislostí; finálny beh prešiel na zahriatom serveri. Žiadna úprava produktu kvôli týmto testovacím problémom. Oba dočasné workspace súbory boli odstránené, vlastné Edge/Vite procesy ukončené.
+
+### Kontrola rozsahu a odovzdanie
+
+Inline review pre správnosť, jednoduchosť, architektúru, bezpečnosť a výkon: bez zostávajúceho nálezu v schválenom rozsahu. Žiadne nové runtime závislosti, suppressions, refaktoring, API requesty ani ručné generated úpravy. Produkčné Policy Set a Groups zostali nedotknuté. Oproti pôvodnému zoznamu netrebalo meniť OrchestratorPushResultDialog.response.test.tsx; bol iba spustený.
+
+Kompletná test suite, full typecheck, production build, živý backend/Keycloak a produkčné E2E neboli spustené. Výsledok je na pôvodnej vetve s atomickými commitmi; bez pushu, merge alebo deploy. Tento záverečný task dokument je evidencia dokončenia, nie ďalšia implementačná úloha.
