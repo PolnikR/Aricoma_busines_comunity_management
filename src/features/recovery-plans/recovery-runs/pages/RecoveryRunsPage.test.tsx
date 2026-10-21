@@ -1,4 +1,7 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { createAppQueryClient } from '@/shared/query/createAppQueryClient'
+import { requestedRuns, runsBody, stubOrchestratorRuns } from '../test/stubOrchestratorRuns'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { RecoveryRunsPage } from './RecoveryRunsPage'
@@ -40,6 +43,28 @@ function renderPage(initialEntries: string[] = ['/']) {
 }
 
 describe('RecoveryRunsPage', () => {
+  it('retries only the failed row using the real latest-run queries', async () => {
+    const actual = await vi.importActual<typeof import('../hooks/useOrchestratedEntityRuns')>('../hooks/useOrchestratedEntityRuns')
+    vi.mocked(useOrchestratedEntityRuns).mockImplementation(actual.useOrchestratedEntityRuns)
+    const refetchEntities = vi.fn()
+    vi.mocked(useOrchestratedEntities).mockReturnValue({ entities, isLoading: false, isFetching: false, error: null, refetch: refetchEntities })
+    vi.mocked(useAppRunHistory).mockReturnValue(historyResult())
+    const mock = stubOrchestratorRuns({ status: 503, body: { detail: 'Unavailable' } }, { body: runsBody([]) }, { body: runsBody([{ id: 'recovered', state: 'success' }]) })
+    const client = createAppQueryClient()
+    client.setDefaultOptions({ queries: { ...client.getDefaultOptions().queries, retry: false } })
+    const view = render(<QueryClientProvider client={client}><MemoryRouter><RecoveryRunsPage /></MemoryRouter></QueryClientProvider>)
+    try {
+      fireEvent.click(await screen.findByRole('button', { name: 'Retry' }))
+      await waitFor(() => { expect(screen.getByText('success')).toBeInTheDocument() })
+      expect(requestedRuns(mock).map(request => request.params.provider_id)).toEqual(['airflow-01', 'airflow-02', 'airflow-01'])
+      expect(refetchEntities).not.toHaveBeenCalled()
+    } finally {
+      view.unmount()
+      client.clear()
+      vi.unstubAllGlobals()
+    }
+  })
+
   it('shows a static surface header and one row per orchestrated entity across both types by default', () => {
     vi.mocked(useOrchestratedEntities).mockReturnValue({
       entities,

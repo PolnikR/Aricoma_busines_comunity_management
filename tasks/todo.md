@@ -180,10 +180,12 @@ Návrh a hranice: [plan.md, sekcia 8](plan.md#8-opravy-funkčného-auditu). Úlo
 **Popis:** Oddeliť kolekčné a entity-scoped Retry cez hook, page a tabuľku; zachovať horný Refresh.
 **Súbory:** `src/features/recovery-plans/recovery-runs/hooks/useOrchestratedEntityRuns.ts`, jeho `.test.tsx`; `src/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage.tsx`, jeho `.test.tsx`; `src/features/recovery-plans/recovery-runs/components/RecoveryRunsTable.tsx`. **Rozsah:** M, 5 súborov; potrebné ďalšie úpravy table testov oddeliť do malého nadväzujúceho commitu. **Závislosti:** žiadne.
 **Akceptácia:**
-- [ ] Po 503 row Retry vyvolá get_orchestrator_runs pre správny provider/DAG a úspech odstráni chybu; nerefetchuje iba kolekcie ani iný úspešný riadok.
-- [ ] Horný Refresh obnoví kolekcie aj viditeľné latest runs; app/group so zhodným ID sa rozlišujú.
-- [ ] Zachované loading/empty/cached-error stavy a selection; page integračný test použije skutočný query hook so stub fetch.
+- [x] Po 503 row Retry vyvolá get_orchestrator_runs pre správny provider/DAG a úspech odstráni chybu; nerefetchuje iba kolekcie ani iný úspešný riadok.
+- [x] Horný Refresh obnoví kolekcie aj viditeľné latest runs; app/group so zhodným ID sa rozlišujú.
+- [x] Zachované loading/empty/cached-error stavy a selection; page integračný test použije skutočný query hook so stub fetch.
 **Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-runs/hooks/useOrchestratedEntityRuns.test.tsx src/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage.test.tsx src/features/recovery-plans/recovery-runs/components/RecoveryRunsTable.test.tsx`.
+
+**A3 výsledok (2026-10-21):** oba nové testy najprv zlyhali (row Retry nezobrazil úspech; scoped hook obnovil oba riadky). Po oprave prešlo 26/26 testov v troch uvedených súboroch cez node Vitest CLI. Focused ESLint šiestich zmenených Runs TS/TSX prešiel. Table fixture si vyžiadala šiesty súbor; zmena je obmedzená na doplnenie providerId do dvoch riadkov. Kolekčné retry ostalo bez argumentu; row retry prenáša úplný riadok a hook filtruje typ/ID/provider/DAG. A2 commit: `e63ae390`.
 
 ## A4: F-02 — vyhľadávanie podľa názvu
 

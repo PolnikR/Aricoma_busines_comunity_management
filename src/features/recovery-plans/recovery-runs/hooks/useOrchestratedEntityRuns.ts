@@ -12,7 +12,7 @@ export interface EntityLatestRun {
 export interface OrchestratedEntityRunsResult {
   rows: EntityLatestRun[]
   isFetching: boolean
-  refetch: () => Promise<unknown[]>
+  refetch: (entity?: OrchestratedEntity) => Promise<unknown[]>
 }
 
 // One cheap (limit=1) query per orchestrated entity, reading providerId off
@@ -45,6 +45,9 @@ export function useOrchestratedEntityRuns(entities: OrchestratedEntity[]): Orche
       latestRunState: getLatestRunState(index),
     })),
     isFetching: results.some(result => result.isFetching),
-    refetch: () => Promise.all(results.map(result => result.refetch())),
+    refetch: target => Promise.all(results.filter((_result, index) => {
+      const entity = entities[index]
+      return !target || (entity?.entityType === target.entityType && entity.id === target.id && entity.providerId === target.providerId && entity.dagId === target.dagId)
+    }).map(result => result.refetch())),
   }
 }
