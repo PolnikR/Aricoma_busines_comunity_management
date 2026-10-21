@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components -- These files export React Router route factories, not renderable components. */
 import { lazy, Suspense } from 'react'
 import { Navigate, Route } from 'react-router'
+import { isAuthEnabled } from '@/config/authEnabled'
 import { RouteLoadingSkeleton } from '@/shared/components/page/RouteLoadingSkeleton'
 import { platformAdministrationPages } from '../modulePageConfigs'
 import { routes } from '../routes'
@@ -56,11 +57,11 @@ export function platformAdministrationRoutes() {
       <Route
         path={toRoutePath(routes.platformIdentityAccess)}
         handle={{ contentScroll: 'contained' }}
-        element={(
+        element={isAuthEnabled() ? (
           <Suspense fallback={<RouteLoadingSkeleton />}>
             <IdentityAccessPage />
           </Suspense>
-        )}
+        ) : <Navigate to={routes.platformProviders} replace />}
       />
       <Route
         path={toRoutePath(routes.platformAuditRetention)}
