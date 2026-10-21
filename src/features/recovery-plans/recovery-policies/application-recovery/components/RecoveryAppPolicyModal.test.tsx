@@ -84,6 +84,40 @@ function renderModal(props: Partial<React.ComponentProps<typeof RecoveryAppPolic
 afterEach(() => vi.unstubAllGlobals())
 
 describe('RecoveryAppPolicyModal', () => {
+  it.each(['Manual zoning', 'Manual WWPN entry'])('explains ignored IBM Power frequency for %s while retaining its payload', async mode => {
+    const fetchMock = stubSubmitResponse()
+    const onClose = vi.fn()
+    renderModal({ onClose })
+    fillRequiredCreateFields()
+    const text = 'For IBM Power Recovery Applications in manual mode, the configured frequency is ignored. Recovery is started manually in Airflow. For VMware, the frequency still applies.'
+    expect(screen.queryByText(text)).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('checkbox', { name: mode }))
+    const info = screen.getByText(text)
+    expect(screen.getByLabelText('Retention').compareDocumentPosition(info) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(info.compareDocumentPosition(screen.getByLabelText('Snapshot selection')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(screen.getByLabelText('Frequency')).toBeEnabled()
+    expect(screen.getByLabelText('Frequency unit')).toBeEnabled()
+    fireEvent.change(screen.getByLabelText('Frequency'), { target: { value: '7' } })
+    fireEvent.change(screen.getByLabelText('Frequency unit'), { target: { value: 'days' } })
+    fireEvent.click(screen.getByRole('checkbox', { name: mode }))
+    expect(screen.queryByText(text)).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Frequency')).toHaveValue(7)
+    fireEvent.click(screen.getByRole('checkbox', { name: mode }))
+    fireEvent.click(screen.getByRole('button', { name: 'Create policy' }))
+    await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+    expect(submittedBody(fetchMock)).toMatchObject({ frequency_value: 7, frequency_unit: 'days' })
+  })
+
+  it('shows frequency guidance for a stored WWPN mode and keeps it when switching to zoning', () => {
+    renderModal({ policy: { ...policy, manual_wwpn_entry: true } })
+    const text = /For IBM Power Recovery Applications in manual mode/
+    expect(screen.getByText(text)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Manual zoning' }))
+    expect(screen.getByText(text)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Manual zoning' }))
+    expect(screen.queryByText(text)).not.toBeInTheDocument()
+  })
+
   it('starts with both manual modes off and sends an explicit false on create', async () => {
     const fetchMock = stubSubmitResponse()
     const onClose = vi.fn()

@@ -109,6 +109,10 @@ export function RecoveryAppPolicyForm({
         </div>
       </div>
 
+      {data.manual_zoning || data.manual_wwpn_entry ? (
+        <p className="text-xs text-text-muted">{t('recoveryAppPolicies.form.manualFrequencyInfo')}</p>
+      ) : null}
+
       <div className="rounded-lg border border-border-subtle bg-surface-subtle p-4">
         <h3 className="text-sm font-semibold text-text-primary">{t('recoveryAppPolicies.form.snapshotSection')}</h3>
         <div className="mt-3 space-y-4">
