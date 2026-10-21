@@ -54,7 +54,7 @@ function createInitialForm(provider?: ProviderRecord): ProviderCreateFormData {
         url: provider.url ?? '',
         credentialId: provider.credentialId ?? '',
         vmPrefix: provider.vmPrefix ?? '',
-        vmTags: provider.vmTags?.[0] ? [provider.vmTags[0]] : [],
+        vmTags: [...(provider.vmTags ?? [])],
         backingStorageProviderIds: [...(provider.backingStorageProviderIds ?? [])],
         partnerProviderId: provider.partnerProviderId ?? '',
         notificationEmail: provider.notificationEmail ?? '',

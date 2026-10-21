@@ -250,10 +250,12 @@ Návrh a hranice: [plan.md, sekcia 8](plan.md#8-opravy-funkčného-auditu). Úlo
 **Popis:** Zachovať úplné vmTags pri inicializácii a uložení bez zmeny selectoru; nahradiť test tichej legacy normalizácie.
 **Súbory:** `src/features/providers-connectors/providers/components/ProvidersCreateModal.tsx`, jeho `.test.tsx`. **Rozsah:** S, 2 súbory. **Závislosti:** A7 kvôli zdieľaným súborom.
 **Akceptácia:**
-- [ ] Edit providera s dvoma tagmi a zmena iba názvu odošle oba tagy v pôvodnom poradí.
-- [ ] Explicitný výber/clear selectoru použije existujúcu jedno-tagovú semantiku; bez novej multi-tag funkcionality.
-- [ ] Cancel/loading/error lookupu nemenia tagy; dirty guard rozlišuje nezmenený zoznam od vedomej úpravy.
+- [x] Edit providera s dvoma tagmi a zmena iba názvu odošle oba tagy v pôvodnom poradí.
+- [x] Explicitný výber/clear selectoru použije existujúcu jedno-tagovú semantiku; bez novej multi-tag funkcionality.
+- [x] Cancel/loading/error lookupu nemenia tagy; dirty guard rozlišuje nezmenený zoznam od vedomej úpravy.
 **Overenie:** `npm.cmd exec vitest run src/features/providers-connectors/providers/components/ProvidersCreateModal.test.tsx`.
+
+**A8 vysledok (2026-10-21):** red: nezmeneny aj lookup-error payload stratil druhy tag; green 47/47 ProvidersCreateModal testov cez node Vitest CLI. Explicitny replace/clear zostal zachovany; focused ESLint oboch suborov presiel. A7 commit: 7dba0ccf.
 
 ## A9: R-01 — reset stránkovania histórie
 
