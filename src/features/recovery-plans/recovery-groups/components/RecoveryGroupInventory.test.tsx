@@ -1,4 +1,6 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { createAppQueryClient } from '@/shared/query/createAppQueryClient'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useGetRecoveryGroupInventory } from '@/generated/query/recovery-groups/recovery-groups.gen'
@@ -50,6 +52,39 @@ beforeEach(() => {
 })
 
 describe('RecoveryGroupInventory', () => {
+  it('keeps cached volumes on background error and isolates a different run', async () => {
+    const actual = await vi.importActual<typeof import('@/generated/query/recovery-groups/recovery-groups.gen')>('@/generated/query/recovery-groups/recovery-groups.gen')
+    vi.mocked(useGetRecoveryGroupInventory).mockImplementation(actual.useGetRecoveryGroupInventory)
+    const client = createAppQueryClient()
+    client.setDefaultOptions({ queries: { ...client.getDefaultOptions().queries, retry: false } })
+    let failed = false
+    let volume = 'cached-volume'
+    vi.stubGlobal('fetch', () => Promise.resolve(Response.json(failed ? { detail: 'Unavailable' } : {
+      recovery_group_id: 'group', recovery_group_name: 'Group', run_id: 'run-1', volumes: { [volume]: { found: true, relations: [] } },
+    }, { status: failed ? 503 : 200 })))
+    const view = render(<QueryClientProvider client={client}><RecoveryGroupInventory runId="run-1" active /></QueryClientProvider>)
+    try {
+      await screen.findByTitle('cached-volume')
+      failed = true
+      await act(async () => { await client.refetchQueries() })
+      expect(await screen.findByRole('alert')).toHaveTextContent('recoveryInventory.refreshFailed')
+      expect(screen.getByTitle('cached-volume')).toBeInTheDocument()
+      failed = false
+      volume = 'updated-volume'
+      fireEvent.click(screen.getByRole('button', { name: 'buttons.retry' }))
+      await screen.findByTitle('updated-volume')
+      await waitFor(() => { expect(screen.queryByRole('alert')).not.toBeInTheDocument() })
+      failed = true
+      view.rerender(<QueryClientProvider client={client}><RecoveryGroupInventory runId="run-2" active /></QueryClientProvider>)
+      expect(screen.queryByTitle('updated-volume')).not.toBeInTheDocument()
+      expect(await screen.findByRole('alert')).toHaveTextContent('recoveryInventory.error')
+    } finally {
+      view.unmount()
+      client.clear()
+      vi.unstubAllGlobals()
+    }
+  })
+
   it('without Metro Mirror renders only the auxiliary volume inventory', () => {
     mockInventory({})
     render(<RecoveryGroupInventory runId="run-1" active />)

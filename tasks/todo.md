@@ -221,10 +221,12 @@ Návrh a hranice: [plan.md, sekcia 8](plan.md#8-opravy-funkčného-auditu). Úlo
 **Popis:** Odlíšiť initial error od data + error v oboch inventároch a pripojiť neblokujúci alert/Retry.
 **Súbory:** `src/features/recovery-plans/recovery-applications/components/RecoveryApplicationInventory.tsx`, jeho `.test.tsx`; `src/features/recovery-plans/recovery-groups/components/RecoveryGroupInventory.tsx`, jeho `.test.tsx`. **Rozsah:** M, 4 súbory. **Závislosti:** A5.
 **Akceptácia:**
-- [ ] Po úspešnom fetch a zlyhanom refetch zostanú dáta s varovaním; úspešný Retry ich obnoví a varovanie odstráni.
-- [ ] Bez dát ostáva error placeholder; noRun, unsupported Power a target-error vetvy sú zachované.
-- [ ] Zmena run/target kontextu neukáže cudzie cached dáta; test zahŕňa QueryClient background refetch.
+- [x] Po úspešnom fetch a zlyhanom refetch zostanú dáta s varovaním; úspešný Retry ich obnoví a varovanie odstráni.
+- [x] Bez dát ostáva error placeholder; noRun, unsupported Power a target-error vetvy sú zachované.
+- [x] Zmena run/target kontextu neukáže cudzie cached dáta; test zahŕňa QueryClient background refetch.
 **Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-applications/components/RecoveryApplicationInventory.test.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupInventory.test.tsx`.
+
+**A6 vysledok (2026-10-21):** 2 regresie najprv zlyhali na chybe namiesto stale varovania; green 18/18 v oboch inventory test suboroch cez node Vitest CLI. Skutocny QueryClient/refetch/stub fetch pokryva success, background 503, Retry, app target a group run zmenu. Focused ESLint 4 suborov presiel. A4 commit: 5df30b53; A5: 7f76bd1d.
 
 ## A7: Odstránenie nefunkčného infra Port poľa
 

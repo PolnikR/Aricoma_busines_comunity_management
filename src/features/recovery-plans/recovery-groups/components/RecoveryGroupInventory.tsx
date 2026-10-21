@@ -52,7 +52,7 @@ export function RecoveryGroupInventory({ runId, active }: RecoveryGroupInventory
 
   if (!runId) return <p className="px-5 py-6 text-sm text-text-subtle">{t('recoveryInventory.noRun')}</p>
   if (query.isLoading) return <p className="px-5 py-6 text-sm text-text-subtle">{t('recoveryInventory.loading')}</p>
-  if (query.error) {
+  if (query.error && !query.data) {
     return <FetchErrorAlert className="m-5" title={t('recoveryInventory.error')} retryLabel={t('buttons.retry')} isRetrying={query.isFetching} onRetry={() => { void query.refetch() }} />
   }
   if (!query.data) return null
@@ -76,6 +76,7 @@ export function RecoveryGroupInventory({ runId, active }: RecoveryGroupInventory
 
   return (
     <div className="flex flex-col gap-7 px-5 py-4">
+      {query.error ? <FetchErrorAlert title={t('recoveryInventory.refreshFailed')} retryLabel={t('buttons.retry')} isRetrying={query.isFetching} onRetry={() => { void query.refetch() }} /> : null}
       {metroMirror ? (
         <>
           {metroMirror.error || metroMirror.consistency_group ? (
