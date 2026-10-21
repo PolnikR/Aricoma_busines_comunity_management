@@ -11,7 +11,9 @@ export const OrchestratorPush = zod.object({
   "reason": zod.union([zod.string(),zod.null()]).exactOptional(),
   "dag": zod.union([zod.string(),zod.null()]).exactOptional(),
   "dag_id": zod.union([zod.string(),zod.null()]).exactOptional(),
-  "json": zod.union([zod.string(),zod.null()]).exactOptional()
+  "json": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "schedule": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "notes": zod.union([zod.array(zod.string()),zod.null()]).exactOptional()
 })
 
 export type OrchestratorPush = zod.input<typeof OrchestratorPush>;

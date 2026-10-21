@@ -33,7 +33,6 @@ const EMPTY_FORM: ProviderCreateFormData = {
   role: '',
   ipAddress: '',
   url: '',
-  port: '22',
   credentialId: '',
   vmPrefix: '',
   vmTags: [],
@@ -53,10 +52,9 @@ function createInitialForm(provider?: ProviderRecord): ProviderCreateFormData {
         role: provider.role,
         ipAddress: provider.ipAddress ?? '',
         url: provider.url ?? '',
-        port: '22',
         credentialId: provider.credentialId ?? '',
         vmPrefix: provider.vmPrefix ?? '',
-        vmTags: provider.vmTags?.[0] ? [provider.vmTags[0]] : [],
+        vmTags: [...(provider.vmTags ?? [])],
         backingStorageProviderIds: [...(provider.backingStorageProviderIds ?? [])],
         partnerProviderId: provider.partnerProviderId ?? '',
         notificationEmail: provider.notificationEmail ?? '',
@@ -90,7 +88,6 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     || formData.role !== initialForm.role
     || formData.ipAddress !== initialForm.ipAddress
     || formData.url !== initialForm.url
-    || formData.port !== initialForm.port
     || formData.credentialId !== initialForm.credentialId
     || formData.notificationEmail !== initialForm.notificationEmail
     || formData.cacheRefreshSeconds !== initialForm.cacheRefreshSeconds
@@ -185,10 +182,6 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     const notificationEmail = formData.notificationEmail.trim()
     if (notificationEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(notificationEmail)) {
       newErrors.notificationEmail = t('forms.notificationEmailInvalid')
-    }
-    const port = Number(formData.port)
-    if (!Number.isInteger(port) || port < 1 || port > 65535) {
-      newErrors.port = t('forms.portRequired')
     }
     const cacheRefreshSeconds = formData.cacheRefreshSeconds.trim()
     if (cacheRefreshSeconds && (!/^\d+$/.test(cacheRefreshSeconds) || !Number.isSafeInteger(Number(cacheRefreshSeconds)) || Number(cacheRefreshSeconds) < 1)) {

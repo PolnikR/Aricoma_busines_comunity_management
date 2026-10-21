@@ -96,6 +96,20 @@ beforeEach(() => {
 })
 
 describe('RecoveryGroupBuilderPage', () => {
+  it.each([null, { status: 'skipped', reason: 'Provider disabled', dag: null, dag_id: null, json: null }])('shows a nullable or skipped push result without inventing a DAG (%j)', async push => {
+    const user = userEvent.setup()
+    create.mockResolvedValue({ airflowRunId: 'legacy_wrong_id', orchestratorPush: push })
+    render(<RecoveryGroupBuilderPage />)
+    await user.click(screen.getByRole('button', { name: 'Create with orchestration' }))
+    const dialog = await screen.findByRole('dialog')
+    expect(dialog).toHaveTextContent(push ? 'Orchestrator push skipped' : 'The API did not return an orchestrator push result.')
+    expect(screen.queryByRole('button', { name: 'View in Airflow' })).not.toBeInTheDocument()
+    expect(screen.queryByText('legacy_wrong_id')).not.toBeInTheDocument()
+    expect(navigate).not.toHaveBeenCalled()
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+    expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-groups')
+  })
+
   it('forwards the Metro draft and keeps the builder open after a failed create', async () => {
     const user = userEvent.setup()
     create.mockRejectedValue(new RecoveryGroupsError('invalid_draft', 'Metro group rejected'))
@@ -131,13 +145,17 @@ describe('RecoveryGroupBuilderPage', () => {
   it('shows the success modal with the airflow run id when pushed to the orchestrator', async () => {
     const user = userEvent.setup()
     const openWindow = vi.spyOn(window, 'open').mockImplementation(() => null)
-    create.mockResolvedValue({ airflowRunId: '260806091844_d023a7ef' })
+    create.mockResolvedValue({ airflowRunId: 'legacy_wrong_id', orchestratorPush: { status: 'pushed', dag_id: 'dag_260806091844_d023a7ef', dag: '/airflow/group.py', json: '/airflow/group.json' } })
     render(<RecoveryGroupBuilderPage />)
 
     await user.click(screen.getByRole('button', { name: 'Create with orchestration' }))
 
-    expect(await screen.findByText('260806091844_d023a7ef')).toBeInTheDocument()
-    expect(screen.getByText('Primary Airflow')).toBeInTheDocument()
+    expect(await screen.findByText('dag_260806091844_d023a7ef')).toBeInTheDocument()
+    expect(screen.getByRole('list')).toHaveTextContent('/airflow/group.py')
+    expect(screen.getByText('OrchestratorPush')).toBeInTheDocument()
+    expect(screen.getByText('2 / 2 passed')).toBeInTheDocument()
+    expect(screen.queryByText('Queued')).not.toBeInTheDocument()
+    expect(screen.queryByText('legacy_wrong_id')).not.toBeInTheDocument()
     expect(navigate).not.toHaveBeenCalled()
 
     await user.click(screen.getByRole('button', { name: 'View in Airflow' }))
@@ -147,6 +165,8 @@ describe('RecoveryGroupBuilderPage', () => {
       'noopener,noreferrer',
     )
     openWindow.mockRestore()
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+    expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-groups')
   })
 
   it('does not offer an exact DAG link when the API omits the airflow run id', async () => {

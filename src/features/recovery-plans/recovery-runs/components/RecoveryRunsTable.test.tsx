@@ -14,6 +14,7 @@ const rows: [RecoveryRunRow, RecoveryRunRow] = [
     name: 'Finance Recovery',
     entityType: 'application',
     dagId: 'dag_260818094526_2918dccb',
+    providerId: 'airflow-01',
     latestRunState: { status: 'data', run: { runId: 'r1', status: 'success', startedAt: '2026-08-17T22:00:00Z', endedAt: '2026-08-17T22:04:12Z', durationSeconds: 252 }, refreshError: null },
   },
   {
@@ -21,6 +22,7 @@ const rows: [RecoveryRunRow, RecoveryRunRow] = [
     name: 'Billing Group',
     entityType: 'group',
     dagId: 'dag_260817113000_aa11bb',
+    providerId: 'airflow-02',
     latestRunState: { status: 'empty', refreshError: null },
   },
 ]

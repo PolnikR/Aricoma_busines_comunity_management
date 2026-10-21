@@ -20,6 +20,16 @@ const entities: OrchestratedEntity[] = [
 ]
 
 describe('useOrchestratedEntityRuns', () => {
+  it('scopes retry to the full identity when app and group IDs match', async () => {
+    const app: OrchestratedEntity = { entityType: 'application', id: 'shared', name: 'App', providerId: 'one', dagId: 'app-dag' }
+    const group: OrchestratedEntity = { ...app, entityType: 'group', name: 'Group', providerId: 'two', dagId: 'group-dag' }
+    const mock = stubOrchestratorRuns({ body: runsBody([]) })
+    const { result } = renderHook(() => useOrchestratedEntityRuns([app, group]), { wrapper: createWrapper() })
+    await waitFor(() => { expect(result.current.isFetching).toBe(false) })
+    await act(async () => { await result.current.refetch(group) })
+    expect(requestedRuns(mock).map(request => request.params['provider_id'])).toEqual(['one', 'two', 'two'])
+  })
+
   afterEach(() => {
     vi.useRealTimers()
     vi.unstubAllGlobals()

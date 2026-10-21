@@ -9,6 +9,7 @@ import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useSubmitRecoveryAppPolicy } from '@/generated/query/recovery-app-policies/recovery-app-policies.gen'
 import {
+  submitRecoveryAppPolicyBodyManualWwpnEntryDefault,
   submitRecoveryAppPolicyBodyManualZoningDefault,
   submitRecoveryAppPolicyBodySourceShutdownTimeoutSecondsDefault,
   submitRecoveryAppPolicyBodyTargetLparPrefixDefault,
@@ -34,6 +35,7 @@ const EMPTY_FORM: RecoveryAppPolicyFormData = {
   snapshot_max_age_value: '', snapshot_max_age_unit: '', snapshot_target_time: '', enabled: true,
   target_lpar_prefix: submitRecoveryAppPolicyBodyTargetLparPrefixDefault,
   manual_zoning: submitRecoveryAppPolicyBodyManualZoningDefault,
+  manual_wwpn_entry: submitRecoveryAppPolicyBodyManualWwpnEntryDefault,
   source_shutdown_timeout_seconds: String(submitRecoveryAppPolicyBodySourceShutdownTimeoutSecondsDefault),
   zoning_wait_minutes: String(submitRecoveryAppPolicyBodyZoningWaitMinutesDefault),
 }
@@ -56,6 +58,7 @@ function toFormData(policy: RecoveryAppPolicyRecordOutput): RecoveryAppPolicyFor
     enabled: policy.enabled,
     target_lpar_prefix: policy.target_lpar_prefix,
     manual_zoning: policy.manual_zoning,
+    manual_wwpn_entry: policy.manual_wwpn_entry,
     source_shutdown_timeout_seconds: String(policy.source_shutdown_timeout_seconds),
     zoning_wait_minutes: String(policy.zoning_wait_minutes),
   }
@@ -105,12 +108,19 @@ export function RecoveryAppPolicyModal({ open, onClose, existingPolicies, policy
   }
 
   const handleChange = <K extends keyof RecoveryAppPolicyFormData>(field: K, value: RecoveryAppPolicyFormData[K]) => {
-    setFormData(previous => ({ ...previous, [field]: value }))
-    if (errors[field]) {
+    const isManualMode = field === 'manual_zoning' || field === 'manual_wwpn_entry'
+    setFormData(previous => ({
+      ...previous,
+      [field]: value,
+      ...(field === 'manual_zoning' && value === true ? { manual_wwpn_entry: false } : {}),
+      ...(field === 'manual_wwpn_entry' && value === true ? { manual_zoning: false } : {}),
+    }))
+    if (errors[field] || isManualMode && errors.manual_zoning) {
       setErrors(previous => {
         const next = { ...previous }
         // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
         delete next[field]
+        if (isManualMode) delete next.manual_zoning
         return next
       })
     }
@@ -125,6 +135,7 @@ export function RecoveryAppPolicyModal({ open, onClose, existingPolicies, policy
     const shutdownTimeout = formData.source_shutdown_timeout_seconds === '' ? null : Number(formData.source_shutdown_timeout_seconds)
     const zoningWait = formData.zoning_wait_minutes === '' ? null : Number(formData.zoning_wait_minutes)
     const mode = formData.snapshot_selection_mode
+    if (formData.manual_zoning && formData.manual_wwpn_entry) next.manual_zoning = t('recoveryAppPolicies.validation.manualModesExclusive')
     if (!formData.id.trim()) next.id = t('recoveryAppPolicies.validation.idRequired')
     else if (!isEdit && existingPolicies.some(entry => entry.id === formData.id.trim())) next.id = t('recoveryAppPolicies.validation.idExists')
     if (!formData.name.trim()) next.name = t('recoveryAppPolicies.validation.nameRequired')

@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClientProvider } from '@tanstack/react-query'
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { isAuthEnabled } from '@/config/authEnabled'
 import { useAuthContext } from '@/contexts/AuthContext'
@@ -6,15 +6,9 @@ import { ConnectionTestProvider } from '@/shared/connection-test/ConnectionTestP
 import { ConnectionTestHost } from '@/shared/connection-test/ConnectionTestHost'
 import { ConnectionTestManager } from '@/shared/connection-test/ConnectionTestManager'
 import { SidebarProvider } from '@/layouts/app-shell/SidebarContext'
-import { STANDARD_QUERY_OPTIONS } from '@/shared/query/cachePolicy'
+import { createAppQueryClient } from '@/shared/query/createAppQueryClient'
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      ...STANDARD_QUERY_OPTIONS,
-    },
-  },
-})
+const queryClient = createAppQueryClient()
 
 let nextSessionGeneration = 0
 

@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { LanguageProvider } from '@/contexts/LanguageProvider'
 import { SidebarProvider } from './SidebarContext'
 import { AppSidebar } from './AppSidebar'
@@ -16,6 +16,7 @@ describe('AppSidebar', () => {
 
   afterEach(() => {
     window.innerWidth = originalInnerWidth
+    vi.unstubAllGlobals()
   })
 
   it('selects Overview at home without opening Discovery', async () => {
@@ -198,6 +199,37 @@ describe('AppSidebar', () => {
     const group = (await screen.findByRole('link', { name: 'Platform providers' })).closest('ul')
     if (!group) throw new Error('Platform Administration submenu not rendered')
     expect(within(group).getAllByRole('link').map(item => item.textContent)).toEqual(['Platform providers', 'Identity & access', 'Audit'])
+  })
+
+  it('hides Identity & Access in expanded and collapsed navigation when auth is disabled', async () => {
+    vi.stubGlobal('__APP_CONFIG__', { AUTH_ENABLED: 'false' })
+    window.innerWidth = 1440
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter initialEntries={['/platform-administration/platform-providers']}>
+        <LanguageProvider><SidebarProvider><AppSidebar /></SidebarProvider></LanguageProvider>
+      </MemoryRouter>,
+    )
+
+    const providers = await screen.findByRole('link', { name: 'Platform providers' })
+    const group = providers.closest('ul')
+    if (!group) throw new Error('Platform Administration submenu not rendered')
+    expect(within(group).getAllByRole('link').map(item => item.textContent)).toEqual(['Platform providers', 'Audit'])
+
+    await user.click(await screen.findByRole('button', { name: 'Collapse menu' }))
+    expect(screen.queryByRole('link', { name: 'Identity & access' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Platform providers' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Audit' })).toBeInTheDocument()
+  })
+
+  it('shows Identity & Access when auth is explicitly enabled', async () => {
+    vi.stubGlobal('__APP_CONFIG__', { AUTH_ENABLED: 'true' })
+    render(
+      <MemoryRouter initialEntries={['/platform-administration/platform-providers']}>
+        <LanguageProvider><SidebarProvider><AppSidebar /></SidebarProvider></LanguageProvider>
+      </MemoryRouter>,
+    )
+    expect(await screen.findByRole('link', { name: 'Identity & access' })).toHaveAttribute('href', '/platform-administration/identity-access')
   })
 
   it('highlights the owning submenu item on a nested create route', async () => {

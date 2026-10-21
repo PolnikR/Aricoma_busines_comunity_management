@@ -1,4 +1,4 @@
-import type { OrchestrationStateOutput, RecoveryAppRecordOutput, RollbackReportOutput } from '@/generated/query/zod'
+import type { OrchestrationStateOutput, OrchestratorPushOutput, RecoveryAppRecordOutput, RollbackReportOutput } from '@/generated/query/zod'
 
 // Rollback report of the delete response, typed by the patched spec.
 export type RollbackReport = RollbackReportOutput
@@ -72,17 +72,12 @@ export interface SubmitDagLocalResponse {
 }
 
 export interface SubmitDagOrchestratedResponse extends SubmitDagLocalResponse {
-  orchestrator_push: OrchestratorPush
+  orchestrator_push: OrchestratorPush | null
 }
 
 export type SubmitDagResponse = SubmitDagLocalResponse | SubmitDagOrchestratedResponse
 
-export interface OrchestratorPush {
-  status: string
-  dag: string
-  json: string
-  dag_id: string
-}
+export type OrchestratorPush = OrchestratorPushOutput
 
 export interface RecoveryApplicationApiRecord {
   id: string

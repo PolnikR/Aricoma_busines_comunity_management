@@ -44,6 +44,7 @@ export function RecoveryRunsPage() {
       name: entity.name,
       entityType: entity.entityType,
       dagId: entity.dagId,
+      providerId: entity.providerId,
       latestRunState,
     })),
     [latestRunRows],
@@ -101,13 +102,14 @@ export function RecoveryRunsPage() {
           isLoading={isLoading}
           error={error}
           isRetrying={isFetching}
-          onRetry={refetch}
+          onRetry={row => { if (row) void refetchLatestRuns(row); else refetch() }}
           onSelectEntity={(nextEntityType, nextEntityId) => { setEntity(nextEntityType, nextEntityId) }}
           selectedEntityKey={selectedEntityKey}
         />
       </InventoryShell>
 
       <RecoveryRunHistoryDetailView
+        key={selectedEntity ? JSON.stringify([selectedEntity.entityType, selectedEntity.id, selectedEntity.providerId, selectedEntity.dagId]) : 'no-entity'}
         entity={selectedEntity}
         onClose={() => { setEntity(null) }}
       />

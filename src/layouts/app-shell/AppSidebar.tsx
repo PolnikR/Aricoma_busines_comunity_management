@@ -2,6 +2,7 @@ import { NavLink, useLocation } from 'react-router'
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { routes } from '@/app/routes'
+import { isAuthEnabled } from '@/config/authEnabled'
 import { useTranslation } from '@/hooks/useTranslation'
 import {
   ChevronDownIcon,
@@ -99,8 +100,8 @@ const navKeyMap: Record<string, string> = {
   'Recovery Actions': 'nav.recoveryActions',
 }
 
-function findRouteMenu(pathname: string): string | undefined {
-  const activeItem = navItems.find((item) => item.subItems?.some((subItem) => pathname === subItem.path || pathname.startsWith(`${subItem.path}/`)))
+function findRouteMenu(pathname: string, items: NavItem[]): string | undefined {
+  const activeItem = items.find((item) => item.subItems?.some((subItem) => pathname === subItem.path || pathname.startsWith(`${subItem.path}/`)))
   return activeItem?.name
 }
 
@@ -114,9 +115,17 @@ export function AppSidebar() {
   const location = useLocation()
   const [openMenu, setOpenMenu] = useState('')
 
+  // config.js is loaded before the app starts. Hide Identity & Access in both
+  // expanded navigation and the collapsed flyout when Keycloak auth is off.
+  const visibleNavItems = isAuthEnabled()
+    ? navItems
+    : navItems.map(item => item.name === 'Platform Administration'
+      ? { ...item, subItems: (item.subItems ?? []).filter(subItem => subItem.path !== routes.platformIdentityAccess) }
+      : item)
+
   // The menu that owns the current route is always expanded; users can also
   // toggle other menus open via openMenu.
-  const routeMenu = findRouteMenu(location.pathname)
+  const routeMenu = findRouteMenu(location.pathname, visibleNavItems)
   const isMenuOpen = (name: string) => openMenu === name || routeMenu === name
 
   const isSubItemActive = (path: string) => {
@@ -158,7 +167,7 @@ export function AppSidebar() {
           </h2>
 
           <ul className="flex flex-col gap-0.5">
-            {navItems.map((item) => (
+            {visibleNavItems.map((item) => (
               <li key={item.name} className="group relative">
                 {item.subItems ? (
                   <>

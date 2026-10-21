@@ -203,7 +203,7 @@ describe('ProvidersCreateModal', () => {
     expect(screen.getByLabelText('IP address')).toBeInTheDocument()
     expect(screen.getByLabelText('URL')).toBeInTheDocument()
     expect(screen.getByLabelText('Notification email')).toBeInTheDocument()
-    expect(screen.getByLabelText('Port')).toHaveValue(22)
+    expect(screen.queryByLabelText('Port')).not.toBeInTheDocument()
     expect(screen.getByLabelText(/Cache refresh interval \(seconds\)/)).toHaveValue(null)
     expect(screen.getByLabelText('Credentials')).toBeInTheDocument()
     expect(useTagsMock).toHaveBeenCalledWith(null, false)
@@ -255,7 +255,9 @@ describe('ProvidersCreateModal', () => {
     vi.unstubAllGlobals()
   })
 
-  it('normalizes legacy provider VM tags to the first saved tag', () => {
+  it.each(['unchanged', 'lookup-error', 'replacement', 'clear'])('preserves all saved tags unless explicitly changed: %s', async action => {
+    const mockFetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
+    vi.stubGlobal('fetch', mockFetch)
     const editedProvider: ProviderRecord = {
       ...mockProviderA,
       vmTags: ['first-tag', 'second-tag'],
@@ -263,7 +265,7 @@ describe('ProvidersCreateModal', () => {
     useTagsMock.mockReturnValue({
       data: ['first-tag', 'second-tag'],
       isLoading: false,
-      error: null,
+      error: action === 'lookup-error' ? new Error('Tag lookup unavailable') : null,
       refetch: vi.fn(),
     })
 
@@ -276,11 +278,20 @@ describe('ProvidersCreateModal', () => {
       />,
     )
 
-    expect(screen.getByLabelText('VM tags')).toHaveValue('first-tag')
+    expect(screen.getByRole('combobox', { name: /VM tags/ })).toHaveValue('first-tag')
+    fireEvent.change(screen.getByLabelText('Provider name'), { target: { value: 'Renamed' } })
+    if (action === 'replacement') fireEvent.change(screen.getByLabelText('VM tags'), { target: { value: 'second-tag' } })
+    if (action === 'clear') fireEvent.change(screen.getByLabelText('VM tags'), { target: { value: '' } })
+    fireEvent.click(screen.getByRole('button', { name: /Edit provider/i }))
+    await waitFor(() => { expect(mockFetch).toHaveBeenCalledOnce() })
+    const init = mockFetch.mock.calls[0]?.[1] as RequestInit
+    expect(JSON.parse(init.body as string)).toMatchObject({
+      name: 'Renamed', vmTags: action === 'replacement' ? ['second-tag'] : action === 'clear' ? [] : ['first-tag', 'second-tag'],
+    })
+    vi.unstubAllGlobals()
   })
 
-  // port is not part of the providers contract: the field shows the default and is never sent.
-  it('shows the default port for an edited provider without sending it to the backend', async () => {
+  it('saves an edited provider without offering or sending an unsupported port', async () => {
     const mockFetch = vi.fn().mockResolvedValueOnce(
       new Response(JSON.stringify({ providers: [] }), { status: 200 }),
     )
@@ -296,7 +307,7 @@ describe('ProvidersCreateModal', () => {
       />,
     )
 
-    expect(screen.getByLabelText('Port')).toHaveValue(22)
+    expect(screen.queryByLabelText('Port')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /Edit provider/i }))
 
     await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })

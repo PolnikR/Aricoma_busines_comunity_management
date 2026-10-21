@@ -1,29 +1,30 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import type { OrchestratorPush } from '../model/recoveryApplicationTypes'
-import { RecoveryApplicationOrchestratorSuccessModal } from './RecoveryApplicationOrchestratorSuccessModal'
+import type { OrchestratorPushResult } from './OrchestratorPushResultDialog'
+import { OrchestratorPushResultDialog } from './OrchestratorPushResultDialog'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
-const push: OrchestratorPush = {
+const push = {
   status: 'pushed',
   dag: '/home/airflow/dags/dag_recovery.py',
   json: '/home/airflow/dags/dag_recovery.json',
   dag_id: 'dag_recovery',
-}
+} satisfies OrchestratorPushResult
 
-describe('RecoveryApplicationOrchestratorSuccessModal', () => {
+describe('OrchestratorPushResultDialog', () => {
   it('shows all orchestrator response values and closes on request', async () => {
     const user = userEvent.setup()
     const onClose = vi.fn()
 
     render(
-      <RecoveryApplicationOrchestratorSuccessModal
+      <OrchestratorPushResultDialog
+        entityType="application"
         open
         onClose={onClose}
-        applicationName="Finance App"
-        orchestratorPush={push}
+        entityName="Finance App"
+        result={push}
       />,
     )
 
@@ -42,11 +43,12 @@ describe('RecoveryApplicationOrchestratorSuccessModal', () => {
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
 
     render(
-      <RecoveryApplicationOrchestratorSuccessModal
+      <OrchestratorPushResultDialog
+        entityType="application"
         open
         onClose={vi.fn()}
-        applicationName="Finance App"
-        orchestratorPush={push}
+        entityName="Finance App"
+        result={push}
         providerUrl="https://airflow.dynamic.test:8443"
       />,
     )
@@ -63,11 +65,12 @@ describe('RecoveryApplicationOrchestratorSuccessModal', () => {
 
   it('shows the full orchestrator response body for inspection', () => {
     render(
-      <RecoveryApplicationOrchestratorSuccessModal
+      <OrchestratorPushResultDialog
+        entityType="application"
         open
         onClose={vi.fn()}
-        applicationName="Finance App"
-        orchestratorPush={push}
+        entityName="Finance App"
+        result={push}
       />,
     )
 

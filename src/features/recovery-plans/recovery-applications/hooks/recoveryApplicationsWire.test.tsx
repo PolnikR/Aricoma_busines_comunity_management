@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { act, renderHook, waitFor } from '@testing-library/react'
+import { act, renderHook } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { RecoveryApplicationData, RecoveryApplicationListItem } from '../model/recoveryApplicationTypes'
@@ -49,6 +49,18 @@ function wrapper({ children }: { children: ReactNode }) {
 }
 
 describe('recovery applications wire contract', () => {
+  it.each([undefined, null])('accepts an optional rollback report from an orchestrated delete: %s', async rollback => {
+    const mock = stubFetch({ applications: [], ...(rollback === undefined ? {} : { rollback }) })
+    const { result } = renderHook(() => useDeleteRecoveryApplication(), { wrapper })
+    let returned: unknown
+    await act(async () => {
+      returned = await result.current.mutateAsync({ ...application, pushToOrchestrator: true, orchestrationProviderId: 'airflow-01' })
+    })
+    expect(returned).toEqual({ applications: [], rollback: null })
+    expect(request(mock).params['rollback_from_orchestrator']).toBe('true')
+    expect(mock).toHaveBeenCalledOnce()
+  })
+
   afterEach(() => { vi.unstubAllGlobals() })
 
   it('deletes a local application without rollback parameters', async () => {
@@ -160,14 +172,19 @@ describe('recovery applications wire contract', () => {
     expect(mock).not.toHaveBeenCalled()
   })
 
-  it('requires the DAG details of an orchestrator push', async () => {
-    stubFetch({ applications: [], orchestrator_push: { status: 'pushed' } })
+  it.each([
+    { status: 'pushed' },
+    { status: 'skipped', reason: 'Provider disabled', dag: null, dag_id: null, json: null },
+    null,
+    undefined,
+  ])('preserves optional push details without turning a saved application into an error (%j)', async push => {
+    stubFetch({ applications: [], ...(push === undefined ? {} : { orchestrator_push: push }) })
     const { result } = renderHook(() => useSubmitRecoveryApplication(), { wrapper })
-
-    result.current.mutate({ providerId: 'airflow-01', data, pushToOrchestrator: true })
-
-    await waitFor(() => { expect(result.current.isError).toBe(true) })
-    expect(result.current.error?.message).toBe('Orchestrator response is missing DAG details')
+    let returned: unknown
+    await act(async () => {
+      returned = await result.current.mutateAsync({ providerId: 'airflow-01', data, pushToOrchestrator: true })
+    })
+    expect(returned).toEqual({ applications: [], orchestrator_push: push ?? null })
   })
 
   it('returns the orchestrator push when the DAG details are present', async () => {

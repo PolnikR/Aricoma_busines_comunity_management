@@ -1,4 +1,6 @@
-import { render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { createAppQueryClient } from '@/shared/query/createAppQueryClient'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useGetRecoveryAppInventory } from '@/generated/query/recovery-apps/recovery-apps.gen'
 import type { RecoveryApplicationListItem } from '../model/recoveryApplicationTypes'
@@ -37,6 +39,39 @@ function inventoryRequest() {
 }
 
 describe('RecoveryApplicationInventory', () => {
+  it('keeps cached inventory on background error, retries it and isolates a different target', async () => {
+    const actual = await vi.importActual<typeof import('@/generated/query/recovery-apps/recovery-apps.gen')>('@/generated/query/recovery-apps/recovery-apps.gen')
+    vi.mocked(useGetRecoveryAppInventory).mockImplementation(actual.useGetRecoveryAppInventory)
+    const client = createAppQueryClient()
+    client.setDefaultOptions({ queries: { ...client.getDefaultOptions().queries, retry: false } })
+    let failed = false
+    let name = 'cached-app'
+    vi.stubGlobal('fetch', () => Promise.resolve(Response.json(failed ? { detail: 'Unavailable' } : {
+      recovery_app_id: 'app-1', recovery_app_name: name, run_id: 'run-1', compute_provider_id: 'target', recovered_datastores: [], tiers: [],
+    }, { status: failed ? 503 : 200 })))
+    const view = render(<QueryClientProvider client={client}><RecoveryApplicationInventory runId="run-1" active application={application} /></QueryClientProvider>)
+    try {
+      await screen.findByText('cached-app')
+      failed = true
+      await act(async () => { await client.refetchQueries() })
+      expect(await screen.findByRole('alert')).toHaveTextContent('recoveryInventory.refreshFailed')
+      expect(screen.getByText('cached-app')).toBeInTheDocument()
+      failed = false
+      name = 'updated-app'
+      fireEvent.click(screen.getByRole('button', { name: 'buttons.retry' }))
+      await screen.findByText('updated-app')
+      await waitFor(() => { expect(screen.queryByRole('alert')).not.toBeInTheDocument() })
+      failed = true
+      view.rerender(<QueryClientProvider client={client}><RecoveryApplicationInventory runId="run-1" active application={withApplication({ target_provider_id: 'different-target' })} /></QueryClientProvider>)
+      expect(screen.queryByText('updated-app')).not.toBeInTheDocument()
+      expect(await screen.findByRole('alert')).toHaveTextContent('recoveryInventory.error')
+    } finally {
+      view.unmount()
+      client.clear()
+      vi.unstubAllGlobals()
+    }
+  })
+
   beforeEach(() => {
     vi.mocked(useGetRecoveryAppInventory).mockReset()
   })
