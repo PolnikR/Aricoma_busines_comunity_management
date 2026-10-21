@@ -1,9 +1,9 @@
-﻿# Úlohy: technický dizajn Create/Edit Recovery Group
+﻿# Úlohy: dizajn Recovery Group a opravy funkčného auditu
 
 Dátum: 2026-10-20. Plán: [plan.md](plan.md). Stav: pripravené na realizáciu; nižšie nie je implementácia označená ako hotová.
-Rozsah: iba Group builder. Recovery Apps/tiers a Resources drag-and-drop sa nemenia.
-Záväzná podmienka všetkých úloh: zachovať aplikačné štýly a komponenty aj existujúce doménové správanie. HTML je referencia rozloženia a ovládania; jeho samostatné CSS sa nekopíruje. Nepridávať nové validačné ani lifecycle pravidlá.
-Všetky relatívne feature cesty nižšie majú prefix `src/features/recovery-plans/recovery-groups/`.
+Rozsah T1–T10: iba Group builder. V tomto pôvodnom bloku sa Recovery Apps/tiers a Resources drag-and-drop nemenia. Rozšírenie 2026-10-21: A1–A11 pokrývajú výhradne funkčné opravy sekcie 8 plánu; pôvodné otvorené úlohy zostávajú zachované.
+Záväzná podmienka T1–T10: zachovať aplikačné štýly a komponenty aj existujúce doménové správanie. HTML je referencia rozloženia a ovládania; jeho samostatné CSS sa nekopíruje. Nepridávať nové validačné ani lifecycle pravidlá.
+Relatívne feature cesty v T1–T10 majú prefix `src/features/recovery-plans/recovery-groups/`. Blok A používa explicitné cesty od koreňa repozitára.
 
 ## T1: VM pôvod objavených volumes
 
@@ -141,3 +141,141 @@ Všetky relatívne feature cesty nižšie majú prefix `src/features/recovery-pl
 ## Overenie tohto plánovacieho výstupu
 
 Dokumenty sú plán, nie dôkaz úspechu budúcej implementácie. Teraz sa vykoná iba obsahová kontrola plánovacích súborov a Git diff check. Produkčný kód ani HTML prototyp sa v tejto úlohe nemenia.
+
+## Opravy funkčného auditu: A1–A11
+
+Návrh a hranice: [plan.md, sekcia 8](plan.md#8-opravy-funkčného-auditu). Úlohy predstavujú opravy; testy overujú ich výsledok. Nové súbory sú označené ako plánované. Pri každej úlohe najprv reprodukcia, potom implementácia a focused zelené overenie, lint zmenených súborov a atomic commit. Nie je to zadanie na vykonanie opráv v aktuálnej plánovacej relácii.
+
+## A1: F-04 — invalidácia po zmene providera
+
+**Popis:** Zaviesť cielenú success politiku sekcie 8.2 a zapojiť submit/delete infra aj platform providerov; zachovať generated vlastné invalidácie aj lokálne callbacky.
+**Súbory:** nové/plánované `src/shared/query/providerMutationInvalidation.ts`, `src/shared/query/providerMutationInvalidation.test.tsx`; `src/app/providers.tsx`. **Rozsah:** M, 3 súbory. **Závislosti:** žiadne.
+**Akceptácia:**
+- [ ] Generated submit mutácia obnoví čerstvú cache dotknutého providera vo všetkých používaných inventár/search variantoch vrátane agregovaných; iný explicitný provider zostáva nedotknutý.
+- [ ] Delete neponechá staré dáta po dobehnutí pending requestu; platform provider sa nezamieňa s infra ID a obnoví svoje skutočné závislé orchestration queries.
+- [ ] Error nespustí success invalidáciu; callbacky a relevantné skipInvalidation správanie ostávajú. Bez ručných generated úprav a refetch all.
+**Overenie:** `npm.cmd exec vitest run src/shared/query/providerMutationInvalidation.test.tsx src/features/providers-connectors/providers/model/providersWire.test.tsx`.
+
+## A2: F-04 — závislosti credentials
+
+**Popis:** Rozšíriť A1 o submit/delete credential; odvodiť dotknuté ID z cached provider zoznamov a ošetriť neúplnú znalosť závislostí.
+**Súbory:** `src/shared/query/providerMutationInvalidation.ts`, `src/shared/query/providerMutationInvalidation.test.tsx`. **Rozsah:** S, 2 súbory. **Závislosti:** A1.
+**Akceptácia:**
+- [ ] Credential success obnoví infra/platform statusy vo všetkých role/type variantoch a inventár známych súvisiacich infra providerov; pri úplnej znalosti nezneplatní nesúvisiacu explicitnú cache.
+- [ ] Neúplná provider cache použije zdokumentovaný fallback iba na potrebné rodiny queries; nie globálny clear/refetch.
+- [ ] Test dokazuje edit/delete, active/inactive cache v staleTime a error bez invalidácie cez výsledné dáta/requesty, nie iba spy.
+**Overenie:** `npm.cmd exec vitest run src/shared/query/providerMutationInvalidation.test.tsx`.
+
+## Checkpoint C: cache
+
+- [ ] A1–A2 majú zelené focused testy a mapu závislostí; FE/BE cache politika sa nezamieňa.
+- [ ] Zaznamenané výsledky, scope a atomic commity; infra/platform identity sú oddelené.
+
+## A3: F-01 — Retry konkrétneho latest runu
+
+**Popis:** Oddeliť kolekčné a entity-scoped Retry cez hook, page a tabuľku; zachovať horný Refresh.
+**Súbory:** `src/features/recovery-plans/recovery-runs/hooks/useOrchestratedEntityRuns.ts`, jeho `.test.tsx`; `src/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage.tsx`, jeho `.test.tsx`; `src/features/recovery-plans/recovery-runs/components/RecoveryRunsTable.tsx`. **Rozsah:** M, 5 súborov; potrebné ďalšie úpravy table testov oddeliť do malého nadväzujúceho commitu. **Závislosti:** žiadne.
+**Akceptácia:**
+- [ ] Po 503 row Retry vyvolá get_orchestrator_runs pre správny provider/DAG a úspech odstráni chybu; nerefetchuje iba kolekcie ani iný úspešný riadok.
+- [ ] Horný Refresh obnoví kolekcie aj viditeľné latest runs; app/group so zhodným ID sa rozlišujú.
+- [ ] Zachované loading/empty/cached-error stavy a selection; page integračný test použije skutočný query hook so stub fetch.
+**Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-runs/hooks/useOrchestratedEntityRuns.test.tsx src/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage.test.tsx src/features/recovery-plans/recovery-runs/components/RecoveryRunsTable.test.tsx`.
+
+## A4: F-02 — vyhľadávanie podľa názvu
+
+**Popis:** Feature-local search adaptér pre ID a zobrazovaný názov, bez zmeny shared search kontraktu.
+**Súbory:** `src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.tsx`, jeho `.test.tsx`. **Rozsah:** S, 2 súbory. **Závislosti:** žiadne.
+**Akceptácia:**
+- [ ] Rozdielne ID a názov sa dajú vyhľadať oba, case-insensitive a s trimovaním search.
+- [ ] Search funguje s environment/platform filtrami, resetom stránky a no-match stavom.
+- [ ] Delete/edit/detail dostanú pôvodný záznam; description sa bez požiadavky neprehľadáva.
+**Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.test.tsx`.
+
+## Checkpoint D: Runs a search
+
+- [ ] A3–A4 majú opravený používateľský výsledok a zelené regresné testy.
+- [ ] Horný Refresh a filtre fungujú; focused lint a diff check prešli.
+
+## A5: Texty neaktuálneho inventára a chýbajúceho reportu
+
+**Popis:** Doplniť iba texty potrebné pre A6/A10 do existujúcich namespaces; využiť spoločné Retry/Close.
+**Súbory:** `src/locales/en.json`, `src/locales/sk.json`, `src/locales/cs.json`. **Rozsah:** M, 3 súbory. **Závislosti:** žiadne; nekonať súbežne s T2.
+**Akceptácia:**
+- [ ] Zhodné nové kľúče a placeholdery v troch jazykoch.
+- [ ] Refresh-failed text označí posledné známe dáta; missing-report text odlíši úspešný delete request od nepotvrdeného výsledku rollbacku.
+- [ ] Text nenavádza na opakovaný delete ani netvrdí nepreukázaný rollback failure.
+**Overenie:** `node -e "for (const l of ['en','sk','cs']) JSON.parse(require('fs').readFileSync('src/locales/'+l+'.json','utf8')); console.log('JSON OK')"`; content assertion nových kľúčov/placeholderov; `git diff --check`.
+
+## A6: F-03 — inventár pri background chybe
+
+**Popis:** Odlíšiť initial error od data + error v oboch inventároch a pripojiť neblokujúci alert/Retry.
+**Súbory:** `src/features/recovery-plans/recovery-applications/components/RecoveryApplicationInventory.tsx`, jeho `.test.tsx`; `src/features/recovery-plans/recovery-groups/components/RecoveryGroupInventory.tsx`, jeho `.test.tsx`. **Rozsah:** M, 4 súbory. **Závislosti:** A5.
+**Akceptácia:**
+- [ ] Po úspešnom fetch a zlyhanom refetch zostanú dáta s varovaním; úspešný Retry ich obnoví a varovanie odstráni.
+- [ ] Bez dát ostáva error placeholder; noRun, unsupported Power a target-error vetvy sú zachované.
+- [ ] Zmena run/target kontextu neukáže cudzie cached dáta; test zahŕňa QueryClient background refetch.
+**Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-applications/components/RecoveryApplicationInventory.test.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupInventory.test.tsx`.
+
+## A7: Odstránenie nefunkčného infra Port poľa
+
+**Popis:** Odstrániť infra port input/state/dirty kontrolu/validáciu; zachovať infra payload aj funkčný Platform Provider port.
+**Súbory:** `src/features/providers-connectors/providers/components/ProviderCreateForm.tsx`, `src/features/providers-connectors/providers/components/ProvidersCreateModal.tsx`, jeho `.test.tsx`. **Rozsah:** M, 3 súbory. **Závislosti:** žiadne.
+**Akceptácia:**
+- [ ] Create/Edit infra providera neponúka neukladaný port a jeho odstránená validácia neblokuje submit.
+- [ ] Payload ostáva bez portu; ostatné validácie a dirty guard fungujú.
+- [ ] PlatformProvidersModal/port a potrebné shared preklady sa nemenia.
+**Overenie:** `npm.cmd exec vitest run src/features/providers-connectors/providers/components/ProvidersCreateModal.test.tsx src/features/platform-administration/platform-providers/components/PlatformProvidersModal.test.tsx`.
+
+## Checkpoint E: inventár a formulár
+
+- [ ] A5–A7 prešli focused kontrolami; en/sk/cs JSON je validný.
+- [ ] Varovanie neskrýva inventár a odstránenie infra portu nezasiahlo platform port.
+
+## A8: Zachovanie uložených VM tagov
+
+**Popis:** Zachovať úplné vmTags pri inicializácii a uložení bez zmeny selectoru; nahradiť test tichej legacy normalizácie.
+**Súbory:** `src/features/providers-connectors/providers/components/ProvidersCreateModal.tsx`, jeho `.test.tsx`. **Rozsah:** S, 2 súbory. **Závislosti:** A7 kvôli zdieľaným súborom.
+**Akceptácia:**
+- [ ] Edit providera s dvoma tagmi a zmena iba názvu odošle oba tagy v pôvodnom poradí.
+- [ ] Explicitný výber/clear selectoru použije existujúcu jedno-tagovú semantiku; bez novej multi-tag funkcionality.
+- [ ] Cancel/loading/error lookupu nemenia tagy; dirty guard rozlišuje nezmenený zoznam od vedomej úpravy.
+**Overenie:** `npm.cmd exec vitest run src/features/providers-connectors/providers/components/ProvidersCreateModal.test.tsx`.
+
+## A9: R-01 — reset stránkovania histórie
+
+**Popis:** Reset pri zmene entity/provider/DAG aj close cez URL/back; prvý request novej entity má offset=0.
+**Súbory:** `src/features/recovery-plans/recovery-runs/components/RecoveryRunHistoryDetailView.tsx`, jeho `.test.tsx`; `src/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage.tsx`, jeho `.test.tsx`. **Rozsah:** M, najviac 4 súbory. **Závislosti:** A3 kvôli zdieľaným súborom.
+**Akceptácia:**
+- [ ] Page=3 entity A a URL/entity zmena na B začne B s offset=0 aj pri jedinej strane histórie.
+- [ ] Close/open, URL/back odstránenie/obnovenie entity a provider/DAG zmena začínajú na strane 1.
+- [ ] História, Airflow link a active-run polling fungujú; bez dát iného kontextu.
+**Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-runs/components/RecoveryRunHistoryDetailView.test.tsx src/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage.test.tsx src/features/recovery-plans/recovery-runs/hooks/useAppRunHistory.test.tsx`.
+
+## A10: R-02 — oznámenie chýbajúceho rollback reportu
+
+**Popis:** Reprodukovať optional odpoveď a po orchestrated delete bez reportu ukázať neutrálne varovanie, bez zmeny backendového kontraktu.
+**Súbory:** `src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.tsx`, jeho `.test.tsx`; `src/features/recovery-plans/recovery-applications/hooks/recoveryApplicationsWire.test.tsx`; podľa potreby `src/features/recovery-plans/recovery-applications/hooks/useDeleteRecoveryApplication.ts`. **Rozsah:** M, najviac 4 súbory. **Závislosti:** A5, A4 kvôli zdieľaným súborom.
+**Akceptácia:**
+- [ ] Wire stub HTTP success bez/null reportu prejde kontraktom; orchestrated app zobrazí oznámenie o nedostupnom výsledku rollbacku.
+- [ ] Local delete bez reportu ostáva úspešný bez varovania; ok/partial/failed/skipped reporty sa naďalej zobrazujú.
+- [ ] Nevznikne druhý delete ani zavádzajúci výsledok rollbacku; zoznam sa obnoví a HTTP error ostane samostatnou chybou.
+**Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.test.tsx src/features/recovery-plans/recovery-applications/hooks/recoveryApplicationsWire.test.tsx`.
+
+## Checkpoint F: konfigurácia a podmienečné scenáre
+
+- [ ] A8–A10 majú reprodukciu a nápravu; optional rollback kontrakt ostal zachovaný.
+- [ ] Edit iného provider poľa zachová tagy; navigácia histórie nepoužíva starý offset.
+
+## A11: Odovzdanie opráv a dôkazy
+
+**Popis:** Skontrolovať výsledky A úloh a browser scenáre sekcie 8.4; checklist aktualizovať podľa vykonaných kontrol.
+**Súbory:** `tasks/todo.md` na evidenciu. **Rozsah:** S. **Závislosti:** A1–A10 a checkpointy C–F.
+**Akceptácia:**
+- [ ] Každá oprava má presný test príkaz, nenulový počet očakávaných testov, exit code a commit; passWithNoTests nesmie skryť chýbajúce súbory.
+- [ ] Browser scenáre sekcie 8.4 majú výsledky/stub/live rozlíšenie alebo presný blokér; nevykonané kontroly ostávajú otvorené.
+- [ ] Focused lint, JSON a diff check prešli; T úlohy sa neoznačili nesprávne ako hotové. Full suite/build iba pri konkrétnom dôvode alebo pokyne.
+**Overenie:** presné dotknuté testové príkazy A1–A10 podľa finálneho diffu; `npm.cmd exec eslint -- <skutocne-zmenene-TS-TSX-subory> --max-warnings 0`; JSON príkaz A5; `git diff --check`. Lint placeholder pred spustením nahradiť presnými cestami.
+
+## Stav rozšírenia 2026-10-21
+
+Používateľ schválil doplnenie existujúcich dokumentov. Riešenia sú pripravené na vecnú revíziu pred implementáciou. V tejto relácii sa mení iba plán/checklist; A1–A11 ani pôvodné T úlohy nie sú označené za hotové.

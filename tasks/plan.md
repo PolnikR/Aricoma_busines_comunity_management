@@ -1,7 +1,9 @@
-﻿# Implementačný plán: technický dizajn Create/Edit Recovery Group
+﻿# Implementačný plán: dizajn Recovery Group a opravy funkčného auditu
 
 Dátum: 2026-10-20. Stav: plán implementácie; v tejto úlohe sa menia iba plánovacie dokumenty.
 Checklist: [todo.md](todo.md). Predchádzajúci eligibility checklist mal všetky položky dokončené; jeho plán zostáva v Git histórii.
+
+Rozšírenie 2026-10-21: používateľ schválil doplnenie opráv funkčného auditu do existujúcich dokumentov. Sekcie 1–7 a T1–T10 zostávajú pôvodným plánom dizajnu; ich obmedzenia vrátane vylúčenia Apps platia pre tento pôvodný blok. Sekcia 8 a A1–A11 povoľujú iba pomenované funkčné opravy aj v Apps, Runs a Providers. Pôvodné otvorené úlohy zostávajú zachované. Checklist oboch blokov je v todo.md.
 
 ## 1. Schválený výsledok a rozsah
 
@@ -115,3 +117,65 @@ Regresné kritérium zachovania funkcionality: porovnať rovnaké scenáre pred/
 Schválený dizajn je vstup; tento dokument ešte neznamená vykonanú implementáciu. Otvorená blokujúca produktová otázka nie je. Pri konkrétnom rozpore medzi prototypom a produkčnými lifecycle pravidlami má prednosť zachovanie existujúcej doménovej funkčnosti a vyššie uvedené výslovné upresnenia používateľa.
 
 V tejto plánovacej úlohe overiť obsah dokumentov, vzájomné odkazy a `git diff --check`; implementačné testy sú budúce kroky a ich úspech sa teraz netvrdí.
+
+## 8. Opravy funkčného auditu
+
+### 8.1 Cieľ a rozsah
+
+Vstup: audit `ABCO_FE_funkcny_audit_2026-10-20.md` pre commit `c597dcec` a následné overenie nálezov. Audit bol dodaný z Downloads; všetky požadované nápravy sú zapísané nižšie, aby realizácia nezávisela od dostupnosti externého súboru. Výsledkom majú byť opravené používateľské toky; testy sú akceptáciou opráv.
+
+| Nález | Výsledok | Úloha |
+| --- | --- | --- |
+| F-04 | Úspešná zmena providera/credential obnoví závislé cache. | A1, A2 |
+| F-01 | Riadkové Retry zopakuje príslušný latest-run request. | A3 |
+| F-02 | Application sa nájde podľa názvu aj ID. | A4 |
+| F-03 | Background chyba neskryje posledný inventár; označí jeho neaktuálnosť. | A5, A6 |
+| Port | Infra formulár neponúka neukladané pole. | A7 |
+| VM tagy | Zmena iného poľa neskráti uložený zoznam tagov. | A8 |
+| R-01 | Nová entita aj nové otvorenie histórie začínajú na strane 1. | A9 |
+| R-02 | Chýbajúci rollback report sa výslovne oznámi bez vymysleného výsledku. | A5, A10 |
+| Dôkazy | Presné vykonané testy, výsledky a atomic commity pre každú opravu. | priebežne, A11 |
+
+F-01 plánovať ako P2: horný Refresh poskytuje obchádzku. F-04 riešiť skoro pre správnosť dát, bez tvrdenia, že každý variant je preukázaný produkčný incident P1. R-01/R-02 majú podmienečné spúšťače; reprodukcia musí predchádzať náprave. R-02 nie je dôkaz neúspešného rollbacku.
+
+Mimo tohto bloku: nové endpointy, zmena BE discovery cache, auth/Keycloak, plošný audit oprávnení, Dashboard, Identity & Access, topológia a auditné logy. To sú nepokryté oblasti auditu, nie potvrdené chyby. Plán nepredstavuje úplné produkčné funkčné schválenie.
+
+### 8.2 Rozhodnutia o opravách
+
+**F-04 — cielená success invalidácia.** Zachovať generated invalidácie vlastných zoznamov. Doplniť malú politiku pod `src/shared/query/` a zapojiť ju do QueryClient cez `MutationCache.onSuccess` v `src/app/providers.tsx`, iba pre presné generated mutation keys submit/delete infra providera, platform providera a credential. Nejde o globálny refetch all. Neprepísať lokálne callbacky formulárov a nezdvojiť existujúce vlastné invalidácie. Pri implementácii preveriť existujúce skipInvalidation call sites a zachovať ich výslovné správanie. Žiadne ručné generated úpravy ani zmena query-key kontraktu.
+
+Infra provider: ID z premenných mutácie; invalidovať všetky jeho používané VMware search, Power, volumes, tags a VM→vdisks varianty. GET keys sa líšia od `['POST', '/vms/search', params?, body]`; matcher musí rešpektovať aj variant bez params a viac search bodies. Zahrnúť existujúce agregované varianty bez provider_id, keď môžu obsahovať dotknutého providera; explicitný iný provider sa neobnovuje. Po delete zrušiť/zneplatniť pending výsledky tak, aby nevzkriesili staré dáta, a slepo nerefetchnúť zmazaného providera pred obnovou zoznamu.
+
+Credential: z cached infra/platform zoznamov pred invalidáciou odvodiť súvisiace provider ID a deduplikovať role/type varianty. Obnoviť provider zoznamy/statusy a inventár známych súvisiacich infra providerov. Pri neúplnej znalosti závislostí použiť zdokumentovaný fallback iba na potrebné rodiny cache; prázdny cached zoznam nie je dôkaz neprítomnosti závislosti. Platform mutácia obnoví svoj zoznam a konkrétne používané orchestration queries podľa platform provider ID; nezamieňať ho s infra ID. Závislosti potvrdiť call sites. Chybná mutácia neinvaliduje úspešnú cache. FE invalidácia nemení BE discovery TTL ani existujúcu explicitnú forced-refresh cestu.
+
+**F-01:** oddeliť kolekčné Retry od row Retry. Hook poskytne refetch podľa stabilnej identity entity (typ, ID a provider/DAG kontext), tabuľka ju odovzdá z chybného riadka. Row Retry nerefetchuje iné úspešné riadky. Horný Refresh naďalej obnovuje kolekcie aj viditeľné latest runs. Zachovať loading/empty/cached-refresh-error stavy.
+
+**F-02:** feature-local plochý search text/row adaptér obsahujúci iba ID a application.name; ponechať pôvodný záznam pre delete/edit/detail. Nerozširovať shared useTableState o nested-path jazyk ani bez požiadavky nepridávať description. Zachovať filtre a stránkovanie.
+
+**F-03:** plný error placeholder iba bez dát. Pri data + error ponechať inventár a existujúci neblokujúci alert s Retry a jasným označením posledných známych údajov. Nikdy neukazovať cached dáta iného runu/target providera. Zachovať noRun, Power unsupported a target-error vetvy.
+
+**Port:** odstrániť iba nefunkčný infrastructure provider input, port state, dirty porovnanie a validáciu. Port nepridávať do infra payloadu. Funkčný port Platform Providers a nimi používané spoločné preklady zostávajú.
+
+**VM tagy:** initial form zachová celý uložený zoznam a submit ho odošle bez zmeny, kým používateľ výslovne nezmení tag selector. Pri explicitnom výbere/clear zachovať dnešnú jedno-tagovú semantiku; nevytvárať nový multiselect ani discovery API. Nahradiť test očakávajúci tichú legacy normalizáciu testom zachovania údajov a explicitnej zmeny.
+
+**R-01:** reset na identitu entity/provider/DAG a na zatvorenie aj cez URL/back. Preferovať malý keyed obal history obsahu; prvý dotaz novej entity musí mať page=1, nie starý offset nasledovaný reset effectom. Zachovať detail, dynamický Airflow link a polling.
+
+**R-02:** report je v schéme optional. Po úspešnom orchestrated delete bez reportu ukázať neutrálne varovanie: delete request uspel, detailný výsledok rollbacku nie je dostupný. Žiadny syntetický report, automatický rollback failed ani opakované deštruktívne delete. Local delete bez reportu zostáva bežným úspechom. ok/partial/failed/skipped reporty sa zobrazujú ďalej. Pred úpravou potvrdiť wire scenár stubom a zaznamenať limit overenia proti BE.
+
+### 8.3 Poradie a vzťah k existujúcemu dizajnu
+
+A1 → A2 → checkpoint C → A3 → A4 → checkpoint D → A5 → A6 → A7 → checkpoint E → A8 → A9 → A10 → checkpoint F → A11. Podrobná akceptácia a súbory sú v todo.
+
+Blok A nečaká na T1–T10. Odporúčané je opraviť funkčné chyby pred pokračovaním dizajnu; T úlohy potom zachovajú opravené správanie. T2/A5 zdieľajú preklady, A7/A8 provider modal a A3/A9 Runs page: vykonať postupne. Žiadne súbežné úpravy rovnakých súborov v inej relácii. Každý krok má funkčný výsledok, focused overenie a samostatný commit. Bez automatického pushu/deploy.
+
+### 8.4 Overenie a ochrany
+
+Každá oprava začína focused reprodukciou na pôvodnom správaní a končí rovnakým zeleným testom vrátane negatívnych variantov. Cache testy používajú skutočné generated mutations, QueryClient a stub fetch; spy invalidateQueries sám nedokazuje obnovu dát. Zahrnúť čerstvú cache v staleTime, inactive queries a pending request.
+
+Evidovať presný príkaz, testové cesty, počet vykonaných súborov/testov, exit code a limity. Projekt má passWithNoTests=true: overiť existenciu a skutočné vykonanie očakávaných súborov. Nové testové cesty v todo sú plánované, nie dôkaz existujúceho pokrytia.
+
+Riziká: príliš širokú invalidáciu obmedziť provider scope a testom nedotknutého providera; staré dáta označiť ako neaktuálne; tichú stratu tagov zachytiť testom payloadu s dvoma tagmi; chýbajúci report nikdy nevydávať za potvrdený úspech/neúspech rollbacku; A a T zmeny oddeliť commitmi.
+
+Browser scenáre: row Retry po 503, search názvu odlišného od ID, data + background error + úspešný Retry, provider/credential edit a návrat do načítaného Resources, odstránenie infra portu a zachovanie tagov, URL zmena entity pri page=3, orchestrated delete bez reportu. Deštruktívne scenáre iba na stuboch alebo vyhradených testovacích dátach. Stub/live BE/Keycloak výsledky uviesť oddelene; bez live overenia netvrdiť produkčné E2E.
+
+Spúšťať dotknuté testové súbory, focused lint a JSON kontroly. Full suite, full typecheck a production build iba pri zdokumentovanej potrebe alebo explicitnom pokyne. Pri tejto čisto plánovacej zmene vykonať iba kontrolu obsahu a `git diff --check`. Implementácia zostáva otvorená; plán sa odovzdáva na vecnú revíziu pred realizáciou.
