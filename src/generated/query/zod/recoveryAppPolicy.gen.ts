@@ -18,6 +18,7 @@ export const recoveryAppPolicyEnabledDefault = true;
 export const recoveryAppPolicyTargetLparPrefixDefault = `dr_`;
 export const recoveryAppPolicyTargetLparPrefixRegExp = new RegExp('^[A-Za-z0-9._-]{0,12}$');
 export const recoveryAppPolicyManualZoningDefault = false;
+export const recoveryAppPolicyManualWwpnEntryDefault = false;
 export const recoveryAppPolicySourceShutdownTimeoutSecondsDefault = 300;
 export const recoveryAppPolicySourceShutdownTimeoutSecondsExclusiveMin = 0;
 
@@ -42,6 +43,7 @@ export const RecoveryAppPolicy = zod.object({
   "enabled": zod.boolean().default(recoveryAppPolicyEnabledDefault),
   "target_lpar_prefix": zod.string().regex(recoveryAppPolicyTargetLparPrefixRegExp).default(recoveryAppPolicyTargetLparPrefixDefault),
   "manual_zoning": zod.boolean().default(recoveryAppPolicyManualZoningDefault),
+  "manual_wwpn_entry": zod.boolean().default(recoveryAppPolicyManualWwpnEntryDefault),
   "source_shutdown_timeout_seconds": zod.int().gt(recoveryAppPolicySourceShutdownTimeoutSecondsExclusiveMin).default(recoveryAppPolicySourceShutdownTimeoutSecondsDefault),
   "zoning_wait_minutes": zod.int().gt(recoveryAppPolicyZoningWaitMinutesExclusiveMin).default(recoveryAppPolicyZoningWaitMinutesDefault)
 })
