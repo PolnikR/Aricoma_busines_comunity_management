@@ -23,6 +23,7 @@ describe('OrchestratorPushResultDialog', () => {
     const { container } = render(<OrchestratorPushResultDialog entityType="application" open onClose={vi.fn()} entityName="Finance"
       result={{ status: 'pushed', schedule: 'manual_only', notes: ['  Backend instruction  ', '', 'Backend instruction', markup, longNote] }} />)
     const info = screen.getByRole('region', { name: 'Manual execution in Airflow' })
+    expect(info).toHaveFocus()
     expect(within(info).getAllByRole('listitem')).toHaveLength(3)
     expect(within(info).getByText('Backend instruction')).toBeInTheDocument()
     expect(within(info).getByText(markup)).toBeInTheDocument()

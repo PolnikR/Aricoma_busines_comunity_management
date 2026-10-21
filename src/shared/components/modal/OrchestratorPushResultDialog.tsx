@@ -67,7 +67,7 @@ export function OrchestratorPushResultDialog({
       } : {})}
     >
       {manualOnly ? (
-        <section aria-label={t('orchestratorPush.manualOnlyTitle')} className="space-y-2 rounded-lg border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">
+        <section tabIndex={0} aria-label={t('orchestratorPush.manualOnlyTitle')} className="space-y-2 rounded-lg border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15">
           <h3 className="font-semibold text-text-primary">{t('orchestratorPush.manualOnlyTitle')}</h3>
           {pushed ? <p>{t('orchestratorPush.manualOnlyPushed')}</p> : null}
           <p>{t('orchestratorPush.manualOnlyInstructions')}</p>
