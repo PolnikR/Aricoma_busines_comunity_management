@@ -225,6 +225,20 @@ describe('RecoveryApplicationsTable', () => {
     expect(dialog).toHaveTextContent('Finance Recovery')
   })
 
+  it('shows Orchestration with the same Yes/No badges as Recovery Groups, independently of submission and DAG ID', () => {
+    const notPushedWithOldDag: RecoveryApplicationListItem = {
+      ...developmentApplication,
+      airflowRunId: 'old-run-id',
+      pushToOrchestrator: false,
+    }
+    renderTable(<RecoveryApplicationsTable applications={[application, notPushedWithOldDag]} />)
+
+    expect(screen.getByRole('columnheader', { name: 'Orchestration' })).toBeInTheDocument()
+    expect(screen.queryByRole('columnheader', { name: 'Submission' })).not.toBeInTheDocument()
+    expect(within(screen.getByRole('row', { name: /Finance Recovery/ })).getByText('Yes')).toBeInTheDocument()
+    expect(within(screen.getByRole('row', { name: /Development Recovery/ })).getByText('No')).toBeInTheDocument()
+  })
+
   it('renders a clickable Airflow DAG ID without opening the row detail', async () => {
     const user = userEvent.setup()
     renderTable(<RecoveryApplicationsTable applications={[application, developmentApplication]} />)
