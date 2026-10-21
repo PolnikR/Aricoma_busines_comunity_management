@@ -203,7 +203,7 @@ describe('ProvidersCreateModal', () => {
     expect(screen.getByLabelText('IP address')).toBeInTheDocument()
     expect(screen.getByLabelText('URL')).toBeInTheDocument()
     expect(screen.getByLabelText('Notification email')).toBeInTheDocument()
-    expect(screen.getByLabelText('Port')).toHaveValue(22)
+    expect(screen.queryByLabelText('Port')).not.toBeInTheDocument()
     expect(screen.getByLabelText(/Cache refresh interval \(seconds\)/)).toHaveValue(null)
     expect(screen.getByLabelText('Credentials')).toBeInTheDocument()
     expect(useTagsMock).toHaveBeenCalledWith(null, false)
@@ -279,8 +279,7 @@ describe('ProvidersCreateModal', () => {
     expect(screen.getByLabelText('VM tags')).toHaveValue('first-tag')
   })
 
-  // port is not part of the providers contract: the field shows the default and is never sent.
-  it('shows the default port for an edited provider without sending it to the backend', async () => {
+  it('saves an edited provider without offering or sending an unsupported port', async () => {
     const mockFetch = vi.fn().mockResolvedValueOnce(
       new Response(JSON.stringify({ providers: [] }), { status: 200 }),
     )
@@ -296,7 +295,7 @@ describe('ProvidersCreateModal', () => {
       />,
     )
 
-    expect(screen.getByLabelText('Port')).toHaveValue(22)
+    expect(screen.queryByLabelText('Port')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /Edit provider/i }))
 
     await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })

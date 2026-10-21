@@ -233,15 +233,17 @@ Návrh a hranice: [plan.md, sekcia 8](plan.md#8-opravy-funkčného-auditu). Úlo
 **Popis:** Odstrániť infra port input/state/dirty kontrolu/validáciu; zachovať infra payload aj funkčný Platform Provider port.
 **Súbory:** `src/features/providers-connectors/providers/components/ProviderCreateForm.tsx`, jeho `ProviderCreateForm.test.tsx`; `src/features/providers-connectors/providers/components/ProvidersCreateModal.tsx`, jeho `.test.tsx`. **Rozsah:** M, 4 súbory. **Závislosti:** žiadne.
 **Akceptácia:**
-- [ ] Create/Edit infra providera neponúka neukladaný port a jeho odstránená validácia neblokuje submit; ProviderCreateForm.test.tsx má fixture bez portu a explicitnú kontrolu neprítomnosti Port inputu.
-- [ ] Payload ostáva bez portu; ostatné validácie a dirty guard fungujú.
-- [ ] PlatformProvidersModal/port a potrebné shared preklady sa nemenia.
+- [x] Create/Edit infra providera neponúka neukladaný port a jeho odstránená validácia neblokuje submit; ProviderCreateForm.test.tsx má fixture bez portu a explicitnú kontrolu neprítomnosti Port inputu.
+- [x] Payload ostáva bez portu; ostatné validácie a dirty guard fungujú.
+- [x] PlatformProvidersModal/port a potrebné shared preklady sa nemenia.
 **Overenie:** `npm.cmd exec vitest run src/features/providers-connectors/providers/components/ProviderCreateForm.test.tsx src/features/providers-connectors/providers/components/ProvidersCreateModal.test.tsx src/features/platform-administration/platform-providers/components/PlatformProvidersModal.test.tsx`.
+
+**A7 vysledok (2026-10-21):** dve red regresie potvrdili nefunkcny Port input. Po odstraneni a uprave oboch starsich port assertions preslo 65/65 testov v troch uvedenych suboroch cez node Vitest CLI; platform port zostal pokryty. Focused ESLint 4 suborov presiel. A6 commit: 3ba70066.
 
 ## Checkpoint E: inventár a formulár
 
-- [ ] A5–A7 prešli focused kontrolami; en/sk/cs JSON je validný.
-- [ ] Varovanie neskrýva inventár a odstránenie infra portu nezasiahlo platform port.
+- [x] A5–A7 prešli focused kontrolami; en/sk/cs JSON je validný.
+- [x] Varovanie neskrýva inventár a odstránenie infra portu nezasiahlo platform port.
 
 ## A8: Zachovanie uložených VM tagov
 
