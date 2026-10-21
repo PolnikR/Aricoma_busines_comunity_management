@@ -2536,6 +2536,8 @@
   "recoveryInventory.powerUnsupported": "Inventář zatím není dostupný pro aplikace IBM Power.",
   "recoveryInventory.loading": "Načítá se inventář…",
   "recoveryInventory.error": "Inventář se nepodařilo načíst",
+  "recoveryInventory.refreshFailed": "Obnovení inventáře selhalo. Zobrazují se poslední známé údaje, které mohou být neaktuální.",
+  "recovery.application.rollback.reportUnavailable": "Požadavek na odstranění uspěl, ale nebyl vrácen report rollbacku. Výsledek rollbacku nelze potvrdit.",
   "recoveryInventory.empty": "Inventář neobsahuje žádné položky.",
   "recoveryInventory.found": "Nalezeno",
   "recoveryInventory.notFound": "Nenalezeno",

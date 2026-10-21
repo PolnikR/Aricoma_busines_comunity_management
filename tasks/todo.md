@@ -209,10 +209,12 @@ Návrh a hranice: [plan.md, sekcia 8](plan.md#8-opravy-funkčného-auditu). Úlo
 **Popis:** Doplniť iba texty potrebné pre A6/A10 do existujúcich namespaces; využiť spoločné Retry/Close.
 **Súbory:** `src/locales/en.json`, `src/locales/sk.json`, `src/locales/cs.json`. **Rozsah:** M, 3 súbory. **Závislosti:** žiadne; nekonať súbežne s T2.
 **Akceptácia:**
-- [ ] Zhodné nové kľúče a placeholdery v troch jazykoch.
-- [ ] Refresh-failed text označí posledné známe dáta; missing-report text odlíši úspešný delete request od nepotvrdeného výsledku rollbacku.
-- [ ] Text nenavádza na opakovaný delete ani netvrdí nepreukázaný rollback failure.
+- [x] Zhodné nové kľúče a placeholdery v troch jazykoch.
+- [x] Refresh-failed text označí posledné známe dáta; missing-report text odlíši úspešný delete request od nepotvrdeného výsledku rollbacku.
+- [x] Text nenavádza na opakovaný delete ani netvrdí nepreukázaný rollback failure.
 **Overenie:** `node -e "for (const l of ['en','sk','cs']) JSON.parse(require('fs').readFileSync('src/locales/'+l+'.json','utf8')); console.log('JSON OK')"`; content assertion nových kľúčov/placeholderov; `git diff --check`.
+
+**A5 vysledok (2026-10-21):** JSON parse a kontrola oboch novych klucov a placeholderov v en/sk/cs presli; git diff --check presiel.
 
 ## A6: F-03 — inventár pri background chybe
 
