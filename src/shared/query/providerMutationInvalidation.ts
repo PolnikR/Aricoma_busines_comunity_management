@@ -12,7 +12,7 @@ function dependentProvider(query: Query, platform: boolean): string | undefined 
   const endpoint = key[0] === 'POST' ? key[1] : key[0]
   if (platform ? endpoint !== '/get_orchestrator_runs' : endpoint !== '/vms/search' && !inventoryEndpoints.has(String(endpoint))) return false
   const params = key[0] === 'POST' ? key[2] : key[1]
-  const id = record(params).provider_id
+  const id = record(params)['provider_id']
   return typeof id === 'string' && id ? id : undefined
 }
 
@@ -32,13 +32,13 @@ function credentialProviders(client: QueryClient, credentialId: string, platform
   const ids = new Set<string>()
   let complete = false
   for (const query of queries) {
-    const providers = record(query.state.data).providers
+    const providers = record(query.state.data)['providers']
     if (!Array.isArray(providers)) continue
     const params = record(query.queryKey[1])
-    if (providers.length > 0 && (platform ? params.type === 'all' : params.role === 'all') && !query.isStaleByTime(STANDARD_STALE_TIME_MS)) complete = true
+    if (providers.length > 0 && (platform ? params['type'] === 'all' : params['role'] === 'all') && !query.isStaleByTime(STANDARD_STALE_TIME_MS)) complete = true
     for (const value of providers) {
       const provider = record(value)
-      if (provider.credentialId === credentialId && typeof provider.id === 'string') ids.add(provider.id)
+      if (provider['credentialId'] === credentialId && typeof provider['id'] === 'string') ids.add(provider['id'])
     }
   }
   return { ids, complete }
@@ -68,13 +68,13 @@ export async function invalidateProviderMutation(client: QueryClient, key: Mutat
   const name = key[0]
   const value = record(variables)
   if (name === 'submitCredential' || name === 'deleteCredential') {
-    const id = name === 'submitCredential' ? record(value.data).id : record(value.params).credential_id
+    const id = name === 'submitCredential' ? record(value['data'])['id'] : record(value['params'])['credential_id']
     if (typeof id === 'string') await refreshCredentialDependents(client, id)
     return
   }
   if (name !== 'submitProvider' && name !== 'deleteProvider' && name !== 'submitPlatformProvider' && name !== 'deletePlatformProvider') return
   const deleted = name === 'deleteProvider' || name === 'deletePlatformProvider'
-  const id = deleted ? record(value.params).provider_id : record(value.data).id
+  const id = deleted ? record(value['params'])['provider_id'] : record(value['data'])['id']
   if (typeof id !== 'string') return
   await refreshDependents(client, id, name === 'submitPlatformProvider' || name === 'deletePlatformProvider', deleted)
 }

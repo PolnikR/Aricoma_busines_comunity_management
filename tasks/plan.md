@@ -182,4 +182,14 @@ Riziká: príliš širokú invalidáciu obmedziť provider scope a testom nedotk
 
 Browser scenáre: row Retry po 503, search názvu odlišného od ID, data + background error + úspešný Retry, provider/credential edit a návrat do načítaného Resources, odstránenie infra portu a zachovanie tagov, URL zmena entity pri page=3, orchestrated delete bez reportu. Deštruktívne scenáre iba na stuboch alebo vyhradených testovacích dátach. Stub/live BE/Keycloak výsledky uviesť oddelene; bez live overenia netvrdiť produkčné E2E.
 
-Spúšťať dotknuté testové súbory, focused lint a JSON kontroly. Full suite, full typecheck a production build iba pri zdokumentovanej potrebe alebo explicitnom pokyne. Pri tejto čisto plánovacej zmene vykonať iba kontrolu obsahu a `git diff --check`. Implementácia zostáva otvorená; plán sa odovzdáva na vecnú revíziu pred realizáciou.
+Spúšťať dotknuté testové súbory, focused lint a JSON kontroly. Full suite, full typecheck a production build iba pri zdokumentovanej potrebe alebo explicitnom pokyne. Pôvodný plánovací výstup overoval iba obsah dokumentov a `git diff --check`; následná realizácia je zaznamenaná nižšie.
+
+### 8.5 Realizácia bloku A — 2026-10-21
+
+Používateľ následne zadal vykonanie inline. A1–A10 sú implementované a samostatne commitnuté; A11 obsahuje záverečné dôkazy v todo.md. Pôvodné dizajnové T1–T10 zostávajú otvorené.
+
+Záverečná focused regresia: 15 súborov, 192 testov, exit 0. Focused ESLint zmenených TS/TSX a QA skriptu prešiel. Spustený aj `tsc -p tsconfig.app.json --noEmit --incremental false`, pretože zmena QueryClient factory a Runs row kontraktu zasiahla viaceré call sites; kontrola prešla po oprave explicitného prístupu k index signatures. Typová kontrola nebola produkčný build.
+
+Opakovateľný browser skript: `scripts/qa/functional-audit-browser.mjs`, samostatný headless Edge CDP na porte 9351, Vite na 5189, profil v dočasnom adresári mimo workspace. Skript interceptuje config.js aj všetky lokálne API requesty; používa dokumentovaný auth-off režim len v izolovanom tabe. Browser overil search, app inventory background 503/Retry, chýbajúci report a jediný delete, latest-run Retry, URL reset histórie, chýbajúci infra port, zachovanie tagov, Resources refetch po provider save a provider status po credential delete. Výsledok: exit 0, 51 interceptovaných requestov, 0 runtime výnimiek/console errors. Fixture so zdieľaným DAG a syntetická URL navigácia môžu vyvolať dev warnings; nejde o tvrdenie nulového počtu warnings. Group inventár a credential save sú pokryté integračnými testmi; browser scenár credential mutácie používa delete.
+
+Živý backend/Keycloak, produkčné E2E, kompletná suite a production build neboli vykonané. Browser a dev server spustené touto úlohou boli ukončené. Bez pushu alebo nasadenia.

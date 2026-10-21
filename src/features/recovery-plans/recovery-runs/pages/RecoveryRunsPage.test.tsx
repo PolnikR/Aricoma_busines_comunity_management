@@ -99,7 +99,7 @@ describe('RecoveryRunsPage', () => {
     try {
       fireEvent.click(await screen.findByRole('button', { name: 'Retry' }))
       await waitFor(() => { expect(screen.getByText('success')).toBeInTheDocument() })
-      expect(requestedRuns(mock).map(request => request.params.provider_id)).toEqual(['airflow-01', 'airflow-02', 'airflow-01'])
+      expect(requestedRuns(mock).map(request => request.params['provider_id'])).toEqual(['airflow-01', 'airflow-02', 'airflow-01'])
       expect(refetchEntities).not.toHaveBeenCalled()
     } finally {
       view.unmount()

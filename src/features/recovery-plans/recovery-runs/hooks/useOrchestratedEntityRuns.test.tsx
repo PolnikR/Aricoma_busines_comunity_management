@@ -27,7 +27,7 @@ describe('useOrchestratedEntityRuns', () => {
     const { result } = renderHook(() => useOrchestratedEntityRuns([app, group]), { wrapper: createWrapper() })
     await waitFor(() => { expect(result.current.isFetching).toBe(false) })
     await act(async () => { await result.current.refetch(group) })
-    expect(requestedRuns(mock).map(request => request.params.provider_id)).toEqual(['one', 'two', 'two'])
+    expect(requestedRuns(mock).map(request => request.params['provider_id'])).toEqual(['one', 'two', 'two'])
   })
 
   afterEach(() => {

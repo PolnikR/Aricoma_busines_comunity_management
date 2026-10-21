@@ -144,7 +144,7 @@ Dokumenty sú plán, nie dôkaz úspechu budúcej implementácie. Teraz sa vykon
 
 ## Opravy funkčného auditu: A1–A11
 
-Návrh a hranice: [plan.md, sekcia 8](plan.md#8-opravy-funkčného-auditu). Úlohy predstavujú opravy; testy overujú ich výsledok. Nové súbory sú označené ako plánované. Pri každej úlohe najprv reprodukcia, potom implementácia a focused zelené overenie, lint zmenených súborov a atomic commit. Nie je to zadanie na vykonanie opráv v aktuálnej plánovacej relácii.
+Návrh a hranice: [plan.md, sekcia 8](plan.md#8-opravy-funkčného-auditu). Úlohy predstavujú opravy; testy overujú ich výsledok. Pri každej úlohe najprv reprodukcia, potom implementácia a focused zelené overenie, lint zmenených súborov a atomic commit. Používateľ následne povolil vykonanie inline; realizácia a dôkazy sú zaznamenané v tomto bloku.
 
 ## A1: F-04 — invalidácia po zmene providera
 
@@ -289,13 +289,52 @@ Návrh a hranice: [plan.md, sekcia 8](plan.md#8-opravy-funkčného-auditu). Úlo
 ## A11: Odovzdanie opráv a dôkazy
 
 **Popis:** Skontrolovať výsledky A úloh a browser scenáre sekcie 8.4; checklist aktualizovať podľa vykonaných kontrol.
-**Súbory:** `tasks/todo.md` na evidenciu. **Rozsah:** S. **Závislosti:** A1–A10 a checkpointy C–F.
+**Súbory:** `tasks/todo.md` a `tasks/plan.md` na evidenciu; nový `scripts/qa/functional-audit-browser.mjs` na opakovateľné browser overenie. Záverečná typová kontrola vyžiadala iba bracket notation v nových cache/Runs test kódoch; bez zmeny správania. **Rozsah:** M. **Závislosti:** A1–A10 a checkpointy C–F.
 **Akceptácia:**
-- [ ] Každá oprava má presný test príkaz, nenulový počet očakávaných testov, exit code a commit; passWithNoTests nesmie skryť chýbajúce súbory.
-- [ ] Browser scenáre sekcie 8.4 majú výsledky/stub/live rozlíšenie alebo presný blokér; nevykonané kontroly ostávajú otvorené.
-- [ ] Focused lint, JSON a diff check prešli; T úlohy sa neoznačili nesprávne ako hotové. Full suite/build iba pri konkrétnom dôvode alebo pokyne.
+- [x] Každá oprava má presný test príkaz, nenulový počet očakávaných testov, exit code a commit; passWithNoTests nesmie skryť chýbajúce súbory.
+- [x] Browser scenáre sekcie 8.4 majú výsledky/stub/live rozlíšenie alebo presný blokér; nevykonané kontroly ostávajú otvorené.
+- [x] Focused lint, JSON a diff check prešli; T úlohy sa neoznačili nesprávne ako hotové. Full suite/build iba pri konkrétnom dôvode alebo pokyne.
 **Overenie:** presné dotknuté testové príkazy A1–A10 podľa finálneho diffu; `npm.cmd exec eslint -- <skutocne-zmenene-TS-TSX-subory> --max-warnings 0`; JSON príkaz A5; `git diff --check`. Lint placeholder pred spustením nahradiť presnými cestami.
 
 ## Stav rozšírenia 2026-10-21
 
-Používateľ schválil doplnenie existujúcich dokumentov. Riešenia sú pripravené na vecnú revíziu pred implementáciou. V tejto relácii sa mení iba plán/checklist; A1–A11 ani pôvodné T úlohy nie sú označené za hotové.
+Používateľ schválil doplnenie existujúcich dokumentov a následne vykonanie inline. Blok A je realizovaný; pôvodný dizajnový blok T zostáva nedokončený a jeho checkboxy sa nemenili.
+
+## A11 — záverečné dôkazy 2026-10-21
+
+Záverečná focused regresia: **15 súborov, 192 testov, exit 0**. Presný príkaz:
+
+```powershell
+node node_modules/vitest/vitest.mjs run src/shared/query/providerMutationInvalidation.test.tsx src/features/providers-connectors/providers/model/providersWire.test.tsx src/features/recovery-plans/recovery-runs/hooks/useOrchestratedEntityRuns.test.tsx src/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage.test.tsx src/features/recovery-plans/recovery-runs/components/RecoveryRunsTable.test.tsx src/features/recovery-plans/recovery-runs/components/RecoveryRunHistoryDetailView.test.tsx src/features/recovery-plans/recovery-runs/hooks/useAppRunHistory.test.tsx src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.test.tsx src/features/recovery-plans/recovery-applications/hooks/recoveryApplicationsWire.test.tsx src/features/recovery-plans/recovery-applications/components/RecoveryApplicationRollbackResultModal.test.tsx src/features/recovery-plans/recovery-applications/components/RecoveryApplicationInventory.test.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupInventory.test.tsx src/features/providers-connectors/providers/components/ProviderCreateForm.test.tsx src/features/providers-connectors/providers/components/ProvidersCreateModal.test.tsx src/features/platform-administration/platform-providers/components/PlatformProvidersModal.test.tsx
+```
+
+Focused lint a typová kontrola prešli (exit 0):
+
+```powershell
+$auditChangedFiles = @(git diff --name-only bd99162f -- '*.ts' '*.tsx')
+node node_modules/eslint/bin/eslint.js @auditChangedFiles scripts/qa/functional-audit-browser.mjs --max-warnings 0
+node node_modules/typescript/bin/tsc -p tsconfig.app.json --noEmit --incremental false
+```
+
+Typecheck bol odôvodnený spoločnou QueryClient factory a rozšíreným Runs row kontraktom. Zachytil noPropertyAccessFromIndexSignature v nových kódoch; opravené bracket notation, bez suppressions. Následná focused regresia týchto štyroch test súborov: 41/41, potom záverečných 192/192.
+
+Browser: `node scripts/qa/functional-audit-browser.mjs`, **exit 0**, 51 stubovaných requestov, bez runtime výnimiek a console errors. Potrebný izolovaný headless Edge s CDP `127.0.0.1:9351` a Vite `127.0.0.1:5189`; použiť dočasný browser profil mimo Vite workspace. Spustenie servera: `node node_modules/vite/bin/vite.js --host 127.0.0.1 --port 5189 --strictPort`. Browser/config/API sú izolované; živý backend sa nepoužíva.
+
+| Browser scenár | Výsledok |
+| --- | --- |
+| A4: názov odlišný od ID | Finance Recovery sa nájde cez FINANCE RECOVERY. |
+| A6: background error + dáta + Retry | App inventár zostal viditeľný so stale varovaním; Retry ho odstránil. Group vetva overená reálnym QueryClient integračným testom. |
+| A10: bez reportu | Neutrálne varovanie a práve jeden delete request. |
+| A3: latest-run 503 | Riadkové Retry obnovilo latest run. |
+| A9: URL zmena pri page=3 | Nová entita začala na strane 1. Úplná identita vrátane app/group kolízie je pokrytá regresnými testmi. |
+| A7/A8: infra edit | Port input chýba, payload port neobsahuje, rename zachoval oba tagy. |
+| A1: návrat do Resources | Po provider save vznikol nový vms/search request. |
+| A2: credential mutácia | Browser delete aktualizoval závislý provider status na missing; credential save je pokrytý generated integračnými testmi. |
+
+Browser harness sleduje Runtime.exceptionThrown aj console.error. Pri cancel ignoruje iba presný CDP Invalid InterceptionId podložený Network.loadingFailed(canceled=true); iné protokolové chyby zostávajú zlyhaním. Dev warnings o zdieľanom DAG vo fixture a syntetickej POP navigácii sú limitom harnessu, nie tvrdením o nulových warnings. Headless browser a lokálny server boli po úspešnom behu ukončené.
+
+JSON parse/kľúče/placeholdery en/sk/cs, `node --check scripts/qa/functional-audit-browser.mjs` a `git diff --check` prešli. Inline kontrola diffu prešla pre správnosť, jednoduchosť, scope a zachovanie API/payload kontraktov; žiadne nové závislosti, generated úpravy ani oslabenie kontrol. Browser skript je testovací artefakt, nie produktový tok.
+
+Atomic implementačné commity: A1 `9dcbbde0`, A2 `e63ae390`, A3 `6466d4bb`, A4 `5df30b53`, A5 `7f76bd1d`, A6 `3ba70066`, A7 `7dba0ccf`, A8 `e0547fa5`, A9 `499c2742`, A10 `6eb65918`. A11 evidencia, opakovateľný browser harness a typové opravy tvoria záverečný commit.
+
+Limity: kompletná suite, production build, živý BE/Keycloak a produkčné E2E neboli spustené. Opravy zostali na `spike/ant-design-shell`; bez pushu/deploy. Nevykonané dizajnové T1–T10 ostávajú otvorené.
