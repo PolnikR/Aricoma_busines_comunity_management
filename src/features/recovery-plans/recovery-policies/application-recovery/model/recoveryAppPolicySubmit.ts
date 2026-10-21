@@ -21,6 +21,7 @@ export function toRecoveryAppPolicySubmitPayload(form: RecoveryAppPolicyFormData
     enabled: form.enabled,
     target_lpar_prefix: form.target_lpar_prefix.trim(),
     manual_zoning: form.manual_zoning,
+    manual_wwpn_entry: form.manual_wwpn_entry,
     source_shutdown_timeout_seconds: Number(form.source_shutdown_timeout_seconds),
     zoning_wait_minutes: Number(form.zoning_wait_minutes),
   }

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { RecoveryAppPolicyRecordOutput } from '@/generated/query/zod'
+import { RecoveryAppPolicyRecord, type RecoveryAppPolicyRecordOutput } from '@/generated/query/zod'
 import { RecoveryAppPolicyModal } from './RecoveryAppPolicyModal'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
@@ -27,6 +27,7 @@ const policy: RecoveryAppPolicyRecordOutput = {
   enabled: true,
   target_lpar_prefix: 'dr_',
   manual_zoning: false,
+  manual_wwpn_entry: false,
   source_shutdown_timeout_seconds: 300,
   zoning_wait_minutes: 240,
 }
@@ -83,6 +84,107 @@ function renderModal(props: Partial<React.ComponentProps<typeof RecoveryAppPolic
 afterEach(() => vi.unstubAllGlobals())
 
 describe('RecoveryAppPolicyModal', () => {
+  it('starts with both manual modes off and sends an explicit false on create', async () => {
+    const fetchMock = stubSubmitResponse()
+    const onClose = vi.fn()
+    renderModal({ onClose })
+    expect(screen.getByRole('checkbox', { name: 'Manual WWPN entry' })).not.toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'Manual zoning' })).not.toBeChecked()
+    fillRequiredCreateFields()
+    fireEvent.click(screen.getByRole('button', { name: 'Create policy' }))
+    await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+    expect(submittedBody(fetchMock)).toMatchObject({ manual_zoning: false, manual_wwpn_entry: false })
+  })
+
+  it.each(['latest', 'time_range', 'exact_time'] as const)('preserves WWPN entry in an unchanged %s edit', async mode => {
+    const fetchMock = stubSubmitResponse()
+    const onClose = vi.fn()
+    const storedPolicy = { ...exactTimePolicy, snapshot_selection_mode: mode, snapshot_max_age_value: 2, snapshot_max_age_unit: 'hours' as const, manual_wwpn_entry: true }
+    renderModal({ onClose, policy: storedPolicy })
+    expect(screen.getByRole('checkbox', { name: 'Manual WWPN entry' })).toBeChecked()
+    expect(screen.getByLabelText('Policy ID')).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: 'Edit policy' }))
+    await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+    expect(submittedBody(fetchMock)).toMatchObject({ manual_zoning: false, manual_wwpn_entry: true, snapshot_selection_mode: mode })
+  })
+
+  it('preserves WWPN entry when another edit field changes', async () => {
+    const fetchMock = stubSubmitResponse()
+    const onClose = vi.fn()
+    renderModal({ onClose, policy: { ...policy, manual_wwpn_entry: true } })
+    fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Updated' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Edit policy' }))
+    await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+    expect(submittedBody(fetchMock)).toMatchObject({ description: 'Updated', manual_wwpn_entry: true })
+  })
+
+  it('switches manual modes both ways and allows both off without hiding or disabling either', async () => {
+    const fetchMock = stubSubmitResponse()
+    const onClose = vi.fn()
+    renderModal({ onClose })
+    fillRequiredCreateFields()
+    const zoning = screen.getByRole('checkbox', { name: 'Manual zoning' })
+    const wwpn = screen.getByRole('checkbox', { name: 'Manual WWPN entry' })
+    fireEvent.click(zoning)
+    expect(zoning).toBeChecked()
+    expect(wwpn).not.toBeChecked()
+    fireEvent.click(wwpn)
+    expect(wwpn).toBeChecked()
+    expect(zoning).not.toBeChecked()
+    fireEvent.click(zoning)
+    expect(zoning).toBeChecked()
+    expect(wwpn).not.toBeChecked()
+    fireEvent.click(zoning)
+    expect(zoning).not.toBeChecked()
+    for (const control of [zoning, wwpn]) {
+      expect(control).toBeVisible()
+      expect(control).toBeEnabled()
+    }
+    fireEvent.click(wwpn)
+    fireEvent.click(screen.getByRole('button', { name: 'Create policy' }))
+    await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+    expect(submittedBody(fetchMock)).toMatchObject({ manual_zoning: false, manual_wwpn_entry: true })
+  })
+
+  it('blocks an API record with conflicting manual modes until the user corrects it', async () => {
+    const fetchMock = stubSubmitResponse()
+    const onClose = vi.fn()
+    renderModal({ onClose, policy: { ...powerPolicy, manual_wwpn_entry: true } })
+    fireEvent.click(screen.getByRole('button', { name: 'Edit policy' }))
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(screen.getByText('Select either manual zoning or manual WWPN entry, or turn both off.')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Manual zoning' }))
+    expect(screen.queryByText('Select either manual zoning or manual WWPN entry, or turn both off.')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Edit policy' }))
+    await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+    expect(submittedBody(fetchMock)).toMatchObject({ manual_zoning: false, manual_wwpn_entry: true })
+  })
+
+  it('edits an older API record using the generated default for WWPN entry', () => {
+    const legacy = { ...policy }
+    Reflect.deleteProperty(legacy, 'manual_wwpn_entry')
+    renderModal({ policy: RecoveryAppPolicyRecord.parse(legacy) })
+    expect(screen.getByRole('checkbox', { name: 'Manual WWPN entry' })).not.toBeChecked()
+  })
+
+  it('guards a changed manual mode and resets it after discard and reopen', () => {
+    const onClose = vi.fn()
+    const { rerender } = renderModal({ onClose, policy: { ...policy, manual_wwpn_entry: true } })
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Manual WWPN entry' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(onClose).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Keep editing' }))
+    expect(screen.getByRole('checkbox', { name: 'Manual WWPN entry' })).not.toBeChecked()
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }))
+    expect(onClose).toHaveBeenCalledOnce()
+    const client = new QueryClient()
+    rerender(<QueryClientProvider client={client}><RecoveryAppPolicyModal open={false} onClose={onClose} existingPolicies={[]} /></QueryClientProvider>)
+    rerender(<QueryClientProvider client={client}><RecoveryAppPolicyModal open onClose={onClose} existingPolicies={[]} /></QueryClientProvider>)
+    expect(screen.getByRole('checkbox', { name: 'Manual WWPN entry' })).not.toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'Manual zoning' })).not.toBeChecked()
+  })
+
   it('renders scheduling, snapshot selection and enabled controls', () => {
     renderModal()
 
@@ -128,7 +230,7 @@ describe('RecoveryAppPolicyModal', () => {
       frequency_value: 7, frequency_unit: 'days', retention_value: 1, retention_unit: 'days',
       boot_verify: true, snapshot_selection_mode: 'time_range', snapshot_max_age_value: 2,
       snapshot_max_age_unit: 'hours', enabled: true,
-      target_lpar_prefix: 'dr_', manual_zoning: false, source_shutdown_timeout_seconds: 300, zoning_wait_minutes: 240,
+      target_lpar_prefix: 'dr_', manual_zoning: false, manual_wwpn_entry: false, source_shutdown_timeout_seconds: 300, zoning_wait_minutes: 240,
     })
   })
 
@@ -163,7 +265,7 @@ describe('RecoveryAppPolicyModal', () => {
       id: 'critical-daily', name: 'Critical daily', description: 'Daily', level: 'critical',
       frequency_value: 1, frequency_unit: 'minutes', retention_value: 1, retention_unit: 'days',
       boot_verify: false, snapshot_selection_mode: 'latest', enabled: true,
-      target_lpar_prefix: 'dr_', manual_zoning: false, source_shutdown_timeout_seconds: 300, zoning_wait_minutes: 240,
+      target_lpar_prefix: 'dr_', manual_zoning: false, manual_wwpn_entry: false, source_shutdown_timeout_seconds: 300, zoning_wait_minutes: 240,
     })
   })
 
@@ -189,7 +291,7 @@ describe('RecoveryAppPolicyModal', () => {
       id: exactTimePolicy.id, name: exactTimePolicy.name, description: exactTimePolicy.description, level: exactTimePolicy.level,
       frequency_value: 30, frequency_unit: 'days', retention_value: 2, retention_unit: 'days',
       boot_verify: true, snapshot_selection_mode: 'exact_time', snapshot_target_time: '02:00', enabled: true,
-      target_lpar_prefix: 'dr_', manual_zoning: false, source_shutdown_timeout_seconds: 300, zoning_wait_minutes: 240,
+      target_lpar_prefix: 'dr_', manual_zoning: false, manual_wwpn_entry: false, source_shutdown_timeout_seconds: 300, zoning_wait_minutes: 240,
     })
   })
 

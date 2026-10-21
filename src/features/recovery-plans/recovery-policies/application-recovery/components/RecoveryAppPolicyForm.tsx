@@ -25,6 +25,7 @@ export interface RecoveryAppPolicyFormData {
   enabled: boolean
   target_lpar_prefix: string
   manual_zoning: boolean
+  manual_wwpn_entry: boolean
   source_shutdown_timeout_seconds: string
   zoning_wait_minutes: string
 }
@@ -155,7 +156,11 @@ export function RecoveryAppPolicyForm({
             <Input id="recovery-app-policy-target-lpar-prefix" value={data.target_lpar_prefix} disabled={isSubmitting} invalid={Boolean(errors.target_lpar_prefix)} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('target_lpar_prefix', event.target.value) }} />
             {errors.target_lpar_prefix ? <p className="mt-1 text-xs text-red-600">{errors.target_lpar_prefix}</p> : null}
           </Field>
-          <CheckboxField id="recovery-app-policy-manual-zoning" className="self-end" label={t('recoveryAppPolicies.form.manualZoning')} checked={data.manual_zoning} disabled={isSubmitting} variant="bordered" onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('manual_zoning', event.target.checked) }} />
+          <div className="grid grid-cols-1 gap-4 sm:col-span-2 sm:grid-cols-2">
+            <CheckboxField id="recovery-app-policy-manual-zoning" label={t('recoveryAppPolicies.form.manualZoning')} checked={data.manual_zoning} disabled={isSubmitting} variant="bordered" aria-invalid={Boolean(errors.manual_zoning)} aria-describedby={errors.manual_zoning ? 'recovery-app-policy-manual-mode-error' : undefined} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('manual_zoning', event.target.checked) }} />
+            <CheckboxField id="recovery-app-policy-manual-wwpn-entry" label={t('recoveryAppPolicies.form.manualWwpnEntry')} checked={data.manual_wwpn_entry} disabled={isSubmitting} variant="bordered" aria-invalid={Boolean(errors.manual_zoning)} aria-describedby={errors.manual_zoning ? 'recovery-app-policy-manual-mode-error' : undefined} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('manual_wwpn_entry', event.target.checked) }} />
+            {errors.manual_zoning ? <p id="recovery-app-policy-manual-mode-error" className="text-xs text-red-600 sm:col-span-2">{errors.manual_zoning}</p> : null}
+          </div>
           <Field label={t('recoveryAppPolicies.form.sourceShutdownTimeout')} htmlFor="recovery-app-policy-source-shutdown-timeout">
             <Input id="recovery-app-policy-source-shutdown-timeout" type="number" min={1} step={1} value={data.source_shutdown_timeout_seconds} disabled={isSubmitting} invalid={Boolean(errors.source_shutdown_timeout_seconds)} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('source_shutdown_timeout_seconds', event.target.value) }} />
             {errors.source_shutdown_timeout_seconds ? <p className="mt-1 text-xs text-red-600">{errors.source_shutdown_timeout_seconds}</p> : null}
