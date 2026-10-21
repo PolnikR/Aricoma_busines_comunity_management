@@ -158,7 +158,7 @@ Credential: z cached infra/platform zoznamov pred invalidáciou odvodiť súvisi
 
 **VM tagy:** initial form zachová celý uložený zoznam a submit ho odošle bez zmeny, kým používateľ výslovne nezmení tag selector. Pri explicitnom výbere/clear zachovať dnešnú jedno-tagovú semantiku; nevytvárať nový multiselect ani discovery API. Nahradiť test očakávajúci tichú legacy normalizáciu testom zachovania údajov a explicitnej zmeny.
 
-**R-01:** reset na identitu entity/provider/DAG a na zatvorenie aj cez URL/back. Preferovať malý keyed obal history obsahu; prvý dotaz novej entity musí mať page=1, nie starý offset nasledovaný reset effectom. Zachovať detail, dynamický Airflow link a polling.
+**R-01:** reset na úplnú identitu `entityType + id + providerId + dagId` a na zatvorenie aj cez URL/back. Preferovať malý keyed obal history obsahu; úplný resetovací kľúč možno zostaviť v rodičovi, ktorý pozná entityType, alebo doplniť entityType do RecoveryRunHistoryEntity. Prvý dotaz novej entity musí mať page=1, nie starý offset nasledovaný reset effectom. Doplniť regresiu Application → Group so zhodným id, providerId aj dagId, aby test izoloval zmenu entityType. Ide o identitu lokálneho UI stavu; API query key netreba rozširovať o entityType, ak požiadavku jednoznačne určuje provider/DAG a stránkovanie. Zachovať detail, dynamický Airflow link a polling.
 
 **R-02:** report je v schéme optional. Po úspešnom orchestrated delete bez reportu ukázať neutrálne varovanie: delete request uspel, detailný výsledok rollbacku nie je dostupný. Žiadny syntetický report, automatický rollback failed ani opakované deštruktívne delete. Local delete bez reportu zostáva bežným úspechom. ok/partial/failed/skipped reporty sa zobrazujú ďalej. Pred úpravou potvrdiť wire scenár stubom a zaznamenať limit overenia proti BE.
 
@@ -171,6 +171,10 @@ Blok A nečaká na T1–T10. Odporúčané je opraviť funkčné chyby pred pokr
 ### 8.4 Overenie a ochrany
 
 Každá oprava začína focused reprodukciou na pôvodnom správaní a končí rovnakým zeleným testom vrátane negatívnych variantov. Cache testy používajú skutočné generated mutations, QueryClient a stub fetch; spy invalidateQueries sám nedokazuje obnovu dát. Zahrnúť čerstvú cache v staleTime, inactive queries a pending request.
+
+A1–A2: aplikácia aj integračné testy vytvárajú QueryClient cez spoločnú factory `src/shared/query/createAppQueryClient.ts` (nový/plánovaný súbor), ktorá zapája rovnakú MutationCache success politiku aj štandardné query nastavenia. Každý test vytvorí novú izolovanú inštanciu a po teste ju vyčistí; nezdieľať aplikačný singleton. Prípadné testové overrides retry/časovania nesmú nahradiť MutationCache ani politiku invalidácie. Overiť invalidáciu a skutočný refetch aktívnej query vrátane nového requestu a aktualizovaných dát; pri neaktívnej query overiť invalidovaný stav a refetch po následnom pripojení observera/otvorení pohľadu. Test si nesmie ručne pripájať kópiu callbacku, ktorá by mohla zakryť chýbajúce zapojenie v aplikácii.
+
+A7: regresia zahŕňa aj existujúci `ProviderCreateForm.test.tsx`; odstrániť port z jeho fixture a doplniť neprítomnosť infra Port inputu. Modal test ďalej dokazuje payload bez portu; PlatformProvidersModal test chráni funkčný platform port.
 
 Evidovať presný príkaz, testové cesty, počet vykonaných súborov/testov, exit code a limity. Projekt má passWithNoTests=true: overiť existenciu a skutočné vykonanie očakávaných súborov. Nové testové cesty v todo sú plánované, nie dôkaz existujúceho pokrytia.
 

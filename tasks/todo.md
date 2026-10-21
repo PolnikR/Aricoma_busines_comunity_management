@@ -148,22 +148,22 @@ Návrh a hranice: [plan.md, sekcia 8](plan.md#8-opravy-funkčného-auditu). Úlo
 
 ## A1: F-04 — invalidácia po zmene providera
 
-**Popis:** Zaviesť cielenú success politiku sekcie 8.2 a zapojiť submit/delete infra aj platform providerov; zachovať generated vlastné invalidácie aj lokálne callbacky.
-**Súbory:** nové/plánované `src/shared/query/providerMutationInvalidation.ts`, `src/shared/query/providerMutationInvalidation.test.tsx`; `src/app/providers.tsx`. **Rozsah:** M, 3 súbory. **Závislosti:** žiadne.
+**Popis:** Zaviesť cielenú success politiku sekcie 8.2 a zapojiť submit/delete infra aj platform providerov; zachovať generated vlastné invalidácie aj lokálne callbacky. Aplikácia aj integračné testy použijú spoločnú factory QueryClient s rovnakou MutationCache politikou; každý test má vlastnú novú inštanciu s cleanupom. Testové overrides nesmú nahradiť invalidáciu.
+**Súbory:** nové/plánované `src/shared/query/createAppQueryClient.ts`, `src/shared/query/providerMutationInvalidation.ts`, `src/shared/query/providerMutationInvalidation.test.tsx`; `src/app/providers.tsx`. **Rozsah:** M, 4 súbory. **Závislosti:** žiadne.
 **Akceptácia:**
-- [ ] Generated submit mutácia obnoví čerstvú cache dotknutého providera vo všetkých používaných inventár/search variantoch vrátane agregovaných; iný explicitný provider zostáva nedotknutý.
+- [ ] Generated submit mutácia na klientovi zo spoločnej aplikačnej factory invaliduje čerstvú cache a vyvolá skutočný refetch aktívneho dotknutého inventára/search vrátane agregovaných variantov; test overí nový request aj aktualizované dáta. Neaktívna query je invalidovaná a refetchne sa po pripojení observera; iný explicitný provider zostáva nedotknutý.
 - [ ] Delete neponechá staré dáta po dobehnutí pending requestu; platform provider sa nezamieňa s infra ID a obnoví svoje skutočné závislé orchestration queries.
 - [ ] Error nespustí success invalidáciu; callbacky a relevantné skipInvalidation správanie ostávajú. Bez ručných generated úprav a refetch all.
 **Overenie:** `npm.cmd exec vitest run src/shared/query/providerMutationInvalidation.test.tsx src/features/providers-connectors/providers/model/providersWire.test.tsx`.
 
 ## A2: F-04 — závislosti credentials
 
-**Popis:** Rozšíriť A1 o submit/delete credential; odvodiť dotknuté ID z cached provider zoznamov a ošetriť neúplnú znalosť závislostí.
+**Popis:** Rozšíriť A1 o submit/delete credential; odvodiť dotknuté ID z cached provider zoznamov a ošetriť neúplnú znalosť závislostí. Integračné testy naďalej používajú spoločnú aplikačnú factory s MutationCache, pre každý test novú izolovanú inštanciu s cleanupom.
 **Súbory:** `src/shared/query/providerMutationInvalidation.ts`, `src/shared/query/providerMutationInvalidation.test.tsx`. **Rozsah:** S, 2 súbory. **Závislosti:** A1.
 **Akceptácia:**
 - [ ] Credential success obnoví infra/platform statusy vo všetkých role/type variantoch a inventár známych súvisiacich infra providerov; pri úplnej znalosti nezneplatní nesúvisiacu explicitnú cache.
 - [ ] Neúplná provider cache použije zdokumentovaný fallback iba na potrebné rodiny queries; nie globálny clear/refetch.
-- [ ] Test dokazuje edit/delete, active/inactive cache v staleTime a error bez invalidácie cez výsledné dáta/requesty, nie iba spy.
+- [ ] Test dokazuje edit/delete a error bez invalidácie na klientovi zo spoločnej factory: aktívna cache v staleTime vykoná nový request a zobrazí nové dáta; neaktívna sa invaliduje a refetchne po pripojení observera. Samotný spy nie je dôkaz.
 **Overenie:** `npm.cmd exec vitest run src/shared/query/providerMutationInvalidation.test.tsx`.
 
 ## Checkpoint C: cache
@@ -219,12 +219,12 @@ Návrh a hranice: [plan.md, sekcia 8](plan.md#8-opravy-funkčného-auditu). Úlo
 ## A7: Odstránenie nefunkčného infra Port poľa
 
 **Popis:** Odstrániť infra port input/state/dirty kontrolu/validáciu; zachovať infra payload aj funkčný Platform Provider port.
-**Súbory:** `src/features/providers-connectors/providers/components/ProviderCreateForm.tsx`, `src/features/providers-connectors/providers/components/ProvidersCreateModal.tsx`, jeho `.test.tsx`. **Rozsah:** M, 3 súbory. **Závislosti:** žiadne.
+**Súbory:** `src/features/providers-connectors/providers/components/ProviderCreateForm.tsx`, jeho `ProviderCreateForm.test.tsx`; `src/features/providers-connectors/providers/components/ProvidersCreateModal.tsx`, jeho `.test.tsx`. **Rozsah:** M, 4 súbory. **Závislosti:** žiadne.
 **Akceptácia:**
-- [ ] Create/Edit infra providera neponúka neukladaný port a jeho odstránená validácia neblokuje submit.
+- [ ] Create/Edit infra providera neponúka neukladaný port a jeho odstránená validácia neblokuje submit; ProviderCreateForm.test.tsx má fixture bez portu a explicitnú kontrolu neprítomnosti Port inputu.
 - [ ] Payload ostáva bez portu; ostatné validácie a dirty guard fungujú.
 - [ ] PlatformProvidersModal/port a potrebné shared preklady sa nemenia.
-**Overenie:** `npm.cmd exec vitest run src/features/providers-connectors/providers/components/ProvidersCreateModal.test.tsx src/features/platform-administration/platform-providers/components/PlatformProvidersModal.test.tsx`.
+**Overenie:** `npm.cmd exec vitest run src/features/providers-connectors/providers/components/ProviderCreateForm.test.tsx src/features/providers-connectors/providers/components/ProvidersCreateModal.test.tsx src/features/platform-administration/platform-providers/components/PlatformProvidersModal.test.tsx`.
 
 ## Checkpoint E: inventár a formulár
 
@@ -243,11 +243,11 @@ Návrh a hranice: [plan.md, sekcia 8](plan.md#8-opravy-funkčného-auditu). Úlo
 
 ## A9: R-01 — reset stránkovania histórie
 
-**Popis:** Reset pri zmene entity/provider/DAG aj close cez URL/back; prvý request novej entity má offset=0.
+**Popis:** Reset podľa úplnej identity `entityType + id + providerId + dagId` aj close cez URL/back; prvý request novej entity má offset=0. Kľúč zostaviť v rodičovi alebo doplniť entityType do RecoveryRunHistoryEntity; nemení to automaticky API query key.
 **Súbory:** `src/features/recovery-plans/recovery-runs/components/RecoveryRunHistoryDetailView.tsx`, jeho `.test.tsx`; `src/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage.tsx`, jeho `.test.tsx`. **Rozsah:** M, najviac 4 súbory. **Závislosti:** A3 kvôli zdieľaným súborom.
 **Akceptácia:**
-- [ ] Page=3 entity A a URL/entity zmena na B začne B s offset=0 aj pri jedinej strane histórie.
-- [ ] Close/open, URL/back odstránenie/obnovenie entity a provider/DAG zmena začínajú na strane 1.
+- [ ] Page=3 entity A a URL/entity zmena na B začne B s offset=0 aj pri jedinej strane histórie; samostatná regresia Application → Group so zhodným id, providerId aj dagId dokazuje reset iba pri zmene entityType.
+- [ ] Close/open, URL/back odstránenie/obnovenie entity a zmena ktorejkoľvek časti identity entityType/id/providerId/dagId začínajú na strane 1.
 - [ ] História, Airflow link a active-run polling fungujú; bez dát iného kontextu.
 **Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-runs/components/RecoveryRunHistoryDetailView.test.tsx src/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage.test.tsx src/features/recovery-plans/recovery-runs/hooks/useAppRunHistory.test.tsx`.
 
