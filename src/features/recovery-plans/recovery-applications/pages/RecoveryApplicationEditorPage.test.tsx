@@ -160,6 +160,28 @@ beforeEach(() => {
 })
 
 describe('RecoveryApplicationEditorPage', () => {
+  it('passes manual-only schedule and notes from the edit response to the shared push dialog', async () => {
+    const user = userEvent.setup()
+    render(<RecoveryApplicationEditorPage />)
+    await user.click(screen.getByRole('button', { name: 'Save orchestrated' }))
+    const call = mutate.mock.calls[0]
+    if (!call) throw new Error('Expected submit mutation')
+    call[1].onSuccess({ applications: [], orchestrator_push: {
+      status: 'pushed', dag_id: 'dag_manual_finance', schedule: 'manual_only', notes: ['Edit backend note'],
+    } })
+    const info = await screen.findByRole('region', { name: 'Manual execution in Airflow' })
+    expect(info).toHaveTextContent('The DAG was successfully pushed, but has not started yet.')
+    expect(info).toHaveTextContent('first select Unpause, then Trigger')
+    expect(info).toHaveTextContent('Edit backend note')
+    expect(navigate).not.toHaveBeenCalled()
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
+    await user.click(screen.getByRole('button', { name: 'View in Airflow' }))
+    expect(openSpy).toHaveBeenCalledWith('https://airflow.dynamic.test:8443/dags/dag_manual_finance', '_blank', 'noopener,noreferrer')
+    openSpy.mockRestore()
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+    expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-applications')
+  })
+
   it.each([null, { status: 'skipped', reason: 'Provider disabled', dag: null, json: null, dag_id: null }] as const)('shows a nullable or skipped push result and closes to the list (%j)', async push => {
     const user = userEvent.setup()
     render(<RecoveryApplicationEditorPage />)
