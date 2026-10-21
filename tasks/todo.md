@@ -262,10 +262,12 @@ Návrh a hranice: [plan.md, sekcia 8](plan.md#8-opravy-funkčného-auditu). Úlo
 **Popis:** Reset podľa úplnej identity `entityType + id + providerId + dagId` aj close cez URL/back; prvý request novej entity má offset=0. Kľúč zostaviť v rodičovi alebo doplniť entityType do RecoveryRunHistoryEntity; nemení to automaticky API query key.
 **Súbory:** `src/features/recovery-plans/recovery-runs/components/RecoveryRunHistoryDetailView.tsx`, jeho `.test.tsx`; `src/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage.tsx`, jeho `.test.tsx`. **Rozsah:** M, najviac 4 súbory. **Závislosti:** A3 kvôli zdieľaným súborom.
 **Akceptácia:**
-- [ ] Page=3 entity A a URL/entity zmena na B začne B s offset=0 aj pri jedinej strane histórie; samostatná regresia Application → Group so zhodným id, providerId aj dagId dokazuje reset iba pri zmene entityType.
-- [ ] Close/open, URL/back odstránenie/obnovenie entity a zmena ktorejkoľvek časti identity entityType/id/providerId/dagId začínajú na strane 1.
-- [ ] História, Airflow link a active-run polling fungujú; bez dát iného kontextu.
+- [x] Page=3 entity A a URL/entity zmena na B začne B s offset=0 aj pri jedinej strane histórie; samostatná regresia Application → Group so zhodným id, providerId aj dagId dokazuje reset iba pri zmene entityType.
+- [x] Close/open, URL/back odstránenie/obnovenie entity a zmena ktorejkoľvek časti identity entityType/id/providerId/dagId začínajú na strane 1.
+- [x] História, Airflow link a active-run polling fungujú; bez dát iného kontextu.
 **Overenie:** `npm.cmd exec vitest run src/features/recovery-plans/recovery-runs/components/RecoveryRunHistoryDetailView.test.tsx src/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage.test.tsx src/features/recovery-plans/recovery-runs/hooks/useAppRunHistory.test.tsx`.
+
+**A9 vysledok (2026-10-21):** tri red scenare potvrdili pretrvanie page=3 pri zmene entityType/providerId/dagId. Green 25/25 v uvedenych 3 suboroch cez node Vitest CLI; focused ESLint page a jej testu presiel. Resetovaci key je JSON tuple entityType/id/providerId/dagId v rodicovi; query key ani typ detailu sa nemenil. URL close/reopen pokryte. A8 commit: e0547fa5.
 
 ## A10: R-02 — oznámenie chýbajúceho rollback reportu
 

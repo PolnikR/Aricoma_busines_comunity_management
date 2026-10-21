@@ -1,8 +1,8 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { createAppQueryClient } from '@/shared/query/createAppQueryClient'
 import { requestedRuns, runsBody, stubOrchestratorRuns } from '../test/stubOrchestratorRuns'
-import { MemoryRouter } from 'react-router'
+import { MemoryRouter, useNavigate } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { RecoveryRunsPage } from './RecoveryRunsPage'
 import { useOrchestratedEntities } from '../hooks/useOrchestratedEntities'
@@ -42,7 +42,50 @@ function renderPage(initialEntries: string[] = ['/']) {
   )
 }
 
+function HistoryNavigation() {
+  const navigate = useNavigate()
+  return <>
+    <button onClick={() => { void navigate('/?entityType=group&entityId=shared') }}>Select group URL</button>
+    <button onClick={() => { void navigate('/') }}>Clear entity URL</button>
+  </>
+}
+
 describe('RecoveryRunsPage', () => {
+  it.each(['providerId', 'dagId'] as const)('resets the history before querying a changed %s', field => {
+    const state = { entities: [financeApp], isLoading: false, isFetching: false, error: null, refetch: vi.fn() }
+    vi.mocked(useOrchestratedEntities).mockReturnValue(state)
+    vi.mocked(useOrchestratedEntityRuns).mockReturnValue({ rows: [], isFetching: false, refetch: vi.fn() })
+    vi.mocked(useAppRunHistory).mockReturnValue({ ...historyResult(), data: { runs: [], total: 30 } })
+    const view = renderPage(['/?entityType=application&entityId=finance_recovery'])
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Run history detail' })).getByRole('button', { name: 'Page 3' }))
+    vi.mocked(useAppRunHistory).mockClear()
+    vi.mocked(useOrchestratedEntities).mockReturnValue({ ...state, entities: [{ ...financeApp, [field]: 'changed' }] })
+    view.rerender(<MemoryRouter initialEntries={['/?entityType=application&entityId=finance_recovery']}><RecoveryRunsPage /></MemoryRouter>)
+    expect(vi.mocked(useAppRunHistory).mock.calls.length).toBeGreaterThan(0)
+    expect(vi.mocked(useAppRunHistory).mock.calls.every(([params]) => params.page === 1)).toBe(true)
+  })
+
+  it('resets history for app/group with matching ID, provider and DAG, including URL close/reopen', () => {
+    const app = { ...financeApp, id: 'shared' }
+    const group = { ...app, entityType: 'group' as const, name: 'Group with same identity fields' }
+    vi.mocked(useOrchestratedEntities).mockReturnValue({ entities: [app, group], isLoading: false, isFetching: false, error: null, refetch: vi.fn() })
+    vi.mocked(useOrchestratedEntityRuns).mockReturnValue({ rows: [], isFetching: false, refetch: vi.fn() })
+    vi.mocked(useAppRunHistory).mockReturnValue({ ...historyResult(), data: { runs: [], total: 30 } })
+    render(<MemoryRouter initialEntries={['/?entityType=application&entityId=shared']}><HistoryNavigation /><RecoveryRunsPage /></MemoryRouter>)
+    const pageThree = () => { fireEvent.click(within(screen.getByRole('dialog', { name: 'Run history detail' })).getByRole('button', { name: 'Page 3' })) }
+    pageThree()
+    expect(vi.mocked(useAppRunHistory).mock.lastCall?.[0].page).toBe(3)
+    vi.mocked(useAppRunHistory).mockClear()
+    fireEvent.click(screen.getByText('Select group URL'))
+    expect(vi.mocked(useAppRunHistory).mock.calls.every(([params]) => params.page === 1)).toBe(true)
+    pageThree()
+    fireEvent.click(screen.getByText('Clear entity URL'))
+    expect(screen.queryByRole('dialog', { name: 'Run history detail' })).not.toBeInTheDocument()
+    vi.mocked(useAppRunHistory).mockClear()
+    fireEvent.click(screen.getByText('Select group URL'))
+    expect(vi.mocked(useAppRunHistory).mock.calls.every(([params]) => params.page === 1)).toBe(true)
+  })
+
   it('retries only the failed row using the real latest-run queries', async () => {
     const actual = await vi.importActual<typeof import('../hooks/useOrchestratedEntityRuns')>('../hooks/useOrchestratedEntityRuns')
     vi.mocked(useOrchestratedEntityRuns).mockImplementation(actual.useOrchestratedEntityRuns)

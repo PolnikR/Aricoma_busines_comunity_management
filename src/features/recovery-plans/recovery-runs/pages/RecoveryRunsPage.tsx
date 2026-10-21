@@ -109,6 +109,7 @@ export function RecoveryRunsPage() {
       </InventoryShell>
 
       <RecoveryRunHistoryDetailView
+        key={selectedEntity ? JSON.stringify([selectedEntity.entityType, selectedEntity.id, selectedEntity.providerId, selectedEntity.dagId]) : 'no-entity'}
         entity={selectedEntity}
         onClose={() => { setEntity(null) }}
       />
