@@ -14,7 +14,7 @@ export function useRecoveryApplications() {
 }
 
 // Facade over the generated submit: it validates the orchestration provider and
-// requires the DAG details of an orchestrator push before the page shows them.
+// preserves the optional push details for the result dialog after saving.
 export function useSubmitRecoveryApplication() {
   const queryClient = useQueryClient()
 

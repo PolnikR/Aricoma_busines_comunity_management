@@ -12,7 +12,7 @@ import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { useGetPlatformProviders } from '@/generated/query/platform-providers/platform-providers.gen'
 import { selectPlatformProviders } from '@/features/platform-administration/platform-providers/model/selectPlatformProviders'
 import { RecoveryGroupBuilder } from '../components/RecoveryGroupBuilder'
-import { RecoveryGroupOrchestratorSuccessModal } from '../components/RecoveryGroupOrchestratorSuccessModal'
+import { OrchestratorPushResultDialog, type OrchestratorPushResult } from '@/shared/components/modal/OrchestratorPushResultDialog'
 import { useRecoveryGroups } from '../hooks/useRecoveryGroups'
 import type { RecoveryGroupDraft } from '../model/recoveryGroupTypes'
 import { RecoveryGroupsError } from '../api/recoveryGroupsErrors'
@@ -20,8 +20,7 @@ import { getRecoveryGroupsErrorKey } from '../utils/recoveryGroupsErrorMessage'
 
 interface OrchestratorRunInfo {
   groupName: string
-  runId: string | null
-  providerName: string | null
+  result: OrchestratorPushResult | null
   providerUrl: string | null
 }
 
@@ -47,8 +46,7 @@ export function RecoveryGroupBuilderPage() {
         const provider = platformProviders.find(candidate => candidate.id === draft.orchestrationProviderId)
         setOrchestratorRun({
           groupName: draft.name,
-          runId: created.airflowRunId ?? null,
-          providerName: provider?.name ?? null,
+          result: created.orchestratorPush,
           providerUrl: provider?.url ?? null,
         })
       } else {
@@ -106,12 +104,12 @@ export function RecoveryGroupBuilderPage() {
         onCancel={navigationGuard.cancelNavigation}
         onConfirm={navigationGuard.confirmNavigation}
       />
-      <RecoveryGroupOrchestratorSuccessModal
+      <OrchestratorPushResultDialog
+        entityType="group"
         open={orchestratorRun !== null}
         onClose={handleSuccessModalClose}
-        groupName={orchestratorRun?.groupName ?? ''}
-        runId={orchestratorRun?.runId ?? null}
-        providerName={orchestratorRun?.providerName ?? null}
+        entityName={orchestratorRun?.groupName ?? ''}
+        result={orchestratorRun?.result ?? null}
         providerUrl={orchestratorRun?.providerUrl ?? null}
       />
     </div>

@@ -9,7 +9,7 @@ import { PageHeader } from '@/shared/components/page/PageHeader'
 import { SkeletonBlock } from '@/shared/components/data-table'
 import { useTranslation } from '@/hooks/useTranslation'
 import { RecoveryAppBuilder } from '../components/RecoveryAppBuilder'
-import { RecoveryApplicationOrchestratorSuccessModal } from '../components/RecoveryApplicationOrchestratorSuccessModal'
+import { OrchestratorPushResultDialog } from '@/shared/components/modal/OrchestratorPushResultDialog'
 import {
   useRecoveryApplications,
   useSubmitRecoveryApplication,
@@ -34,7 +34,7 @@ export function RecoveryApplicationEditorPage() {
   const { data: applications, isLoading, error, isFetching, refetch } = useRecoveryApplications()
   const submitApplication = useSubmitRecoveryApplication()
   const [isDirty, setIsDirty] = useState(false)
-  const [orchestratorPush, setOrchestratorPush] = useState<OrchestratorPush | null>(null)
+  const [orchestratorPush, setOrchestratorPush] = useState<OrchestratorPush | null | undefined>(undefined)
   const [orchestratedApplicationName, setOrchestratedApplicationName] = useState('')
   const [orchestratorProviderUrl, setOrchestratorProviderUrl] = useState<string | undefined>(undefined)
   const navigationGuard = useUnsavedChangesGuard(isDirty)
@@ -158,16 +158,17 @@ export function RecoveryApplicationEditorPage() {
         onCancel={navigationGuard.cancelNavigation}
         onConfirm={navigationGuard.confirmNavigation}
       />
-      {orchestratorPush ? (
-        <RecoveryApplicationOrchestratorSuccessModal
+      {orchestratorPush !== undefined ? (
+        <OrchestratorPushResultDialog
+          entityType="application"
           open
           onClose={() => {
-            setOrchestratorPush(null)
+            setOrchestratorPush(undefined)
             setOrchestratedApplicationName('')
             navigationGuard.runWithoutBlocking(navigateToApplications)
           }}
-          applicationName={orchestratedApplicationName}
-          orchestratorPush={orchestratorPush}
+          entityName={orchestratedApplicationName}
+          result={orchestratorPush}
           providerUrl={orchestratorProviderUrl}
         />
       ) : null}

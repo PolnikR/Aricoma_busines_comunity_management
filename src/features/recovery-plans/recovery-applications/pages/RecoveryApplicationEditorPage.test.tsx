@@ -160,6 +160,22 @@ beforeEach(() => {
 })
 
 describe('RecoveryApplicationEditorPage', () => {
+  it.each([null, { status: 'skipped', reason: 'Provider disabled', dag: null, json: null, dag_id: null }] as const)('shows a nullable or skipped push result and closes to the list (%j)', async push => {
+    const user = userEvent.setup()
+    render(<RecoveryApplicationEditorPage />)
+    await user.click(screen.getByRole('button', { name: 'Save orchestrated' }))
+    const call = mutate.mock.calls[0]
+    if (!call) throw new Error('Expected submit mutation')
+    const options = call[1]
+    options.onSuccess({ applications: [], orchestrator_push: push })
+    const dialog = await screen.findByRole('dialog')
+    expect(dialog).toHaveTextContent(push ? 'Orchestrator push skipped' : 'The API did not return an orchestrator push result.')
+    expect(screen.queryByRole('button', { name: 'View in Airflow' })).not.toBeInTheDocument()
+    expect(navigate).not.toHaveBeenCalled()
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+    expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-applications')
+  })
+
   it('keeps the builder in a constrained body region for nested resource scrolling', () => {
     const { container } = render(<RecoveryApplicationEditorPage />)
 
