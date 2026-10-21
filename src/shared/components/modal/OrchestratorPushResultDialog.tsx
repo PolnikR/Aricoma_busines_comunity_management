@@ -38,6 +38,8 @@ export function OrchestratorPushResultDialog({
     })
   }
   const dagId = result?.dag_id?.trim()
+  const manualOnly = result?.schedule === 'manual_only'
+  const notes = [...new Set(result?.notes?.map(note => note.trim()).filter(Boolean) ?? [])]
 
   return (
     <ChecklistResultDialog
@@ -63,6 +65,22 @@ export function OrchestratorPushResultDialog({
           window.open(buildAirflowDagUrl(dagId, providerUrl), '_blank', 'noopener,noreferrer')
         },
       } : {})}
-    />
+    >
+      {manualOnly ? (
+        <section aria-label={t('orchestratorPush.manualOnlyTitle')} className="space-y-2 rounded-lg border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">
+          <h3 className="font-semibold text-text-primary">{t('orchestratorPush.manualOnlyTitle')}</h3>
+          {pushed ? <p>{t('orchestratorPush.manualOnlyPushed')}</p> : null}
+          <p>{t('orchestratorPush.manualOnlyInstructions')}</p>
+          {notes.length ? (
+            <div>
+              <p className="text-xs font-medium text-text-muted">{t('orchestratorPush.backendNotes')}</p>
+              <ul className="mt-1 list-disc space-y-1 pl-5 text-xs wrap-anywhere">
+                {notes.map(note => <li key={note}>{note}</li>)}
+              </ul>
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+    </ChecklistResultDialog>
   )
 }
