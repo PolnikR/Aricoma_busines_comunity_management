@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ABCO · Technical table template</title>
+<style>
+:root{color-scheme:light;--page:#f7f9fc;--surface:#fff;--subtle:#fbfdff;--muted:#f1f6fb;--hover:#e8f2fa;--text:#17233d;--secondary:#3b4763;--quiet:#596b83;--border:#dbe7f2;--strong:#c8d7e7;--accent:#087fba;--soft:#e8f6fd;--good:#18764c;--warning:#9c5100;--mono:ui-monospace,SFMono-Regular,Consolas,monospace}
+[data-theme=dark]{color-scheme:dark;--page:#09111f;--surface:#111c2f;--subtle:#152238;--muted:#1a2941;--hover:#22344f;--text:#edf4ff;--secondary:#c5d1e2;--quiet:#98a8bf;--border:#293b56;--strong:#3a506f;--accent:#43b2ec;--soft:#123854;--good:#73d5a0;--warning:#ffc078}
+*{box-sizing:border-box}body{margin:0;background:var(--page);color:var(--text);font:14px/1.5 "Segoe UI",Arial,sans-serif}button,input,select{font:inherit;color:inherit}button,select{cursor:pointer}button{background:var(--surface);border:1px solid var(--strong);border-radius:4px;padding:7px 12px}button:hover{background:var(--hover)}button:disabled{cursor:default;opacity:.45}button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:3px}svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;flex-shrink:0}code,.mono{font-family:var(--mono);font-size:12px}.quiet{color:var(--quiet)}.eyebrow{font:11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--quiet)}
+.shell{max-width:1600px;margin:auto;padding:32px}.page-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px}.page-head h1{font-size:24px;letter-spacing:-.6px;margin:4px 0}.page-head p{margin:0;color:var(--quiet)}.preview-label{border-left:2px solid var(--accent);padding-left:12px}.tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.icon-button{display:inline-flex;align-items:center;gap:8px}
+.inventory{background:var(--surface);border:1px solid var(--strong);border-radius:8px;overflow:hidden}.section-head{padding:20px 20px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px}.section-head h2{font-size:16px;margin:0;display:flex;align-items:center;gap:12px}.count{font:12px var(--mono);color:var(--quiet);background:var(--muted);border:1px solid var(--border);padding:2px 6px;border-radius:3px}.tabs{display:flex;gap:24px;padding:0 20px;border-bottom:1px solid var(--border);overflow:auto}.tabs button{border:0;border-bottom:2px solid transparent;border-radius:0;padding:12px 0;white-space:nowrap;color:var(--quiet);background:transparent}.tabs button[aria-pressed=true]{border-color:var(--accent);color:var(--accent)}.tabs code{margin-left:8px;font-size:10px;color:var(--quiet);background:var(--muted);padding:3px 5px;border-radius:3px}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 20px}.search{position:relative;max-width:360px;flex:1;min-width:160px}.search svg{position:absolute;left:12px;top:11px;color:var(--quiet)}input[type=search]{width:100%;border:1px solid var(--strong);border-radius:4px;background:var(--subtle);padding:8px 12px 8px 36px}.segmented{display:flex;background:var(--muted);padding:3px;border-radius:5px}.segmented button{border:1px solid transparent;background:transparent;font-size:12px;padding:5px 10px;color:var(--quiet)}.segmented button[aria-pressed=true]{border-color:var(--strong);background:var(--surface);color:var(--text)}.filter-strip{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 20px 16px;font-size:12px}.chip{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--border);background:var(--subtle);padding:3px 8px;font-size:12px}.chip strong{font:11px var(--mono)}.text-button{border:0;color:var(--accent);background:transparent;padding:4px}.table-scroll{overflow:auto;max-height:440px;min-height:320px;border-top:1px solid var(--border)}table{width:100%;border-collapse:separate;border-spacing:0;white-space:nowrap;font-size:12px}caption{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}th{position:sticky;top:0;z-index:1;background:var(--muted);text-align:left;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--quiet);border-bottom:1px solid var(--strong);padding:10px 16px}th button{border:0;padding:0;font:inherit;letter-spacing:inherit;text-transform:inherit;background:transparent;display:flex;gap:12px;align-items:center}td{padding:11px 16px;border-bottom:1px solid var(--border);color:var(--secondary)}tbody tr:hover{background:var(--subtle)}tbody tr.selected{background:var(--soft)}tbody tr.selected td:first-child{box-shadow:inset 3px 0 var(--accent)}.row-name{border:0;background:transparent;padding:0;font:600 12px var(--mono);color:var(--text)}.row-name:hover{color:var(--accent);background:transparent}.subline{display:block;font-size:10px;color:var(--quiet);margin-top:3px}.tag{display:inline-block;padding:2px 6px;border:1px solid var(--border);border-radius:3px;font:10px/1.5 var(--mono);margin-right:4px;background:var(--muted)}.status{display:inline-flex;gap:6px;align-items:center}.status:before{content:"";width:6px;height:6px;background:currentColor;border-radius:50%}.good{color:var(--good)}.warning{color:var(--warning)}.number{text-align:right;font-family:var(--mono)}.comfortable td{padding-top:19px;padding-bottom:19px}.empty{text-align:center;padding:64px 16px;white-space:normal}.empty strong{display:block;font-size:14px;color:var(--text)}.footer{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 20px;font-size:12px;color:var(--quiet);border-top:1px solid var(--border)}select{background:var(--surface);border:1px solid var(--strong);border-radius:4px;padding:6px 8px}.pager button{padding:5px 10px}.detail{padding:16px 20px;border-top:1px solid var(--border);background:var(--subtle)}.detail-head{display:flex;align-items:center;justify-content:space-between}.detail h3{margin:0;font:600 13px var(--mono)}.detail dl{display:flex;gap:40px;flex-wrap:wrap;margin-bottom:0;font-size:12px}.detail dt{color:var(--quiet)}.detail dd{margin:4px 0;font-family:var(--mono)}
+.notes{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:24px}.notes article{border-top:1px solid var(--strong);padding-top:12px}.notes h3{font-size:12px;margin:4px 0 8px}.notes p{font-size:12px;color:var(--quiet);margin:0;max-width:360px}dialog{width:min(420px,calc(100% - 32px));background:var(--surface);color:var(--text);border:1px solid var(--strong);border-radius:8px;padding:24px}dialog::backdrop{background:#09111f66}dialog h2{margin-top:0;font-size:18px}dialog label{display:grid;gap:6px;margin-bottom:16px;font-size:12px}dialog .tools{justify-content:flex-end}.primary{background:var(--accent);color:var(--surface);border-color:var(--accent)}[hidden]{display:none!important}
+@media(max-width:768px){.shell{padding:16px}.page-head{align-items:flex-start}.page-head h1{font-size:20px}.toolbar{flex-wrap:wrap;padding:12px}.search{max-width:none;flex-basis:100%}.toolbar>.tools{width:100%;justify-content:space-between}.section-head{padding:16px 12px}.section-head>.quiet{display:none}.tabs{padding:0 12px;gap:20px}.filter-strip{padding:0 12px 12px}.footer{flex-wrap:wrap;padding:12px}.notes{grid-template-columns:1fr;gap:16px}.table-scroll{min-height:280px}.preview-label p{font-size:12px}.detail dl{gap:16px}.page-head>.tools button{font-size:12px}.theme-text{display:none}}
+</style>
+</head>
+<body>
+<main class="shell">
+  <header class="page-head">
+    <div class="preview-label"><span class="eyebrow">ABCO / Interface study 01</span><h1>Technical inventory</h1><p>A shared table language for infrastructure operations.</p></div>
+    <div class="tools"><button id="theme" class="icon-button" aria-label="Switch to dark theme"><span aria-hidden="true">◐</span><span class="theme-text">Dark theme</span></button></div>
+  </header>
+  <section class="inventory" aria-labelledby="inventory-title">
+    <header class="section-head"><h2 id="inventory-title">Inventory records <span class="count" id="total">08</span></h2><span class="quiet mono">DEMO DATA · READ ONLY</span></header>
+    <nav class="tabs" aria-label="Inventory provider">
+      <button aria-pressed="true" data-provider="vm-01">VMware VMs <code>vm-01</code></button>
+      <button aria-pressed="false" data-provider="vm-03">VMware VMs <code>vm-03</code></button>
+      <button aria-pressed="false" data-provider="flash-01">FlashSystem Volumes <code>flash-01</code></button>
+      <button aria-pressed="false" data-provider="power-01">IBM Power Partitions <code>power-01</code></button>
+    </nav>
+    <div class="toolbar">
+      <div class="search"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 5 5"/></svg><input id="search" type="search" aria-label="Search inventory records" placeholder="Search name, placement or tag…"></div>
+      <div class="tools"><div class="segmented" role="group" aria-label="Row density"><button data-density="comfortable" aria-pressed="false">Comfortable</button><button data-density="compact" aria-pressed="true">Compact</button></div><button id="filters" class="icon-button"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 4h18l-7 8v7l-4-2v-5Z"/></svg>Filters <span class="count" id="filter-count">0</span></button></div>
+    </div>
+    <div class="filter-strip" id="chips"></div>
+    <div class="table-scroll" tabindex="0" role="region" aria-label="Inventory table, scroll horizontally for all columns">
+      <table><caption>Inventory records. Select a resource name to view its details.</caption><thead><tr><th scope="col" aria-sort="ascending"><button id="sort">Resource name <span id="sort-arrow" aria-hidden="true">↑</span></button></th><th scope="col">Operating system / Type</th><th scope="col">Placement</th><th scope="col">Provider</th><th scope="col">Tags</th><th scope="col" class="number">Capacity</th><th scope="col">Connection</th><th scope="col">Power</th></tr></thead><tbody id="rows"></tbody></table>
+    </div>
+    <aside class="detail" id="detail" aria-labelledby="detail-title" hidden></aside>
+    <footer class="footer"><span id="summary" role="status" aria-live="polite"></span><div class="tools pager"><label for="size">Rows</label><select id="size"><option>5</option><option selected>10</option><option>25</option></select><span id="page-label"></span><button id="prev" aria-label="Previous page">←</button><button id="next" aria-label="Next page">→</button></div></footer>
+  </section>
+  <section class="notes" aria-label="Design specifications">
+    <article><span class="eyebrow">01 / Structure</span><h3>One predictable table surface</h3><p>Provider navigation → search and filters → records → pagination. Sticky column headers keep context while scrolling.</p></article>
+    <article><span class="eyebrow">02 / Precision</span><h3>Technical values, clearly separated</h3><p>Monospace identifiers, aligned capacity values and explicit status labels. Select a resource to inspect its context.</p></article>
+    <article><span class="eyebrow">03 / Density</span><h3>Compact by default</h3><p>4 px controls, 8 px container corners and thin dividers. On narrow screens, scroll the table without losing columns.</p></article>
+  </section>
+</main>
+<dialog id="filter-dialog" aria-labelledby="filter-title"><form method="dialog" id="filter-form"><h2 id="filter-title">Filter inventory</h2><label>Connection<select id="connection"><option value="">All connections</option><option>Connected</option><option>Inaccessible</option></select></label><label>Tag<select id="tag"><option value="">All tags</option><option>WEB</option><option>DATABASE</option><option>PRODUCTION</option><option>BACKUP</option></select></label><div class="tools"><button type="button" id="cancel">Cancel</button><button class="primary" type="submit">Apply filters</button></div></form></dialog>
+<script>
+// Standalone, local-only design template. No application APIs or dependencies.
+const inventory = [
+  ['TEST-WEB01','Windows Server 2022','ACMTHCICLUSTER','vm-01',['WEB','ABC Orchestrator'],'0 vCPU · 0 GB','Inaccessible','Off'],
+  ['TEST-WEB02','Windows Server 2022','ACMTHCICLUSTER','vm-01',['WEB','ABC Orchestrator'],'0 vCPU · 0 GB','Inaccessible','Off'],
+  ['PRD-API01','Red Hat Enterprise Linux 9','ACMTHCICLUSTER','vm-01',['PRODUCTION'],'8 vCPU · 32 GB','Connected','On'],
+  ['PRD-DB01','Ubuntu Server 24.04','ACMTHCICLUSTER','vm-01',['DATABASE','PRODUCTION'],'16 vCPU · 64 GB','Connected','On'],
+  ['PRD-WEB01','Windows Server 2022','ACMTHCICLUSTER','vm-01',['WEB','PRODUCTION'],'4 vCPU · 16 GB','Connected','On'],
+  ['PRD-WEB02','Windows Server 2022','ACMTHCICLUSTER','vm-01',['WEB','PRODUCTION'],'4 vCPU · 16 GB','Connected','On'],
+  ['STG-API01','Ubuntu Server 24.04','ACMTHCICLUSTER','vm-01',['WEB'],'2 vCPU · 8 GB','Connected','Off'],
+  ['BKP-PROXY01','Rocky Linux 9','ACMTHCICLUSTER','vm-01',['BACKUP'],'4 vCPU · 16 GB','Connected','On'],
+  ['DR-WEB01','Windows Server 2022','DR-CLUSTER','vm-03',['WEB'],'4 vCPU · 16 GB','Connected','Off'],
+  ['DR-DB01','Ubuntu Server 24.04','DR-CLUSTER','vm-03',['DATABASE'],'16 vCPU · 64 GB','Connected','Off'],
+  ['VOL-DB-DATA01','Thin-provisioned volume','POOL-PRODUCTION','flash-01',['DATABASE'],'2.0 TB','Connected','—'],
+  ['VOL-BACKUP01','Thin-provisioned volume','POOL-BACKUP','flash-01',['BACKUP'],'8.0 TB','Connected','—'],
+  ['LPAR-SAP01','AIX 7.3','POWER-S1022','power-01',['PRODUCTION'],'8 vCPU · 64 GB','Connected','On'],
+  ['LPAR-DB01','IBM i 7.5','POWER-S1022','power-01',['DATABASE'],'4 vCPU · 32 GB','Connected','On']
+].map(([name,os,placement,provider,tags,capacity,connection,power])=>({name,os,placement,provider,tags,capacity,connection,power}));
+const $=id=>document.getElementById(id);
+const state={provider:'vm-01',search:'',connection:'',tag:'',ascending:true,page:1,size:10,selected:null};
+const escapeHtml=value=>String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+function render(){
+  const source=inventory.filter(row=>row.provider===state.provider);
+  const records=source.filter(row=>(!state.connection||row.connection===state.connection)&&(!state.tag||row.tags.includes(state.tag))&&Object.values(row).join(' ').toLowerCase().includes(state.search.toLowerCase())).sort((a,b)=>a.name.localeCompare(b.name)*(state.ascending?1:-1));
+  const pages=Math.max(1,Math.ceil(records.length/state.size));state.page=Math.min(state.page,pages);
+  const start=(state.page-1)*state.size;
+  $('total').textContent=String(source.length).padStart(2,'0');
+  $('rows').innerHTML=records.slice(start,start+state.size).map(row=>`<tr class="${state.selected===row.name?'selected':''}"><td><button class="row-name" data-name="${row.name}" aria-expanded="${state.selected===row.name}" aria-controls="detail">${row.name}</button></td><td>${escapeHtml(row.os)}</td><td class="mono">${row.placement}</td><td class="mono">${row.provider}<span class="subline">${row.provider.startsWith('vm')?'VMware vCenter':row.provider.startsWith('flash')?'IBM FlashSystem':'IBM Power'}</span></td><td>${row.tags.map(tag=>`<span class="tag">${tag}</span>`).join('')}</td><td class="number">${row.capacity}</td><td><span class="status ${row.connection==='Connected'?'good':'warning'}">${row.connection}</span></td><td><span class="${row.power==='—'?'quiet':'status '+(row.power==='On'?'good':'quiet')}">${row.power}</span></td></tr>`).join('')||'<tr><td colspan="8" class="empty"><strong>No matching records</strong><p>Try another search or clear the active filters.</p><button id="reset">Clear search and filters</button></td></tr>';
+  $('summary').textContent=records.length?`Showing ${start+1}–${Math.min(start+state.size,records.length)} of ${records.length} records`:'0 matching records';
+  $('page-label').textContent=`${state.page} / ${pages}`;$('prev').disabled=state.page===1;$('next').disabled=state.page===pages;
+  const filters=[['connection','Connection',state.connection],['tag','Tag',state.tag]].filter(([, ,value])=>value);
+  $('filter-count').textContent=filters.length;
+  $('chips').innerHTML=filters.length?'<span class="quiet">Active filters</span>'+filters.map(([key,label,value])=>`<button class="chip" data-clear="${key}" aria-label="Remove ${label} filter">${label} <strong>${value}</strong><span aria-hidden="true">×</span></button>`).join('')+'<button class="text-button" id="clear">Clear all</button>':'<span class="quiet">All records in this provider</span>';
+  $('detail').hidden=!state.selected;
+}
+function reset(){state.search='';state.connection='';state.tag='';state.page=1;state.selected=null;$('search').value='';render();}
+$('search').addEventListener('input',event=>{state.search=event.target.value;state.page=1;state.selected=null;render()});
+document.querySelectorAll('[data-provider]').forEach(button=>button.addEventListener('click',()=>{state.provider=button.dataset.provider;document.querySelectorAll('[data-provider]').forEach(tab=>tab.setAttribute('aria-pressed',String(tab===button)));reset()}));
+document.querySelectorAll('[data-density]').forEach(button=>button.addEventListener('click',()=>{document.querySelector('table').classList.toggle('comfortable',button.dataset.density==='comfortable');document.querySelectorAll('[data-density]').forEach(item=>item.setAttribute('aria-pressed',String(item===button)))}));
+$('theme').addEventListener('click',()=>{const dark=document.documentElement.dataset.theme!=='dark';document.documentElement.dataset.theme=dark?'dark':'light';$('theme').setAttribute('aria-label',`Switch to ${dark?'light':'dark'} theme`);document.querySelector('.theme-text').textContent=dark?'Light theme':'Dark theme'});
+$('sort').addEventListener('click',()=>{state.ascending=!state.ascending;$('sort').closest('th').setAttribute('aria-sort',state.ascending?'ascending':'descending');$('sort-arrow').textContent=state.ascending?'↑':'↓';render()});
+$('filters').addEventListener('click',()=>{$('connection').value=state.connection;$('tag').value=state.tag;$('filter-dialog').showModal()});
+$('cancel').addEventListener('click',()=>$('filter-dialog').close());
+$('filter-form').addEventListener('submit',()=>{state.connection=$('connection').value;state.tag=$('tag').value;state.page=1;state.selected=null;render()});
+$('chips').addEventListener('click',event=>{const button=event.target.closest('button');if(!button)return;if(button.dataset.clear)state[button.dataset.clear]='';else{state.connection='';state.tag=''}state.page=1;state.selected=null;render()});
+$('size').addEventListener('change',event=>{state.size=Number(event.target.value);state.page=1;render()});
+$('prev').addEventListener('click',()=>{state.page--;render()});$('next').addEventListener('click',()=>{state.page++;render()});
+$('rows').addEventListener('click',event=>{const button=event.target.closest('button');if(!button)return;if(button.id==='reset'){reset();$('search').focus();return}const row=inventory.find(row=>row.name===button.dataset.name);if(!row)return;state.selected=row.name;render();$('detail').innerHTML=`<div class="detail-head"><h3 id="detail-title" tabindex="-1">${row.name}</h3><button id="close-detail" aria-label="Close resource details">×</button></div><dl><div><dt>Placement</dt><dd>${row.placement}</dd></div><div><dt>Provider</dt><dd>${row.provider}</dd></div><div><dt>Connection</dt><dd>${row.connection}</dd></div><div><dt>Capacity</dt><dd>${row.capacity}</dd></div></dl>`;$('detail-title').focus()});
+$('detail').addEventListener('click',event=>{if(event.target.closest('#close-detail')){const name=state.selected;state.selected=null;render();document.querySelector(`[data-name="${name}"]`)?.focus()}});
+render();
+</script>
+</body>
+</html>
