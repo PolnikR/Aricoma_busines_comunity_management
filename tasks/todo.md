@@ -163,15 +163,17 @@ Návrh a hranice: [plan.md, sekcia 8](plan.md#8-opravy-funkčného-auditu). Úlo
 **Popis:** Rozšíriť A1 o submit/delete credential; odvodiť dotknuté ID z cached provider zoznamov a ošetriť neúplnú znalosť závislostí. Integračné testy naďalej používajú spoločnú aplikačnú factory s MutationCache, pre každý test novú izolovanú inštanciu s cleanupom.
 **Súbory:** `src/shared/query/providerMutationInvalidation.ts`, `src/shared/query/providerMutationInvalidation.test.tsx`. **Rozsah:** S, 2 súbory. **Závislosti:** A1.
 **Akceptácia:**
-- [ ] Credential success obnoví infra/platform statusy vo všetkých role/type variantoch a inventár známych súvisiacich infra providerov; pri úplnej znalosti nezneplatní nesúvisiacu explicitnú cache.
-- [ ] Neúplná provider cache použije zdokumentovaný fallback iba na potrebné rodiny queries; nie globálny clear/refetch.
-- [ ] Test dokazuje edit/delete a error bez invalidácie na klientovi zo spoločnej factory: aktívna cache v staleTime vykoná nový request a zobrazí nové dáta; neaktívna sa invaliduje a refetchne po pripojení observera. Samotný spy nie je dôkaz.
+- [x] Credential success obnoví infra/platform statusy vo všetkých role/type variantoch a inventár známych súvisiacich infra providerov; pri úplnej znalosti nezneplatní nesúvisiacu explicitnú cache.
+- [x] Neúplná provider cache použije zdokumentovaný fallback iba na potrebné rodiny queries; nie globálny clear/refetch.
+- [x] Test dokazuje edit/delete a error bez invalidácie na klientovi zo spoločnej factory: aktívna cache v staleTime vykoná nový request a zobrazí nové dáta; neaktívna sa invaliduje a refetchne po pripojení observera. Samotný spy nie je dôkaz.
 **Overenie:** `npm.cmd exec vitest run src/shared/query/providerMutationInvalidation.test.tsx`.
+
+**A2 výsledok (2026-10-21):** cache testy 17/17 cez `node node_modules/vitest/vitest.mjs run src/shared/query/providerMutationInvalidation.test.tsx`; red fáza mala 3 očakávané zlyhania pre credential save/delete/fallback. Testy zahŕňajú skutočné generated provider zoznamy so zmenou credentialStatus, aktívne aj neaktívne inventáre a error vetvu. Fallback sa obmedzuje na inventory/orchestration rodiny pri chýbajúcom, prázdnom alebo stale úplnom zozname. A1 commit: `9dcbbde0`. Focused ESLint A1 prešiel; A2 sa overuje rovnakým príkazom na dvoch zmenených cache súboroch.
 
 ## Checkpoint C: cache
 
-- [ ] A1–A2 majú zelené focused testy a mapu závislostí; FE/BE cache politika sa nezamieňa.
-- [ ] Zaznamenané výsledky, scope a atomic commity; infra/platform identity sú oddelené.
+- [x] A1–A2 majú zelené focused testy a mapu závislostí; FE/BE cache politika sa nezamieňa.
+- [x] Zaznamenané výsledky, scope a atomic commity; infra/platform identity sú oddelené.
 
 ## A3: F-01 — Retry konkrétneho latest runu
 

@@ -1,7 +1,8 @@
 import { QueryObserver, type QueryClient, type QueryKey } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { getSubmitProviderMutationOptions, getDeleteProviderMutationOptions } from '@/generated/query/providers/providers.gen'
-import { getSubmitPlatformProviderMutationOptions } from '@/generated/query/platform-providers/platform-providers.gen'
+import { getSubmitProviderMutationOptions, getDeleteProviderMutationOptions, getGetProvidersQueryOptions } from '@/generated/query/providers/providers.gen'
+import { getSubmitPlatformProviderMutationOptions, getGetPlatformProvidersQueryOptions } from '@/generated/query/platform-providers/platform-providers.gen'
+import { getSubmitCredentialMutationOptions, getDeleteCredentialMutationOptions } from '@/generated/query/credentials/credentials.gen'
 import { createAppQueryClient } from './createAppQueryClient'
 
 const clients: QueryClient[] = []
@@ -20,7 +21,7 @@ function setup(fail = false) {
   const fetch = vi.fn((url: string) => {
     if (url.startsWith('/inventory/')) return Promise.resolve(Response.json({ version }))
     version = 2
-    return Promise.resolve(Response.json({ providers: [] }, { status: fail ? 500 : 200 }))
+    return Promise.resolve(Response.json(url.includes('credential') ? { credentials: [] } : { providers: [] }, { status: fail ? 500 : 200 }))
   })
   vi.stubGlobal('fetch', fetch)
   return { client, fetch }
@@ -37,8 +38,79 @@ async function inventory(client: QueryClient, key: QueryKey, active = true) {
 }
 
 const provider = { id: 'infra-a', name: 'A', type: 'VMWARE' as const, role: 'source' as const }
+const credential = { id: 'credential-a', name: 'A', username: 'test-user', password: 'test-fixture' }
 
 describe('provider mutation dependent cache', () => {
+  it('refetches actual generated provider lists after a credential is deleted', async () => {
+    const { client } = setup()
+    let credentialDeleted = false
+    vi.stubGlobal('fetch', (url: string) => {
+      if (url.startsWith('/api/delete_credential')) {
+        credentialDeleted = true
+        return Promise.resolve(Response.json({ credentials: [] }))
+      }
+      return Promise.resolve(Response.json({ providers: [{ ...provider, credentialId: credential.id, credentialStatus: credentialDeleted ? 'missing' : 'ok' }] }))
+    })
+    const infra = new QueryObserver(client, getGetProvidersQueryOptions({ role: 'all' }))
+    const platform = new QueryObserver(client, getGetPlatformProvidersQueryOptions({ type: 'all' }))
+    subscriptions.push(infra.subscribe(() => undefined), platform.subscribe(() => undefined))
+    await vi.waitFor(() => {
+      expect(infra.getCurrentResult().data?.providers[0]?.credentialStatus).toBe('ok')
+      expect(platform.getCurrentResult().data?.providers[0]?.credentialStatus).toBe('ok')
+    })
+    await client.getMutationCache().build(client, getDeleteCredentialMutationOptions(client)).execute({ params: { credential_id: credential.id } })
+    expect(infra.getCurrentResult().data?.providers[0]?.credentialStatus).toBe('missing')
+    expect(platform.getCurrentResult().data?.providers[0]?.credentialStatus).toBe('missing')
+  })
+
+  it.each(['save', 'delete'])('refreshes related provider inventories and statuses after credential %s', async operation => {
+    const { client } = setup()
+    client.setQueryData(['/get_providers', { role: 'all' }], { providers: [{ id: 'infra-a', credentialId: 'credential-a' }, { id: 'infra-b', credentialId: 'other' }] })
+    client.setQueryData(['/get_platform_providers', { type: 'all' }], { providers: [{ id: 'airflow-a', credentialId: 'credential-a' }] })
+    const affected = ['/get_volumes', { provider_id: 'infra-a' }]
+    const unrelated = ['/get_volumes', { provider_id: 'infra-b' }]
+    const inactive = ['/tags', { provider_id: 'infra-a' }]
+    const runs = ['/get_orchestrator_runs', { provider_id: 'airflow-a' }]
+    await inventory(client, affected)
+    await inventory(client, unrelated)
+    const inactiveOptions = await inventory(client, inactive, false)
+    await inventory(client, runs)
+    if (operation === 'save') await client.getMutationCache().build(client, getSubmitCredentialMutationOptions(client)).execute({ data: credential })
+    else await client.getMutationCache().build(client, getDeleteCredentialMutationOptions(client)).execute({ params: { credential_id: credential.id } })
+    expect(client.getQueryData(affected)).toEqual({ version: 2 })
+    expect(client.getQueryData(unrelated)).toEqual({ version: 1 })
+    expect(client.getQueryData(runs)).toEqual({ version: 2 })
+    expect(client.getQueryState(['/get_providers', { role: 'all' }])?.isInvalidated).toBe(true)
+    expect(client.getQueryState(['/get_platform_providers', { type: 'all' }])?.isInvalidated).toBe(true)
+    expect(client.getQueryState(inactive)?.isInvalidated).toBe(true)
+    const observer = new QueryObserver(client, inactiveOptions)
+    subscriptions.push(observer.subscribe(() => undefined))
+    await vi.waitFor(() => { expect(observer.getCurrentResult().data).toEqual({ version: 2 }) })
+  })
+
+  it('uses inventory-family fallback when cached provider relationships are incomplete', async () => {
+    const { client } = setup()
+    client.setQueryData(['/get_providers', { role: 'source' }], { providers: [] })
+    const key = ['/get_volumes', { provider_id: 'unknown' }]
+    const unrelated = ['/unrelated']
+    await inventory(client, key)
+    await inventory(client, unrelated)
+    await client.getMutationCache().build(client, getSubmitCredentialMutationOptions(client)).execute({ data: credential })
+    expect(client.getQueryData(key)).toEqual({ version: 2 })
+    expect(client.getQueryData(unrelated)).toEqual({ version: 1 })
+  })
+
+  it('keeps provider status and inventory fresh after a failed credential mutation', async () => {
+    const { client } = setup(true)
+    const providersKey = ['/get_providers', { role: 'all' }]
+    client.setQueryData(providersKey, { providers: [{ id: 'infra-a', credentialId: credential.id }] })
+    const key = ['/get_volumes', { provider_id: 'infra-a' }]
+    await inventory(client, key)
+    await expect(client.getMutationCache().build(client, getSubmitCredentialMutationOptions(client)).execute({ data: credential })).rejects.toThrow()
+    expect(client.getQueryState(providersKey)?.isInvalidated).toBe(false)
+    expect(client.getQueryData(key)).toEqual({ version: 1 })
+  })
+
   it.each([
     ['/get_power_vm', { provider_id: 'infra-a' }],
     ['/get_volumes', { provider_id: 'infra-a' }],
