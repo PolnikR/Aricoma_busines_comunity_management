@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react'
 import { act, renderHook, waitFor } from '@testing-library/react'
-import { QueryClient, QueryClientProvider, QueryObserver } from '@tanstack/react-query'
+import { focusManager, onlineManager, QueryClient, QueryClientProvider, QueryObserver } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { STANDARD_QUERY_OPTIONS } from '@/shared/query/cachePolicy'
 import { createAppQueryClient } from '@/shared/query/createAppQueryClient'
+import { getProviderInventoryRevision, isProviderInventoryDeleted } from '@/shared/query/providerInventoryRevision'
 import { getDeleteProviderMutationOptions, getSubmitProviderMutationOptions } from '@/generated/query/providers/providers.gen'
 import { getSubmitPlatformProviderMutationOptions } from '@/generated/query/platform-providers/platform-providers.gen'
 import { getDeleteCredentialMutationOptions, getSubmitCredentialMutationOptions } from '@/generated/query/credentials/credentials.gen'
@@ -43,6 +44,7 @@ function deferred<T>() {
 }
 
 const raceClients: QueryClient[] = []
+const raceSubscriptions: (() => void)[] = []
 const raceProvider = { id: 'vcenter-01', name: 'VCenter', type: 'VMWARE' as const, role: 'source' as const }
 const raceCredential = { id: 'credential-a', name: 'Credential', username: 'test-user', password: 'test-fixture' }
 
@@ -50,11 +52,20 @@ async function setupRefreshRace(providerIds = ['vcenter-01'], client = createApp
   raceClients.push(client)
   client.setDefaultOptions({ queries: { ...STANDARD_QUERY_OPTIONS, retry: false } })
   const responses: ReturnType<typeof deferred<Response>>[] = []
+  const normalRequests: string[] = []
+  const normalDeletedStates: boolean[] = []
+  let automaticNames: Promise<string[]> | undefined
   let inventoryName = 'Cached VM'
   let mutationFails = false
   vi.stubGlobal('fetch', vi.fn((url: string, init: RequestInit) => {
     if (url.includes('/vms/search')) {
-      if (!parseRequestBody(init)['force_refresh']) return Promise.resolve(inventoryResponse([inventoryName]))
+      if (!parseRequestBody(init)['force_refresh']) {
+        normalRequests.push(url)
+        normalDeletedStates.push(isProviderInventoryDeleted(client, new URL(url, 'http://localhost').searchParams.get('provider_id') ?? undefined))
+        return automaticNames
+          ? automaticNames.then(names => inventoryResponse(names))
+          : Promise.resolve(inventoryResponse([inventoryName]))
+      }
       const response = deferred<Response>()
       responses.push(response)
       return response.promise
@@ -75,6 +86,21 @@ async function setupRefreshRace(providerIds = ['vcenter-01'], client = createApp
   })
   return {
     client,
+    hooks,
+    normalRequests,
+    normalDeletedStates,
+    pauseAutomaticFetch: () => {
+      const names = deferred<string[]>()
+      automaticNames = names.promise
+      return {
+        finish: async () => {
+          await act(async () => {
+            names.resolve(['Current VM'])
+            await names.promise
+          })
+        },
+      }
+    },
     key: (providerId = 'vcenter-01') => vmwareInventoryQuery({ providerId }).queryKey,
     failMutations: () => { mutationFails = true },
     start: async (hookIndex = 0) => {
@@ -98,7 +124,36 @@ async function setupRefreshRace(providerIds = ['vcenter-01'], client = createApp
   }
 }
 
+function pauseCancellation(client: QueryClient) {
+  const entered = deferred<undefined>()
+  const released = deferred<undefined>()
+  const cancel = client.cancelQueries.bind(client)
+  let paused = false
+  vi.spyOn(client, 'cancelQueries').mockImplementation(async (filters, options) => {
+    await cancel(filters, options)
+    if (!paused) {
+      paused = true
+      entered.resolve(undefined)
+      await released.promise
+    }
+  })
+  return { entered: entered.promise, release: () => { released.resolve(undefined) } }
+}
+
+function inventoryWrites(client: QueryClient, key: readonly unknown[]) {
+  const names: string[] = []
+  const snapshots: (string | undefined)[] = []
+  const unsubscribe = client.getQueryCache().subscribe(() => {
+    const data = client.getQueryData<{ vms: { name: string }[] }>(key)
+    names.push(...(data?.vms.map(vm => vm.name) ?? []))
+    snapshots.push(data?.vms[0]?.name)
+  })
+  raceSubscriptions.push(unsubscribe)
+  return { names, snapshots, unsubscribe }
+}
+
 afterEach(() => {
+  raceSubscriptions.splice(0).forEach(unsubscribe => { unsubscribe() })
   raceClients.splice(0).forEach(client => { client.clear() })
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
@@ -106,6 +161,283 @@ afterEach(() => {
 })
 
 describe('useVmwareResourceInventory', () => {
+  it('does not fetch a deleted provider when delete and recreate are React-batched', async () => {
+    const race = await setupRefreshRace()
+    const gate = pauseCancellation(race.client)
+    await act(async () => {
+      const deleted = race.client.getMutationCache().build(race.client, getDeleteProviderMutationOptions(race.client))
+        .execute({ params: { provider_id: raceProvider.id } })
+      await gate.entered
+      await race.client.getMutationCache().build(race.client, getSubmitProviderMutationOptions(race.client))
+        .execute({ data: raceProvider })
+      gate.release()
+      await deleted
+    })
+    await waitFor(() => {
+      expect(race.client.getQueryData(race.key())).toMatchObject({ vms: [{ name: 'Current VM' }] })
+    })
+    expect(race.normalRequests).toHaveLength(2)
+    expect(race.normalDeletedStates).toEqual([false, false])
+  })
+
+  it.each(['pending', 'completed'])('ignores an old delete resumed after a newer recreate fetch is %s', async (fetchState) => {
+    const race = await setupRefreshRace()
+    const stale = await race.start()
+    const gate = pauseCancellation(race.client)
+    let deleted!: Promise<unknown>
+    act(() => {
+      deleted = race.client.getMutationCache().build(race.client, getDeleteProviderMutationOptions(race.client))
+        .execute({ params: { provider_id: raceProvider.id } })
+    })
+    await gate.entered
+    expect(isProviderInventoryDeleted(race.client, raceProvider.id)).toBe(true)
+    const automatic = race.pauseAutomaticFetch()
+    await act(async () => {
+      await race.client.getMutationCache().build(race.client, getSubmitProviderMutationOptions(race.client))
+        .execute({ data: raceProvider })
+    })
+    await waitFor(() => { expect(race.normalRequests).toHaveLength(2) })
+    if (fetchState === 'completed') {
+      await automatic.finish()
+      await waitFor(() => {
+        expect(race.client.getQueryData(race.key())).toMatchObject({ vms: [{ name: 'Current VM' }] })
+      })
+    } else {
+      expect(race.client.getQueryState(race.key())?.fetchStatus).toBe('fetching')
+    }
+    const writes = inventoryWrites(race.client, race.key())
+    await act(async () => { gate.release(); await deleted })
+    expect(isProviderInventoryDeleted(race.client, raceProvider.id)).toBe(false)
+    expect(writes.snapshots).not.toContain(undefined)
+    expect(race.normalRequests).toHaveLength(2)
+    if (fetchState === 'pending') {
+      expect(race.client.getQueryState(race.key())?.fetchStatus).toBe('fetching')
+      await automatic.finish()
+    }
+    await stale.finish('Stale VM')
+    await waitFor(() => {
+      expect(race.client.getQueryData(race.key())).toMatchObject({ vms: [{ name: 'Current VM' }] })
+    })
+    expect(writes.names).not.toContain('Stale VM')
+    expect(writes.snapshots).not.toContain(undefined)
+    expect(race.normalRequests).toHaveLength(2)
+    writes.unsubscribe()
+  })
+
+  it('does not let an older submit completion unblock a newer delete', async () => {
+    const race = await setupRefreshRace()
+    const gate = pauseCancellation(race.client)
+    let submitted!: Promise<unknown>
+    act(() => {
+      submitted = race.client.getMutationCache().build(race.client, getSubmitProviderMutationOptions(race.client))
+        .execute({ data: raceProvider })
+    })
+    await gate.entered
+    await act(async () => {
+      await race.client.getMutationCache().build(race.client, getDeleteProviderMutationOptions(race.client))
+        .execute({ params: { provider_id: raceProvider.id } })
+    })
+    await act(async () => { gate.release(); await submitted })
+    expect(isProviderInventoryDeleted(race.client, raceProvider.id)).toBe(true)
+    expect(race.client.getQueryData(race.key())).toBeUndefined()
+    expect(race.normalRequests).toHaveLength(1)
+  })
+
+  it('allows recreate to complete after a credential mutation while cancellation is pending', async () => {
+    const race = await setupRefreshRace()
+    await act(async () => {
+      await race.client.getMutationCache().build(race.client, getDeleteProviderMutationOptions(race.client))
+        .execute({ params: { provider_id: raceProvider.id } })
+    })
+    const gate = pauseCancellation(race.client)
+    let recreated!: Promise<unknown>
+    act(() => {
+      recreated = race.client.getMutationCache().build(race.client, getSubmitProviderMutationOptions(race.client))
+        .execute({ data: raceProvider })
+    })
+    await gate.entered
+    await act(async () => {
+      await race.client.getMutationCache().build(race.client, getSubmitCredentialMutationOptions(race.client))
+        .execute({ data: raceCredential })
+    })
+    expect(isProviderInventoryDeleted(race.client, raceProvider.id)).toBe(true)
+    expect(race.normalRequests).toHaveLength(1)
+    await act(async () => { gate.release(); await recreated })
+    await waitFor(() => {
+      expect(race.client.getQueryData(race.key())).toMatchObject({ vms: [{ name: 'Current VM' }] })
+    })
+    expect(race.normalRequests).toHaveLength(2)
+    const live = await race.start()
+    await live.finish('New Live VM')
+    expect(race.client.getQueryData(race.key())).toMatchObject({ vms: [{ name: 'New Live VM' }] })
+  })
+
+  it('keeps provider B active while provider A is deleted and a new A hook remains disabled', async () => {
+    const race = await setupRefreshRace(['vcenter-01', 'vcenter-02'])
+    const liveB = await race.start(1)
+    await act(async () => {
+      await race.client.getMutationCache().build(race.client, getDeleteProviderMutationOptions(race.client))
+        .execute({ params: { provider_id: raceProvider.id } })
+    })
+    await liveB.finish('Live B')
+    const newA = renderHook(() => useVmwareResourceInventory({ providerId: raceProvider.id }), { wrapper: createWrapper(race.client) })
+    expect(newA.result.current.isFetching).toBe(false)
+    expect(race.client.getQueryData(race.key())).toBeUndefined()
+    expect(race.client.getQueryData(race.key('vcenter-02'))).toMatchObject({ vms: [{ name: 'Live B' }] })
+    expect(race.normalRequests).toHaveLength(2)
+  })
+
+  it('reactively deletes and recreates inventory for two mounted hooks without duplicate fetches', async () => {
+    const race = await setupRefreshRace(['vcenter-01', 'vcenter-01'])
+    const stale = await race.start()
+    await act(async () => {
+      await race.client.getMutationCache().build(race.client, getDeleteProviderMutationOptions(race.client))
+        .execute({ params: { provider_id: raceProvider.id } })
+    })
+    await stale.finish('Stale VM')
+    await act(async () => {
+      focusManager.setFocused(false)
+      focusManager.setFocused(true)
+      onlineManager.setOnline(false)
+      onlineManager.setOnline(true)
+      await Promise.resolve()
+    })
+    expect(race.client.getQueryData(race.key())).toBeUndefined()
+    expect(race.normalRequests).toHaveLength(1)
+    const gate = pauseCancellation(race.client)
+    let recreated!: Promise<unknown>
+    act(() => {
+      recreated = race.client.getMutationCache().build(race.client, getSubmitProviderMutationOptions(race.client))
+        .execute({ data: raceProvider })
+    })
+    await gate.entered
+    expect(race.normalRequests).toHaveLength(1)
+    await act(async () => { gate.release(); await recreated })
+    await waitFor(() => {
+      race.hooks.forEach(hook => { expect(hook.result.current.data?.virtualMachines[0]?.name).toBe('Current VM') })
+    })
+    expect(race.normalRequests).toHaveLength(2)
+  })
+
+  it.each(['before rerender', 'after rerender'])('rejects a deleted provider refresh through an old reference %s', async (timing) => {
+    const race = await setupRefreshRace()
+    const hook = race.hooks[0]
+    if (!hook) throw new Error('Expected mounted hook')
+    const oldRefresh = hook.result.current.forceRefresh
+    let attempt: Promise<unknown> | undefined
+    let mutationsBefore = 0
+    let mutationsAfter = 0
+    const tryRefresh = () => {
+      mutationsBefore = race.client.getMutationCache().getAll().length
+      attempt = oldRefresh().catch((error: unknown) => error)
+      mutationsAfter = race.client.getMutationCache().getAll().length
+    }
+    if (timing === 'before rerender') {
+      const cancel = race.client.cancelQueries.bind(race.client)
+      vi.spyOn(race.client, 'cancelQueries').mockImplementation((filters, options) => {
+        tryRefresh()
+        return cancel(filters, options)
+      })
+    }
+    await act(async () => {
+      await race.client.getMutationCache().build(race.client, getDeleteProviderMutationOptions(race.client))
+        .execute({ params: { provider_id: raceProvider.id } })
+    })
+    if (timing === 'after rerender') act(tryRefresh)
+    expect(mutationsAfter).toBe(mutationsBefore)
+    const error = await attempt
+    if (!(error instanceof Error)) throw new Error('Expected a rejected deleted-provider refresh')
+    expect(error.message).toMatch(/deleted/i)
+    expect(hook.result.current.isForceRefreshing).toBe(false)
+    expect(race.client.getQueryData(race.key())).toBeUndefined()
+    expect(race.normalRequests).toHaveLength(1)
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(2)
+  })
+
+  it.each(['provider', 'credential'].flatMap(operation => ['focus', 'reconnect', 'remount'].map(trigger => ({ operation, trigger }))))('automatically recovers an empty inventory after $operation update and late refresh on $trigger', async ({ operation, trigger }) => {
+    const client = createAppQueryClient()
+    raceClients.push(client)
+    client.setDefaultOptions({ queries: { ...STANDARD_QUERY_OPTIONS, retry: false } })
+    const liveResponse = deferred<Response>()
+    const liveStarted = deferred<undefined>()
+    const updateResponse = deferred<Response>()
+    const updateStarted = deferred<undefined>()
+    const recoveryResponse = deferred<Response>()
+    let normalRequests = 0
+    vi.stubGlobal('fetch', vi.fn((url: string, init: RequestInit) => {
+      if (url.includes('/vms/search')) {
+        if (parseRequestBody(init)['force_refresh']) {
+          liveStarted.resolve(undefined)
+          return liveResponse.promise
+        }
+        normalRequests += 1
+        if (normalRequests === 1) return Promise.resolve(new Response(null, { status: 503 }))
+        if (normalRequests === 2) {
+          updateStarted.resolve(undefined)
+          return updateResponse.promise
+        }
+        if (normalRequests === 3) return recoveryResponse.promise
+        throw new Error('Unexpected repeated automatic fetch')
+      }
+      if (url.includes('/submit_provider')) return Promise.resolve(Response.json({ providers: [] }))
+      if (url.includes('/submit_credential')) return Promise.resolve(Response.json({ credentials: [] }))
+      throw new Error(`Unexpected request: ${url}`)
+    }))
+    const wrapper = createWrapper(client)
+    const hook = renderHook(() => useVmwareResourceInventory({ providerId: raceProvider.id }), { wrapper })
+    const key = vmwareInventoryQuery({ providerId: raceProvider.id }).queryKey
+    await waitFor(() => { expect(hook.result.current.isError).toBe(true) })
+    let pendingLive!: Promise<unknown>
+    act(() => { pendingLive = hook.result.current.forceRefresh() })
+    await liveStarted.promise
+    let pendingUpdate!: Promise<unknown>
+    act(() => {
+      pendingUpdate = operation === 'provider'
+        ? client.getMutationCache().build(client, getSubmitProviderMutationOptions(client)).execute({ data: raceProvider })
+        : client.getMutationCache().build(client, getSubmitCredentialMutationOptions(client)).execute({ data: raceCredential })
+    })
+    await updateStarted.promise
+    await act(async () => {
+      updateResponse.resolve(new Response(null, { status: 503 }))
+      await pendingUpdate
+    })
+    expect(client.getQueryData(key)).toBeUndefined()
+    await act(async () => {
+      liveResponse.resolve(inventoryResponse(['Stale VM']))
+      await pendingLive
+    })
+    // Invalidating an old result must not publish it, even when the newer fetch failed.
+    expect(client.getQueryData(key)).toBeUndefined()
+    expect(hook.result.current.isForceRefreshing).toBe(false)
+
+    // The provider still exists and the backend has recovered. No manual refresh.
+    recoveryResponse.resolve(inventoryResponse(['Recovered VM']))
+    try {
+      if (trigger === 'remount') {
+        hook.unmount()
+        renderHook(() => useVmwareResourceInventory({ providerId: raceProvider.id }), { wrapper })
+      } else {
+        await act(async () => {
+          if (trigger === 'focus') {
+            focusManager.setFocused(false)
+            focusManager.setFocused(true)
+          } else {
+            onlineManager.setOnline(false)
+            onlineManager.setOnline(true)
+          }
+          await Promise.resolve()
+        })
+      }
+      await waitFor(() => {
+        expect(client.getQueryData(key)).toMatchObject({ vms: [{ name: 'Recovered VM' }] })
+      })
+      expect(normalRequests).toBe(3)
+    } finally {
+      focusManager.setFocused(undefined)
+      onlineManager.setOnline(true)
+    }
+  })
+
   it('ignores a late refresh after provider update preserves newer refetched inventory', async () => {
     const race = await setupRefreshRace()
     const refresh = await race.start()
@@ -180,6 +512,11 @@ describe('useVmwareResourceInventory', () => {
       } else {
         await race.client.getMutationCache().build(race.client, getSubmitCredentialMutationOptions(race.client))
           .execute({ data: raceCredential })
+        const hook = race.hooks[0]
+        if (!hook) throw new Error('Expected mounted hook')
+        await expect(hook.result.current.forceRefresh()).rejects.toThrow(/deleted/i)
+        await race.client.getMutationCache().build(race.client, getSubmitProviderMutationOptions(race.client))
+          .execute({ data: raceProvider })
       }
     })
     const newRefresh = await race.start()
@@ -200,16 +537,26 @@ describe('useVmwareResourceInventory', () => {
     expect(race.client.getQueryData(race.key())).toMatchObject({ vms: [{ name: 'Live VM' }] })
   })
 
-  it.each(['provider', 'credential'])('keeps a refresh valid when a %s mutation fails', async (scope) => {
+  it.each(['provider', 'credential'].flatMap(scope => ['update', 'delete'].map(operation => ({ scope, operation }))))('keeps a refresh valid when a $scope $operation mutation fails', async ({ scope, operation }) => {
     const race = await setupRefreshRace()
+    const revision = getProviderInventoryRevision(race.client, raceProvider.id)
     const refresh = await race.start()
     race.failMutations()
     await act(async () => {
-      const pending = scope === 'provider'
-        ? race.client.getMutationCache().build(race.client, getSubmitProviderMutationOptions(race.client)).execute({ data: raceProvider })
-        : race.client.getMutationCache().build(race.client, getSubmitCredentialMutationOptions(race.client)).execute({ data: raceCredential })
+      let pending: Promise<unknown>
+      if (scope === 'provider') {
+        pending = operation === 'update'
+          ? race.client.getMutationCache().build(race.client, getSubmitProviderMutationOptions(race.client)).execute({ data: raceProvider })
+          : race.client.getMutationCache().build(race.client, getDeleteProviderMutationOptions(race.client)).execute({ params: { provider_id: raceProvider.id } })
+      } else {
+        pending = operation === 'update'
+          ? race.client.getMutationCache().build(race.client, getSubmitCredentialMutationOptions(race.client)).execute({ data: raceCredential })
+          : race.client.getMutationCache().build(race.client, getDeleteCredentialMutationOptions(race.client)).execute({ params: { credential_id: raceCredential.id } })
+      }
       await expect(pending).rejects.toThrow()
     })
+    expect(getProviderInventoryRevision(race.client, raceProvider.id)).toEqual(revision)
+    expect(isProviderInventoryDeleted(race.client, raceProvider.id)).toBe(false)
     await refresh.finish('Live VM')
     expect(race.client.getQueryData(race.key())).toMatchObject({ vms: [{ name: 'Live VM' }] })
   })
@@ -265,6 +612,8 @@ describe('useVmwareResourceInventory', () => {
 
   it.each(['update', 'delete'].flatMap(operation => ['missing', 'filtered', 'stale', 'empty'].map(mapping => ({ operation, mapping }))))('uses credential $operation fallback for $mapping mapping even after the inventory query is removed', async ({ operation, mapping }) => {
     const race = await setupRefreshRace()
+    const automatic = race.pauseAutomaticFetch()
+    const writes = inventoryWrites(race.client, race.key())
     if (mapping !== 'missing') {
       race.client.setQueryData(['/get_providers', { role: mapping === 'filtered' ? 'source' : 'all' }], {
         providers: mapping === 'empty' ? [] : [{ ...raceProvider, credentialId: 'other' }],
@@ -283,10 +632,19 @@ describe('useVmwareResourceInventory', () => {
     })
     await refresh.finish('Stale VM')
     expect(race.client.getQueryData(race.key())).toBeUndefined()
+    await waitFor(() => { expect(race.normalRequests).toHaveLength(2) })
+    await automatic.finish()
+    await waitFor(() => {
+      expect(race.client.getQueryData(race.key())).toMatchObject({ vms: [{ name: 'Current VM' }] })
+    })
+    expect(writes.names).not.toContain('Stale VM')
+    writes.unsubscribe()
   })
 
   it.each(['update', 'delete'])('captures complete credential relationships before list refetch on %s even without an inventory query', async (operation) => {
     const race = await setupRefreshRace()
+    const automatic = race.pauseAutomaticFetch()
+    const writes = inventoryWrites(race.client, race.key())
     const providersKey = ['/get_providers', { role: 'all' }]
     race.client.setQueryData(providersKey, { providers: [{ ...raceProvider, credentialId: raceCredential.id }] })
     const observer = new QueryObserver(race.client, {
@@ -309,8 +667,15 @@ describe('useVmwareResourceInventory', () => {
       expect(race.client.getQueryData(providersKey)).toEqual({ providers: [] })
       await refresh.finish('Stale VM')
       expect(race.client.getQueryData(race.key())).toBeUndefined()
+      await waitFor(() => { expect(race.normalRequests).toHaveLength(2) })
+      await automatic.finish()
+      await waitFor(() => {
+        expect(race.client.getQueryData(race.key())).toMatchObject({ vms: [{ name: 'Current VM' }] })
+      })
+      expect(writes.names).not.toContain('Stale VM')
     } finally {
       unsubscribe()
+      writes.unsubscribe()
     }
   })
 
