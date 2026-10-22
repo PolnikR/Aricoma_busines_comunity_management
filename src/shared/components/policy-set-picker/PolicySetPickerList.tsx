@@ -1,19 +1,20 @@
 import { useMemo, useState } from 'react'
 import { Input } from '@/shared/components/form/FormControls'
 import { useTranslation } from '@/hooks/useTranslation'
-import type { PolicySetRecordOutput } from '@/generated/query/zod'
+import type { PolicyReference } from '@/features/recovery-plans/recovery-policies/catalog/model/policyCatalog'
+import type { RecoveryAppPolicyRecordOutput, PolicySetRecordOutput } from '@/generated/query/zod'
 
 interface PolicySetPickerListProps {
   policySets: PolicySetRecordOutput[]
   selectedPolicySetId: string | null
-  recoveryPoliciesById: Map<string, { name: string }>
+  resolveRecoveryPolicy: (id: string | null | undefined) => PolicyReference<Pick<RecoveryAppPolicyRecordOutput, 'name'>>
   onSelect: (policySetId: string) => void
 }
 
 export function PolicySetPickerList({
   policySets,
   selectedPolicySetId,
-  recoveryPoliciesById,
+  resolveRecoveryPolicy,
   onSelect,
 }: PolicySetPickerListProps) {
   const { t } = useTranslation()
@@ -24,11 +25,12 @@ export function PolicySetPickerList({
     return policySets.filter(set => {
       const matchesName = set.name.toLowerCase().includes(term)
       const matchesDescription = (set.description ?? '').toLowerCase().includes(term)
-      const recoveryPolicyName = recoveryPoliciesById.get(set.recovery_app_policy_id ?? '')?.name ?? ''
+      const reference = resolveRecoveryPolicy(set.recovery_app_policy_id)
+      const recoveryPolicyName = reference.status === 'resolved' ? reference.policy.name : ''
       const matchesPolicy = recoveryPolicyName.toLowerCase().includes(term)
       return matchesName || matchesDescription || matchesPolicy
     })
-  }, [policySets, search, recoveryPoliciesById])
+  }, [policySets, search, resolveRecoveryPolicy])
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden border-r border-border bg-surface">
@@ -52,7 +54,8 @@ export function PolicySetPickerList({
           <div className="divide-y divide-border-soft">
             {filteredSets.map(policySet => {
               const isSelected = policySet.id === selectedPolicySetId
-              const recoveryPolicyName = recoveryPoliciesById.get(policySet.recovery_app_policy_id ?? '')?.name ?? (policySet.recovery_app_policy_id ?? '')
+              const reference = resolveRecoveryPolicy(policySet.recovery_app_policy_id)
+              const recoveryPolicyName = reference.status === 'resolved' ? reference.policy.name : (policySet.recovery_app_policy_id ?? '')
               return (
                 <button
                   key={policySet.id}

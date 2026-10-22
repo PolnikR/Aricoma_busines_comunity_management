@@ -122,10 +122,25 @@ const cleanRoomPolicies = [
 ] as const
 
 describe('PolicySetPicker', () => {
+  it('keeps cached recovery names searchable and retries the named source while other details remain', async () => {
+    const refetch = vi.fn()
+    useRecoveryAppPoliciesMock.mockReturnValue({ status: 'error', fetchStatus: 'idle', data: recoveryAppPolicies, error: new Error('refresh failed'), refetch })
+    const onSelect = vi.fn()
+    render(<PolicySetPicker policySets={policySets} selectedPolicySetId="tier2-apps" onSelect={onSelect} />)
+    expect(screen.getByText('Recovery application policy could not be refreshed. Previously loaded data is shown.')).toBeInTheDocument()
+    expect(screen.getByText('Every 6 hours')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Retry Recovery application policy' }))
+    expect(refetch).toHaveBeenCalledOnce()
+    await userEvent.type(screen.getByRole('searchbox'), 'Critical')
+    expect(screen.queryByRole('button', { name: /Tier 3 web/i })).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: /Tier 2 applications/i }))
+    expect(onSelect).toHaveBeenCalledWith('tier2-apps')
+  })
+
   beforeEach(() => {
-    useSnapshotPoliciesMock.mockReturnValue({ data: snapshotPolicies, isLoading: false, error: null })
-    useRecoveryAppPoliciesMock.mockReturnValue({ data: recoveryAppPolicies, isLoading: false, error: null })
-    useCleanRoomPoliciesMock.mockReturnValue({ data: cleanRoomPolicies, isLoading: false, error: null })
+    useSnapshotPoliciesMock.mockReturnValue({ status: 'success', fetchStatus: 'idle', data: snapshotPolicies, isLoading: false, error: null })
+    useRecoveryAppPoliciesMock.mockReturnValue({ status: 'success', fetchStatus: 'idle', data: recoveryAppPolicies, isLoading: false, error: null })
+    useCleanRoomPoliciesMock.mockReturnValue({ status: 'success', fetchStatus: 'idle', data: cleanRoomPolicies, isLoading: false, error: null })
   })
 
   it('shows resolved policy names in list rows and details for the selected set', () => {
@@ -184,6 +199,7 @@ describe('PolicySetPicker', () => {
 
   it('shows referenced policy IDs when policy details cannot be resolved', () => {
     useRecoveryAppPoliciesMock.mockReturnValue({
+      status: 'error', fetchStatus: 'idle',
       data: [],
       isLoading: false,
       error: new Error('Recovery policies unavailable'),
@@ -199,11 +215,11 @@ describe('PolicySetPicker', () => {
 
     const detail = screen.getByRole('region', { name: 'Selected policy set details' })
     expect(detail).toHaveTextContent('critical-daily-latest')
-    expect(detail).toHaveTextContent('Some policy details could not be loaded.')
+    expect(detail).toHaveTextContent('Recovery application policy could not be refreshed. Previously loaded data is shown.')
   })
 
   it('shows a policy detail loading state without hiding selectable policy sets', () => {
-    useSnapshotPoliciesMock.mockReturnValue({ data: undefined, isLoading: true, error: null })
+    useSnapshotPoliciesMock.mockReturnValue({ status: 'pending', fetchStatus: 'fetching', data: undefined, isLoading: true, error: null })
 
     render(
       <PolicySetPicker
@@ -213,7 +229,7 @@ describe('PolicySetPicker', () => {
       />,
     )
 
-    expect(screen.getByRole('status')).toHaveTextContent('Loading policy details')
+    expect(screen.getByText('Loading policy details')).toBeInTheDocument()
     expect(screen.queryByText('All policies resolved')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Tier 2 applications/i })).toBeEnabled()
   })

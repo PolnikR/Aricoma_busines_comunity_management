@@ -17,14 +17,10 @@ import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
 import { useTranslation } from '@/hooks/useTranslation'
 import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
-import { useGetPolicies } from '@/generated/query/snapshot-policies/snapshot-policies.gen'
-import { selectSnapshotPolicies } from '@/features/recovery-plans/recovery-policies/snapshot/model/selectSnapshotPolicies'
-import { useGetRecoveryAppPolicies } from '@/generated/query/recovery-app-policies/recovery-app-policies.gen'
-import { selectRecoveryAppPolicies } from '@/features/recovery-plans/recovery-policies/application-recovery/model/selectRecoveryAppPolicies'
-import { useGetCleanRoomPolicies } from '@/generated/query/clean-room-policies/clean-room-policies.gen'
-import { selectCleanRoomPolicies } from '@/features/recovery-plans/recovery-policies/clean-room/model/selectCleanRoomPolicies'
 import { useDeletePolicySet } from '@/generated/query/policy-sets/policy-sets.gen'
 import type { PolicySetRecordOutput } from '@/generated/query/zod'
+import { usePolicyCatalog } from '@/features/recovery-plans/recovery-policies/catalog/hooks/usePolicyCatalog'
+import type { PolicyKind } from '@/features/recovery-plans/recovery-policies/catalog/model/policyCatalog'
 import { PolicySetModal } from './PolicySetModal'
 
 
@@ -92,9 +88,7 @@ interface PolicySetsTableProps {
 export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRetry }: PolicySetsTableProps) {
   const { t } = useTranslation()
   const deletePolicySet = useDeletePolicySet()
-  const { data: availablePolicies = [] } = useGetPolicies({ query: { select: selectSnapshotPolicies } })
-  const { data: availableRecoveryAppPolicies = [] } = useGetRecoveryAppPolicies({ query: { select: selectRecoveryAppPolicies } })
-  const { data: availableCleanRoomPolicies = [] } = useGetCleanRoomPolicies({ query: { select: selectCleanRoomPolicies } })
+  const catalog = usePolicyCatalog()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editing, setEditing] = useState<PolicySetRecordOutput | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<PolicySetRecordOutput | null>(null)
@@ -103,9 +97,27 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
   const selected = rows.find(policySet => policySet.id === selectedId) ?? null
   const jsonViewed = rows.find(policySet => policySet.id === jsonViewId) ?? null
   const table = useTableState(rows, { searchFields: ['name', 'id', 'description'] })
-  const policyName = (policyId: string) => availablePolicies.find(policy => policy.id === policyId)?.name ?? policyId
-  const recoveryAppPolicyName = (policyId: string) => availableRecoveryAppPolicies.find(policy => policy.id === policyId)?.name ?? policyId
-  const cleanRoomPolicyName = (policyId: string) => availableCleanRoomPolicies.find(policy => policy.id === policyId)?.name ?? policyId
+  const referenceField = (kind: PolicyKind, id: string | null | undefined, label: string) => {
+    const reference = catalog.resolve(kind, id)
+    const source = catalog.sources[kind]
+    if (reference.status === 'notConfigured') return { value: null, secondary: null }
+    const errorDetail = extractBackendErrorDetail(source.error)
+    return {
+      value: reference.status === 'resolved' ? reference.policy.name : reference.id,
+      secondary: reference.status === 'missing' || reference.status === 'unknown' || source.status === 'error' || source.status === 'cachedError' ? (
+        <>
+          {reference.status === 'missing' || reference.status === 'unknown' ? <p role="status">{t(reference.status === 'missing' ? 'policyCatalog.missing' : 'policyCatalog.unknown', { id: reference.id })}</p> : null}
+          {source.status === 'error' || source.status === 'cachedError' ? (
+            <div className="mt-1 space-y-1" role="alert">
+              <p>{t(source.status === 'cachedError' ? 'policyCatalog.cachedError' : 'policyCatalog.error', { kind: label })}</p>
+              {errorDetail ? <p>{errorDetail}</p> : null}
+              <Button size="xs" variant="outline" disabled={source.isFetching || source.isPaused} onClick={() => { void catalog.retry(kind) }}>{t('policyCatalog.retry', { kind: label })}</Button>
+            </div>
+          ) : null}
+        </>
+      ) : null,
+    }
+  }
   const deleteErrorDetail = extractBackendErrorDetail(deletePolicySet.error)
   const loadErrorDetail = extractBackendErrorDetail(error)
 
@@ -194,9 +206,9 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
             <DetailOverview>
               <DetailField label={t('details.policySetId')} value={selected.id} mono copyValue={selected.id} />
               <DetailField label={t('details.description')} value={selected.description} wide />
-              <DetailField label={t('details.snapshotPolicies')} value={selected.snapshot_policy_id ? policyName(selected.snapshot_policy_id) : null} emphasis />
-              <DetailField label={t('details.recoveryAppPolicy')} value={selected.recovery_app_policy_id ? recoveryAppPolicyName(selected.recovery_app_policy_id) : null} />
-              <DetailField label={t('details.cleanRoomPolicy')} value={selected.clean_room_policy_id ? cleanRoomPolicyName(selected.clean_room_policy_id) : null} />
+              <DetailField label={t('details.snapshotPolicies')} {...referenceField('snapshot', selected.snapshot_policy_id, t('policySets.form.snapshotPolicy'))} emphasis />
+              <DetailField label={t('details.recoveryAppPolicy')} {...referenceField('recoveryApp', selected.recovery_app_policy_id, t('policySets.form.recoveryAppPolicy'))} />
+              <DetailField label={t('details.cleanRoomPolicy')} {...referenceField('cleanRoom', selected.clean_room_policy_id, t('policySets.form.cleanRoomPolicy'))} />
             </DetailOverview>
           </DetailViewSection>
         </DetailView>

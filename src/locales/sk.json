@@ -1,4 +1,12 @@
 {
+  "policyCatalog.waiting": "Čaká sa na údaje politík.",
+  "policyCatalog.paused": "Čaká sa na pripojenie na načítanie politík.",
+  "policyCatalog.refreshing": "Obnovujú sa údaje politík…",
+  "policyCatalog.error": "Nepodarilo sa načítať: {{kind}}.",
+  "policyCatalog.cachedError": "Nepodarilo sa obnoviť: {{kind}}. Zobrazujú sa predtým načítané údaje.",
+  "policyCatalog.missing": "Politika {{id}} sa nenachádza v poslednom úspešne načítanom katalógu.",
+  "policyCatalog.unknown": "Dostupnosť politiky {{id}} sa nepodarilo overiť.",
+  "policyCatalog.retry": "Skúsiť znova: {{kind}}",
   "overview.dashboard": "Celkový prehľad",
   "overview.description": "Stav ochrany, infraštruktúry a obnovy",
   "overview.all": "Všetci",

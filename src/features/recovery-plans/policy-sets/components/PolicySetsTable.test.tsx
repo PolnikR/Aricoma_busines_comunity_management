@@ -7,7 +7,8 @@ import { PolicySetsTable } from './PolicySetsTable'
 import { detailNavigationLabels, detailSectionsLabels } from '@/test-utils/detailView'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
-const { deleteMutation } = vi.hoisted(() => ({
+const { deleteMutation, snapshotState } = vi.hoisted(() => ({
+  snapshotState: { error: null as Error | null, refetch: vi.fn() },
   deleteMutation: { mutate: vi.fn(), isPending: false, error: null as Error | null },
 }))
 vi.mock('@/generated/query/policy-sets/policy-sets.gen', () => ({
@@ -16,6 +17,7 @@ vi.mock('@/generated/query/policy-sets/policy-sets.gen', () => ({
 }))
 vi.mock('@/generated/query/snapshot-policies/snapshot-policies.gen', () => ({
   useGetPolicies: () => ({
+    status: snapshotState.error ? 'error' : 'success', fetchStatus: 'idle', error: snapshotState.error, refetch: snapshotState.refetch,
     data: [{ id: 'medium-6h', name: 'Medium — 6h' }],
   }),
 }))
@@ -49,6 +51,23 @@ const partialPolicySet: PolicySetRecordOutput = {
 }
 
 describe('PolicySetsTable', () => {
+  it('distinguishes a missing reference from an unverified catalog without changing the policy count', async () => {
+    const record = { ...policySet, snapshot_policy_id: 'historic-snapshot' }
+    const props = { policySets: [record], isLoading: false, error: null, isRetrying: false, onRetry: vi.fn() }
+    const view = render(<PolicySetsTable {...props} />)
+    await userEvent.click(screen.getByText(record.name))
+    expect(screen.getByText('historic-snapshot')).toBeInTheDocument()
+    expect(screen.getByText('Policy historic-snapshot was not found in the last successfully loaded catalog.')).toBeInTheDocument()
+    snapshotState.error = new Error('refresh unavailable')
+    view.rerender(<PolicySetsTable {...props} />)
+    expect(screen.getByText('Availability of policy historic-snapshot could not be verified.')).toBeInTheDocument()
+    expect(screen.queryByText('Policy historic-snapshot was not found in the last successfully loaded catalog.')).not.toBeInTheDocument()
+    expect(screen.getByText('3')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Retry Snapshot policy' }))
+    expect(snapshotState.refetch).toHaveBeenCalledOnce()
+    snapshotState.error = null
+  })
+
   it('renders an empty-string description as a dash', () => {
     render(
       <PolicySetsTable

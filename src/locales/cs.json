@@ -1,4 +1,12 @@
 {
+  "policyCatalog.waiting": "Čeká se na údaje zásad.",
+  "policyCatalog.paused": "Čeká se na připojení pro načtení zásad.",
+  "policyCatalog.refreshing": "Obnovují se údaje zásad…",
+  "policyCatalog.error": "Nepodařilo se načíst: {{kind}}.",
+  "policyCatalog.cachedError": "Nepodařilo se obnovit: {{kind}}. Zobrazují se dříve načtené údaje.",
+  "policyCatalog.missing": "Zásada {{id}} se nenachází v posledním úspěšně načteném katalogu.",
+  "policyCatalog.unknown": "Dostupnost zásady {{id}} se nepodařilo ověřit.",
+  "policyCatalog.retry": "Zkusit znovu: {{kind}}",
   "overview.dashboard": "Celkový přehled",
   "overview.description": "Stav ochrany, infrastruktury a obnovy",
   "overview.all": "Všichni",

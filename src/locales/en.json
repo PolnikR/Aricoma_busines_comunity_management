@@ -1,4 +1,12 @@
 {
+  "policyCatalog.waiting": "Waiting for policy data.",
+  "policyCatalog.paused": "Waiting for a connection to load policy data.",
+  "policyCatalog.refreshing": "Refreshing policy data…",
+  "policyCatalog.error": "{{kind}} could not be loaded.",
+  "policyCatalog.cachedError": "{{kind}} could not be refreshed. Previously loaded data is shown.",
+  "policyCatalog.missing": "Policy {{id}} was not found in the last successfully loaded catalog.",
+  "policyCatalog.unknown": "Availability of policy {{id}} could not be verified.",
+  "policyCatalog.retry": "Retry {{kind}}",
   "overview.dashboard": "Overall dashboard",
   "overview.description": "Protection, infrastructure and recovery status",
   "overview.all": "All",
