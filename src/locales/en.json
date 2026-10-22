@@ -1810,6 +1810,7 @@
   "snapshotPolicies.validation.flashcopyCopyRate": "Enter a whole number from 0 to 150",
   "snapshotPolicies.form.noLimit": "No limit",
   "snapshotPolicies.form.enabled": "Enabled",
+  "snapshotPolicies.form.status": "Policy status",
   "snapshotPolicies.level.critical": "Critical",
   "snapshotPolicies.level.high": "High",
   "snapshotPolicies.level.medium": "Medium",

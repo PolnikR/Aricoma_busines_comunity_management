@@ -1773,6 +1773,7 @@
   "snapshotPolicies.validation.flashcopyCopyRate": "Zadajte celé číslo od 0 do 150",
   "snapshotPolicies.form.noLimit": "Bez limitu",
   "snapshotPolicies.form.enabled": "Povolená",
+  "snapshotPolicies.form.status": "Stav politiky",
   "snapshotPolicies.level.critical": "Kritická",
   "snapshotPolicies.level.high": "Vysoká",
   "snapshotPolicies.level.medium": "Stredná",
