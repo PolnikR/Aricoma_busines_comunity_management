@@ -1,3 +1,4 @@
+import { QueryClient } from '@tanstack/react-query'
 import { describe, expect, it, vi } from 'vitest'
 import { selectVmwareInventory, vmwareInventoryQuery } from '../model/inventoryQueries'
 import type { VirtualMachinesQuery } from '../types/virtualMachineTypes'
@@ -54,7 +55,7 @@ function createQuery(overrides: Partial<VirtualMachinesQuery> = {}): VirtualMach
 }
 
 async function loadVirtualMachines() {
-  const response = await vmwareInventoryQuery({}).queryFn({ signal: new AbortController().signal })
+  const response = await vmwareInventoryQuery({}).queryFn({ signal: new AbortController().signal, client: new QueryClient() })
   return mapInventoryToVirtualMachines(selectVmwareInventory(response))
 }
 

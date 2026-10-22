@@ -3,6 +3,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, renderHook, waitFor, cleanup } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { STANDARD_QUERY_OPTIONS } from '@/shared/query/cachePolicy'
+import { createAppQueryClient } from '@/shared/query/createAppQueryClient'
+import { getDeleteProviderMutationOptions, getSubmitProviderMutationOptions } from '@/generated/query/providers/providers.gen'
 import { writeProviderFilterSnapshot } from '../state/providerFilterSession'
 import { useInitialResourcePrefetch } from './useInitialResourcePrefetch'
 
@@ -31,6 +33,37 @@ beforeEach(() => {
 afterEach(() => { cleanup(); client.clear(); vi.unstubAllGlobals() })
 
 describe('useInitialResourcePrefetch', () => {
+  it.each(['queued idle', 'pending list'])('blocks a deleted source from a %s and prepares it again after recreate', async timing => {
+    client.clear()
+    client = createAppQueryClient()
+    client.setDefaultOptions({ queries: { ...STANDARD_QUERY_OPTIONS, retry: false } })
+    let finishList!: (response: Response) => void
+    const list = new Promise<Response>(resolve => { finishList = resolve })
+    fetchMock.mockImplementation((url: string) => {
+      if (url.includes('/get_providers')) return timing === 'pending list' ? list.then(response => response.clone()) : Promise.resolve(Response.json({ providers }))
+      if (/\/(delete|submit)_provider/.test(url)) return Promise.resolve(Response.json({ providers: [] }))
+      return Promise.resolve(Response.json({ count: 1, vms: [{ name: 'Current VM' }] }))
+    })
+    const hook = renderHook(({ ready }) => { useInitialResourcePrefetch(ready) }, { wrapper, initialProps: { ready: true } })
+    if (timing === 'pending list') await act(async () => { scheduled(); await Promise.resolve() })
+    await act(async () => {
+      await client.getMutationCache().build(client, getDeleteProviderMutationOptions(client)).execute({ params: { provider_id: 'source' } })
+      if (timing === 'pending list') finishList(Response.json({ providers }))
+      else scheduled()
+    })
+    await waitFor(() => { expect(client.isFetching()).toBe(0) })
+    expect(fetchMock.mock.calls.filter(([url]) => url.includes('/vms/search?provider_id=source'))).toHaveLength(0)
+    expect(fetchMock.mock.calls.filter(([url]) => url.includes('/vms/search?provider_id=target'))).toHaveLength(1)
+    await act(async () => {
+      await client.getMutationCache().build(client, getSubmitProviderMutationOptions(client)).execute({ data: { id: 'source', name: 'Source', type: 'VMWARE', role: 'source' } })
+    })
+    hook.rerender({ ready: false })
+    hook.rerender({ ready: true })
+    await act(async () => { scheduled(); await Promise.resolve() })
+    await waitFor(() => { expect(client.isFetching()).toBe(0) })
+    expect(fetchMock.mock.calls.filter(([url]) => url.includes('/vms/search?provider_id=source'))).toHaveLength(1)
+  })
+
   it('waits for ready and idle, then prepares only the initial source and target searches', async () => {
     writeProviderFilterSnapshot({ role: 'target', resourceTab: 'vmware', providerId: 'target' }, {
       resourceTab: 'vmware', initialized: true,

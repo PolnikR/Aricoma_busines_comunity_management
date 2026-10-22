@@ -15,6 +15,7 @@ export interface SnapshotPolicyFormData {
   retention_value: string
   retention_unit: string
   max_snapshots: string
+  flashcopy_copy_rate: string
   enabled: boolean
 }
 
@@ -87,6 +88,14 @@ export function SnapshotPolicyForm({ data, errors, isSubmitting, idDisabled = fa
           </Field>
           {errors.retention_value ? <p className="col-span-2 text-xs text-red-600">{errors.retention_value}</p> : null}
         </div>
+      </div>
+
+      <div>
+        <Field label={t('snapshotPolicies.form.flashcopyCopyRate')} htmlFor="snapshot-policy-copy-rate">
+          <Input id="snapshot-policy-copy-rate" type="number" min={0} max={150} step={1} value={data.flashcopy_copy_rate} disabled={isSubmitting} invalid={Boolean(errors.flashcopy_copy_rate)} aria-describedby={errors.flashcopy_copy_rate ? 'snapshot-policy-copy-rate-help snapshot-policy-copy-rate-error' : 'snapshot-policy-copy-rate-help'} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('flashcopy_copy_rate', event.target.value) }} />
+        </Field>
+        <p id="snapshot-policy-copy-rate-help" className="mt-1 text-xs text-text-muted">{t('snapshotPolicies.form.flashcopyCopyRateHelp')}</p>
+        {errors.flashcopy_copy_rate ? <p id="snapshot-policy-copy-rate-error" className="mt-1 text-xs text-red-600">{errors.flashcopy_copy_rate}</p> : null}
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:items-end">

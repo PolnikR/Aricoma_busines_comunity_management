@@ -27,7 +27,7 @@ describe('CleanRoomPoliciesTable', () => {
         isLoading={false}
         error={null}
         isRetrying={false}
-        onRetry={vi.fn()}
+        onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No request in this component test. */ }}
       />,
     )
 
@@ -42,7 +42,7 @@ describe('CleanRoomPoliciesTable', () => {
         isLoading
         error={null}
         isRetrying={false}
-        onRetry={vi.fn()}
+        onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No request in this component test. */ }}
       />,
     )
 
@@ -61,7 +61,7 @@ describe('CleanRoomPoliciesTable', () => {
         isLoading={false}
         error={null}
         isRetrying={false}
-        onRetry={vi.fn()}
+        onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No request in this component test. */ }}
       />,
     )
 
@@ -104,7 +104,7 @@ describe('CleanRoomPoliciesTable', () => {
         isLoading={false}
         error={null}
         isRetrying={false}
-        onRetry={vi.fn()}
+        onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No request in this component test. */ }}
       />,
     )
 
@@ -123,7 +123,7 @@ describe('CleanRoomPoliciesTable', () => {
         isLoading={false}
         error={new Error('private backend details')}
         isRetrying={false}
-        onRetry={vi.fn()}
+        onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No request in this component test. */ }}
       />,
     )
 
@@ -132,12 +132,12 @@ describe('CleanRoomPoliciesTable', () => {
   })
 
   it('shows supported backend detail in the load error', () => {
-    render(<CleanRoomPoliciesTable policies={[]} isLoading={false} error={new OrvalApiError(503, 'Unavailable', { detail: 'Clean room service unavailable.' })} isRetrying={false} onRetry={vi.fn()} />)
+    render(<CleanRoomPoliciesTable policies={[]} isLoading={false} error={new OrvalApiError(503, 'Unavailable', { detail: 'Clean room service unavailable.' })} isRetrying={false} onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No request in this component test. */ }} />)
     expect(screen.getByRole('alert')).toHaveTextContent('Clean room service unavailable.')
   })
 
   it('keeps pagination available when cached policies remain after a refresh error', () => {
-    render(<CleanRoomPoliciesTable policies={[policy]} isLoading={false} error={new Error('background refresh failed')} isRetrying={false} onRetry={vi.fn()} />)
+    render(<CleanRoomPoliciesTable policies={[policy]} isLoading={false} error={new Error('background refresh failed')} isRetrying={false} onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No request in this component test. */ }} />)
     expect(screen.getByRole('alert')).toBeInTheDocument()
     expect(screen.getByLabelText('Rows per page')).toBeInTheDocument()
   })

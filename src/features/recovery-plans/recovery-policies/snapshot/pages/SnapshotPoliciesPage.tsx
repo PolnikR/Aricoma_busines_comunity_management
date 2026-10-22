@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { usePostDeleteRefresh } from '../../../hooks/usePostDeleteRefresh'
 import { useNavigate } from 'react-router'
 import { Button } from '@/shared/components/button/Button'
 import { useTranslation } from '@/hooks/useTranslation'
@@ -17,6 +18,7 @@ export function SnapshotPoliciesPage() {
   const { data: policies = [], isLoading, isFetching, error, refetch } = useGetPolicies({
     query: { select: selectSnapshotPolicies },
   })
+  const postDelete = usePostDeleteRefresh(() => refetch({ cancelRefetch: false, throwOnError: false }))
   const policyTabs: readonly TabItem<RecoveryPolicyTab>[] = [
     { value: 'snapshot', label: t('recoveryPolicies.tabs.snapshot') },
     { value: 'application-recovery', label: t('recoveryPolicies.tabs.applicationRecovery') },
@@ -33,7 +35,7 @@ export function SnapshotPoliciesPage() {
         title={t('recoveryPolicies.title')}
         description={t('recoveryPolicies.description')}
         isFetching={isFetching}
-        onRefresh={() => { void refetch() }}
+        onRefresh={() => { void postDelete.refresh() }}
         actions={(
           <Button size="sm" variant="outline" onClick={() => { setIsCreateModalOpen(true) }}>
             {t('pages.snapshotPolicies.addButton')}
@@ -44,10 +46,12 @@ export function SnapshotPoliciesPage() {
       >
         <SnapshotPoliciesTable
           policies={policies}
+          postDeletePhase={postDelete.phase}
+          onDeleted={postDelete.afterDelete}
           isLoading={isLoading}
           error={error instanceof Error ? error : null}
           isRetrying={isFetching}
-          onRetry={() => { void refetch() }}
+          onRetry={() => { void postDelete.refresh() }}
         />
       </RecoveryPolicyPageShell>
 

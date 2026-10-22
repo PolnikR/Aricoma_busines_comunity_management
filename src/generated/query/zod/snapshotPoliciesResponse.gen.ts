@@ -12,6 +12,10 @@ export const snapshotPoliciesResponseSnapshotPoliciesItemRetentionValueExclusive
 
 export const snapshotPoliciesResponseSnapshotPoliciesItemMaxSnapshotsOneExclusiveMin = 0;
 
+export const snapshotPoliciesResponseSnapshotPoliciesItemFlashcopyCopyRateDefault = 0;
+export const snapshotPoliciesResponseSnapshotPoliciesItemFlashcopyCopyRateMin = 0;
+export const snapshotPoliciesResponseSnapshotPoliciesItemFlashcopyCopyRateMax = 150;
+
 export const snapshotPoliciesResponseSnapshotPoliciesItemEnabledDefault = true;
 export const SnapshotPoliciesResponse = zod.object({
   "snapshot_policies": zod.array(zod.object({
@@ -24,6 +28,7 @@ export const SnapshotPoliciesResponse = zod.object({
   "retention_value": zod.int().gt(snapshotPoliciesResponseSnapshotPoliciesItemRetentionValueExclusiveMin),
   "retention_unit": zod.enum(['minutes', 'hours', 'days']),
   "max_snapshots": zod.union([zod.int().gt(snapshotPoliciesResponseSnapshotPoliciesItemMaxSnapshotsOneExclusiveMin),zod.null()]).exactOptional(),
+  "flashcopy_copy_rate": zod.int().min(snapshotPoliciesResponseSnapshotPoliciesItemFlashcopyCopyRateMin).max(snapshotPoliciesResponseSnapshotPoliciesItemFlashcopyCopyRateMax).default(snapshotPoliciesResponseSnapshotPoliciesItemFlashcopyCopyRateDefault),
   "enabled": zod.boolean().default(snapshotPoliciesResponseSnapshotPoliciesItemEnabledDefault)
 }))
 })

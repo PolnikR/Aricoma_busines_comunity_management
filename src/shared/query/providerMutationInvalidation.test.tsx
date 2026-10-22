@@ -1,9 +1,10 @@
 import { QueryObserver, type QueryClient, type QueryKey } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { getSubmitProviderMutationOptions, getDeleteProviderMutationOptions, getGetProvidersQueryOptions } from '@/generated/query/providers/providers.gen'
-import { getSubmitPlatformProviderMutationOptions, getGetPlatformProvidersQueryOptions } from '@/generated/query/platform-providers/platform-providers.gen'
+import { getSubmitPlatformProviderMutationOptions, getDeletePlatformProviderMutationOptions, getGetPlatformProvidersQueryOptions } from '@/generated/query/platform-providers/platform-providers.gen'
 import { getSubmitCredentialMutationOptions, getDeleteCredentialMutationOptions } from '@/generated/query/credentials/credentials.gen'
 import { createAppQueryClient } from './createAppQueryClient'
+import { beginProviderInventoryMutation, getProviderInventoryRevision, isProviderInventoryDeleted } from './providerInventoryRevision'
 
 const clients: QueryClient[] = []
 const subscriptions: (() => void)[] = []
@@ -41,6 +42,29 @@ const provider = { id: 'infra-a', name: 'A', type: 'VMWARE' as const, role: 'sou
 const credential = { id: 'credential-a', name: 'A', username: 'test-user', password: 'test-fixture' }
 
 describe('provider mutation dependent cache', () => {
+  it.each(['provider save', 'provider delete', 'credential save', 'credential delete'])('preserves a known deletion and its revision after failed %s', async (operation) => {
+    const { client } = setup(true)
+    beginProviderInventoryMutation(client, provider.id, true)
+    const revision = getProviderInventoryRevision(client, provider.id)
+    let pending: Promise<unknown>
+    switch (operation) {
+      case 'provider save':
+        pending = client.getMutationCache().build(client, getSubmitProviderMutationOptions(client)).execute({ data: provider })
+        break
+      case 'provider delete':
+        pending = client.getMutationCache().build(client, getDeleteProviderMutationOptions(client)).execute({ params: { provider_id: provider.id } })
+        break
+      case 'credential save':
+        pending = client.getMutationCache().build(client, getSubmitCredentialMutationOptions(client)).execute({ data: credential })
+        break
+      default:
+        pending = client.getMutationCache().build(client, getDeleteCredentialMutationOptions(client)).execute({ params: { credential_id: credential.id } })
+    }
+    await expect(pending).rejects.toThrow()
+    expect(isProviderInventoryDeleted(client, provider.id)).toBe(true)
+    expect(getProviderInventoryRevision(client, provider.id)).toEqual(revision)
+  })
+
   it('refetches actual generated provider lists after a credential is deleted', async () => {
     const { client } = setup()
     let credentialDeleted = false
@@ -173,14 +197,22 @@ describe('provider mutation dependent cache', () => {
     expect(client.getQueryState(key)).toBeUndefined()
   })
 
-  it('refetches platform orchestration without touching an infrastructure provider with the same ID', async () => {
+  it.each(['save', 'delete'])('handles platform %s without touching an infrastructure provider with the same ID', async (operation) => {
     const { client } = setup()
     const runs = ['/get_orchestrator_runs', { provider_id: 'infra-a', dag_id: 'dag-a' }]
     const infra = ['/get_volumes', { provider_id: 'infra-a' }]
     await inventory(client, runs)
     await inventory(client, infra)
-    await client.getMutationCache().build(client, getSubmitPlatformProviderMutationOptions(client)).execute({ data: { id: 'infra-a', name: 'Airflow', type: 'AIRFLOW' } })
-    expect(client.getQueryData(runs)).toEqual({ version: 2 })
+    const revision = getProviderInventoryRevision(client, provider.id)
+    if (operation === 'save') {
+      await client.getMutationCache().build(client, getSubmitPlatformProviderMutationOptions(client)).execute({ data: { id: 'infra-a', name: 'Airflow', type: 'AIRFLOW' } })
+      expect(client.getQueryData(runs)).toEqual({ version: 2 })
+    } else {
+      await client.getMutationCache().build(client, getDeletePlatformProviderMutationOptions(client)).execute({ params: { provider_id: provider.id } })
+      expect(client.getQueryData(runs)).toBeUndefined()
+    }
     expect(client.getQueryData(infra)).toEqual({ version: 1 })
+    expect(getProviderInventoryRevision(client, provider.id)).toEqual(revision)
+    expect(isProviderInventoryDeleted(client, provider.id)).toBe(false)
   })
 })

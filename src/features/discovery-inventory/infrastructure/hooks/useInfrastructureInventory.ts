@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import type { PowerVmsResponse, VmsResponse } from '@/generated/query/zod'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
+import { useProviderInventoryDeleted } from '@/shared/query/useProviderInventoryDeleted'
 import {
   createPowerInventorySelect,
   powerInventoryQuery,
@@ -15,6 +16,7 @@ export type InfrastructureInventory = DiscoveryInventory | PowerInventory
 export function useInfrastructureInventory(provider: ProviderRecord | null) {
   const providerType = provider?.type
   const providerId = provider?.id
+  const isDeleted = useProviderInventoryDeleted(providerType === 'VMWARE' ? providerId : undefined)
   // One query per provider type: the power and VMware inventories come from
   // different endpoints, so the response type is narrowed per branch.
   const options = useMemo(() => {
@@ -32,6 +34,6 @@ export function useInfrastructureInventory(provider: ProviderRecord | null) {
     queryKey: options?.queryKey ?? ['infrastructure-topology', 'inactive'],
     queryFn: options?.queryFn ?? (() => Promise.reject(new Error('A supported infrastructure provider is required.'))),
     ...(options ? { select: options.select } : {}),
-    enabled: options !== null,
+    enabled: options !== null && !isDeleted,
   })
 }

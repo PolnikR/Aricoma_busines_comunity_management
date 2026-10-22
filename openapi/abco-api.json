@@ -7295,6 +7295,13 @@
             ],
             "title": "Max Snapshots"
           },
+          "flashcopy_copy_rate": {
+            "type": "integer",
+            "maximum": 150,
+            "minimum": 0,
+            "title": "Flashcopy Copy Rate",
+            "default": 0
+          },
           "enabled": {
             "type": "boolean",
             "title": "Enabled",
@@ -7383,6 +7390,13 @@
               }
             ],
             "title": "Max Snapshots"
+          },
+          "flashcopy_copy_rate": {
+            "type": "integer",
+            "maximum": 150,
+            "minimum": 0,
+            "title": "Flashcopy Copy Rate",
+            "default": 0
           },
           "enabled": {
             "type": "boolean",
