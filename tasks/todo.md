@@ -1,205 +1,176 @@
-# Úlohy: IBM Power Manual WWPN Entry
+﻿# Úlohy: VMware Live Refresh a provider invalidácia
 
-Dátum: 2026-10-21. Stav: implementované a overené inline, 2026-10-21. Kontext a návrh: [plan.md](plan.md).
-Používateľ schválil prepísanie plánu a následne vykonanie inline; W1–W5 sú dokončené. Pôvodné Recovery Group T1–T10 sa tým neoznačujú za dokončené.
+Dátum: 2026-10-22. Plán: [plan.md](plan.md).
+Stav: plán schválený pokynom používateľa „načítaj, vykonaj inline“. T1–T4 a oba checkpointy dokončené a overené; zmeny ponechané inline na pôvodnej vetve. Bez commitu a pushu podľa zadania. Nahradenie dokončeného WWPN plánu povolil používateľ.
 
-## W1: Preklady manuálneho režimu
+## T1: Guard platnosti oneskoreného refreshu
 
-**Popis a konkrétne zmeny:** Doplniť rovnaké ploché kľúče do troch locales: recoveryAppPolicies.form.manualWwpnEntry, recoveryAppPolicies.form.manualFrequencyInfo, recoveryAppPolicies.validation.manualModesExclusive, orchestratorPush.manualOnlyTitle, orchestratorPush.manualOnlyPushed, orchestratorPush.manualOnlyInstructions, orchestratorPush.backendNotes. Existujúce názvy sekcií a View in Airflow opätovne použiť. manualOnlyTitle/instructions budú neutrálne, aby sa dali použiť aj pri skipped; manualOnlyPushed iba pre pushed.
+**Popis:** Zaviesť minimálny QueryClient-scoped revision helper a napojiť ho na spoločnú úspešnú infra provider/credential invalidáciu a VMware snapshot. Credential vetva musí byť pokrytá už teraz, aby neskorší krok nepridával druhú cestu invalidácie.
 
-**Akceptácia:**
-- [x] Všetky tri jazyky majú sedem zhodných nových kľúčov, bez duplicitných JSON kľúčov a neúmyselných zmien ostatných textov.
-- [x] Frequency text vysvetľuje IBM Power manuálny režim aj zachovanú VMware frekvenciu podľa presného slovenského znenia v pláne.
-- [x] Push text odlišuje odoslanie od spustenia a uvádza poradie Unpause a potom Trigger; konflikt má zrozumiteľnú validačnú správu.
-
-**Overenie:**
-- [x] JSON parse príkaz nižšie prejde; skontrolovať diff kvôli duplicitám a rovnakým siedmim kľúčom/parametrom v en/sk/cs.
-- [x] git diff --check prejde; implementačný commit obsahuje iba overený rozsah W1.
-
-```powershell
-node -e "const fs=require('node:fs'); for(const l of ['en','sk','cs']) JSON.parse(fs.readFileSync('src/locales/'+l+'.json','utf8')); console.log('Locales JSON OK')"
-```
-
-**Závislosti:** schválenie implementácie. **Rozsah:** M, 3 súbory.
-**Súbory:** src/locales/en.json, src/locales/sk.json, src/locales/cs.json.
-
-## W2: Funkčný Manual WWPN Entry v Create/Edit Policy
-
-**Popis a konkrétne zmeny:** Rozšíriť form typ, EMPTY_FORM generated defaultom, toFormData a common submit mapper. Zobraziť nový bordered checkbox vedľa manual_zoning v existujúcej IBM Power sekcii. V handleChange urobiť atomické automatické prepínanie; vo validate blokovať true/true a zobraziť preklad chyby. Nezavádzať nový stav, effect, helper vrstvu ani generovaný validátor. Aktualizovať existujúce exact payload očakávania a fixtures v rovnakom focused test súbore.
-
-**Akceptácia:**
-- [x] Create má false; edit načíta true a nezmenené uloženie i úprava iného poľa zachovajú true. Payload vždy obsahuje manual_wwpn_entry ako boolean v latest/time_range/exact_time; starší response bez poľa sa cez existujúcu generated schému zmení na false.
-- [x] Oba checkboxy zostávajú viditeľné a použiteľné: zapnutie jedného vypne druhý jednou aktualizáciou, vypnutie umožní false/false. Konfliktný API record nevyvolá request pri uložení, zobrazí chybu a po vedomej oprave sa dá uložiť.
-- [x] Zachované existujúce polia a validácie, immutable ID pri edit, pending správanie, dirty/discard guard a reset draftu pri reopen. Žiadna zmena Edit Policy Set ani obmedzení VMware.
+**Akceptačné kritériá:**
+- [x] Existujúci delete-provider regresný test prejde bez zmeny jeho assertion a všetkých pôvodných 20 hook testov ostane zelených.
+- [x] Shared helper izoluje QueryClient aj ID, umožní legitímny refresh po bump/recreate a odmietne starý snapshot. Token je hodnotová kópia `Readonly<{ providerRevision: number; infraEpoch: number }>` pre neprázdne provider ID; validácia porovná obe čísla, takže zmena **ktorejkoľvek** hodnoty token zneplatní. Úplný credential scope zvýši ID revision, fallback infra epoch, platform scope infra neovplyvní.
+- [x] Bump nastane pred prvým await invalidácie, aj ak query už neexistuje; test s pozastaveným cancellation preukáže odmietnutie starej odpovede počas tohto okna. Neúspešné mutations revisions nemenia.
+- [x] Bez `providerId` `forceRefresh()` odmietne Promise s jasnou chybou ešte pred mutation/requestom; nevykoná HTTP ani zápis do cache, zatiaľ čo disabled `useQuery` správanie zostane nezmenené. Pôvodné úspešné requesty zachovajú pending/error settle.
 
 **Overenie:**
-- [x] Najprv testy reprodukujú chýbajúci flag/prepínanie; potom celý dotknutý test súbor prejde vrátane pôvodných snapshot/IBM Power regresií.
-- [x] Testy overujú reálny request body, oba smery prepínania, false/false, konflikt bez requestu a edit round-trip; nestačí mock onChange.
-- [x] Focused ESLint štyroch uvedených TS/TSX a git diff --check prejdú; po overení atomický implementačný commit.
+- [x] `node node_modules/vitest/vitest.mjs run src/shared/query/providerInventoryRevision.test.ts src/shared/query/providerMutationInvalidation.test.tsx src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx`
+- [x] Skontrolovať diff: žiadne generated/key/backend zmeny, bez druhej cache; zachované settle/pending/error správanie.
 
-```powershell
-node node_modules/vitest/vitest.mjs run src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPolicyModal.test.tsx
-```
+**Závislosti:** Schválený plán; pred začiatkom nový git status.
+**Súbory (5, medium):**
+- `src/shared/query/providerInventoryRevision.ts` (nový)
+- `src/shared/query/providerInventoryRevision.test.ts` (nový)
+- `src/shared/query/providerMutationInvalidation.ts`
+- `src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx`
+- `src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.ts`
 
-**Závislosti:** W1. **Rozsah:** M, 4 súbory.
-**Súbory:**
-- src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPolicyForm.tsx
-- src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPolicyModal.tsx
-- src/features/recovery-plans/recovery-policies/application-recovery/model/recoveryAppPolicySubmit.ts
-- src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPolicyModal.test.tsx
+## T2: Provider lifecycle a izolácia klientov
 
-## Checkpoint A: Policy dátový tok
+**Popis:** Doplniť deterministické integračné scenáre cez generated options, ktoré preveria ochranu mimo samotného delete prípadu. Existujúci hook test súbor obsahuje cudziu dodanú reprodukciu; zachovať ju.
 
-- [x] W1–W2 majú nenulové focused výsledky a zachovávajú true pri editácii; žiadny request neobsahuje true/true.
-- [x] Layout checkboxov zodpovedá existujúcemu formuláru; oba viditeľné aj bez kontextu konkrétnej platformy.
-- [x] Generated/OpenAPI/Policy Set produkčné súbory zostali nedotknuté. Zistený nesúlad vyriešiť pred ďalšou úlohou.
-
-## W3: Informácia o ignorovanej frekvencii
-
-**Popis a konkrétne zmeny:** Vložiť nenápadný lokalizovaný text hneď pod Frequency/Retention grid a pred Snapshot selection. Podmienka je priamo data.manual_zoning || data.manual_wwpn_entry. Nepridávať sekciu, modal ani nový stav. Doplniť testy do existujúceho modal test súboru.
-
-**Akceptácia:**
-- [x] Text je na požadovanom mieste pri zoning-only aj WWPN-only, pri false/false chýba; testuje sa create, edit a živé prepínanie.
-- [x] Frequency aj unit zostávajú viditeľné a editovateľné, ich hodnota sa po prepínaní a odoslaní zachová; VMware platnosť je výslovne uvedená v texte.
-- [x] Nenápadná typografia a existujúce tokeny, bez výrazného warningu alebo novej sekcie; test poradia DOM medzi Frequency/Retention a Snapshot selection.
+**Akceptačné kritériá:**
+- [x] Update A počas refresh A zachová novšie inventory; update B ani platform providera s rovnakým ID neblokuje refresh A.
+- [x] Delete a submit rovnakého ID odmietne starý výsledok, ale nový legitímny refresh sa zapíše; zdokumentovaná hranica mock testu voči backend reuse kontraktu.
+- [x] Viac hook inštancií rovnakého klienta zdieľa lifecycle invalidáciu; dva klienty s rovnakým ID ostanú izolované. Normálny refresh a existujúci latest-request-wins prechádzajú.
 
 **Overenie:**
-- [x] Focused test príkaz W2 prejde, vrátane payload assertions frekvencie v oboch manuálnych režimoch.
-- [x] Focused ESLint týchto dvoch súborov a git diff --check prejdú; po overení atomický implementačný commit.
-- [x] Browser kontrola umiestnenia, čitateľnosti a editable frekvencie je zahrnutá vo W5.
+- [x] `node node_modules/vitest/vitest.mjs run src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx src/shared/query/providerMutationInvalidation.test.tsx`
+- [x] Každý nový race test riadi odpoveď Promise a kontroluje cache až po dokončení starého requestu; bez sleep synchronizácie. Explicitne otestovať izoláciu providerRevision/infraEpoch, najmä samostatnú zmenu každého tokenového poľa a zachovanie druhého.
 
-**Závislosti:** W2. **Rozsah:** S, 2 súbory.
-**Súbory:**
-- src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPolicyForm.tsx
-- src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPolicyModal.test.tsx
+**Závislosti:** T1.
+**Súbory (2, small):**
+- `src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx`
+- `src/shared/query/providerMutationInvalidation.test.tsx`
 
-## W4: Manual-only výsledok v spoločnom Push modale
+## Checkpoint A: Provider lifecycle
 
-**Popis a konkrétne zmeny:** V OrchestratorPushResultDialog vložiť cez existujúci children slot preložený informačný blok pre schedule=manual_only. Pri pushed vysvetliť úspešné odoslanie bez spustenia a kroky Unpause→Trigger. Notes zobraziť ako označený escaped plain text podľa pravidiel plánu; zachovať originálny response viewer. Nové `manual_only` testy písať len pre `entityType=application`; existujúce Group regresie ponechať bez rozširovania.
+- [x] T1–T2 zelené vrátane pôvodnej reprodukcie, update a recreate; zachované pôvodné testy.
+- [x] Diff review potvrdí monotónnosť, oddelenie namespaces a synchronný bump bez nového race window.
+- [x] Priebežný výsledok zaznamenať; zastaviť iba pri konkrétnom nevyriešenom kontrakte alebo chybe.
 
-**Akceptácia:**
-- [x] `manual_only` ukáže vysvetlenie pre Application; pushed zostáva úspešný push, skipped sa nevydáva za úspešný. Bez/null/iný schedule nemení pôvodný layout ani výsledok. Existujúce Group pushed/skipped/link správanie sa nemení.
-- [x] null/undefined/prázdne notes nezrušia hlavnú FE inštrukciu; textové poznámky sa trimujú/deduplikujú, markup ostane textom, dlhý text sa zalomí. Celý pôvodný response zostáva viditeľný vo vieweri.
-- [x] Zachovaný spoločný komponent, počty kontrol, Close, View in Airflow s provider URL a pravidlom dag_id. Nevznikne request na Trigger ani nový modal/API.
+## T3: Credential zmeny a konzervatívny fallback
 
-**Overenie:**
-- [x] Oba focused súbory prejdú vrátane pôvodných pushed/skipped/missing/DAG/link testov; nové schedule/notes varianty testovať iba pre Application.
-- [x] Focused ESLint uvedených troch TSX a git diff --check prejdú; po overení atomický implementačný commit.
+**Popis:** Rozšíriť delayed-response integráciu o obe credential mutation operácie a pôvodné pravidlá úplnosti provider mapovania.
 
-```powershell
-node node_modules/vitest/vitest.mjs run src/shared/components/modal/OrchestratorPushResultDialog.test.tsx src/shared/components/modal/OrchestratorPushResultDialog.response.test.tsx
-```
-
-**Závislosti:** W1. **Rozsah:** M, 3 súbory.
-**Súbory:**
-- src/shared/components/modal/OrchestratorPushResultDialog.tsx
-- src/shared/components/modal/OrchestratorPushResultDialog.test.tsx
-- src/shared/components/modal/OrchestratorPushResultDialog.response.test.tsx
-
-## Checkpoint B: Oba funkčné toky
-
-- [x] W2–W4 focused regresie prešli; frekvencia sa nemení a konflikt sa neodosiela.
-- [x] Úspešný push s manual_only vysvetľuje ďalšie kroky bez tvrdenia o spustenom recovery; pôvodné odpovede ostávajú kompatibilné.
-- [x] Zmeny nevyžadovali ChecklistResultDialog, backend ani generated úpravy. Ak sa ukáže potreba rozšírenia rozsahu, zaznamenať dôvod pred ďalšou úpravou.
-
-## W5: Integračná a browser regresia
-
-**Popis a konkrétne zmeny:** Rozšíriť iba dva Recovery Application Builder/Editor page testy o `manual_only` so schedule a notes odovzdanými do spoločného modalu. Existujúce Group Builder/Editor a PolicySetModal testy iba spustiť ako regresie, bez nových `manual_only` scenárov alebo úprav výberu policy. Produkčné stránky ani Policy Set nemení táto úloha. Browser výsledky zaznamenať pri realizácii, bez nového harnessu, ak postačujú existujúce nástroje.
-
-**Akceptácia:**
-- [x] Create/Edit Application zobrazia spoločný modal so správnym `manual_only` vysvetlením a Airflow linkom; Create/Edit Group si zachovajú pôvodný push výsledok, link a navigáciu bez nového `manual_only` scenára.
-- [x] Policy Set zostáva bez zmien a bez nových výberových obmedzení; iba spustiť existujúce regresné testy. Zachovať pôvodné policy validácie, snapshot režimy a frequency payload.
-- [x] Vykonané browser scenáre majú zaznamenaný výsledok a stub/live rozlíšenie; neoverené body sú výslovne limity. Nie je vykonaný reálny recovery run ani nový trigger request.
+**Akceptačné kritériá:**
+- [x] Update aj delete credential ignorujú starý refresh dotknutého A; pri úplnom čerstvom zozname neovplyvnia B s inými credentials.
+- [x] Chýbajúce, filtrované, stale alebo prázdne provider mapovanie zachová broad fallback vrátane refreshu, ktorého query bola odstránená pred credential úspechom.
+- [x] Capture mapovania a bump prebehnú pred await/provider-list refetchom; failed credential mutation neblokuje platný refresh a pôvodné provider status/platform invalidation testy prechádzajú.
 
 **Overenie:**
-- [x] Nasledujúcich päť focused test súborov prejde: dva rozšírené Application testy a tri nezmenené regresné súbory (dva Group, jeden Policy Set); výstup potvrdzuje ich vykonanie a nenulový počet testov.
-- [x] Záverečná regresia použije aj tri existujúce test súbory z W2 a W4 (celkom osem), focused ESLint iba zmenených TS/TSX, JSON kontrolu W1 a git diff --check.
-- [x] Browser: create false; WWPN on/off a zoning prepínanie klávesnicou aj myšou; edit true/save/reopen; informácia pod Frequency a jej skrytie; mobilný layout, obe témy; stub push `manual_only` pre Application, pôvodný push bez `manual_only` pre Group.
+- [x] `node node_modules/vitest/vitest.mjs run src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx src/shared/query/providerMutationInvalidation.test.tsx src/shared/query/providerInventoryRevision.test.ts`
+- [x] Kontrola assertions na finálnej cache; neodvodzovať úspech iba od počtu callbackov.
+
+**Závislosti:** T1–T2.
+**Súbory (2, small):**
+- `src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx`
+- `src/shared/query/providerMutationInvalidation.test.tsx`
+
+## T4: Focused regresie a technické odovzdanie
+
+**Popis:** Overiť dotknuté kontrakty a existujúcich používateľov bez zmeny ich produkčného kódu. Zapísať reálne výsledky, počty testov a limity.
+
+**Akceptačné kritériá:**
+- [x] Všetky požadované race scenáre a pôvodné relevantné testy prejdú; Resources/Recovery Groups používajú nezmenené keys a hook kontrakt.
+- [x] Typecheck, focused ESLint, `git diff --check` pre tracked zmeny a **samostatná read-only whitespace/final-newline kontrola nových untracked súborov** prejdú alebo je prípadný preexistujúci blocker presne doložený bez oslabenia kontrol.
+- [x] Report obsahuje root cause, zvolený mechanizmus, úplný zoznam vlastných zmien, presné príkazy/počty, regresie, limity (vrátane **nemožnosti rozpoznať externé zmeny bez lokálnej mutation**) a dôvod malej abstrakcie; žiadny commit/push ani zásah do cudzej práce.
+
+**Overenie (plánované, nie výsledky):**
+- [x] `node node_modules/vitest/vitest.mjs run src/shared/query/providerInventoryRevision.test.ts src/shared/query/providerMutationInvalidation.test.tsx src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx src/features/discovery-inventory/resources/model/inventoryQueries.test.ts src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.test.tsx src/features/discovery-inventory/resources/pages/ResourcesPrefetch.integration.test.tsx src/features/recovery-plans/recovery-groups/hooks/useRecoveryGroupResourceInventory.test.tsx`
+- [x] `npm run typecheck`
+- [x] `node node_modules/eslint/bin/eslint.js src/shared/query/providerInventoryRevision.ts src/shared/query/providerInventoryRevision.test.ts src/shared/query/providerMutationInvalidation.ts src/shared/query/providerMutationInvalidation.test.tsx src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.ts src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx --max-warnings 0`
+- [x] `git diff --check` (iba tracked zmeny)
+- [x] Read-only whitespace/final-newline kontrola nových súborov bez `git add` a bez zmeny indexu:
 
 ```powershell
-node node_modules/vitest/vitest.mjs run src/features/recovery-plans/recovery-applications/pages/RecoveryApplicationBuilderPage.test.tsx src/features/recovery-plans/recovery-applications/pages/RecoveryApplicationEditorPage.test.tsx src/features/recovery-plans/recovery-groups/pages/RecoveryGroupBuilderPage.test.tsx src/features/recovery-plans/recovery-groups/pages/RecoveryGroupEditorPage.test.tsx src/features/recovery-plans/policy-sets/components/PolicySetModal.test.tsx
+$files=@('src/shared/query/providerInventoryRevision.ts','src/shared/query/providerInventoryRevision.test.ts')
+foreach ($path in $files) {
+  $text=[System.IO.File]::ReadAllText((Join-Path (Get-Location) $path))
+  if ($text -match '(?m)[ \t]+\r?$' -or -not $text.EndsWith("`n")) { throw "Whitespace/final newline failed: $path" }
+}
 ```
 
-**Závislosti:** W2, W3, W4; checkpointy A a B. **Rozsah:** M, 2 upravované test súbory + 3 nezmenené na regresné spustenie.
-**Upravované súbory:** RecoveryApplicationBuilderPage.test.tsx a RecoveryApplicationEditorPage.test.tsx (presné cesty vyššie). Group Builder/Editor a PolicySetModal testy sa iba spustia; tasks/todo.md slúži na evidenciu výsledkov.
+- [x] `git status --short` a diff review porovnať s východiskom; kompletnú suite ani build nespúšťať.
 
-## Checkpoint C: Odovzdanie implementácie
+**Závislosti:** T1–T3.
+**Súbory (2, small, dokumentácia):** `tasks/plan.md`, `tasks/todo.md`. Uvedené consumer testy sa iba spustia; nové chyby vyžadujú najprv určiť príčinu, nie automaticky rozširovať rozsah opravy.
 
-- [x] Všetky akceptačné kritériá W1–W5 splnené; obmedzenia zadania zachované.
-- [x] Evidované presné overovacie príkazy, počty testov, exit codes, browser výsledky a implementačné commity.
-- [x] Výslovne uvedené nevykonané kontroly: kompletná suite a produkčný build sa automaticky nespúšťajú; živý backend iba ak bol skutočne overený.
-- [x] Finálny diff obsahuje iba schválené zmeny; cudzie zmeny zachované, bez automatického push/deploy.
+## Checkpoint B: Odovzdanie opravy
 
-## Stav plánovacieho výstupu
+- [x] T1–T4 dokončené a overené, pôvodný regresný test zelený.
+- [x] Žiadne oslabené assertions, vypnuté testy, nové suppressions alebo nesúvisiace refaktory; explicitne potvrdená providerless ochrana a dvojhodnotový revision token.
+- [x] Technický report a zvyšné riziká pripravené na review; kompletná suite/build explicitne uvedené ako nespustené.
 
-- [x] Používateľ povolil prepísanie existujúcich tasks/plan.md a tasks/todo.md.
-- [x] Prečítané zadanie, aktuálny Git stav a relevantná implementácia vrátane shared modalu a generated kontraktu.
-- [x] Každá úloha má súbory, konkrétne zmeny, najviac tri akceptačné body, overenie a závislosti; medzi fázami sú checkpointy.
-- [x] Overená integrita dokumentov cez Node obsahovú kontrolu: 5 úloh, 3 checkpointy, 16 existujúcich zdrojových odkazov; exit 0. git diff --check prešiel. Zmenené iba dva plánovacie dokumenty; bez implementácie, commitu a pushu. Test suite ani build sa pri plánovaní nespúšťali.
-- [x] Používateľ schválil implementáciu pokynom executing-plans inline. Implementácia bola vykonaná s focused overením a atomickými commitmi; bez pushu.
+## Evidencia plánovania
 
-## Realizácia a dôkazy — 2026-10-21
+- [x] Architektúra, generated mutation cesta, credential fallback, query identita a ADR 0002 preverené.
+- [x] Pôvodný regresný test reprodukovaný: 1 failed, 20 skipped; finálna cache obsahuje Stale VM.
+- [x] Baseline oboch priamo dotknutých test súborov: 37 passed, 1 failed (38); jediná chyba je dodaná reprodukcia.
+- [x] Používateľ povolil nahradiť dokončené tasks/plan.md a tasks/todo.md.
+- [x] Používateľ schválil spresnený implementačný plán a vykonanie inline.
 
-Používateľ schválil realizáciu príkazom executing-plans inline. Pracovalo sa v existujúcom checkout na spike/ant-design-shell podľa tohto pokynu, bez subagentov. Pri štarte boli necommitnuté iba task dokumenty; ich existujúci obsah vrátane obmedzenia nových manual_only scenárov na Applications zostal základom realizácie.
 
-### Výsledky úloh
+## Priebežná evidencia implementácie
 
-- W1: sedem nových kľúčov v en/sk/cs, JSON a unikátnosť/nonempty kontrola prešli, exit 0. Commit a44ee7b6.
-- W2: red 8 chýbajúcich WWPN scenárov; green 30/30 po doplnení aj dirty/discard/reopen regresie. Obsahuje create false, edit true, všetky snapshot režimy, explicitný payload, prepínanie oboma smermi, false/false, konflikt bez requestu a legacy default cez generated parse. Focused ESLint štyroch súborov prešiel, exit 0. Commit 731ccc53.
-- W3: red 3 frequency scenáre; green 33/33 v celom policy súbore. Text má správne DOM poradie a zachováva editovateľnú frekvenciu aj payload. Focused lint dvoch súborov prešiel, exit 0. Commit 27bc3dbf.
-- W4: red 6 chýbajúcich manual-only scenárov; green 17/17 v dvoch shared modal test súboroch. Notes absent/null/empty/trim/deduplikácia/markup/dlhý text, skipped neutralita a pôvodné schedule varianty sú pokryté. Focused lint zmenených súborov prešiel. Commit 139b8ebf.
-- W5: prenos schedule/notes cez create/edit Application odpoveď, dynamický Airflow link a Close navigácia. Päť plánovaných integračných/regresných súborov je zahrnutých do záverečného behu nižšie. Group a PolicySet test súbory sa nemenili. Commit 0de5c040.
-- Vizuálna kontrola zistila, že pri dlhých notes pôvodný autofocus na Copy odroloval úvod. Red focus test potvrdil problém. Informačný section má teraz tabIndex=0 a existujúci focus ring, takže ho zameria existujúci Modal bez úpravy jeho API alebo efektov. Po tejto oprave prešlo 67/67 v šiestich dotknutých shared/Application/Group test súboroch a focused lint, exit 0. Commit a7dc351c.
+- RED pred produkčnou opravou: hook súbor 25 passed / 15 failed (40). Zlyhania boli na stale cache hodnotách a providerless Promise, nie na timeoutoch alebo mock importe.
+- Prvý revision guard odmietol stale mutation zápis, ale ponechaný observer po settlement rerenderi spustil obyčajný query fetch: finálna cache obsahovala Cached/Current VM. Preto doplnená lokálna `removedRevision` iba v existujúcom force-refresh stave. Pozastaví automatický refetch odstránenej query po odmietnutej odpovedi; nová revision, explicitný refresh alebo príchod platných dát ju odblokuje. Nie je to globálny deleted stav ani druhá cache. Pôvodná delete assertion zostala nezmenená.
+- T1 rozsah spresnený: providerless/timing integračné testy sú v hook test súbore; shared invalidation test súbor sa nemenil. T1 tak má päť zmenených TS/TSX súborov, nie šesť.
+- T1–T3 finálny focused beh: **69 passed, 0 failed, 3 súbory** (48 hook, 17 pôvodná invalidácia, 4 helper).
+- Focused príkaz: `node node_modules/vitest/vitest.mjs run src/shared/query/providerInventoryRevision.test.ts src/shared/query/providerMutationInvalidation.test.tsx src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx`.
+- Pokryté aj obe credential operácie pri missing/filtered/stale/empty mapovaní, úplné mapovanie pred provider-list refetchom bez inventory query, a legitímny nový refresh po usadení starej odmietnutej odpovede.
+- Prvé focused ESLint zlyhania boli iba v nových testoch (non-null assertions a void generic); opravené bez suppressions. Následný focused lint prešiel pred posledným rozšírením testov; T4 ho zopakuje.
+- `npm run typecheck` zablokovala PowerShell execution policy pre npm.ps1; použitý ekvivalent `npm.cmd run typecheck`. Ten hlásil syntaktické chyby v súbežne upravovaných PolicySetsRefetch a troch *PoliciesRefetch testoch. Tieto cudzie súbory sa nemenia; T4 zopakuje kontrolu aktuálneho stavu.
 
-### Presné focused test príkazy
+## Finálny technický report — 2026-10-22
 
-Pôvodný fork worker zostával bez výsledku aj mimo sandboxu. Jeden kontrolný shared test s thread workerom prešiel (5/5), preto sa používal iba CLI prepínač --pool=threads; konfigurácia projektu sa nemenila. Východiskový thread beh mal 8 súborov, 87/87 testov. Pri neskorších behoch rovnaké testovacie cesty ako v úlohách vyššie, s doplneným --pool=threads. Test runner použil nainštalovaný Vitest 4.1.11.
+### Príčina a riešenie
 
-Záverečná regresia pred vizuálnou opravou focusu: **8 súborov, 110/110 testov, exit 0**:
+Samostatná force-refresh mutation nebola zrušená cez cancelQueries a jej requestId guard nepoznal úspešnú provider/credential lifecycle zmenu. Preto po delete znovu vytvorila cache alebo po update prepísala novšie dáta. Nový helper udržiava iba platnosť výsledkov: WeakMap podľa QueryClient, providerRevision podľa ID a infraEpoch pre neúplný credential fallback. Snapshot má obe číselné hodnoty; zápis vyžaduje ich rovnosť aj pôvodný latest-request guard. Bump je pred prvým await invalidácie, credential vzťahy sa zachytávajú pred provider-list refetchom. Platform provider namespace zostáva oddelený.
+
+Doplnená lokálna removedRevision v existujúcom hook pending stave bráni automatickému refetchu odstránenej query vyvolanému settlement rerenderom. Nie je to globálny tombstone: nová revision, explicitný refresh alebo platné dáta obnovia query fetchovanie. Providerless refresh odmietne Promise pred HTTP a pred vytvorením mutation. Pôvodné platné requesty zachovajú výsledný Promise, pending/error settlement a latest-request-wins.
+
+### Úplný zoznam vlastných zmien
+
+| Súbor | Účel |
+| --- | --- |
+| `src/shared/query/providerInventoryRevision.ts` (nový) | Malé spoločné API platnosti snapshotov, bez inventory cache dát. |
+| `src/shared/query/providerInventoryRevision.test.ts` (nový) | 4 testy nezávislej zmeny oboch čísel tokenu, per-ID/client izolácie a monotónnosti. |
+| `src/shared/query/providerMutationInvalidation.ts` | 3 nové riadky: import a synchronné infra provider/credential revision bumps; pôvodná invalidácia zachovaná. |
+| `src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.ts` | Snapshot/guard, fail-fast bez providera a obnoviteľné pozastavenie odstránenej query. |
+| `src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx` | 27 nových deterministických scenárov, spoločný HTTP/Promise fixture a cleanup; dodaný regresný test a jeho assertions zachované. Jeho 42 riadkov bolo vo worktree už pred našou implementáciou. |
+| `tasks/plan.md` | Schválený plán a zdôvodnenie zisteného settlement/refetch okna. |
+| `tasks/todo.md` | Checklist, skutočné overenie, report a limity. |
+
+`providerMutationInvalidation.test.tsx` sa iba spúšťal, nemenil sa. Generated súbory, inventoryQueries, Resources UI, Recovery Groups UI, cache policy a QueryClient konfigurácia zostali bez našich zmien. Súbežná cudzia práca v Policy oblastiach pokračovala počas overovania; nebola obnovovaná, stashovaná, upravovaná ani zahrnutá do commitu.
+
+### Skutočné finálne overenie
+
+1. Rozšírený focused Vitest príkaz z T4: **122 passed, 0 failed, 7 súborov**, exit 0. Zahŕňa inventory query kontrakt, VMware hook, spoločnú invalidáciu, Resources page/prefetch a Recovery Groups hook.
+2. Po poslednej lint oprave testovej queryFn (`Promise.resolve` namiesto async bez await) znovu spustené:
 
 ```powershell
-node node_modules/vitest/vitest.mjs run --pool=threads src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPolicyModal.test.tsx src/shared/components/modal/OrchestratorPushResultDialog.test.tsx src/shared/components/modal/OrchestratorPushResultDialog.response.test.tsx src/features/recovery-plans/recovery-applications/pages/RecoveryApplicationBuilderPage.test.tsx src/features/recovery-plans/recovery-applications/pages/RecoveryApplicationEditorPage.test.tsx src/features/recovery-plans/recovery-groups/pages/RecoveryGroupBuilderPage.test.tsx src/features/recovery-plans/recovery-groups/pages/RecoveryGroupEditorPage.test.tsx src/features/recovery-plans/policy-sets/components/PolicySetModal.test.tsx
+node node_modules/vitest/vitest.mjs run src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx
+npm.cmd run typecheck
+node node_modules/eslint/bin/eslint.js src/shared/query/providerInventoryRevision.ts src/shared/query/providerInventoryRevision.test.ts src/shared/query/providerMutationInvalidation.ts src/shared/query/providerMutationInvalidation.test.tsx src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.ts src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx --max-warnings 0
 ```
 
-Po oprave focusu bola zopakovaná iba dotknutá regresia: **6 súborov, 67/67 testov, exit 0**; policy 33 a Policy Set 10 testov sa nemenili:
+Hook: **48 passed, 0 failed**, exit 0; všetkých pôvodných 20 plus dodaná delete reprodukcia prechádzajú. Typecheck aj ESLint: exit 0. Predchádzajúce nesúvisiace parse chyby v Policy súboroch už posledný typecheck nehlásil; neboli opravované v tejto úlohe.
+
+3. `git diff --check` a posledná focused varianta nižšie: exit 0. Git iba upozorňuje na LF→CRLF a neprístupný používateľský ignore súbor.
 
 ```powershell
-node node_modules/vitest/vitest.mjs run --pool=threads src/shared/components/modal/OrchestratorPushResultDialog.test.tsx src/shared/components/modal/OrchestratorPushResultDialog.response.test.tsx src/features/recovery-plans/recovery-applications/pages/RecoveryApplicationBuilderPage.test.tsx src/features/recovery-plans/recovery-applications/pages/RecoveryApplicationEditorPage.test.tsx src/features/recovery-plans/recovery-groups/pages/RecoveryGroupBuilderPage.test.tsx src/features/recovery-plans/recovery-groups/pages/RecoveryGroupEditorPage.test.tsx
+git diff --check -- src/shared/query/providerMutationInvalidation.ts src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.ts src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx tasks/plan.md tasks/todo.md
+git status --short
+git branch --show-current
 ```
 
-Záverečný focused lint ôsmich skutočne zmenených súborov prešiel, exit 0:
+4. Nové untracked helper súbory overené natívnou read-only PowerShell whitespace/final-newline kontrolou z T4: pass. Pôvodná `node -e` verzia z plánu v tomto PowerShelli stratila vnútorné úvodzovky a skončila SyntaxError; preto nahradená ekvivalentnou natívnou kontrolou bez stage/index zmien.
 
-```powershell
-node node_modules/eslint/bin/eslint.js src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPolicyForm.tsx src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPolicyModal.tsx src/features/recovery-plans/recovery-policies/application-recovery/model/recoveryAppPolicySubmit.ts src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPolicyModal.test.tsx src/shared/components/modal/OrchestratorPushResultDialog.tsx src/shared/components/modal/OrchestratorPushResultDialog.test.tsx src/features/recovery-plans/recovery-applications/pages/RecoveryApplicationBuilderPage.test.tsx src/features/recovery-plans/recovery-applications/pages/RecoveryApplicationEditorPage.test.tsx --max-warnings 0
-```
+### Review, regresie a limity
 
-Po následnej oprave focusu znovu prešiel focused lint iba dvoch zmenených shared súborov:
+Inline review podľa správnosti, čitateľnosti, architektúry, bezpečnosti a výkonu: bez zostávajúceho nálezu v dohodnutom rozsahu. Žiadne nové závislosti, všeobecná orchestration vrstva, ďalšia inventory cache, event bus, test suppressions, oslabené assertions ani backend zmeny. Malá shared abstrakcia je potrebná, pretože mutácie aj viac hookov musia používať rovnakú platnosť v rámci klienta; lokálny ref to nedokáže.
 
-```powershell
-node node_modules/eslint/bin/eslint.js src/shared/components/modal/OrchestratorPushResultDialog.tsx src/shared/components/modal/OrchestratorPushResultDialog.test.tsx --max-warnings 0
-git diff --check
-```
+Pokryté oba credential úspechy aj fallback varianty, update/delete provider, izolácia B/platform/client, shared hooky, recreate, normálny refresh, out-of-order latest-request-wins, pending/error, providerless call a bump pred ukončením cancellation. Bump je viazaný na úspešne oznámenú lokálnu mutation: nepozná zmeny vykonané iným tabom, klientom ani používateľom bez lokálnej udalosti. Nezavádza globálne latest-request poradie medzi nezávislými hookmi. Per-ID revisions žijú s QueryClient; nevynulujú sa pri query GC. Reuse ID je overený cez reálne generated submit/delete options s mock HTTP; nepredstavuje produkčnú backend garanciu reuse ID.
 
-JSON validácia z W1 bola zopakovaná aj na konci; Node kontrola navyše overila sedem nových kľúčov v každom jazyku ako neprázdne a uvedené práve raz. Bez zmien placeholders. Git hlási iba existujúce upozornenia na LF→CRLF a používateľský ignore súbor, nie chybu diffu.
-
-### Browser QA a hranice výsledku
-
-Samostatný headless Edge CDP 9352, Vite 5190, profil mimo workspace. Všetko lokálne API aj config boli stubované; žiadny živý BE alebo reálny recovery. Bežná aplikácia prešla create false, oba smery prepínania myšou aj Space, zobrazenie/skrytie a poradie frequency informácie, create payload true/false s frekvenciou 7, nezmenené edit uloženie a reopen s true. Desktop light 1440×1000 a mobile dark 390×844 vizuálne skontrolované.
-
-Skutočný shared Push komponent bol renderovaný v dočasnom Vite QA entry s reálnymi Theme/Language providers. Overené Application manual_only, hláška o nespustenom DAG, Unpause→Trigger, escaped/deduplikované/dlhé notes, Airflow tlačidlo, obidve témy/šírky a pôvodný Group push bez schedule. Po oprave focusu browser explicitne potvrdil zameraný informačný blok a jeho hlavičku viditeľnú pod nadpisom modalu. Vizuálne skontrolované screenshoty.
-
-Posledný runner: exit 0, **7 stubovaných requestov, bez runtime výnimiek a console errors, bez trigger requestu**. Application submit-to-modal flow je pokrytý page integračnými testmi; browser Push náhľad používa priamy vstup skutočného komponentu, nie plný Application wizard. Group create/edit a Policy Set sú nezmenené automatické regresie.
-
-Dočasný runner a screenshoty sú v lokálnom TEMP adresári abco-wwpn-qa-8382c79252374f6386f5e613e0a2faee. Príkaz úspešného behu:
-
-```powershell
-node "$env:TEMP/abco-wwpn-qa-8382c79252374f6386f5e613e0a2faee/browser.mjs" "$env:TEMP/abco-wwpn-qa-8382c79252374f6386f5e613e0a2faee"
-```
-
-Na zopakovanie treba obnoviť izolovaný Vite/Edge a dočasný QA entry; runner nie je trvalý projektový test. Počiatočné pokusy s ručne interceptovaným HTML zlyhali na Vite preamble/importoch a HMR; vyriešené použitím Vite spracovaného entry a vypnutým HMR iba na QA serveri. Prvé studené načítanie po štarte čakalo na optimalizáciu závislostí; finálny beh prešiel na zahriatom serveri. Žiadna úprava produktu kvôli týmto testovacím problémom. Oba dočasné workspace súbory boli odstránené, vlastné Edge/Vite procesy ukončené.
-
-### Kontrola rozsahu a odovzdanie
-
-Inline review pre správnosť, jednoduchosť, architektúru, bezpečnosť a výkon: bez zostávajúceho nálezu v schválenom rozsahu. Žiadne nové runtime závislosti, suppressions, refaktoring, API requesty ani ručné generated úpravy. Produkčné Policy Set a Groups zostali nedotknuté. Oproti pôvodnému zoznamu netrebalo meniť OrchestratorPushResultDialog.response.test.tsx; bol iba spustený.
-
-Kompletná test suite, full typecheck, production build, živý backend/Keycloak a produkčné E2E neboli spustené. Výsledok je na pôvodnej vetve s atomickými commitmi; bez pushu, merge alebo deploy. Tento záverečný task dokument je evidencia dokončenia, nie ďalšia implementačná úloha.
+Kompletná test suite, production build, browser E2E a živý backend neboli spustené. Nebol potrebný nový vizuálny UI návrh. Práca je ponechaná na `spike/ant-design-shell`, bez stage, commitu, pushu, merge, stashu alebo nového worktree podľa pokynov používateľa.

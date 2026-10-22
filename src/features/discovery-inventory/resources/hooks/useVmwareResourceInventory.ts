@@ -2,6 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { VmsResponse } from '@/generated/query/zod'
 import {
+  getProviderInventoryRevision,
+  isProviderInventoryRevisionCurrent,
+  type ProviderInventoryRevision,
+} from '@/shared/query/providerInventoryRevision'
+import {
   fetchVmwareInventoryLive,
   normalizeVmwareInventorySearch,
   selectVmwareInventory,
@@ -13,6 +18,8 @@ import type { DiscoveryInventory } from '../model/discoveryTypes'
 const NAME_SEARCH_DEBOUNCE_MS = 300
 
 interface ForceRefreshSnapshot {
+  providerId: string
+  revision: ProviderInventoryRevision
   search: VmwareInventorySearch
   queryKey: readonly unknown[]
   queryHash: string
@@ -23,6 +30,7 @@ interface ForceRefreshState {
   latestRequestId: number
   pendingRequestIds: number[]
   error: Error | null
+  removedRevision?: ProviderInventoryRevision
 }
 
 export interface VmwareResourceInventoryOptions {
@@ -86,7 +94,13 @@ export function useVmwareResourceInventory({
   }
   const { queryKey, queryFn } = vmwareInventoryQuery(search)
   const queryHash = JSON.stringify(queryKey)
-  const canFetch = enabled && Boolean(currentProviderId) && !isDebouncing
+  const forceRefreshState = forceRefreshStates[queryHash]
+  // Settling a stale mutation must not make a still-mounted observer refetch a
+  // removed query. A new provider revision or explicit refresh resumes fetching.
+  const isRemovedRevision = currentProviderId && forceRefreshState?.removedRevision
+    && isProviderInventoryRevisionCurrent(queryClient, currentProviderId, forceRefreshState.removedRevision)
+    && queryClient.getQueryData(queryKey) === undefined
+  const canFetch = enabled && Boolean(currentProviderId) && !isDebouncing && !isRemovedRevision
 
   const query = useQuery<VmsResponse, Error, DiscoveryInventory>({
     queryKey,
@@ -108,12 +122,16 @@ export function useVmwareResourceInventory({
 
       const pendingRequestIds = state.pendingRequestIds.filter((requestId) => requestId !== snapshot.requestId)
       const nextState = {
-        ...state,
+        latestRequestId: state.latestRequestId,
         pendingRequestIds,
         error: state.latestRequestId === snapshot.requestId ? error : state.error,
+        ...(!isProviderInventoryRevisionCurrent(queryClient, snapshot.providerId, snapshot.revision)
+          && queryClient.getQueryData(snapshot.queryKey) === undefined
+          ? { removedRevision: getProviderInventoryRevision(queryClient, snapshot.providerId) }
+          : {}),
       }
 
-      if (pendingRequestIds.length > 0 || nextState.error !== null) {
+      if (pendingRequestIds.length > 0 || nextState.error !== null || nextState.removedRevision) {
         return { ...states, [snapshot.queryHash]: nextState }
       }
 
@@ -126,6 +144,7 @@ export function useVmwareResourceInventory({
     mutationFn: ({ search: snapshotSearch }) => fetchVmwareInventoryLive(snapshotSearch),
     onSuccess: (data, snapshot) => {
       if (latestForceRefreshRequestIds.current[snapshot.queryHash] !== snapshot.requestId) return
+      if (!isProviderInventoryRevisionCurrent(queryClient, snapshot.providerId, snapshot.revision)) return
       queryClient.setQueryData(snapshot.queryKey, data)
     },
     onSettled: (_, error, snapshot) => {
@@ -133,7 +152,10 @@ export function useVmwareResourceInventory({
     },
   })
   const forceRefresh = () => {
+    if (!currentProviderId) return Promise.reject(new Error('Live Refresh requires a provider ID'))
     const snapshot = {
+      providerId: currentProviderId,
+      revision: getProviderInventoryRevision(queryClient, currentProviderId),
       search,
       queryKey,
       queryHash,
@@ -154,7 +176,6 @@ export function useVmwareResourceInventory({
     })
     return forceRefreshMutation.mutateAsync(snapshot)
   }
-  const forceRefreshState = forceRefreshStates[queryHash]
 
   const hasSettledProviderQuery = settledProviderId === normalizedSearch.providerId
 

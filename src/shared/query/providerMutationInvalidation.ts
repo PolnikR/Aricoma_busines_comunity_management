@@ -1,5 +1,6 @@
 import type { MutationKey, Query, QueryClient } from '@tanstack/react-query'
 import { STANDARD_STALE_TIME_MS } from './cachePolicy'
+import { invalidateProviderInventoryRevision } from './providerInventoryRevision'
 
 const inventoryEndpoints = new Set(['/get_power_vm', '/get_volumes', '/tags', '/vdisks_by_vm', '/get_volume_tree'])
 
@@ -17,6 +18,7 @@ function dependentProvider(query: Query, platform: boolean): string | undefined 
 }
 
 async function refreshDependents(client: QueryClient, id: string, platform: boolean, deleted: boolean) {
+  if (!platform) invalidateProviderInventoryRevision(client, [id])
   const predicate = (query: Query) => {
     const provider = dependentProvider(query, platform)
     return provider !== false && (provider === undefined || provider === id)
@@ -48,6 +50,7 @@ async function refreshCredentialDependents(client: QueryClient, credentialId: st
   // Capture both namespaces before provider-list refetches can replace their data.
   const infra = credentialProviders(client, credentialId, false)
   const platform = credentialProviders(client, credentialId, true)
+  invalidateProviderInventoryRevision(client, infra.complete ? infra.ids : undefined)
   const predicate = (query: Query) => {
     for (const [isPlatform, scope] of [[false, infra], [true, platform]] as const) {
       const provider = dependentProvider(query, isPlatform)
