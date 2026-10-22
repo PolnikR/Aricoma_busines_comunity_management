@@ -152,7 +152,13 @@ export function PolicySetPickerDetails({
   const { t } = useTranslation()
   const isLoading = references.summary === 'loading'
   const badgeColor = isLoading ? 'light' : references.summary === 'resolved' ? 'success' : 'warning'
-  const badgeLabel = t(isLoading ? 'policySets.picker.details.loading' : references.summary === 'resolved' ? 'policySets.picker.details.resolved' : 'policySets.picker.details.incomplete')
+  const badgeLabel = t(references.summary === 'loading'
+    ? 'policySets.picker.details.loading'
+    : references.summary === 'resolved'
+      ? 'policySets.picker.details.resolved'
+      : references.summary === 'cachedError'
+        ? 'policySets.picker.details.cachedError'
+        : 'policySets.picker.details.incomplete')
   const sections = buildSections(
     policySet,
     references.snapshot.status === 'resolved' ? references.snapshot.policy : undefined,

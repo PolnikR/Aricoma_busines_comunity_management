@@ -128,6 +128,8 @@ describe('PolicySetPicker', () => {
     const onSelect = vi.fn()
     render(<PolicySetPicker policySets={policySets} selectedPolicySetId="tier2-apps" onSelect={onSelect} />)
     expect(screen.getByText('Recovery application policy could not be refreshed. Previously loaded data is shown.')).toBeInTheDocument()
+    expect(screen.getByText('Refresh failed – earlier data')).toBeInTheDocument()
+    expect(screen.queryByText('Policy details incomplete')).not.toBeInTheDocument()
     expect(screen.getByText('Every 6 hours')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Retry Recovery application policy' }))
     expect(refetch).toHaveBeenCalledOnce()
@@ -215,6 +217,7 @@ describe('PolicySetPicker', () => {
 
     const detail = screen.getByRole('region', { name: 'Selected policy set details' })
     expect(detail).toHaveTextContent('critical-daily-latest')
+    expect(detail).toHaveTextContent('Policy details incomplete')
     expect(detail).toHaveTextContent('Recovery application policy could not be refreshed. Previously loaded data is shown.')
   })
 

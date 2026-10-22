@@ -713,6 +713,7 @@
   "policySets.picker.details.loadFailed": "Some policy details could not be loaded.",
   "policySets.picker.details.resolved": "All policies resolved",
   "policySets.picker.details.incomplete": "Policy details incomplete",
+  "policySets.picker.details.cachedError": "Refresh failed – earlier data",
   "pages.recoveryBuilder.policySet.loading": "Loading policy sets",
   "pages.recoveryGroupBuilder.orchestration.title": "Orchestration",
   "pages.recoveryGroupBuilder.orchestration.description": "Choose whether this recovery group is pushed to the orchestrator, and select the Airflow platform provider that will run it.",

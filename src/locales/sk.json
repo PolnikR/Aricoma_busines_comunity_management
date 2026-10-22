@@ -692,6 +692,7 @@
   "policySets.picker.details.loadFailed": "Niektoré podrobnosti politík sa nepodarilo načítať.",
   "policySets.picker.details.resolved": "Všetky politiky sú dostupné",
   "policySets.picker.details.incomplete": "Podrobnosti politík sú neúplné",
+  "policySets.picker.details.cachedError": "Obnova zlyhala – staršie údaje",
   "pages.recoveryBuilder.policySet.loading": "Načítavajú sa sady politík",
   "pages.recoveryGroupBuilder.orchestration.title": "Orchestrácia",
   "pages.recoveryGroupBuilder.orchestration.description": "Zvoľte, či sa má táto skupina obnovy odoslať do orchestrátora, a vyberte platformového poskytovateľa Airflow, ktorý ju spustí.",
