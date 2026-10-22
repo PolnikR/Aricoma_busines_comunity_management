@@ -81,7 +81,7 @@ export function RecoveryAppBuilder({
   onSave,
   onCancel,
   onDirtyChange,
-  isSaving,
+  isSaving = false,
   initialData,
   disableFileName = false,
   isInitialLoading = false,
@@ -89,6 +89,7 @@ export function RecoveryAppBuilder({
   lockedProviders = null,
 }: RecoveryAppBuilderProps) {
   const { t } = useTranslation()
+  const isFormDisabled = isInitialLoading || isSaving
   const [step, setStep] = useState(1)
   const [formState, setFormState] = useState<RecoveryApplicationFormState>(
     () => ({
@@ -150,14 +151,16 @@ export function RecoveryAppBuilder({
   )
 
   const updateFormState = useCallback((update: Partial<RecoveryApplicationFormState>) => {
+    if (isFormDisabled) return
     setFormState(current => ({ ...current, ...update }))
     onDirtyChange?.(true)
-  }, [onDirtyChange])
+  }, [isFormDisabled, onDirtyChange])
 
   // Assigned groups belong to the current source platform, so a source change
   // asks first and then detaches them from every tier (the tiers stay).
   const [pendingSourceChange, setPendingSourceChange] = useState<Partial<RecoveryApplicationFormState> | null>(null)
   const handleMetadataChange = useCallback((update: Partial<RecoveryApplicationFormState>) => {
+    if (isFormDisabled) return
     // Locked providers ignore any change, not only through the disabled selects.
     const metadata = lockedProviders
       ? Object.fromEntries(Object.entries(update).filter(([key]) => key !== 'platform' && key !== 'targetProviderId'))
@@ -169,9 +172,9 @@ export function RecoveryAppBuilder({
       return
     }
     updateFormState(metadata)
-  }, [formState.platform, formState.tiers, lockedProviders, updateFormState])
+  }, [formState.platform, formState.tiers, isFormDisabled, lockedProviders, updateFormState])
   const confirmSourceChange = () => {
-    if (!pendingSourceChange) return
+    if (isFormDisabled || !pendingSourceChange) return
     setFormState(prev => ({
       ...prev,
       ...pendingSourceChange,
@@ -182,6 +185,7 @@ export function RecoveryAppBuilder({
   }
 
   const handleRecoveryGroupAdded = useCallback((tierId: string, groupId: string) => {
+    if (isFormDisabled) return
     const selectedGroup = availableGroups.find(group => group.id === groupId)
     if (!selectedGroup) return
 
@@ -206,9 +210,10 @@ export function RecoveryAppBuilder({
       return { ...prev, tiers: newTiers }
     })
     onDirtyChange?.(true)
-  }, [availableGroups, onDirtyChange])
+  }, [availableGroups, isFormDisabled, onDirtyChange])
 
   const handleRecoveryGroupRemoved = useCallback((tierId: string) => {
+    if (isFormDisabled) return
     setFormState(prev => {
       const tier = prev.tiers.get(tierId)
       if (!tier?.recovery_group) return prev
@@ -218,9 +223,10 @@ export function RecoveryAppBuilder({
       return { ...prev, tiers: newTiers }
     })
     onDirtyChange?.(true)
-  }, [onDirtyChange])
+  }, [isFormDisabled, onDirtyChange])
 
   const handleRecoveryVmSelectionChange = useCallback((tierId: string, vmName: string, selected: boolean) => {
+    if (isFormDisabled) return
     setFormState(prev => {
       const tier = prev.tiers.get(tierId)
       if (!tier?.recovery_group) return prev
@@ -244,9 +250,10 @@ export function RecoveryAppBuilder({
       return { ...prev, tiers: newTiers }
     })
     onDirtyChange?.(true)
-  }, [compatibleGroups, onDirtyChange])
+  }, [compatibleGroups, isFormDisabled, onDirtyChange])
 
   const handleTierEdit = useCallback((tierId: string, newTierId: string, updates: { tierDescription: string }) => {
+    if (isFormDisabled) return
     setFormState(prev => {
       const newTiers = new Map(prev.tiers)
       const oldTier = newTiers.get(tierId)
@@ -256,26 +263,29 @@ export function RecoveryAppBuilder({
       return { ...prev, tiers: newTiers }
     })
     onDirtyChange?.(true)
-  }, [onDirtyChange])
+  }, [isFormDisabled, onDirtyChange])
 
   const handleTierAdd = useCallback((tierId: string, tier: DraftRecoveryTier) => {
+    if (isFormDisabled) return
     setFormState(prev => ({ ...prev, tiers: new Map(prev.tiers).set(tierId, tier) }))
     onDirtyChange?.(true)
-  }, [onDirtyChange])
+  }, [isFormDisabled, onDirtyChange])
 
   const handleTierDelete = useCallback((tierId: string) => {
+    if (isFormDisabled) return
     setFormState(prev => {
       const newTiers = new Map(prev.tiers)
       newTiers.delete(tierId)
       return { ...prev, tiers: newTiers }
     })
     onDirtyChange?.(true)
-  }, [onDirtyChange])
+  }, [isFormDisabled, onDirtyChange])
 
   const handleTierReorder = useCallback((reorderedTiers: Record<string, DraftRecoveryTier>) => {
+    if (isFormDisabled) return
     setFormState(prev => ({ ...prev, tiers: new Map(Object.entries(reorderedTiers)) }))
     onDirtyChange?.(true)
-  }, [onDirtyChange])
+  }, [isFormDisabled, onDirtyChange])
 
   const sourceProvider = eligibleSourceProviders.find(provider => provider.id === formState.platform)
   const detailsValid = Boolean(
@@ -324,6 +334,7 @@ export function RecoveryAppBuilder({
     && (!lockedProviders || (providersLoaded && !lockedProvidersError))
 
   const handleSave = () => {
+    if (isFormDisabled) return
     const validationError = validateRecoveryApplication(
       formState,
       providersQuery.data ?? [],
@@ -338,7 +349,7 @@ export function RecoveryAppBuilder({
   }
 
   return (
-    <fieldset className="contents" disabled={isInitialLoading} aria-busy={isInitialLoading}>
+    <fieldset className="contents" disabled={isFormDisabled} aria-busy={isFormDisabled}>
     <div className="flex min-h-0 flex-1 p-4">
       <div className="grid min-h-0 flex-1 overflow-hidden rounded-[20px] border border-border bg-surface shadow-sm lg:grid-cols-[280px_minmax(0,1fr)]">
         <aside className="custom-scrollbar min-h-0 overflow-x-hidden overflow-y-auto border-b border-border bg-surface-subtle lg:border-b-0 lg:border-r">
@@ -566,6 +577,7 @@ export function RecoveryAppBuilder({
     </div>
     <ConfirmDialog
       open={pendingSourceChange !== null}
+      isLoading={isFormDisabled}
       title={t('recovery.application.sourceChange.title')}
       message={t('recovery.application.sourceChange.message')}
       confirmLabel={t('recovery.application.sourceChange.confirm')}

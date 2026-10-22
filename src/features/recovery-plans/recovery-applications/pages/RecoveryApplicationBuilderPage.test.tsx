@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
@@ -133,6 +133,72 @@ beforeEach(() => {
 })
 
 describe('RecoveryApplicationBuilderPage', () => {
+  it.each([false, true])('clears dirty state after a locked successful save (push=%s)', async push => {
+    const user = userEvent.setup()
+    render(<RecoveryApplicationBuilderPage />)
+    await user.click(screen.getByRole('button', { name: 'Change builder' }))
+    await user.click(screen.getByRole('button', { name: push ? 'Save orchestrated fixture' : 'Save fixture' }))
+    expect(screen.getByRole('button', { name: 'Back' })).toBeDisabled()
+    const before = new Event('beforeunload', { cancelable: true })
+    window.dispatchEvent(before)
+    expect(before.defaultPrevented).toBe(true)
+    const options = mutate.mock.calls[0]?.[1] as { onSuccess: (response: SubmitDagResponse) => void }
+    act(() => { options.onSuccess({ applications: [], ...(push ? { orchestrator_push: null } : {}) }) })
+    const after = new Event('beforeunload', { cancelable: true })
+    window.dispatchEvent(after)
+    expect(after.defaultPrevented).toBe(false)
+    if (push) {
+      expect(navigate).not.toHaveBeenCalled()
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Close' }))
+    }
+    expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-applications')
+  })
+
+  it.each([false, true])('resolves stale discard when Save starts and completes (push=%s)', async push => {
+    const user = userEvent.setup()
+    render(<RecoveryApplicationBuilderPage />)
+    await user.click(screen.getByRole('button', { name: 'Change builder' }))
+    await user.click(screen.getByRole('button', { name: 'Back' }))
+    expect(screen.getByRole('dialog', { name: 'Discard unsaved changes?' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: push ? 'Save orchestrated fixture' : 'Save fixture' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    const options = mutate.mock.calls[0]?.[1] as { onSuccess: (response: SubmitDagResponse) => void }
+    act(() => { options.onSuccess({ applications: [], ...(push ? { orchestrator_push: null } : {}) }) })
+    expect(screen.queryByRole('dialog', { name: 'Discard unsaved changes?' })).not.toBeInTheDocument()
+    if (push) {
+      expect(navigate).not.toHaveBeenCalled()
+      await user.click(screen.getByRole('button', { name: 'Close' }))
+    }
+    expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-applications')
+    expect(navigate).toHaveBeenCalledOnce()
+  })
+
+  it('rejects duplicate submissions and restores normal dirty Back after failure', async () => {
+    const user = userEvent.setup()
+    render(<RecoveryApplicationBuilderPage />)
+    await user.click(screen.getByRole('button', { name: 'Change builder' }))
+    await user.click(screen.getByRole('button', { name: 'Save fixture' }))
+    await user.click(screen.getByRole('button', { name: 'Save fixture' }))
+    expect(mutate).toHaveBeenCalledOnce()
+    const options = mutate.mock.calls[0]?.[1] as { onError: () => void }
+    act(() => { options.onError() })
+    expect(screen.getByRole('button', { name: 'Back' })).toBeEnabled()
+    await user.click(screen.getByRole('button', { name: 'Back' }))
+    expect(screen.getByRole('dialog', { name: 'Discard unsaved changes?' })).toBeInTheDocument()
+    expect(navigate).not.toHaveBeenCalled()
+  })
+
+  it('preserves local fallback when a callback bypasses push normalization', async () => {
+    const user = userEvent.setup()
+    render(<RecoveryApplicationBuilderPage />)
+    await user.click(screen.getByRole('button', { name: 'Save orchestrated fixture' }))
+    const options = mutate.mock.calls[0]?.[1] as { onSuccess: (response: SubmitDagResponse) => void }
+    act(() => { options.onSuccess({ applications: [] }) })
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-applications')
+  })
+
   it('passes manual-only schedule and notes from the create response to the shared push dialog', async () => {
     const user = userEvent.setup()
     render(<RecoveryApplicationBuilderPage />)

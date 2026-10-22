@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 
 import { OrvalApiError } from '@/shared/api/orvalMutator'
 import { RecoveryAppBuilder } from './RecoveryAppBuilder'
 import type { RecoveryGroup } from '../../recovery-groups/model/recoveryGroupTypes'
-import type { DraftRecoveryTier, LockedProviders, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
+import type { LockedProviders, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
@@ -126,14 +126,10 @@ vi.mock('./TierCanvas', async (importOriginal) => {
     onRecoveryGroupAdded,
     onRecoveryGroupRemoved,
     onRecoveryVmSelectionChange,
-  }: {
-    tiers: Record<string, DraftRecoveryTier>
-    recoveryGroupVmOptions?: Record<string, string[]>
-    onRecoveryGroupAdded?: (tierId: string, groupId: string) => void
-    onRecoveryGroupRemoved?: (tierId: string) => void
-    onRecoveryVmSelectionChange?: (tierId: string, vmName: string, selected: boolean) => void
-  }) => canvasMode.real ? (
+    ...tierActions
+  }: React.ComponentProps<typeof ActualTierCanvas>) => canvasMode.real ? (
     <ActualTierCanvas
+      {...tierActions}
       tiers={tiers}
       {...(recoveryGroupVmOptions ? { recoveryGroupVmOptions } : {})}
       {...(onRecoveryGroupAdded ? { onRecoveryGroupAdded } : {})}
@@ -329,6 +325,49 @@ describe('RecoveryAppBuilder', () => {
       await user.click(screen.getByRole('button', { name: 'Save Application' }))
       return { onSave, alert }
     }
+
+    it('rejects in-flight tier reorder and resource drops while saving', async () => {
+      canvasMode.real = true
+      const user = userEvent.setup()
+      const initialData = savedApplication('vmware-01', 'vmware-target-01', 'database_group', 'Database Group', ['DB-01'])
+      initialData.tiers.set('second', { ...structuredClone(initialData.tiers.get('tier_id')), order: 2, description: 'Second tier' })
+      const onSave = vi.fn<(state: RecoveryApplicationFormState) => void>()
+      const onDirtyChange = vi.fn()
+      const props = { initialData, onSave, onDirtyChange }
+      const { rerender } = render(<RecoveryAppBuilder {...props} />)
+      await user.click(screen.getByRole('button', { name: 'Recovery groups & tiers' }))
+      const first = screen.getByText('tier_id').closest('[draggable]')
+      const second = screen.getByText('second').closest('[draggable]')
+      const dropTarget = screen.getAllByRole('group', { name: 'Database Group virtual machines' })[0]?.closest('section')
+      if (!first || !second || !dropTarget) throw new Error('Expected real tier drag/drop targets')
+      fireEvent.dragStart(first)
+      rerender(<RecoveryAppBuilder {...props} isSaving />)
+      fireEvent.drop(second)
+      fireEvent.drop(dropTarget, { dataTransfer: { getData: () => 'database_group' } })
+      const checkbox = screen.getAllByRole('checkbox', { name: 'DB-01' })[0]
+      if (!checkbox) throw new Error('Expected VM checkbox')
+      await user.click(checkbox)
+      expect(checkbox).toBeChecked()
+      expect(onDirtyChange).not.toHaveBeenCalled()
+      rerender(<RecoveryAppBuilder {...props} isSaving={false} />)
+      await user.click(screen.getByRole('button', { name: 'Orchestration' }))
+      await user.click(screen.getByRole('button', { name: 'Save Application' }))
+      expect(onSave).toHaveBeenCalledWith(initialData)
+    })
+
+    it('locks a source-change confirmation that was open when Save began', async () => {
+      const user = userEvent.setup()
+      const initialData = savedApplication('vmware-01', 'vmware-target-01', 'database_group', 'Database Group', ['DB-01'])
+      const onDirtyChange = vi.fn()
+      const { rerender } = render(<RecoveryAppBuilder initialData={initialData} onDirtyChange={onDirtyChange} />)
+      await user.selectOptions(screen.getByLabelText('Provider ID *'), 'power-01')
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
+      rerender(<RecoveryAppBuilder initialData={initialData} onDirtyChange={onDirtyChange} isSaving />)
+      for (const button of within(screen.getByRole('dialog')).getAllByRole('button')) expect(button).toBeDisabled()
+      await user.keyboard('{Enter}')
+      expect(onDirtyChange).not.toHaveBeenCalled()
+      expect(screen.getByLabelText('Provider ID *')).toHaveValue('vmware-01')
+    })
 
     it.each([
       ['vmware-01', 'vmware-target-01', 'database_group', 'Database Group', 'DB-01'],
@@ -589,6 +628,55 @@ describe('RecoveryAppBuilder', () => {
     await user.selectOptions(screen.getByLabelText('Airflow provider *'), 'airflow-01')
     await user.click(screen.getByRole('button', { name: 'Save Application' }))
     expect(onSave.mock.calls[0]?.[0]).toMatchObject({ pushToOrchestrator: true, orchestrationProviderId: 'airflow-01' })
+  })
+
+  it('locks wizard and duplicate Save while pending, then permits editing after failure', async () => {
+    const user = userEvent.setup()
+    const onSave = vi.fn<(state: RecoveryApplicationFormState) => void>()
+    const onDirtyChange = vi.fn()
+    const { rerender } = render(<RecoveryAppBuilder onSave={onSave} onDirtyChange={onDirtyChange} />)
+    await openPolicy()
+    await user.click(screen.getByRole('button', { name: /Critical - Daily DR Test/ }))
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+    await user.click(screen.getByRole('button', { name: 'Save Application' }))
+    const submitted = onSave.mock.calls[0]?.[0]
+    expect(submitted?.name).toBe('Finance')
+    rerender(<RecoveryAppBuilder onSave={onSave} onDirtyChange={onDirtyChange} isSaving />)
+    expect(screen.getByRole('button', { name: /^Saving/ })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Application details' })).toBeDisabled()
+    expect(screen.getByRole('group')).toHaveAttribute('aria-busy', 'true')
+    await user.click(screen.getByRole('button', { name: /^Saving/ }))
+    expect(onSave).toHaveBeenCalledOnce()
+    rerender(<RecoveryAppBuilder onSave={onSave} onDirtyChange={onDirtyChange} isSaving={false} />)
+    await user.click(screen.getByRole('button', { name: 'Application details' }))
+    expect(screen.getByLabelText('Application Name *')).toHaveValue('Finance')
+    onDirtyChange.mockClear()
+    fireEvent.change(screen.getByLabelText('Application Name *'), { target: { value: 'NewerFinance' } })
+    expect(screen.getByLabelText('Application Name *')).toHaveValue('NewerFinance')
+    expect(onDirtyChange).toHaveBeenCalledWith(true)
+    expect(submitted?.name).toBe('Finance')
+    expect(onSave).toHaveBeenCalledOnce()
+  })
+
+  it('blocks mouse and keyboard edits of metadata while saving and preserves values on unlock', async () => {
+    const user = userEvent.setup()
+    const onDirtyChange = vi.fn()
+    const { rerender } = render(<RecoveryAppBuilder onDirtyChange={onDirtyChange} />)
+    fillDetails()
+    onDirtyChange.mockClear()
+    const input = screen.getByLabelText('Application Name *')
+    input.focus()
+    rerender(<RecoveryAppBuilder onDirtyChange={onDirtyChange} isSaving />)
+    expect(input).toBeDisabled()
+    expect(screen.getByLabelText('Provider ID *')).toBeDisabled()
+    await user.type(input, 'LostEdit')
+    await user.keyboard('LostKeyboardEdit')
+    expect(input).toHaveValue('Finance')
+    expect(onDirtyChange).not.toHaveBeenCalled()
+    rerender(<RecoveryAppBuilder onDirtyChange={onDirtyChange} isSaving={false} />)
+    await user.type(input, 'Updated')
+    expect(input).toHaveValue('FinanceUpdated')
+    expect(onDirtyChange).toHaveBeenCalledWith(true)
   })
 
   it('lists only AIRFLOW providers with valid credentials in the orchestration dropdown', async () => {
