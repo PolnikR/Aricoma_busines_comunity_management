@@ -22,7 +22,7 @@ interface SnapshotPolicyModalProps {
 
 const EMPTY_FORM: SnapshotPolicyFormData = {
   id: '', name: '', description: '', level: '', frequency_value: '1', frequency_unit: 'minutes',
-  retention_value: '1', retention_unit: 'days', max_snapshots: '', enabled: true,
+  retention_value: '1', retention_unit: 'days', max_snapshots: '', flashcopy_copy_rate: '0', enabled: true,
 }
 
 function toFormData(policy: SnapshotPolicyRecordOutput): SnapshotPolicyFormData {
@@ -36,6 +36,7 @@ function toFormData(policy: SnapshotPolicyRecordOutput): SnapshotPolicyFormData 
     retention_value: String(policy.retention_value),
     retention_unit: policy.retention_unit,
     max_snapshots: policy.max_snapshots == null ? '' : String(policy.max_snapshots),
+    flashcopy_copy_rate: String(policy.flashcopy_copy_rate),
     enabled: policy.enabled,
   }
 }
@@ -93,6 +94,7 @@ export function SnapshotPolicyModal({ open, onClose, existingPolicies, policy }:
     const frequency = Number(formData.frequency_value)
     const retention = Number(formData.retention_value)
     const maximum = formData.max_snapshots === '' ? null : Number(formData.max_snapshots)
+    const copyRate = Number(formData.flashcopy_copy_rate)
     if (!formData.id.trim()) next.id = t('snapshotPolicies.validation.idRequired')
     else if (!isEdit && existingPolicies.some(entry => entry.id === formData.id.trim())) next.id = t('snapshotPolicies.validation.idExists')
     if (!formData.name.trim()) next.name = t('snapshotPolicies.validation.nameRequired')
@@ -101,6 +103,7 @@ export function SnapshotPolicyModal({ open, onClose, existingPolicies, policy }:
     if (!Number.isInteger(frequency) || frequency < 1) next.frequency_value = t('snapshotPolicies.validation.positiveInteger')
     if (!Number.isInteger(retention) || retention < 1) next.retention_value = t('snapshotPolicies.validation.positiveInteger')
     if (maximum !== null && (!Number.isInteger(maximum) || maximum < 1)) next.max_snapshots = t('snapshotPolicies.validation.positiveInteger')
+    if (!formData.flashcopy_copy_rate.trim() || !Number.isInteger(copyRate) || copyRate < 0 || copyRate > 150) next.flashcopy_copy_rate = t('snapshotPolicies.validation.flashcopyCopyRate')
     setErrors(next)
     return Object.keys(next).length === 0
   }
@@ -118,6 +121,7 @@ export function SnapshotPolicyModal({ open, onClose, existingPolicies, policy }:
         retention_value: Number(formData.retention_value),
         retention_unit: formData.retention_unit as SnapshotPolicyTimeUnit,
         max_snapshots: formData.max_snapshots === '' ? null : Number(formData.max_snapshots),
+        flashcopy_copy_rate: Number(formData.flashcopy_copy_rate),
         enabled: formData.enabled,
       },
     }, {
