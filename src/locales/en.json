@@ -1801,7 +1801,7 @@
   "snapshotPolicies.form.retentionUnit": "Retention unit",
   "snapshotPolicies.form.maxSnapshots": "Maximum snapshots",
   "snapshotPolicies.form.flashcopyCopyRate": "FlashCopy copy rate",
-  "snapshotPolicies.form.flashcopyCopyRateHelp": "0 disables background copy. A nonzero value enables background copy and may increase storage capacity usage. Hitachi VSP ignores this setting.",
+  "snapshotPolicies.form.flashcopyCopyRateHelp": "0 disables background copy. A nonzero value enables background copy and may increase storage capacity usage.",
   "snapshotPolicies.validation.flashcopyCopyRate": "Enter a whole number from 0 to 150",
   "snapshotPolicies.form.noLimit": "No limit",
   "snapshotPolicies.form.enabled": "Enabled",

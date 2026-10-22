@@ -1764,7 +1764,7 @@
   "snapshotPolicies.form.retentionUnit": "Jednotka uchovávání",
   "snapshotPolicies.form.maxSnapshots": "Maximum snímků",
   "snapshotPolicies.form.flashcopyCopyRate": "FlashCopy copy rate",
-  "snapshotPolicies.form.flashcopyCopyRateHelp": "Hodnota 0 vypíná kopírování na pozadí. Nenulová hodnota ho zapíná a může zvýšit spotřebu storage kapacity. Hitachi VSP toto nastavení ignoruje.",
+  "snapshotPolicies.form.flashcopyCopyRateHelp": "Hodnota 0 vypíná kopírování na pozadí. Nenulová hodnota ho zapíná a může zvýšit spotřebu storage kapacity.",
   "snapshotPolicies.validation.flashcopyCopyRate": "Zadejte celé číslo od 0 do 150",
   "snapshotPolicies.form.noLimit": "Bez limitu",
   "snapshotPolicies.form.enabled": "Povolena",

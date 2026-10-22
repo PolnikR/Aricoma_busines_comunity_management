@@ -1,6 +1,6 @@
 import type { MutationKey, Query, QueryClient } from '@tanstack/react-query'
 import { STANDARD_STALE_TIME_MS } from './cachePolicy'
-import { invalidateProviderInventoryRevision } from './providerInventoryRevision'
+import { beginProviderInventoryMutation, invalidateProviderInventoryRevision } from './providerInventoryRevision'
 
 const inventoryEndpoints = new Set(['/get_power_vm', '/get_volumes', '/tags', '/vdisks_by_vm', '/get_volume_tree'])
 
@@ -19,13 +19,17 @@ function dependentProvider(query: Query, platform: boolean): string | undefined 
 
 async function refreshDependents(client: QueryClient, id: string, platform: boolean, deleted: boolean) {
   if (!platform) invalidateProviderInventoryRevision(client, [id])
+  const operation = platform ? undefined : beginProviderInventoryMutation(client, id, deleted)
   const predicate = (query: Query) => {
     const provider = dependentProvider(query, platform)
     return provider !== false && (provider === undefined || provider === id)
   }
   await client.cancelQueries({ predicate })
+  if (operation && !operation.isCurrent()) return
   if (deleted) client.removeQueries({ predicate: query => dependentProvider(query, platform) === id })
+  if (operation && !operation.isCurrent()) return
   await client.invalidateQueries({ predicate })
+  operation?.complete()
 }
 
 function credentialProviders(client: QueryClient, credentialId: string, platform: boolean) {

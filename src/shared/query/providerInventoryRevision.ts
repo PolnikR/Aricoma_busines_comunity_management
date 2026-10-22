@@ -8,18 +8,62 @@ export type ProviderInventoryRevision = Readonly<{
 interface RevisionState {
   providers: Map<string, number>
   infraEpoch: number
+  lifecycle: Map<string, { deleted: boolean }>
+  listeners: Map<string, Set<() => void>>
 }
 
-// Validity metadata only: shared by a client's consumers, independent of query GC.
+// Client-local result validity and explicit deletion, independent of query GC.
 const revisions = new WeakMap<QueryClient, RevisionState>()
 
 function revisionState(client: QueryClient): RevisionState {
   let state = revisions.get(client)
   if (!state) {
-    state = { providers: new Map(), infraEpoch: 0 }
+    state = { providers: new Map(), infraEpoch: 0, lifecycle: new Map(), listeners: new Map() }
     revisions.set(client, state)
   }
   return state
+}
+
+export function isProviderInventoryDeleted(client: QueryClient, providerId: string | undefined): boolean {
+  return providerId !== undefined && (revisionState(client).lifecycle.get(providerId)?.deleted ?? false)
+}
+
+export function subscribeProviderInventoryDeleted(client: QueryClient, providerId: string | undefined, listener: () => void): () => void {
+  if (providerId === undefined) return () => undefined
+  const state = revisionState(client)
+  let listeners = state.listeners.get(providerId)
+  if (!listeners) {
+    listeners = new Set()
+    state.listeners.set(providerId, listeners)
+  }
+  const subscription = listeners
+  subscription.add(listener)
+  return () => {
+    subscription.delete(listener)
+    if (subscription.size === 0 && state.listeners.get(providerId) === subscription) state.listeners.delete(providerId)
+  }
+}
+
+// Entry identity orders only successful infra provider operations. Credential
+// revisions must not supersede a pending recreate or clear a known deletion.
+export function beginProviderInventoryMutation(client: QueryClient, providerId: string, deleted: boolean) {
+  const state = revisionState(client)
+  const previousDeleted = isProviderInventoryDeleted(client, providerId)
+  const entry = { deleted: deleted || previousDeleted }
+  state.lifecycle.set(providerId, entry)
+  const notify = () => { state.listeners.get(providerId)?.forEach(listener => { listener() }) }
+  if (entry.deleted !== previousDeleted) notify()
+  const isCurrent = () => state.lifecycle.get(providerId) === entry
+  return {
+    isCurrent,
+    complete: () => {
+      // Recreate becomes observable only after its cancellation/invalidation.
+      if (!deleted && isCurrent() && entry.deleted) {
+        entry.deleted = false
+        notify()
+      }
+    },
+  }
 }
 
 export function getProviderInventoryRevision(client: QueryClient, providerId: string): ProviderInventoryRevision {
