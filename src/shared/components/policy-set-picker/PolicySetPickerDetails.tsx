@@ -64,6 +64,7 @@ function buildSections(
   const snapshotFacts: PolicyDetailFact[] = snapshotPolicy ? [
     { label: t('details.frequency'), value: t('snapshotPolicies.every').replace('{interval}', formatInterval(snapshotPolicy.frequency_value, snapshotPolicy.frequency_unit, 'snapshotPolicies', t)) },
     { label: t('details.retention'), value: formatInterval(snapshotPolicy.retention_value, snapshotPolicy.retention_unit, 'snapshotPolicies', t) },
+    { label: t('snapshotPolicies.form.flashcopyCopyRate'), value: snapshotPolicy.flashcopy_copy_rate },
     { label: t('details.status'), value: t(snapshotPolicy.enabled ? 'snapshotPolicies.enabled' : 'snapshotPolicies.disabled') },
   ] : []
 

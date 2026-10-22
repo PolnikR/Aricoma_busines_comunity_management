@@ -22,6 +22,7 @@ const policy: SnapshotPolicyRecordOutput = {
   retention_value: 3,
   retention_unit: 'hours',
   max_snapshots: 12,
+  flashcopy_copy_rate: 0,
   enabled: true,
 }
 
@@ -35,10 +36,18 @@ const archivePolicy: SnapshotPolicyRecordOutput = {
   retention_value: 90,
   retention_unit: 'days',
   max_snapshots: null,
+  flashcopy_copy_rate: 0,
   enabled: false,
 }
 
 describe('SnapshotPoliciesTable', () => {
+  it.each([0, 50])('shows copy rate %s in the detail overview', async rate => {
+    render(<SnapshotPoliciesTable policies={[{ ...policy, flashcopy_copy_rate: rate }]} isLoading={false} error={null} isRetrying={false} onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No request in this component test. */ }} />)
+    await userEvent.click(screen.getByText('Critical — 15 min'))
+    const dialog = screen.getByRole('dialog', { name: 'Snapshot policy detail' })
+    expect(detailSectionsFields(dialog)['FlashCopy copy rate']).toBe(String(rate))
+  })
+
   it('renders an empty-string description as a dash', () => {
     render(
       <SnapshotPoliciesTable
@@ -93,7 +102,7 @@ describe('SnapshotPoliciesTable', () => {
     // One shared Overview field list in the original drawer order; the ID is a field, not a technical block.
     const overview = within(modelCDrawer).getByRole('region', { name: 'Overview' })
     expect(overview.querySelectorAll('dl')).toHaveLength(1)
-    expect(detailSectionsLabels(modelCDrawer)).toEqual(['Policy ID', 'Description', 'Level', 'Frequency', 'Retention', 'Maximum snapshots', 'Status'])
+    expect(detailSectionsLabels(modelCDrawer)).toEqual(['Policy ID', 'Description', 'Level', 'Frequency', 'Retention', 'Maximum snapshots', 'FlashCopy copy rate', 'Status'])
     expect(within(overview).getByText('critical-15m')).toHaveClass('font-mono')
     expect(within(overview).getByRole('button', { name: 'Copy Policy ID' })).toBeInTheDocument()
     // Level stays a header badge and is repeated in Overview.

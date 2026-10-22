@@ -122,6 +122,12 @@ const cleanRoomPolicies = [
 ] as const
 
 describe('PolicySetPicker', () => {
+  it.each([0, 50])('shows snapshot copy rate %s in the selected policy set', rate => {
+    useSnapshotPoliciesMock.mockReturnValue({ status: 'success', fetchStatus: 'idle', data: snapshotPolicies.map(policy => ({ ...policy, flashcopy_copy_rate: rate })), isLoading: false, error: null })
+    render(<PolicySetPicker policySets={policySets} selectedPolicySetId="tier2-apps" onSelect={vi.fn()} />)
+    expect(screen.getByRole('region', { name: 'Selected policy set details' })).toHaveTextContent(`FlashCopy copy rate${String(rate)}`)
+  })
+
   it('keeps cached recovery names searchable and retries the named source while other details remain', async () => {
     const refetch = vi.fn()
     useRecoveryAppPoliciesMock.mockReturnValue({ status: 'error', fetchStatus: 'idle', data: recoveryAppPolicies, error: new Error('refresh failed'), refetch })

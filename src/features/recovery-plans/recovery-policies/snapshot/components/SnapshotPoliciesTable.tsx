@@ -290,6 +290,7 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
               <DetailField label={t('details.frequency')} value={t('snapshotPolicies.every').replace('{interval}', formatInterval(selected.frequency_value, selected.frequency_unit, t))} emphasis />
               <DetailField label={t('details.retention')} value={formatInterval(selected.retention_value, selected.retention_unit, t)} />
               <DetailField label={t('details.maxSnapshots')} value={selected.max_snapshots == null ? t('snapshotPolicies.noLimit') : String(selected.max_snapshots)} />
+              <DetailField label={t('snapshotPolicies.form.flashcopyCopyRate')} value={String(selected.flashcopy_copy_rate)} />
               <DetailField label={t('details.status')} value={t(selected.enabled ? 'snapshotPolicies.enabled' : 'snapshotPolicies.disabled')} />
             </DetailOverview>
           </DetailViewSection>
