@@ -1,3 +1,4 @@
+import type { PostDeletePhase } from '../../hooks/usePostDeleteRefresh'
 import { useMemo, useState } from 'react'
 import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { Alert } from '@/shared/components/alert/Alert'
@@ -78,6 +79,8 @@ function getColumns(
 }
 
 interface PolicySetsTableProps {
+  postDeletePhase: PostDeletePhase
+  onDeleted: () => Promise<void>
   policySets: PolicySetRecordOutput[]
   isLoading: boolean
   error: Error | null
@@ -85,14 +88,19 @@ interface PolicySetsTableProps {
   onRetry: () => void
 }
 
-export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRetry }: PolicySetsTableProps) {
+export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRetry, postDeletePhase, onDeleted }: PolicySetsTableProps) {
   const { t } = useTranslation()
-  const deletePolicySet = useDeletePolicySet()
   const catalog = usePolicyCatalog()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editing, setEditing] = useState<PolicySetRecordOutput | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<PolicySetRecordOutput | null>(null)
   const [jsonViewId, setJsonViewId] = useState<string | null>(null)
+  const deletePolicySet = useDeletePolicySet({ mutation: { onSuccess: () => {
+    setDeleteTarget(null)
+    setSelectedId(null)
+    void onDeleted()
+  } } })
+  const isRowsLoading = isLoading || postDeletePhase === 'refreshing'
   const rows = useMemo(() => policySets, [policySets])
   const selected = rows.find(policySet => policySet.id === selectedId) ?? null
   const jsonViewed = rows.find(policySet => policySet.id === jsonViewId) ?? null
@@ -147,7 +155,7 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
       page={table.page}
       pageSize={table.pageSize}
       total={table.total}
-      isLoading={isLoading}
+      isLoading={isRowsLoading}
       onPageChange={table.setPage}
       onPageSizeChange={table.setPageSize}
     />
@@ -162,9 +170,9 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
       >
         <DataTableRequestState
           hasCachedData={policySets.length > 0}
-          error={error ? {
-            title: t('policySets.loadFailed'),
-            ...(loadErrorDetail ? { description: loadErrorDetail } : {}),
+          error={(error || postDeletePhase === 'error') && postDeletePhase !== 'refreshing' ? {
+            title: t(postDeletePhase === 'error' ? 'postDeleteRefresh.title' : 'policySets.loadFailed'),
+            ...(postDeletePhase === 'error' ? { description: [t('postDeleteRefresh.description'), loadErrorDetail].filter(Boolean).join(' ') } : loadErrorDetail ? { description: loadErrorDetail } : {}),
             retryLabel: t('buttons.retry'),
             isRetrying,
             onRetry,
@@ -173,11 +181,11 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
           <DataTable
             columns={getColumns(t, setJsonViewId)}
             rows={table.pageItems}
-            isLoading={isLoading}
+            isLoading={isRowsLoading}
             rowKey={policySet => policySet.id}
             density={table.density}
             minWidthClassName="min-w-200"
-            ariaLabel={isLoading ? t('policySets.loading') : t('policySets.tableLabel')}
+            ariaLabel={isRowsLoading ? t('policySets.loading') : t('policySets.tableLabel')}
             rowAriaLabel={policySet => policySet.name}
             onRowClick={policySet => { setSelectedId(policySet.id) }}
             selectedRowKey={selectedId}
@@ -229,7 +237,6 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
         onConfirm={() => {
           if (!deleteTarget) return
           deletePolicySet.mutate({ params: { policy_set_id: deleteTarget.id } }, {
-            onSuccess: () => { setDeleteTarget(null); setSelectedId(null) },
             onError: () => { setDeleteTarget(null) },
           })
         }}

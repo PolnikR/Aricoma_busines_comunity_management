@@ -1,3 +1,4 @@
+import type { PostDeletePhase } from '../../../hooks/usePostDeleteRefresh'
 import { useMemo, useState } from 'react'
 import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { Alert } from '@/shared/components/alert/Alert'
@@ -115,6 +116,8 @@ function getColumns(
 }
 
 interface SnapshotPoliciesTableProps {
+  postDeletePhase: PostDeletePhase
+  onDeleted: () => Promise<void>
   policies: SnapshotPolicyRecordOutput[]
   isLoading: boolean
   error: Error | null
@@ -122,9 +125,8 @@ interface SnapshotPoliciesTableProps {
   onRetry: () => void
 }
 
-export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, onRetry }: SnapshotPoliciesTableProps) {
+export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, onRetry, postDeletePhase, onDeleted }: SnapshotPoliciesTableProps) {
   const { t } = useTranslation()
-  const deletePolicy = useDeletePolicy()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editing, setEditing] = useState<SnapshotPolicyRecordOutput | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<SnapshotPolicyRecordOutput | null>(null)
@@ -134,6 +136,12 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
   const filterOptions = useMemo(() => ({
     levels: Array.from(new Set(policies.map(policy => policy.level ?? ''))).sort(),
   }), [policies])
+  const deletePolicy = useDeletePolicy({ mutation: { onSuccess: () => {
+    setDeleteTarget(null)
+    setSelectedId(null)
+    void onDeleted()
+  } } })
+  const isRowsLoading = isLoading || postDeletePhase === 'refreshing'
   const rows = useMemo(() => policies.filter(policy => (
     (!filters.level || policy.level === filters.level)
     && (!filters.status || (filters.status === 'enabled' ? policy.enabled : !policy.enabled))
@@ -218,7 +226,7 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
       page={table.page}
       pageSize={table.pageSize}
       total={table.total}
-      isLoading={isLoading}
+      isLoading={isRowsLoading}
       onPageChange={table.setPage}
       onPageSizeChange={table.setPageSize}
     />
@@ -233,9 +241,9 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
       >
       <DataTableRequestState
         hasCachedData={policies.length > 0}
-        error={error ? {
-          title: t('snapshotPolicies.loadFailed'),
-          ...(loadErrorDetail ? { description: loadErrorDetail } : {}),
+        error={(error || postDeletePhase === 'error') && postDeletePhase !== 'refreshing' ? {
+          title: t(postDeletePhase === 'error' ? 'postDeleteRefresh.title' : 'snapshotPolicies.loadFailed'),
+          ...(postDeletePhase === 'error' ? { description: [t('postDeleteRefresh.description'), loadErrorDetail].filter(Boolean).join(' ') } : loadErrorDetail ? { description: loadErrorDetail } : {}),
           retryLabel: t('buttons.retry'),
           isRetrying,
           onRetry,
@@ -244,11 +252,11 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
         <DataTable
           columns={getColumns(t, setJsonViewId)}
           rows={table.pageItems}
-          isLoading={isLoading}
+          isLoading={isRowsLoading}
           rowKey={policy => policy.id}
           density={table.density}
           minWidthClassName="min-w-260"
-          ariaLabel={isLoading ? t('snapshotPolicies.loading') : t('snapshotPolicies.tableLabel')}
+          ariaLabel={isRowsLoading ? t('snapshotPolicies.loading') : t('snapshotPolicies.tableLabel')}
           rowAriaLabel={policy => policy.name}
           onRowClick={policy => { setSelectedId(policy.id) }}
           selectedRowKey={selectedId}
@@ -303,7 +311,6 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
         onConfirm={() => {
           if (!deleteTarget) return
           deletePolicy.mutate({ params: { policy_id: deleteTarget.id } }, {
-            onSuccess: () => { setDeleteTarget(null); setSelectedId(null) },
             onError: () => { setDeleteTarget(null) },
           })
         }}

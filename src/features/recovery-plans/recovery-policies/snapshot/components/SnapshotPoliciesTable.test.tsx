@@ -46,7 +46,7 @@ describe('SnapshotPoliciesTable', () => {
         isLoading={false}
         error={null}
         isRetrying={false}
-        onRetry={vi.fn()}
+        onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No request in this component test. */ }}
       />,
     )
 
@@ -55,7 +55,7 @@ describe('SnapshotPoliciesTable', () => {
 
 
   it('keeps the toolbar and real column labels visible while rows load', () => {
-    render(<SnapshotPoliciesTable policies={[]} isLoading error={null} isRetrying={false} onRetry={vi.fn()} />)
+    render(<SnapshotPoliciesTable policies={[]} isLoading error={null} isRetrying={false} onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No request in this component test. */ }} />)
 
     expect(screen.getByRole('region', { name: 'Snapshot policies table' })).toBeInTheDocument()
     expect(screen.getByRole('searchbox', { name: 'Search snapshot policies' })).toBeVisible()
@@ -72,7 +72,7 @@ describe('SnapshotPoliciesTable', () => {
         isLoading={false}
         error={null}
         isRetrying={false}
-        onRetry={vi.fn()}
+        onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No request in this component test. */ }}
       />,
     )
 
@@ -116,7 +116,7 @@ describe('SnapshotPoliciesTable', () => {
         isLoading={false}
         error={null}
         isRetrying={false}
-        onRetry={vi.fn()}
+        onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No request in this component test. */ }}
       />,
     )
 
@@ -137,7 +137,7 @@ describe('SnapshotPoliciesTable', () => {
         isLoading={false}
         error={new Error('private backend details')}
         isRetrying={false}
-        onRetry={vi.fn()}
+        onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No request in this component test. */ }}
       />,
     )
 
@@ -154,7 +154,7 @@ describe('SnapshotPoliciesTable', () => {
         isLoading={false}
         error={new Error('Background refresh failed')}
         isRetrying={false}
-        onRetry={vi.fn()}
+        onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No request in this component test. */ }}
       />,
     )
 
@@ -166,7 +166,7 @@ describe('SnapshotPoliciesTable', () => {
   })
 
   it('shows supported backend detail in the load error', () => {
-    render(<SnapshotPoliciesTable policies={[]} isLoading={false} error={new OrvalApiError(503, 'Unavailable', { detail: 'Snapshot service unavailable.' })} isRetrying={false} onRetry={vi.fn()} />)
+    render(<SnapshotPoliciesTable policies={[]} isLoading={false} error={new OrvalApiError(503, 'Unavailable', { detail: 'Snapshot service unavailable.' })} isRetrying={false} onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No request in this component test. */ }} />)
     expect(screen.getByRole('alert')).toHaveTextContent('Snapshot service unavailable.')
   })
 
@@ -178,7 +178,7 @@ describe('SnapshotPoliciesTable', () => {
         isLoading={false}
         error={null}
         isRetrying={false}
-        onRetry={vi.fn()}
+        onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No request in this component test. */ }}
       />,
     )
 
@@ -197,7 +197,7 @@ describe('SnapshotPoliciesTable', () => {
         isLoading={false}
         error={null}
         isRetrying={false}
-        onRetry={vi.fn()}
+        onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No request in this component test. */ }}
       />,
     )
 
@@ -218,7 +218,7 @@ describe('SnapshotPoliciesTable', () => {
         isLoading={false}
         error={null}
         isRetrying={false}
-        onRetry={vi.fn()}
+        onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No request in this component test. */ }}
       />,
     )
 
@@ -239,7 +239,7 @@ describe('SnapshotPoliciesTable', () => {
         isLoading={false}
         error={null}
         isRetrying={false}
-        onRetry={vi.fn()}
+        onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No request in this component test. */ }}
       />,
     )
 

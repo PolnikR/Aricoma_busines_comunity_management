@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { usePostDeleteRefresh } from '../../../hooks/usePostDeleteRefresh'
 import { useNavigate } from 'react-router'
 import { Button } from '@/shared/components/button/Button'
 import { useTranslation } from '@/hooks/useTranslation'
@@ -17,6 +18,7 @@ export function CleanRoomPoliciesPage() {
   const { data: policies = [], isLoading, isFetching, error, refetch } = useGetCleanRoomPolicies({
     query: { select: selectCleanRoomPolicies },
   })
+  const postDelete = usePostDeleteRefresh(() => refetch({ cancelRefetch: false, throwOnError: false }))
   const policyTabs: readonly TabItem<RecoveryPolicyTab>[] = [
     { value: 'snapshot', label: t('recoveryPolicies.tabs.snapshot') },
     { value: 'application-recovery', label: t('recoveryPolicies.tabs.applicationRecovery') },
@@ -33,17 +35,19 @@ export function CleanRoomPoliciesPage() {
         title={t('recoveryPolicies.title')}
         description={t('recoveryPolicies.description')}
         isFetching={isFetching}
-        onRefresh={() => { void refetch() }}
+        onRefresh={() => { void postDelete.refresh() }}
         actions={<Button size="sm" variant="outline" onClick={() => { setIsCreateModalOpen(true) }}>{t('pages.cleanRoomPolicies.addButton')}</Button>}
         inventoryTitle={t('pages.cleanRoomPolicies.inventoryTitle')}
         inventoryDescription={t('pages.cleanRoomPolicies.inventoryDescription')}
       >
         <CleanRoomPoliciesTable
           policies={policies}
+          postDeletePhase={postDelete.phase}
+          onDeleted={postDelete.afterDelete}
           isLoading={isLoading}
           error={error instanceof Error ? error : null}
           isRetrying={isFetching}
-          onRetry={() => { void refetch() }}
+          onRetry={() => { void postDelete.refresh() }}
         />
       </RecoveryPolicyPageShell>
 

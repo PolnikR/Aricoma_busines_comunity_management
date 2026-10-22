@@ -1,3 +1,4 @@
+import type { PostDeletePhase } from '../../../hooks/usePostDeleteRefresh'
 import { useMemo, useState } from 'react'
 import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { Alert } from '@/shared/components/alert/Alert'
@@ -115,6 +116,8 @@ function getColumns(
 }
 
 interface RecoveryAppPoliciesTableProps {
+  postDeletePhase: PostDeletePhase
+  onDeleted: () => Promise<void>
   policies: RecoveryAppPolicyRecordOutput[]
   isLoading: boolean
   error: Error | null
@@ -122,9 +125,8 @@ interface RecoveryAppPoliciesTableProps {
   onRetry: () => void
 }
 
-export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetrying, onRetry }: RecoveryAppPoliciesTableProps) {
+export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetrying, onRetry, postDeletePhase, onDeleted }: RecoveryAppPoliciesTableProps) {
   const { t } = useTranslation()
-  const deletePolicy = useDeleteRecoveryAppPolicy()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editing, setEditing] = useState<RecoveryAppPolicyRecordOutput | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<RecoveryAppPolicyRecordOutput | null>(null)
@@ -132,6 +134,12 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
   const [filters, setFilters] = useState<RecoveryAppPolicyFilters>(EMPTY_FILTERS)
   const [pendingFilters, setPendingFilters] = useState<RecoveryAppPolicyFilters>(EMPTY_FILTERS)
   const filterOptions = useMemo(() => ({ levels: Array.from(new Set(policies.map(policy => policy.level ?? ''))).sort() }), [policies])
+  const deletePolicy = useDeleteRecoveryAppPolicy({ mutation: { onSuccess: () => {
+    setDeleteTarget(null)
+    setSelectedId(null)
+    void onDeleted()
+  } } })
+  const isRowsLoading = isLoading || postDeletePhase === 'refreshing'
   const rows = useMemo(() => policies.filter(policy => (
     (!filters.level || policy.level === filters.level)
     && (!filters.status || (filters.status === 'enabled' ? policy.enabled : !policy.enabled))
@@ -193,20 +201,20 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
     </>
   )
 
-  const pagination = (!error || policies.length > 0) ? <DataTablePagination page={table.page} pageSize={table.pageSize} total={table.total} isLoading={isLoading} onPageChange={table.setPage} onPageSizeChange={table.setPageSize} /> : null
+  const pagination = (!error || policies.length > 0) ? <DataTablePagination page={table.page} pageSize={table.pageSize} total={table.total} isLoading={isRowsLoading} onPageChange={table.setPage} onPageSizeChange={table.setPageSize} /> : null
 
   return (
     <>
       <DataTableSurface ariaLabel={t('recoveryAppPolicies.tableLabel')} toolbar={toolbar} pagination={pagination}>
-      <DataTableRequestState hasCachedData={policies.length > 0} error={error ? { title: t('recoveryAppPolicies.loadFailed'), ...(loadErrorDetail ? { description: loadErrorDetail } : {}), retryLabel: t('buttons.retry'), isRetrying, onRetry } : null}>
+      <DataTableRequestState hasCachedData={policies.length > 0} error={(error || postDeletePhase === 'error') && postDeletePhase !== 'refreshing' ? { title: t(postDeletePhase === 'error' ? 'postDeleteRefresh.title' : 'recoveryAppPolicies.loadFailed'), ...(postDeletePhase === 'error' ? { description: [t('postDeleteRefresh.description'), loadErrorDetail].filter(Boolean).join(' ') } : loadErrorDetail ? { description: loadErrorDetail } : {}), retryLabel: t('buttons.retry'), isRetrying, onRetry } : null}>
         <DataTable
           columns={getColumns(t, setJsonViewId)}
           rows={table.pageItems}
-          isLoading={isLoading}
+          isLoading={isRowsLoading}
           rowKey={policy => policy.id}
           density={table.density}
           minWidthClassName="min-w-260"
-          ariaLabel={isLoading ? t('recoveryAppPolicies.loading') : t('recoveryAppPolicies.tableLabel')}
+          ariaLabel={isRowsLoading ? t('recoveryAppPolicies.loading') : t('recoveryAppPolicies.tableLabel')}
           rowAriaLabel={policy => policy.name}
           onRowClick={policy => { setSelectedId(policy.id) }}
           selectedRowKey={selectedId}
@@ -265,7 +273,7 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
         onCancel={() => { setDeleteTarget(null) }}
         onConfirm={() => {
           if (!deleteTarget) return
-          deletePolicy.mutate({ params: { policy_id: deleteTarget.id } }, { onSuccess: () => { setDeleteTarget(null); setSelectedId(null) }, onError: () => { setDeleteTarget(null) } })
+          deletePolicy.mutate({ params: { policy_id: deleteTarget.id } }, { onError: () => { setDeleteTarget(null) } })
         }}
       />
 

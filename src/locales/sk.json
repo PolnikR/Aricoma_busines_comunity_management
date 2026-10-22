@@ -1,4 +1,6 @@
 {
+  "postDeleteRefresh.title": "Vymazané, ale zoznam sa nepodarilo obnoviť",
+  "postDeleteRefresh.description": "Vymazanie prebehlo úspešne. Zobrazujú sa predchádzajúce údaje, ktoré môžu stále obsahovať vymazaný záznam. Skúste znova načítať zoznam.",
   "policyCatalog.waiting": "Čaká sa na údaje politík.",
   "policyCatalog.paused": "Čaká sa na pripojenie na načítanie politík.",
   "policyCatalog.refreshing": "Obnovujú sa údaje politík…",

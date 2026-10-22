@@ -1,3 +1,4 @@
+import type { PostDeletePhase } from '../../../hooks/usePostDeleteRefresh'
 import { useMemo, useState } from 'react'
 import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { Alert } from '@/shared/components/alert/Alert'
@@ -75,6 +76,8 @@ function getColumns(
 }
 
 interface CleanRoomPoliciesTableProps {
+  postDeletePhase: PostDeletePhase
+  onDeleted: () => Promise<void>
   policies: CleanRoomPolicyRecordOutput[]
   isLoading: boolean
   error: Error | null
@@ -82,13 +85,18 @@ interface CleanRoomPoliciesTableProps {
   onRetry: () => void
 }
 
-export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying, onRetry }: CleanRoomPoliciesTableProps) {
+export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying, onRetry, postDeletePhase, onDeleted }: CleanRoomPoliciesTableProps) {
   const { t } = useTranslation()
-  const deletePolicy = useDeleteCleanRoomPolicy()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editing, setEditing] = useState<CleanRoomPolicyRecordOutput | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<CleanRoomPolicyRecordOutput | null>(null)
   const [jsonViewId, setJsonViewId] = useState<string | null>(null)
+  const deletePolicy = useDeleteCleanRoomPolicy({ mutation: { onSuccess: () => {
+    setDeleteTarget(null)
+    setSelectedId(null)
+    void onDeleted()
+  } } })
+  const isRowsLoading = isLoading || postDeletePhase === 'refreshing'
   const rows = useMemo(() => policies, [policies])
   const selected = rows.find(policy => policy.id === selectedId) ?? null
   const jsonViewed = rows.find(policy => policy.id === jsonViewId) ?? null
@@ -116,7 +124,7 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
       page={table.page}
       pageSize={table.pageSize}
       total={table.total}
-      isLoading={isLoading}
+      isLoading={isRowsLoading}
       onPageChange={table.setPage}
       onPageSizeChange={table.setPageSize}
     />
@@ -127,9 +135,9 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
       <DataTableSurface ariaLabel={t('cleanRoomPolicies.tableLabel')} toolbar={toolbar} pagination={pagination}>
       <DataTableRequestState
         hasCachedData={policies.length > 0}
-        error={error ? {
-          title: t('cleanRoomPolicies.loadFailed'),
-          ...(loadErrorDetail ? { description: loadErrorDetail } : {}),
+        error={(error || postDeletePhase === 'error') && postDeletePhase !== 'refreshing' ? {
+          title: t(postDeletePhase === 'error' ? 'postDeleteRefresh.title' : 'cleanRoomPolicies.loadFailed'),
+          ...(postDeletePhase === 'error' ? { description: [t('postDeleteRefresh.description'), loadErrorDetail].filter(Boolean).join(' ') } : loadErrorDetail ? { description: loadErrorDetail } : {}),
           retryLabel: t('buttons.retry'),
           isRetrying,
           onRetry,
@@ -138,11 +146,11 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
         <DataTable
           columns={getColumns(t, setJsonViewId)}
           rows={table.pageItems}
-          isLoading={isLoading}
+          isLoading={isRowsLoading}
           rowKey={policy => policy.id}
           density={table.density}
           minWidthClassName="min-w-180"
-          ariaLabel={isLoading ? t('cleanRoomPolicies.loading') : t('cleanRoomPolicies.tableLabel')}
+          ariaLabel={isRowsLoading ? t('cleanRoomPolicies.loading') : t('cleanRoomPolicies.tableLabel')}
           rowAriaLabel={policy => policy.name}
           onRowClick={policy => { setSelectedId(policy.id) }}
           selectedRowKey={selectedId}
@@ -193,7 +201,6 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
         onConfirm={() => {
           if (!deleteTarget) return
           deletePolicy.mutate({ params: { policy_id: deleteTarget.id } }, {
-            onSuccess: () => { setDeleteTarget(null); setSelectedId(null) },
             onError: () => { setDeleteTarget(null) },
           })
         }}

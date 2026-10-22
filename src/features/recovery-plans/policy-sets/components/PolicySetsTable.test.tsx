@@ -53,7 +53,7 @@ const partialPolicySet: PolicySetRecordOutput = {
 describe('PolicySetsTable', () => {
   it('distinguishes a missing reference from an unverified catalog without changing the policy count', async () => {
     const record = { ...policySet, snapshot_policy_id: 'historic-snapshot' }
-    const props = { policySets: [record], isLoading: false, error: null, isRetrying: false, onRetry: vi.fn() }
+    const props = { postDeletePhase: 'idle' as const, onDeleted: async () => { /* No list request in this component test. */ }, policySets: [record], isLoading: false, error: null, isRetrying: false, onRetry: vi.fn() }
     const view = render(<PolicySetsTable {...props} />)
     await userEvent.click(screen.getByText(record.name))
     expect(screen.getByText('historic-snapshot')).toBeInTheDocument()
@@ -76,6 +76,8 @@ describe('PolicySetsTable', () => {
         error={null}
         isRetrying={false}
         onRetry={vi.fn()}
+        postDeletePhase="idle"
+        onDeleted={async () => { /* No list request in this component test. */ }}
       />,
     )
 
@@ -90,6 +92,8 @@ describe('PolicySetsTable', () => {
         error={null}
         isRetrying={false}
         onRetry={vi.fn()}
+        postDeletePhase="idle"
+        onDeleted={async () => { /* No list request in this component test. */ }}
       />,
     )
 
@@ -108,6 +112,8 @@ describe('PolicySetsTable', () => {
         error={null}
         isRetrying={false}
         onRetry={vi.fn()}
+        postDeletePhase="idle"
+        onDeleted={async () => { /* No list request in this component test. */ }}
       />,
     )
 
@@ -127,6 +133,8 @@ describe('PolicySetsTable', () => {
         error={null}
         isRetrying={false}
         onRetry={vi.fn()}
+        postDeletePhase="idle"
+        onDeleted={async () => { /* No list request in this component test. */ }}
       />,
     )
 
@@ -171,6 +179,8 @@ describe('PolicySetsTable', () => {
         error={null}
         isRetrying={false}
         onRetry={vi.fn()}
+        postDeletePhase="idle"
+        onDeleted={async () => { /* No list request in this component test. */ }}
       />,
     )
 
@@ -192,6 +202,8 @@ describe('PolicySetsTable', () => {
         error={null}
         isRetrying={false}
         onRetry={vi.fn()}
+        postDeletePhase="idle"
+        onDeleted={async () => { /* No list request in this component test. */ }}
       />,
     )
 
@@ -206,6 +218,8 @@ describe('PolicySetsTable', () => {
         error={new Error('private backend details')}
         isRetrying={false}
         onRetry={vi.fn()}
+        postDeletePhase="idle"
+        onDeleted={async () => { /* No list request in this component test. */ }}
       />,
     )
 
@@ -224,6 +238,8 @@ describe('PolicySetsTable', () => {
         error={new Error('Policy set request failed with status 503', { cause: apiError })}
         isRetrying={false}
         onRetry={vi.fn()}
+        postDeletePhase="idle"
+        onDeleted={async () => { /* No list request in this component test. */ }}
       />,
     )
 
@@ -239,6 +255,8 @@ describe('PolicySetsTable', () => {
         error={new Error('background refresh failed')}
         isRetrying={false}
         onRetry={vi.fn()}
+        postDeletePhase="idle"
+        onDeleted={async () => { /* No list request in this component test. */ }}
       />,
     )
 
@@ -263,6 +281,8 @@ describe('PolicySetsTable', () => {
         error={null}
         isRetrying={false}
         onRetry={vi.fn()}
+        postDeletePhase="idle"
+        onDeleted={async () => { /* No list request in this component test. */ }}
       />,
     )
 
@@ -276,6 +296,8 @@ describe('PolicySetsTable', () => {
         error={null}
         isRetrying={false}
         onRetry={vi.fn()}
+        postDeletePhase="idle"
+        onDeleted={async () => { /* No list request in this component test. */ }}
       />,
     )
 

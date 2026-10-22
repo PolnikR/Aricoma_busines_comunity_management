@@ -1,6 +1,6 @@
 # Implementačný plán – Skeleton riadkov po vymazaní policy
 
-Dátum: 2026-10-22. Stav: návrh na review; implementácia nezačala.
+Dátum: 2026-10-22. Stav: implementované podľa schválenia `executing-plans inline`; výsledky overenia v TODO.
 TODO: [policy-delete-refetch-skeleton-todo.md](policy-delete-refetch-skeleton-todo.md).
 Rozsah: Snapshot Policies, Recovery Application Policies, Clean Room Policies a Policy Sets.
 

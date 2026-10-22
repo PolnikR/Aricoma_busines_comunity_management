@@ -1,4 +1,6 @@
 {
+  "postDeleteRefresh.title": "Deleted, but the list could not be refreshed",
+  "postDeleteRefresh.description": "Deletion succeeded. Previous data is shown and may still contain the deleted record. Retry loading the list.",
   "policyCatalog.waiting": "Waiting for policy data.",
   "policyCatalog.paused": "Waiting for a connection to load policy data.",
   "policyCatalog.refreshing": "Refreshing policy data…",

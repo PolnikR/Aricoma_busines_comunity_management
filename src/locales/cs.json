@@ -1,4 +1,6 @@
 {
+  "postDeleteRefresh.title": "Smazáno, ale seznam se nepodařilo obnovit",
+  "postDeleteRefresh.description": "Smazání proběhlo úspěšně. Zobrazují se předchozí údaje, které mohou stále obsahovat smazaný záznam. Zkuste znovu načíst seznam.",
   "policyCatalog.waiting": "Čeká se na údaje zásad.",
   "policyCatalog.paused": "Čeká se na připojení pro načtení zásad.",
   "policyCatalog.refreshing": "Obnovují se údaje zásad…",
