@@ -29,6 +29,19 @@ function setup(changes: Partial<typeof application> = {}, others: typeof applica
 }
 
 describe('Application selected orchestration HTTP contract', () => {
+  it('preserves the latest execution timestamp and duration in the existing presentation', async () => {
+    stubSelectedOrchestration({ latest: () => Response.json({
+      ...runsBody([]),
+      dag_runs: [{ dag_run_id: 'latest', state: 'success', start_date: '2026-08-19T08:51:00Z', duration: 7.45 }],
+    }) })
+    const view = setup()
+    view.open()
+    const section = view.section('Orchestration')
+    await within(section).findByText('success')
+    expect(section).toHaveTextContent(new Date('2026-08-19T08:51:00Z').toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }))
+    expect(within(section).getByText('Duration').nextElementSibling).toHaveTextContent('7s')
+  })
+
   it('retains the existing error precedence when a cached latest run fails to refresh', async () => {
     let failed = false
     stubSelectedOrchestration({ latest: () => failed

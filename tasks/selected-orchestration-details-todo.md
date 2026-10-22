@@ -168,9 +168,9 @@ git diff --check
 
 ### Task 7: Migrate Recovery Groups
 
-- [ ] Replace Group coordination with the same hook using `entityType: 'group'` and existing provider snapshot.
-- [ ] Preserve raw Group detail reference, inventory/summary run IDs, row links, mapper presentation and Group navigation.
-- [ ] Remove only newly unused imports/coordination; confirm both tables now share the selected-detail decision sequence.
+- [x] Replace Group coordination with the same hook using `entityType: 'group'` and existing provider snapshot.
+- [x] Preserve raw Group detail reference, inventory/summary run IDs, row links, mapper presentation and Group navigation.
+- [x] Remove only newly unused imports/coordination; confirm both tables now share the selected-detail decision sequence.
 
 **Dependencies:** Task 6. **Scope:** Small, table plus existing test if needed.
 
@@ -182,15 +182,15 @@ git diff --check
 
 ### Checkpoint F3 - After Tasks 6-7
 
-- [ ] Two callers use one coordination implementation; entity-specific inventory/actions and table provider sources retain their F1 contracts.
+- [x] Two callers use one coordination implementation; entity-specific inventory/actions and table provider sources retain their F1 contracts.
 
 ## F4 - Regression and acceptance
 
 ### Task 8: Verify static and focused runtime contracts
 
-- [ ] Run V-A, V-G, V-CA, V-CG, V-D, V-H and V-R, recording actual suite/test counts rather than assuming no-test success.
+- [x] Run V-A, V-G, V-CA, V-CG, V-D, V-H and V-R, recording actual suite/test counts rather than assuming no-test success.
 - [ ] Run V-Q, retaining full ESLint/layout and typecheck results; inspect the production diff for unchanged generated/cache/provider/inventory/Recovery Runs contracts.
-- [ ] Compare request evidence to F1: no initial count growth, unchanged identity and disabled gates, no new provider observer or page fan-out.
+- [x] Compare request evidence to F1: no initial count growth, unchanged identity and disabled gates, no new provider observer or page fan-out.
 
 **Dependencies:** Task 7. **Scope:** Small, evidence updates in the two planning documents; production fixes require rerunning the affected checks.
 
@@ -204,7 +204,7 @@ git diff --check
 
 - [ ] Smoke both tables: select/switch/close, Overview/Orchestration/Inventory, Push-off stored-run cases, links and navigation destinations; inspect console and endpoint-specific network counts.
 - [ ] Confirm Recovery Runs still uses page-limited visible fan-out and existing history behavior; distinguish shared-cache observer requests from new selected-detail requests.
-- [ ] Record matrix completion, remaining limitations and reviewed diff; use the plan's reverse-order rollback if acceptance fails.
+- [x] Record matrix completion, remaining limitations and reviewed diff; use the plan's reverse-order rollback if acceptance fails.
 
 **Dependencies:** Task 8. **Scope:** Small, evidence in the two documents; no visual redesign.
 
@@ -217,3 +217,5 @@ git diff --check
 ### Checkpoint F4 - Acceptance
 
 - [ ] All implementation acceptance criteria in the plan are satisfied with evidence; no additional network fan-out, cache-policy drift or entity contract drift. Any unverified browser step remains explicitly open.
+
+Execution status: F0-F3 complete. F4 focused tests, typecheck, feature-layout and diff checks passed. Full npm lint encountered an unrelated temporary QA file; browser smoke is unavailable. The remaining unchecked acceptance items are intentional and are documented in the plan.
