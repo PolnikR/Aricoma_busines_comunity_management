@@ -1,176 +1,185 @@
-﻿# Úlohy: VMware Live Refresh a provider invalidácia
+# Úlohy: Snapshot Policy FlashCopy copy rate
 
-Dátum: 2026-10-22. Plán: [plan.md](plan.md).
-Stav: plán schválený pokynom používateľa „načítaj, vykonaj inline“. T1–T4 a oba checkpointy dokončené a overené; zmeny ponechané inline na pôvodnej vetve. Bez commitu a pushu podľa zadania. Nahradenie dokončeného WWPN plánu povolil používateľ.
+Plán: [plan.md](plan.md). Stav: T1–T5 dokončené v automaticky overiteľnom rozsahu; browser kontroly nedostupné a označené nižšie. Používateľ následne povolil atómové commity vlastných zmien; push zostáva mimo rozsahu.
 
-## T1: Guard platnosti oneskoreného refreshu
+## T1: Kompatibilita kontraktu a typované fixtures
 
-**Popis:** Zaviesť minimálny QueryClient-scoped revision helper a napojiť ho na spoločnú úspešnú infra provider/credential invalidáciu a VMware snapshot. Credential vetva musí byť pokrytá už teraz, aby neskorší krok nepridával druhú cestu invalidácie.
-
-**Akceptačné kritériá:**
-- [x] Existujúci delete-provider regresný test prejde bez zmeny jeho assertion a všetkých pôvodných 20 hook testov ostane zelených.
-- [x] Shared helper izoluje QueryClient aj ID, umožní legitímny refresh po bump/recreate a odmietne starý snapshot. Token je hodnotová kópia `Readonly<{ providerRevision: number; infraEpoch: number }>` pre neprázdne provider ID; validácia porovná obe čísla, takže zmena **ktorejkoľvek** hodnoty token zneplatní. Úplný credential scope zvýši ID revision, fallback infra epoch, platform scope infra neovplyvní.
-- [x] Bump nastane pred prvým await invalidácie, aj ak query už neexistuje; test s pozastaveným cancellation preukáže odmietnutie starej odpovede počas tohto okna. Neúspešné mutations revisions nemenia.
-- [x] Bez `providerId` `forceRefresh()` odmietne Promise s jasnou chybou ešte pred mutation/requestom; nevykoná HTTP ani zápis do cache, zatiaľ čo disabled `useQuery` správanie zostane nezmenené. Pôvodné úspešné requesty zachovajú pending/error settle.
-
-**Overenie:**
-- [x] `node node_modules/vitest/vitest.mjs run src/shared/query/providerInventoryRevision.test.ts src/shared/query/providerMutationInvalidation.test.tsx src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx`
-- [x] Skontrolovať diff: žiadne generated/key/backend zmeny, bez druhej cache; zachované settle/pending/error správanie.
-
-**Závislosti:** Schválený plán; pred začiatkom nový git status.
-**Súbory (5, medium):**
-- `src/shared/query/providerInventoryRevision.ts` (nový)
-- `src/shared/query/providerInventoryRevision.test.ts` (nový)
-- `src/shared/query/providerMutationInvalidation.ts`
-- `src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx`
-- `src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.ts`
-
-## T2: Provider lifecycle a izolácia klientov
-
-**Popis:** Doplniť deterministické integračné scenáre cez generated options, ktoré preveria ochranu mimo samotného delete prípadu. Existujúci hook test súbor obsahuje cudziu dodanú reprodukciu; zachovať ju.
+**Popis:** Opraviť tri potvrdené typové chyby explicitným flashcopy_copy_rate: 0 a overiť staršie odpovede bez zmeny generated vrstvy.
 
 **Akceptačné kritériá:**
-- [x] Update A počas refresh A zachová novšie inventory; update B ani platform providera s rovnakým ID neblokuje refresh A.
-- [x] Delete a submit rovnakého ID odmietne starý výsledok, ale nový legitímny refresh sa zapíše; zdokumentovaná hranica mock testu voči backend reuse kontraktu.
-- [x] Viac hook inštancií rovnakého klienta zdieľa lifecycle invalidáciu; dva klienty s rovnakým ID ostanú izolované. Normálny refresh a existujúci latest-request-wins prechádzajú.
+- [x] Všetky tri typované fixtures obsahujú pole, bez assertions alebo suppressions obchádzajúcich typ.
+- [x] Nový test mimo generated adresára overí default 0, zachovanie 50, hranice 0/150 a odmietnutie -1/151/10.5 v štyroch dodaných schémach (collection schema vo vnorenom zázname).
+- [x] validatingMutator test GET /get_policies preukáže doplnenie 0 do legacy response a zachovanie nenulovej hodnoty; pôvodné assertions zachované.
 
 **Overenie:**
-- [x] `node node_modules/vitest/vitest.mjs run src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx src/shared/query/providerMutationInvalidation.test.tsx`
-- [x] Každý nový race test riadi odpoveď Promise a kontroluje cache až po dokončení starého requestu; bez sleep synchronizácie. Explicitne otestovať izoláciu providerRevision/infraEpoch, najmä samostatnú zmenu každého tokenového poľa a zachovanie druhého.
+- [x] `node node_modules/vitest/vitest.mjs run src/features/recovery-plans/recovery-policies/snapshot/model/snapshotPolicyContract.test.ts src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPolicyModal.test.tsx src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPoliciesTable.test.tsx src/shared/api/validatingMutator.test.ts`
+- [x] `npm.cmd run typecheck` už nehlási tri baseline TS2741.
 
-**Závislosti:** T1.
-**Súbory (2, small):**
-- `src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx`
-- `src/shared/query/providerMutationInvalidation.test.tsx`
+**Závislosti:** Existujúci BE/OpenAPI/Zod kontrakt.
+**Súbory (4, medium):**
+- src/features/recovery-plans/recovery-policies/snapshot/model/snapshotPolicyContract.test.ts (nový)
+- src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPolicyModal.test.tsx
+- src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPoliciesTable.test.tsx
+- src/shared/api/validatingMutator.test.ts
 
-## Checkpoint A: Provider lifecycle
+## T2: Lokalizované texty FlashCopy nastavenia
 
-- [x] T1–T2 zelené vrátane pôvodnej reprodukcie, update a recreate; zachované pôvodné testy.
-- [x] Diff review potvrdí monotónnosť, oddelenie namespaces a synchronný bump bez nového race window.
-- [x] Priebežný výsledok zaznamenať; zastaviť iba pri konkrétnom nevyriešenom kontrakte alebo chybe.
-
-## T3: Credential zmeny a konzervatívny fallback
-
-**Popis:** Rozšíriť delayed-response integráciu o obe credential mutation operácie a pôvodné pravidlá úplnosti provider mapovania.
+**Popis:** Pripraviť label, help a jednu validačnú správu vo všetkých podporovaných jazykoch podľa troch kľúčov v pláne.
 
 **Akceptačné kritériá:**
-- [x] Update aj delete credential ignorujú starý refresh dotknutého A; pri úplnom čerstvom zozname neovplyvnia B s inými credentials.
-- [x] Chýbajúce, filtrované, stale alebo prázdne provider mapovanie zachová broad fallback vrátane refreshu, ktorého query bola odstránená pred credential úspechom.
-- [x] Capture mapovania a bump prebehnú pred await/provider-list refetchom; failed credential mutation neblokuje platný refresh a pôvodné provider status/platform invalidation testy prechádzajú.
+- [x] EN/SK/CS majú rovnaké nové kľúče; label používa termín FlashCopy copy rate.
+- [x] Help vysvetľuje 0, background copy, storage kapacitu a Hitachi VSP; validácia požaduje celé číslo 0–150.
+- [x] Existujúce preklady a plochá JSON štruktúra sú zachované.
 
 **Overenie:**
-- [x] `node node_modules/vitest/vitest.mjs run src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx src/shared/query/providerMutationInvalidation.test.tsx src/shared/query/providerInventoryRevision.test.ts`
-- [x] Kontrola assertions na finálnej cache; neodvodzovať úspech iba od počtu callbackov.
+- [x] JSON parse všetkých troch súborov a assertion prítomnosti/neprázdnosti troch nových kľúčov v každom jazyku.
+- [x] `node node_modules/vitest/vitest.mjs run src/locales/policyCatalogTranslations.test.ts`
+- [x] `git diff --check -- src/locales/en.json src/locales/sk.json src/locales/cs.json`
+
+**Závislosti:** T1 (poradie práce, bez novej API závislosti).
+**Súbory (3, medium):** src/locales/en.json, src/locales/sk.json, src/locales/cs.json.
+
+## Checkpoint A: Kontrakt pripravený
+
+- [x] T1–T2 overené; output typy a legacy default fungujú bez generated úprav.
+- [x] Baseline TS2741 odstránené; prípadné nové cudzie chyby oddelené dôkazmi.
+- [x] Diff iba v dohodnutom rozsahu, bez oslabených assertions.
+
+## T3: Create/edit so zachovaním copy rate
+
+**Popis:** Najprv doplniť regresné testy a zaznamenať RED, potom rozšíriť existujúci form/modal od inicializácie po request a overiť green.
+
+**Akceptačné kritériá:**
+- [x] Shared číselný input má min 0, max 150, step 1, label/help/chybu a pending disabled; nový default je '0', edit používa String(policy.flashcopy_copy_rate).
+- [x] HTTP payload testy preukážu create 0, create 50, rename-only edit zachová 50, edit 50→100 a prijatie 0/150. Presnú existujúcu payload assertion rozšíriť o pole, neoslabiť ju na neurčitú čiastočnú kontrolu.
+- [x] -1, 151, 10.5, empty/whitespace a nečíselný vstup sú odmietnuté pred mutation; chyba sa zobrazí a fetch/submit sa nespustí. Rešpektovať DOM sanitizáciu nečíselného textu; overiť opravu chyby po zmene vstupu.
+
+**Overenie:**
+- [x] RED/green: `node node_modules/vitest/vitest.mjs run src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPolicyModal.test.tsx`
+- [ ] Browser kontrola create/edit, chyby a nápravy, Enter submit, pending disabled, discard guard a úzkeho viewportu. Nedostupný browser uviesť ako limit.
 
 **Závislosti:** T1–T2.
-**Súbory (2, small):**
-- `src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx`
-- `src/shared/query/providerMutationInvalidation.test.tsx`
+**Súbory (3, medium):**
+- src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPolicyForm.tsx
+- src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPolicyModal.tsx
+- src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPolicyModal.test.tsx
 
-## T4: Focused regresie a technické odovzdanie
+## T4: Copy rate v detaile a Policy Set pickeri
 
-**Popis:** Overiť dotknuté kontrakty a existujúcich používateľov bez zmeny ich produkčného kódu. Zapísať reálne výsledky, počty testov a limity.
+**Popis:** Najprv doplniť behavior testy, potom jeden DetailField a jeden snapshot fact. Hodnotu zobrazovať aj pri 0.
 
 **Akceptačné kritériá:**
-- [x] Všetky požadované race scenáre a pôvodné relevantné testy prejdú; Resources/Recovery Groups používajú nezmenené keys a hook kontrakt.
-- [x] Typecheck, focused ESLint, `git diff --check` pre tracked zmeny a **samostatná read-only whitespace/final-newline kontrola nových untracked súborov** prejdú alebo je prípadný preexistujúci blocker presne doložený bez oslabenia kontrol.
-- [x] Report obsahuje root cause, zvolený mechanizmus, úplný zoznam vlastných zmien, presné príkazy/počty, regresie, limity (vrátane **nemožnosti rozpoznať externé zmeny bez lokálnej mutation**) a dôvod malej abstrakcie; žiadny commit/push ani zásah do cudzej práce.
+- [x] DetailOverview zobrazuje label a hodnotu 50 aj 0; stĺpce tabuľky ostávajú bez rozšírenia.
+- [x] Picker zobrazuje hodnotu pri vyriešenej snapshot referencii; existujúce missing/loading/cached-error správanie funguje.
+- [x] Bez zmien catalog typov, referenčných ID, keys, invalidácie alebo Recovery Group kontraktu.
 
-**Overenie (plánované, nie výsledky):**
-- [x] `node node_modules/vitest/vitest.mjs run src/shared/query/providerInventoryRevision.test.ts src/shared/query/providerMutationInvalidation.test.tsx src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx src/features/discovery-inventory/resources/model/inventoryQueries.test.ts src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.test.tsx src/features/discovery-inventory/resources/pages/ResourcesPrefetch.integration.test.tsx src/features/recovery-plans/recovery-groups/hooks/useRecoveryGroupResourceInventory.test.tsx`
-- [x] `npm run typecheck`
-- [x] `node node_modules/eslint/bin/eslint.js src/shared/query/providerInventoryRevision.ts src/shared/query/providerInventoryRevision.test.ts src/shared/query/providerMutationInvalidation.ts src/shared/query/providerMutationInvalidation.test.tsx src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.ts src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx --max-warnings 0`
-- [x] `git diff --check` (iba tracked zmeny)
-- [x] Read-only whitespace/final-newline kontrola nových súborov bez `git add` a bez zmeny indexu:
+**Overenie:**
+- [x] RED/green: `node node_modules/vitest/vitest.mjs run src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPoliciesTable.test.tsx src/shared/components/policy-set-picker/PolicySetPicker.test.tsx`
+- [ ] Browser kontrola detailu/picker facts pri 0/50, v úzkom viewporte a EN/SK/CS.
 
-```powershell
-$files=@('src/shared/query/providerInventoryRevision.ts','src/shared/query/providerInventoryRevision.test.ts')
-foreach ($path in $files) {
-  $text=[System.IO.File]::ReadAllText((Join-Path (Get-Location) $path))
-  if ($text -match '(?m)[ \t]+\r?$' -or -not $text.EndsWith("`n")) { throw "Whitespace/final newline failed: $path" }
-}
-```
+**Závislosti:** T3.
+**Súbory (4, medium):**
+- src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPoliciesTable.tsx
+- src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPoliciesTable.test.tsx
+- src/shared/components/policy-set-picker/PolicySetPickerDetails.tsx
+- src/shared/components/policy-set-picker/PolicySetPicker.test.tsx
 
-- [x] `git status --short` a diff review porovnať s východiskom; kompletnú suite ani build nespúšťať.
+## Checkpoint B: Používateľské rezy fungujú
 
-**Závislosti:** T1–T3.
-**Súbory (2, small, dokumentácia):** `tasks/plan.md`, `tasks/todo.md`. Uvedené consumer testy sa iba spustia; nové chyby vyžadujú najprv určiť príčinu, nie automaticky rozširovať rozsah opravy.
+- [x] Create/edit/invalid input aj oba detaily overené, obzvlášť rename-only zachovanie 50.
+- [x] Pôvodné testy/assertions funkčné; žiadny nový endpoint ani generated zmena.
+- [x] UI zachováva existujúci form/modal/DetailOverview štýl.
 
-## Checkpoint B: Odovzdanie opravy
+## T5: Focused regresie a technické odovzdanie
 
-- [x] T1–T4 dokončené a overené, pôvodný regresný test zelený.
-- [x] Žiadne oslabené assertions, vypnuté testy, nové suppressions alebo nesúvisiace refaktory; explicitne potvrdená providerless ochrana a dvojhodnotový revision token.
-- [x] Technický report a zvyšné riziká pripravené na review; kompletná suite/build explicitne uvedené ako nespustené.
+**Popis:** Spustiť dotknuté regresie, typecheck a lint; reálne výsledky zapísať do dokumentov.
+
+**Akceptačné kritériá:**
+- [x] Snapshot Policies, Policy Sets, Policy Catalog, picker a response kompatibilita prejdú; typecheck/focused ESLint zelené alebo cudzí blocker presne oddelený.
+- [x] Report obsahuje BE kontrakt, vlastné súbory, zachovanie hodnoty, validáciu, presné príkazy/počty/exit kódy a limity. Recovery Groups používajú existujúci Policy Set; bez automatickej regenerácie DAGu.
+- [x] Finálny status/diff potvrdí zachovanie cudzej VMware/OpenAPI/generated práce a zákaz stage/commit/push/reset/stash/worktree/zmeny vetvy.
+
+**Overenie:**
+- [x] `node node_modules/vitest/vitest.mjs run src/features/recovery-plans/recovery-policies/snapshot src/features/recovery-plans/policy-sets src/features/recovery-plans/recovery-policies/catalog src/shared/components/policy-set-picker/PolicySetPicker.test.tsx src/shared/api/validatingMutator.test.ts src/locales/policyCatalogTranslations.test.ts`
+- [x] `npm.cmd run typecheck`
+- [x] `node node_modules/eslint/bin/eslint.js src/features/recovery-plans/recovery-policies/snapshot/model/snapshotPolicyContract.test.ts src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPolicyForm.tsx src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPolicyModal.tsx src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPolicyModal.test.tsx src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPoliciesTable.tsx src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPoliciesTable.test.tsx src/shared/components/policy-set-picker/PolicySetPickerDetails.tsx src/shared/components/policy-set-picker/PolicySetPicker.test.tsx src/shared/api/validatingMutator.test.ts --max-warnings 0`
+- [x] JSON parse/key assertions z T2, `git diff --check`, whitespace/final-newline kontrola nového untracked testu (git diff ho bez stage nezahŕňa).
+- [x] `git status --short` a review vlastného diffu; kompletnú suite ani production build nespúšťať, širší dopad najprv doložiť.
+
+**Závislosti:** T1–T4.
+**Súbory (2, small):** tasks/plan.md, tasks/todo.md. Ostatné súbory sa v T5 iba overujú; nové chyby najprv diagnostikovať.
 
 ## Evidencia plánovania
 
-- [x] Architektúra, generated mutation cesta, credential fallback, query identita a ADR 0002 preverené.
-- [x] Pôvodný regresný test reprodukovaný: 1 failed, 20 skipped; finálna cache obsahuje Stale VM.
-- [x] Baseline oboch priamo dotknutých test súborov: 37 passed, 1 failed (38); jediná chyba je dodaná reprodukcia.
-- [x] Používateľ povolil nahradiť dokončené tasks/plan.md a tasks/todo.md.
-- [x] Používateľ schválil spresnený implementačný plán a vykonanie inline.
+- [x] Zadanie, FE diff, BE commit, komponenty a testy preverené.
+- [x] Predchádzajúci plán dokončený bez otvorených checkboxov; rozpracovaný plán neprepísaný.
+- [x] Baseline Vitest: 19 passed, 0 failed, 4 súbory, exit 0.
+- [x] Baseline npm.cmd run typecheck: exit 1, tri TS2741 na fixtures.
+- [x] Každá úloha má kritériá, overenie, závislosti a najviac päť súborov; checkpointy po T2/T4.
+- [x] Používateľ schválil vykonanie plánu pokynom executing-plans inline.
 
+Kompletná suite, production build, ESLint, browser QA a živý backend sa počas plánovania nespúšťali. Implementačné výsledky doplniť až pri vykonaní úloh.
 
-## Priebežná evidencia implementácie
+## Priebežné výsledky
 
-- RED pred produkčnou opravou: hook súbor 25 passed / 15 failed (40). Zlyhania boli na stale cache hodnotách a providerless Promise, nie na timeoutoch alebo mock importe.
-- Prvý revision guard odmietol stale mutation zápis, ale ponechaný observer po settlement rerenderi spustil obyčajný query fetch: finálna cache obsahovala Cached/Current VM. Preto doplnená lokálna `removedRevision` iba v existujúcom force-refresh stave. Pozastaví automatický refetch odstránenej query po odmietnutej odpovedi; nová revision, explicitný refresh alebo príchod platných dát ju odblokuje. Nie je to globálny deleted stav ani druhá cache. Pôvodná delete assertion zostala nezmenená.
-- T1 rozsah spresnený: providerless/timing integračné testy sú v hook test súbore; shared invalidation test súbor sa nemenil. T1 tak má päť zmenených TS/TSX súborov, nie šesť.
-- T1–T3 finálny focused beh: **69 passed, 0 failed, 3 súbory** (48 hook, 17 pôvodná invalidácia, 4 helper).
-- Focused príkaz: `node node_modules/vitest/vitest.mjs run src/shared/query/providerInventoryRevision.test.ts src/shared/query/providerMutationInvalidation.test.tsx src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx`.
-- Pokryté aj obe credential operácie pri missing/filtered/stale/empty mapovaní, úplné mapovanie pred provider-list refetchom bez inventory query, a legitímny nový refresh po usadení starej odmietnutej odpovede.
-- Prvé focused ESLint zlyhania boli iba v nových testoch (non-null assertions a void generic); opravené bez suppressions. Následný focused lint prešiel pred posledným rozšírením testov; T4 ho zopakuje.
-- `npm run typecheck` zablokovala PowerShell execution policy pre npm.ps1; použitý ekvivalent `npm.cmd run typecheck`. Ten hlásil syntaktické chyby v súbežne upravovaných PolicySetsRefetch a troch *PoliciesRefetch testoch. Tieto cudzie súbory sa nemenia; T4 zopakuje kontrolu aktuálneho stavu.
+- T1: focused štyri súbory 50 passed / 0 failed; typecheck exit 0.
+- T2: JSON parse/key assertions PASS; translation test 1 passed / 0 failed.
+- T3 RED: 14 failed / 3 passed; chýbajúci input a pole v requeste. Po implementácii opravené umiestnenie help mimo labelu shared Field, aby zostal stabilný accessible name. GREEN: 17 passed / 0 failed.
+- T4 RED: 5 failed / 19 passed; chýbajúce facts a položka DetailOverview. GREEN: 24 passed / 0 failed.
+- Typecheck po implementácii T3–T4: exit 0.
+- Browser inventory vrátil apps: [], browsers: []; Chrome DevTools MCP nie je dostupný. Browser/vizuálne kontroly neboli vykonané a zostávajú limitom overenia.
+- Pri kontrole diffu odhalená strata diakritiky pri prenose nových SK/CS textov cez PowerShell pipe do Node. Nové texty opravené cez apply_patch; existujúce preklady sa nemenili.
 
 ## Finálny technický report — 2026-10-22
 
-### Príčina a riešenie
+### Kontrakt a výsledné správanie
 
-Samostatná force-refresh mutation nebola zrušená cez cancelQueries a jej requestId guard nepoznal úspešnú provider/credential lifecycle zmenu. Preto po delete znovu vytvorila cache alebo po update prepísala novšie dáta. Nový helper udržiava iba platnosť výsledkov: WeakMap podľa QueryClient, providerRevision podľa ID a infraEpoch pre neúplný credential fallback. Snapshot má obe číselné hodnoty; zápis vyžaduje ich rovnosť aj pôvodný latest-request guard. Bump je pred prvým await invalidácie, credential vzťahy sa zachytávajú pred provider-list refetchom. Platform provider namespace zostáva oddelený.
+BE commit ca93414 a dodaný OpenAPI/Zod kontrakt potvrdzujú integer 0–150 s defaultom 0 a optional request vstupom. Nová politika má vo formulári 0 a odošle číselnú hodnotu. Edit inicializuje pôvodnú hodnotu z parsovaného záznamu a vždy ju zahrnie do POST /submit_policy. Regresný test s pôvodnou hodnotou 50 a zmenou iba názvu kontroluje celý serializovaný payload, takže nenulové nastavenie sa nestratí.
 
-Doplnená lokálna removedRevision v existujúcom hook pending stave bráni automatickému refetchu odstránenej query vyvolanému settlement rerenderom. Nie je to globálny tombstone: nová revision, explicitný refresh alebo platné dáta obnovia query fetchovanie. Providerless refresh odmietne Promise pred HTTP a pred vytvorením mutation. Pôvodné platné requesty zachovajú výsledný Promise, pending/error settlement a latest-request-wins.
+Validácia odmieta prázdny vstup pred Number konverziou, neceločíselné hodnoty a čísla mimo 0–150. Nečíselný text, whitespace a Infinity browser number input sanitizuje na prázdny vstup, ktorý je tiež odmietnutý. Chyba sa zobrazuje a čistí pri oprave hodnoty. Input má stabilný accessible name, prepojený help/chybu, HTML min/max/step, Enter submit a disabled počas pending requestu.
 
-### Úplný zoznam vlastných zmien
+Hodnota 0 aj 50 sa zobrazuje v existujúcom DetailOverview a Snapshot Policy facts Policy Set pickera. Žiadny nový stĺpec tabuľky. Starší wire response bez poľa dostane default 0 cez existujúcu generated schému aj reálny response registry mutator.
 
-| Súbor | Účel |
+### Vlastné zmenené súbory
+
+| Súbor | Zmena |
 | --- | --- |
-| `src/shared/query/providerInventoryRevision.ts` (nový) | Malé spoločné API platnosti snapshotov, bez inventory cache dát. |
-| `src/shared/query/providerInventoryRevision.test.ts` (nový) | 4 testy nezávislej zmeny oboch čísel tokenu, per-ID/client izolácie a monotónnosti. |
-| `src/shared/query/providerMutationInvalidation.ts` | 3 nové riadky: import a synchronné infra provider/credential revision bumps; pôvodná invalidácia zachovaná. |
-| `src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.ts` | Snapshot/guard, fail-fast bez providera a obnoviteľné pozastavenie odstránenej query. |
-| `src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx` | 27 nových deterministických scenárov, spoločný HTTP/Promise fixture a cleanup; dodaný regresný test a jeho assertions zachované. Jeho 42 riadkov bolo vo worktree už pred našou implementáciou. |
-| `tasks/plan.md` | Schválený plán a zdôvodnenie zisteného settlement/refetch okna. |
-| `tasks/todo.md` | Checklist, skutočné overenie, report a limity. |
+| src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPolicyForm.tsx | String field a shared číselný input s labelom, help a chybou. |
+| src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPolicyModal.tsx | Default, edit mapovanie, validácia a číselný submit payload. |
+| src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPolicyModal.test.tsx | Fixture a create/edit/invalid-input/Enter/pending HTTP testy. |
+| src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPoliciesTable.tsx | DetailField pre copy rate. |
+| src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPoliciesTable.test.tsx | Dve fixtures a detail testy 0/50; rozšírená pôvodná assertion poradia polí. |
+| src/features/recovery-plans/recovery-policies/snapshot/model/snapshotPolicyContract.test.ts | Nový test štyroch generated kontraktov vrátane defaultu a hraníc. |
+| src/shared/api/validatingMutator.test.ts | Legacy default a nenulová hodnota cez reálny response registry. |
+| src/shared/components/policy-set-picker/PolicySetPickerDetails.tsx | Snapshot copy rate fact. |
+| src/shared/components/policy-set-picker/PolicySetPicker.test.tsx | Zobrazenie hodnoty 0/50 v referencovanej politike. |
+| src/locales/en.json | Tri nové snapshotPolicies kľúče. |
+| src/locales/sk.json | Tri nové snapshotPolicies kľúče. |
+| src/locales/cs.json | Tri nové snapshotPolicies kľúče. |
+| tasks/plan.md | Stav schváleného plánu a limity. |
+| tasks/todo.md | Checklist, skutočné výsledky a tento report. |
 
-`providerMutationInvalidation.test.tsx` sa iba spúšťal, nemenil sa. Generated súbory, inventoryQueries, Resources UI, Recovery Groups UI, cache policy a QueryClient konfigurácia zostali bez našich zmien. Súbežná cudzia práca v Policy oblastiach pokračovala počas overovania; nebola obnovovaná, stashovaná, upravovaná ani zahrnutá do commitu.
+### Overenie a review
 
-### Skutočné finálne overenie
+- T5 focused Vitest príkaz uvedený vyššie: **142 passed, 0 failed, 14 súborov**, exit 0. Zahŕňa Snapshot Policies, Policy Sets, Policy Catalog, picker, validatingMutator a translation kontrakt.
+- Po sprísnení payload assertion a oprave SK/CS encodingu opakovaný modal + translation príkaz: **18 passed, 0 failed, 2 súbory**, exit 0.
+- Po poslednom sprísnení invalid-input udalosti: `node node_modules/vitest/vitest.mjs run src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPolicyModal.test.tsx --reporter=dot` — **17 passed, 0 failed**, exit 0. `node node_modules/eslint/bin/eslint.js src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPolicyModal.test.tsx --max-warnings 0` — exit 0.
+- `npm.cmd run typecheck` po implementácii: exit 0. Všetky tri východiskové TS2741 sú odstránené.
+- Focused ESLint príkaz z T5 nad deviatimi TS/TSX súbormi: exit 0. Po zmenách testu sa opakuje iba lint dotknutého test súboru.
+- JSON parse, prítomnosť/neprázdnosť všetkých troch kľúčov EN/SK/CS a kontrola encodingu bez náhradných znakov: PASS. Samostatná whitespace/final-newline kontrola nového untracked contract testu: PASS.
+- `git diff --check`: exit 0. Git vypisuje iba upozornenia LF→CRLF a neprístupný používateľský ignore súbor.
+- Inline review podľa correctness/readability/architecture/security/performance: validácia pred mutation, bezpečné defaultovanie v existujúcej vrstve, stabilný label a žiadne nové závislosti či suppressions. Invalid-input test používa await userEvent.click, aby kontrola absencie requestu nasledovala až po spracovaní udalosti.
 
-1. Rozšírený focused Vitest príkaz z T4: **122 passed, 0 failed, 7 súborov**, exit 0. Zahŕňa inventory query kontrakt, VMware hook, spoločnú invalidáciu, Resources page/prefetch a Recovery Groups hook.
-2. Po poslednej lint oprave testovej queryFn (`Promise.resolve` namiesto async bez await) znovu spustené:
+### Regresie, limity a Git
 
-```powershell
-node node_modules/vitest/vitest.mjs run src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx
-npm.cmd run typecheck
-node node_modules/eslint/bin/eslint.js src/shared/query/providerInventoryRevision.ts src/shared/query/providerInventoryRevision.test.ts src/shared/query/providerMutationInvalidation.ts src/shared/query/providerMutationInvalidation.test.tsx src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.ts src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx --max-warnings 0
-```
+Policy Sets a Policy Catalog regresie prešli; ich modely ani query keys sa nemenili. Recovery Groups naďalej používajú existujúcu Policy Set referenciu. Úprava politiky automaticky neaktualizuje už vygenerovaný DAG; aplikovanie nového COPY_RATE môže vyžadovať regenerate/push Recovery Group. Backend ani generated vrstva sa touto implementáciou nemenili.
 
-Hook: **48 passed, 0 failed**, exit 0; všetkých pôvodných 20 plus dodaná delete reprodukcia prechádzajú. Typecheck aj ESLint: exit 0. Predchádzajúce nesúvisiace parse chyby v Policy súboroch už posledný typecheck nehlásil; neboli opravované v tejto úlohe.
+Kompletná suite a production build neboli spustené podľa focused scope. Browser inventory vrátil prázdny zoznam prehliadačov a Chrome DevTools MCP nie je dostupný; vizuálne/viewport/language/discard-guard browser kontroly zostávajú neoverené. Enter/pending a formulárové správanie pokrývajú React Testing Library testy. Živý BE, IBM storage a aktualizácia nasadeného DAGu neboli testované.
 
-3. `git diff --check` a posledná focused varianta nižšie: exit 0. Git iba upozorňuje na LF→CRLF a neprístupný používateľský ignore súbor.
+Práca zostáva na spike/ant-design-shell. Vstupné OpenAPI/generated/VMware zmeny a cudzie tasks/vmware-removed-revision-p2-* súbory zachované. Nebol vykonaný stage, commit, push, reset, stash, zmena vetvy, worktree ani merge podľa explicitného zadania.
 
-```powershell
-git diff --check -- src/shared/query/providerMutationInvalidation.ts src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.ts src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx tasks/plan.md tasks/todo.md
-git status --short
-git branch --show-current
-```
+## Následné rozdelenie do commitov
 
-4. Nové untracked helper súbory overené natívnou read-only PowerShell whitespace/final-newline kontrolou z T4: pass. Pôvodná `node -e` verzia z plánu v tomto PowerShelli stratila vnútorné úvodzovky a skončila SyntaxError; preto nahradená ekvivalentnou natívnou kontrolou bez stage/index zmien.
+Používateľ po odovzdaní výslovne požiadal vytvoriť atómové commity vlastných zmien podľa implementačných krokov. Vyššie uvedený zákaz a Git report opisujú pôvodné odovzdanie; nové povolenie zahŕňa stage a commit vlastných súborov. Poradie: testy kontraktu → preklady → formulár s regresnými testami → oba detaily s testami → dokumentácia. Fixtures sú zahrnuté s príslušným formulárovým/detailovým testom. Pôvodný OpenAPI/generated kontrakt ostáva samostatnou vstupnou zmenou mimo týchto commitov; commity naň nadväzujú. Súbežné VMware zmeny sa nezahŕňajú. Push sa nevykonáva.
 
-### Review, regresie a limity
-
-Inline review podľa správnosti, čitateľnosti, architektúry, bezpečnosti a výkonu: bez zostávajúceho nálezu v dohodnutom rozsahu. Žiadne nové závislosti, všeobecná orchestration vrstva, ďalšia inventory cache, event bus, test suppressions, oslabené assertions ani backend zmeny. Malá shared abstrakcia je potrebná, pretože mutácie aj viac hookov musia používať rovnakú platnosť v rámci klienta; lokálny ref to nedokáže.
-
-Pokryté oba credential úspechy aj fallback varianty, update/delete provider, izolácia B/platform/client, shared hooky, recreate, normálny refresh, out-of-order latest-request-wins, pending/error, providerless call a bump pred ukončením cancellation. Bump je viazaný na úspešne oznámenú lokálnu mutation: nepozná zmeny vykonané iným tabom, klientom ani používateľom bez lokálnej udalosti. Nezavádza globálne latest-request poradie medzi nezávislými hookmi. Per-ID revisions žijú s QueryClient; nevynulujú sa pri query GC. Reuse ID je overený cez reálne generated submit/delete options s mock HTTP; nepredstavuje produkčnú backend garanciu reuse ID.
-
-Kompletná test suite, production build, browser E2E a živý backend neboli spustené. Nebol potrebný nový vizuálny UI návrh. Práca je ponechaná na `spike/ant-design-shell`, bez stage, commitu, pushu, merge, stashu alebo nového worktree podľa pokynov používateľa.
+Pred commitmi opätovne spustené: `node node_modules/vitest/vitest.mjs run src/features/recovery-plans/recovery-policies/snapshot/model/snapshotPolicyContract.test.ts src/shared/api/validatingMutator.test.ts src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPolicyModal.test.tsx src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPoliciesTable.test.tsx src/shared/components/policy-set-picker/PolicySetPicker.test.tsx src/locales/policyCatalogTranslations.test.ts --reporter=dot` — **77 passed, 0 failed, 6 súborov**, exit 0. `git diff --check` prešiel; pred každým commitom overený aj staged diff. Kompletná suite ani build sa neopakovali.
