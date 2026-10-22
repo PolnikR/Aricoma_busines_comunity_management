@@ -3,6 +3,17 @@ import { describe, expect, it } from 'vitest'
 import { DataTableSurface } from './DataTableSurface'
 
 describe('DataTableSurface', () => {
+  it('offers a flat surface with one keyboard-accessible scroll viewport', () => {
+    render(<DataTableSurface variant="flat" ariaLabel="Flat runs" toolbar={<input aria-label="Find run" />} pagination={<div>Run pages</div>}><div>Run records</div></DataTableSurface>)
+    const surface = screen.getByRole('region', { name: 'Flat runs' })
+    expect(surface).not.toHaveClass('rounded-[20px]', 'shadow-sm', 'border')
+    const viewport = surface.querySelector('.overflow-auto')
+    expect(viewport).toHaveAttribute('tabindex', '0')
+    expect(viewport).toContainElement(screen.getByText('Run records'))
+    expect(viewport).not.toContainElement(screen.getByText('Run pages'))
+    expect(viewport).not.toContainElement(screen.getByLabelText('Find run'))
+  })
+
   it('keeps toolbar and footer outside the vertical data viewport', () => {
     render(
       <DataTableSurface

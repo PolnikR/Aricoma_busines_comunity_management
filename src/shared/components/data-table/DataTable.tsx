@@ -25,7 +25,8 @@ interface DataTableProps<T> {
   onRowClick?: (row: T) => void
   selectedRowKey?: string | null
   minWidthClassName?: string
-  layout?: 'scroll' | 'fit'
+  /** Use contained when the parent owns both scroll axes (for sticky headers). */
+  layout?: 'scroll' | 'fit' | 'contained'
   emptyContent?: ReactNode
   ariaLabel?: string
   headerCellClassName?: string
@@ -65,10 +66,12 @@ export function DataTable<T>({
 
   return (
     <div
-      className={isFitLayout
+      className={layout === 'contained'
+        ? '@container/data-table w-full min-w-0'
+        : isFitLayout
         ? '@container/data-table w-full min-w-0 overflow-x-hidden'
         : '@container/data-table custom-scrollbar w-full min-w-0 touch-pan-x overflow-x-auto overscroll-x-contain'}
-      tabIndex={isFitLayout || isLoading ? undefined : 0}
+      tabIndex={isFitLayout || layout === 'contained' || isLoading ? undefined : 0}
       role={isLoading ? 'status' : undefined}
       aria-busy={isLoading ? true : undefined}
       aria-label={ariaLabel}

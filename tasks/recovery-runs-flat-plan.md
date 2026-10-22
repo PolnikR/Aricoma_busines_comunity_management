@@ -1,6 +1,6 @@
 # Recovery runs — Flat workspace
 
-Dátum: 2026-10-22. Stav: plán pripravený; implementácia nezačala.
+Dátum: 2026-10-22. Stav: implementované inline; cielené testy a browser kontrola s fixture dátami prešli.
 Úlohy: [recovery-runs-flat-todo.md](recovery-runs-flat-todo.md).
 Používateľ schválil tieto samostatné názvy dokumentov. Existujúce plány iných prác sa nemenia.
 

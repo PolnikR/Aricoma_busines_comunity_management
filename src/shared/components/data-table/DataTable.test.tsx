@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { DataTable, type ColumnDef } from './DataTable'
 
@@ -18,6 +18,20 @@ const rows: Row[] = [
 ]
 
 describe('DataTable', () => {
+  it('delegates scrolling to the surface in contained layout while preserving row keyboard activation', () => {
+    let selected = ''
+    render(<DataTable columns={columns} rows={rows} rowKey={row => row.id} layout="contained" ariaLabel="Contained table" onRowClick={row => { selected = row.id }} />)
+    const wrapper = screen.getByLabelText('Contained table')
+    expect(wrapper).not.toHaveClass('overflow-x-auto')
+    expect(wrapper).not.toHaveClass('overflow-x-hidden')
+    expect(wrapper).not.toHaveAttribute('tabindex')
+    const row = within(wrapper).getAllByRole('row')[1]
+    expect(row).toHaveAttribute('tabindex', '0')
+    if (!row) throw new Error('Expected a data row')
+    fireEvent.keyDown(row, { key: 'Enter' })
+    expect(selected).toBe('row-1')
+  })
+
   it('fits to its container without a horizontal scrolling surface when requested', () => {
     render(
       <DataTable

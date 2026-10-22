@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
-import { InventoryShell } from '@/shared/components/inventory-shell/InventoryShell'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
 import { Tabs } from '@/shared/components/tabs/Tabs'
 import { useTableState } from '@/shared/components/data-table'
@@ -62,7 +61,7 @@ export function RecoveryRunsPage() {
   ]
 
   return (
-    <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
+    <div className="flex min-h-full min-w-0 flex-col lg:h-full lg:min-h-0">
       <TableToolbar
         title={t('pages.recoveryRuns.title')}
         description={t('pages.recoveryRuns.description')}
@@ -73,10 +72,8 @@ export function RecoveryRunsPage() {
         }}
       />
 
-      <InventoryShell
-        inventoryTitle={t('recoveryRuns.inventoryTitle')}
-        inventoryDescription={t('recoveryRuns.inventoryDescription')}
-        tabs={(
+      <section className="flex min-w-0 flex-1 flex-col lg:min-h-0" aria-label={t('recoveryRuns.inventoryTitle')}>
+        <div className="shrink-0 border-b border-border">
           <Tabs<RecoveryRunTab>
             items={tabItems}
             value={tab}
@@ -84,10 +81,10 @@ export function RecoveryRunsPage() {
             ariaLabel={t('recoveryRuns.tabs.ariaLabel')}
             indicator="inset"
             compact
-            className="w-full shrink-0 border-b-0 bg-surface px-0 sm:w-auto"
+            className="w-full shrink-0 border-b-0 bg-surface px-0"
           />
-        )}
-      >
+        </div>
+        <p className="shrink-0 py-2 text-xs text-text-muted">{t('recoveryRuns.inventoryDescription')}</p>
         <RecoveryRunsTable
           rows={rows}
           hasCachedData={entities.length > 0}
@@ -106,7 +103,7 @@ export function RecoveryRunsPage() {
           onSelectEntity={(nextEntityType, nextEntityId) => { setEntity(nextEntityType, nextEntityId) }}
           selectedEntityKey={selectedEntityKey}
         />
-      </InventoryShell>
+      </section>
 
       <RecoveryRunHistoryDetailView
         key={selectedEntity ? JSON.stringify([selectedEntity.entityType, selectedEntity.id, selectedEntity.providerId, selectedEntity.dagId]) : 'no-entity'}

@@ -108,7 +108,7 @@ describe('RecoveryRunsPage', () => {
     }
   })
 
-  it('shows a static surface header and one row per orchestrated entity across both types by default', () => {
+  it('shows a flat workspace with one heading and one row per orchestrated entity across both types', () => {
     vi.mocked(useOrchestratedEntities).mockReturnValue({
       entities,
       isLoading: false,
@@ -129,7 +129,9 @@ describe('RecoveryRunsPage', () => {
     renderPage()
 
     expect(screen.getByRole('heading', { level: 1, name: 'Recovery runs' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 2, name: 'Orchestrated entities' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { level: 2, name: 'Orchestrated entities' })).not.toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Orchestrated entities' })).not.toHaveClass('rounded-[20px]', 'shadow-sm')
+    expect(screen.getByRole('group', { name: 'Recovery runs' })).toHaveAttribute('tabindex', '0')
     expect(screen.getByText('Latest run per orchestrated entity. Entities never pushed to orchestration aren\'t queried.')).toBeInTheDocument()
     expect(screen.getAllByText('Execution history and status of recovery runs.')).toHaveLength(1)
     expect(screen.queryByText(/^Showing \d+ orchestrated entities/)).not.toBeInTheDocument()
