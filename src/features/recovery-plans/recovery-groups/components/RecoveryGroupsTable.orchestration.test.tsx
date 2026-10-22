@@ -11,7 +11,9 @@ afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals() })
 
 function Location() { return <output>{useLocation().search}</output> }
 
-function setup(changes: Partial<typeof group> = {}, others: typeof group[] = []) {
+type GroupChanges = Partial<Pick<typeof group, 'id' | 'name' | 'pushToOrchestrator' | 'airflowRunId' | 'orchestrationProviderId'>>
+
+function setup(changes: GroupChanges = {}, others: typeof group[] = []) {
   const selected = { ...group, ...changes }
   const { client, Wrapper } = createQueryWrapper()
   const content = (record: typeof group) => <MemoryRouter><Routes>
@@ -25,7 +27,7 @@ function setup(changes: Partial<typeof group> = {}, others: typeof group[] = [])
     fireEvent.click(within(detail).getByRole('button', { name }))
     return within(detail).getByRole('region', { name })
   }
-  return { ...view, client, open, section, update: (next: Partial<typeof group>) => { view.rerender(content({ ...selected, ...next })) } }
+  return { ...view, client, open, section, update: (next: GroupChanges) => { view.rerender(content({ ...selected, ...next })) } }
 }
 
 describe('Group selected orchestration HTTP contract', () => {

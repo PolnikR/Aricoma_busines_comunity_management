@@ -324,3 +324,7 @@ A shared HTTP/fixture utility, src/features/recovery-plans/recovery-runs/test/se
 The new hook test was written first and its initial run failed to resolve the not-yet-created module, as expected. Behavioral assertion checks follow once its public declaration exists. Browser/DevTools tools are unavailable in this session; browser acceptance remains open rather than inferred from JSDOM.
 
 Concurrent unrelated edits have appeared in shared table infrastructure and unrelated planning documents. This task leaves those files untouched and stages only explicitly named task files.
+
+F2: A declaration-only stub produced six expected assertion failures for missing selected-detail results. Replacing it with the minimal coordinator made the complete hook/domain check pass: 4 suites, 50 tests (26 public hook cases plus mapper, latest and URL tests). Focused ESLint passed for the new hook and its tests. No table has migrated at this checkpoint. Characterization commit: 69baed0d.
+
+F2 typecheck: npm.cmd run typecheck passed after restricting the Group test fixture override type to orchestration fields/id/name. A full Partial<RecoveryGroup> could construct invalid combinations of its resource-kind discriminant; the test helper now preserves that contract without assertions or suppressions. The Group characterization rerun passed 18 tests. PowerShell blocks npm.ps1, so npm.cmd is used for equivalent package scripts.

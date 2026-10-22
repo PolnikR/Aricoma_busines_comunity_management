@@ -134,9 +134,9 @@ git diff --check
 
 ### Task 5: Implement the independently tested selected-detail hook
 
-- [ ] Implement the plan's exact public interface with one unconditional existing latest-hook invocation, entity-specific DAG/reference projection, selected URL resolution and unchanged mapper invocation.
-- [ ] Test its public output and real requests for all mapper states, null selection, both entity projections, catalog-independent eligibility, exact params/keys and selection lifecycle; reuse lower-level polling tests rather than rewriting polling.
-- [ ] Confirm no provider query, raw query exports, new keys/adapters, policy overrides, schema changes or ESLint exemption was introduced.
+- [x] Implement the plan's exact public interface with one unconditional existing latest-hook invocation, entity-specific DAG/reference projection, selected URL resolution and unchanged mapper invocation.
+- [x] Test its public output and real requests for all mapper states, null selection, both entity projections, catalog-independent eligibility, exact params/keys and selection lifecycle; reuse lower-level polling tests rather than rewriting polling.
+- [x] Confirm no provider query, raw query exports, new keys/adapters, policy overrides, schema changes or ESLint exemption was introduced.
 
 **Dependencies:** Task 4 and F1 checkpoint; GO reviewed. **Scope:** Small, two new files.
 
@@ -148,7 +148,7 @@ git diff --check
 
 ### Checkpoint F2 - Independently testable module
 
-- [ ] Hook tests pass without table migration; no behavior has moved into a new generated API facade or duplicated mapper/query implementation.
+- [x] Hook tests pass without table migration; no behavior has moved into a new generated API facade or duplicated mapper/query implementation.
 
 ## F3 - Table integration
 
