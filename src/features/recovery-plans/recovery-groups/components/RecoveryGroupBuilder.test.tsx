@@ -1076,4 +1076,74 @@ describe('RecoveryGroupBuilder', () => {
     })
     expect(screen.getByLabelText('Selected recovery group virtual machines')).not.toHaveTextContent('DB-01')
   })
+
+  it('keeps a persisted related disk after removing its originally discovered VM', async () => {
+    vi.mocked(useRecoveryGroupRelatedVolumes).mockImplementation((_provider, names, source) => ({
+      flashcopyProviderId: source, discoveredVolumeNames: names.includes('VM-A') ? ['DISK-A'] : [], isResolved: true, isLoading: false,
+    }))
+    const onCreate = vi.fn()
+    render(<RecoveryGroupBuilder initialData={{ ...existingGroup, resources: ['VM-A', 'VM-B'], relatedVolumeProviderId: 'ibm-flashsystem-01', relatedVolumes: ['DISK-A', 'MANUAL'] }} onCreate={onCreate} onCancel={vi.fn()} />)
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: 'Resources' }))
+    await user.click(screen.getByRole('button', { name: 'Remove virtual machine: VM-A' }))
+    await user.click(screen.getByRole('button', { name: 'Orchestration' }))
+    await user.click(screen.getByRole('button', { name: 'Create Recovery Group' }))
+    expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({ resources: ['VM-B'], relatedVolumes: ['DISK-A', 'MANUAL'] }))
+  })
+
+  it.each(['pushed', 'provisioned'] as const)('follows live %s locks for the same group without resetting local edits or step', async lock => {
+    const initialData: RecoveryGroup = { ...existingStorageGroup, topology: lock === 'provisioned' ? 'metro_mirror' : 'local', metroMirrorMode: lock === 'provisioned' ? 'managed' : null }
+    const onCreate = vi.fn()
+    const onDirtyChange = vi.fn()
+    const props = { onCreate, onCancel: vi.fn(), onDirtyChange }
+    const { rerender } = render(<RecoveryGroupBuilder {...props} initialData={initialData} />)
+    fireEvent.change(screen.getByLabelText('Group name *'), { target: { value: 'Local edit' } })
+    expect(onDirtyChange).toHaveBeenCalledWith(true)
+    const dirtyCalls = onDirtyChange.mock.calls.length
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: 'Orchestration' }))
+    expect(screen.getByRole('button', { name: 'Create Recovery Group' })).toBeEnabled()
+    const locked = { ...initialData, ...(lock === 'pushed' ? { pushToOrchestrator: true } : { consistencyGroupId: 'BE-CG' }) }
+    rerender(<RecoveryGroupBuilder {...props} initialData={locked} />)
+    expect(screen.getByRole('button', { name: 'Create Recovery Group' })).toBeDisabled()
+    expect(screen.getByRole('switch', { name: 'Deploy to orchestrator' })).toBeDisabled()
+    await user.click(screen.getByRole('button', { name: 'Details' }))
+    expect(screen.getByLabelText('Group name *')).toBeDisabled()
+    fireEvent.change(screen.getByLabelText('Group name *'), { target: { value: 'Rejected edit' } })
+    expect(screen.getByLabelText('Group name *')).toHaveValue('Local edit')
+    expect(onDirtyChange).toHaveBeenCalledTimes(dirtyCalls)
+    rerender(<RecoveryGroupBuilder {...props} initialData={initialData} />)
+    expect(screen.getByLabelText('Group name *')).toHaveValue('Local edit')
+    expect(screen.getByLabelText('Group name *')).toBeEnabled()
+    await user.click(screen.getByRole('button', { name: 'Orchestration' }))
+    await user.click(screen.getByRole('button', { name: 'Create Recovery Group' }))
+    expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({ name: 'Local edit' }))
+  })
+
+  it('distinguishes persisted empty CG, manually emptied CG and a persisted empty auxiliary', async () => {
+    vi.mocked(useRecoveryGroupMetroMirrorRelationships).mockReturnValue({ data: { provider_id: 'ibm-flashsystem-01', consistency_group_id: 'AUTO', volumes: [{ name: 'VOL-01', status: 'ok', auxiliary_name: 'AUTO-AUX' }] }, isLoading: false, error: null, refetch: vi.fn() })
+    const initialData: RecoveryGroup = { ...existingStorageGroup, topology: 'metro_mirror', metroMirrorMode: 'existing', consistencyGroupId: '', auxiliaryNamesByVolume: { 'VOL-01': '' } }
+    const props = { initialData, onCreate: vi.fn(), onCancel: vi.fn() }
+    const { rerender } = render(<RecoveryGroupBuilder {...props} />)
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Resources' }))
+    expect(screen.getByLabelText('Consistency group ID')).toHaveValue('AUTO')
+    expect(screen.getByLabelText('Auxiliary volume name: VOL-01')).toHaveValue('')
+    fireEvent.change(screen.getByLabelText('Consistency group ID'), { target: { value: '' } })
+    rerender(<RecoveryGroupBuilder {...props} />)
+    expect(screen.getByLabelText('Consistency group ID')).toHaveValue('')
+  })
+
+  it('retains manual CG when category and workload are selected again', async () => {
+    render(<RecoveryGroupBuilder onCreate={vi.fn()} onCancel={vi.fn()} />)
+    const user = userEvent.setup()
+    await startNewMetroVolumeGroup(user)
+    await selectFlashSystemVolumes(user)
+    fireEvent.change(screen.getByLabelText('Consistency group ID'), { target: { value: 'MANUAL' } })
+    await user.click(screen.getByRole('button', { name: 'Resource type' }))
+    await user.click(screen.getByRole('tab', { name: 'Compute workloads' }))
+    await user.click(screen.getByRole('tab', { name: /Storage volumes/i }))
+    await user.click(screen.getByRole('button', { name: /IBM FlashSystemGroup storage volumes/i }))
+    await user.click(screen.getByRole('button', { name: 'Resources' }))
+    expect(screen.getByLabelText('Consistency group ID')).toHaveValue('MANUAL')
+  })
 })

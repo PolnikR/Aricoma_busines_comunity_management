@@ -4,6 +4,7 @@ import { Alert } from '@/shared/components/alert/Alert'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { ListSkeleton } from '@/shared/components/list-skeleton/ListSkeleton'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
+import type { DraftEvent } from '../model/recoveryGroupDraftLifecycle'
 import type { RecoveryGroupDraft } from '../model/recoveryGroupTypes'
 import { getRecoveryGroupTopologyError } from '../utils/recoveryGroupTopology'
 
@@ -13,7 +14,7 @@ interface RecoveryGroupTopologyStepProps {
   isLoading: boolean
   error: Error | null
   onRetry: () => void
-  onChange: (update: Partial<RecoveryGroupDraft>) => void
+  onChange: (event: Extract<DraftEvent, { type: 'sourceChanged' | 'topologyChanged' | 'metroModeChanged' }>) => void
   allowLegacyLocal?: boolean
   // Metro Mirror mode is chosen only on create; edit keeps the persisted mode.
   isEditing?: boolean
@@ -39,7 +40,7 @@ export function RecoveryGroupTopologyStep({ draft, providers, isLoading, error, 
       <Field label={t(key('mode'))} htmlFor="group-topology">
         <Select id="group-topology" value={draft.topology ?? ''} disabled={lockedManaged} onChange={event => {
           const topology = event.target.value === 'metro_mirror' ? 'metro_mirror' : 'local'
-          onChange({ topology, metroMirrorMode: topology === 'metro_mirror' ? 'existing' : null, consistencyGroupId: '', auxiliaryNamesByVolume: {} })
+          onChange({ type: 'topologyChanged', topology })
         }}>
           <option value="" disabled>{t(key('choose'))}</option>
           <option value="local">{t(key('local'))}</option>
@@ -49,7 +50,7 @@ export function RecoveryGroupTopologyStep({ draft, providers, isLoading, error, 
       <div className={`grid min-w-0 gap-4 ${remote ? 'sm:grid-cols-2' : ''}`}>
         <Field label={t(key('source'))} htmlFor="topology-source">
           <Select id="topology-source" value={draft.relatedVolumeProviderId ?? ''} disabled={isLoading || Boolean(error) || lockedManaged}
-            onChange={event => { onChange({ relatedVolumeProviderId: event.target.value || null }) }}>
+            onChange={event => { onChange({ type: 'sourceChanged', sourceId: event.target.value || null }) }}>
             <option value="">{t(key('choose'))}</option>
             {draft.relatedVolumeProviderId && !sources.some(provider => provider.id === draft.relatedVolumeProviderId)
               ? <option value={draft.relatedVolumeProviderId} disabled>{source?.name ?? draft.relatedVolumeProviderId}</option> : null}
@@ -64,7 +65,7 @@ export function RecoveryGroupTopologyStep({ draft, providers, isLoading, error, 
         <Field label={t(key('metroMode'))} htmlFor="metro-mode">
           <Select id="metro-mode" value={draft.metroMirrorMode ?? 'existing'} disabled={isEditing}
             onChange={event => {
-              onChange({ metroMirrorMode: event.target.value === 'managed' ? 'managed' : 'existing', consistencyGroupId: '', auxiliaryNamesByVolume: {} })
+              onChange({ type: 'metroModeChanged', mode: event.target.value === 'managed' ? 'managed' : 'existing' })
             }}>
             <option value="existing">{t(key('existing'))}</option>
             <option value="managed">{t(key('managed'))}</option>

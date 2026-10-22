@@ -287,6 +287,20 @@ describe('useRecoveryGroups', () => {
       .rejects.toMatchObject({ code: 'invalid_draft' })
   })
 
+  it('uses the latest server record for the legacy exception and rejects explicitly unselected topology', async () => {
+    let storageAttached = false
+    const mock = stubFetch({ '/api/get_recovery_groups': () => ({ recovery_groups: [{ ...wireGroup, provider_id_volume: storageAttached ? source.id : '' }] }) })
+    const { result } = renderHook(() => useRecoveryGroups(), { wrapper: createWrapper() })
+    await waitFor(() => { expect(result.current.groups).toHaveLength(1) })
+    await expect(result.current.update(draft.id, { ...draft, topology: null, relatedVolumeProviderId: null })).rejects.toMatchObject({ code: 'invalid_draft' })
+    await act(async () => { await result.current.update(draft.id, { ...draft, topology: undefined, relatedVolumeProviderId: null }) })
+    storageAttached = true
+    await act(async () => { await result.current.refresh() })
+    await waitFor(() => { expect(result.current.groups[0]?.relatedVolumeProviderId).toBe(source.id) })
+    await expect(result.current.update(draft.id, { ...draft, relatedVolumeProviderId: null })).rejects.toMatchObject({ code: 'invalid_draft' })
+    expect(calls(mock, '/api/submit_recovery_group')).toHaveLength(1)
+  })
+
   it('blocks an edit when provider relationships change or refresh is pending', async () => {
     const mock = stubFetch()
     const { result, rerender } = renderHook(() => useRecoveryGroups(), { wrapper: createWrapper() })
