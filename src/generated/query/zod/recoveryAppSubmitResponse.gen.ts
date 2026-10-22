@@ -49,7 +49,9 @@ export const RecoveryAppSubmitResponse = zod.object({
   "reason": zod.union([zod.string(),zod.null()]).exactOptional(),
   "dag": zod.union([zod.string(),zod.null()]).exactOptional(),
   "dag_id": zod.union([zod.string(),zod.null()]).exactOptional(),
-  "json": zod.union([zod.string(),zod.null()]).exactOptional()
+  "json": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "schedule": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "notes": zod.union([zod.array(zod.string()),zod.null()]).exactOptional()
 }),zod.null()]).exactOptional()
 }).describe('Same \'applications\' envelope key as /get_recovery_apps - the router\nre-keys upsert_recovery_app\'s own \'recovery_applications\' result to match.')
 

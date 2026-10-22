@@ -7,12 +7,7 @@ import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { Modal } from '@/shared/components/modal/Modal'
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { useTranslation } from '@/hooks/useTranslation'
-import { useGetPolicies } from '@/generated/query/snapshot-policies/snapshot-policies.gen'
-import { selectSnapshotPolicies } from '@/features/recovery-plans/recovery-policies/snapshot/model/selectSnapshotPolicies'
-import { useGetRecoveryAppPolicies } from '@/generated/query/recovery-app-policies/recovery-app-policies.gen'
-import { selectRecoveryAppPolicies } from '@/features/recovery-plans/recovery-policies/application-recovery/model/selectRecoveryAppPolicies'
-import { useGetCleanRoomPolicies } from '@/generated/query/clean-room-policies/clean-room-policies.gen'
-import { selectCleanRoomPolicies } from '@/features/recovery-plans/recovery-policies/clean-room/model/selectCleanRoomPolicies'
+import { usePolicyCatalog } from '@/features/recovery-plans/recovery-policies/catalog/hooks/usePolicyCatalog'
 import { useSubmitPolicySet } from '@/generated/query/policy-sets/policy-sets.gen'
 import type { PolicySetRecordOutput } from '@/generated/query/zod'
 import { PolicySetForm } from './PolicySetForm'
@@ -52,9 +47,7 @@ function initialForm(policySet?: PolicySetRecordOutput) {
 export function PolicySetModal({ open, onClose, existingPolicySets, policySet }: PolicySetModalProps) {
   const { t } = useTranslation()
   const submitPolicySet = useSubmitPolicySet()
-  const snapshotPoliciesQuery = useGetPolicies({ query: { select: selectSnapshotPolicies } })
-  const recoveryAppPoliciesQuery = useGetRecoveryAppPolicies({ query: { select: selectRecoveryAppPolicies } })
-  const cleanRoomPoliciesQuery = useGetCleanRoomPolicies({ query: { select: selectCleanRoomPolicies } })
+  const catalog = usePolicyCatalog()
   const isEdit = Boolean(policySet)
   const [formData, setFormData] = useState<PolicySetFormData>(EMPTY_FORM)
   const [errors, setErrors] = useState<Partial<Record<keyof PolicySetFormData, string>>>({})
@@ -156,15 +149,9 @@ export function PolicySetModal({ open, onClose, existingPolicySets, policySet }:
         <PolicySetForm
           data={formData}
           errors={errors}
-          availableSnapshotPolicies={snapshotPoliciesQuery.data ?? []}
-          availableRecoveryAppPolicies={recoveryAppPoliciesQuery.data ?? []}
-          availableCleanRoomPolicies={cleanRoomPoliciesQuery.data ?? []}
-          isRecoveryAppPoliciesLoading={recoveryAppPoliciesQuery.isLoading}
-          recoveryAppPoliciesError={recoveryAppPoliciesQuery.error}
-          onRetryRecoveryAppPolicies={() => { void recoveryAppPoliciesQuery.refetch() }}
-          isCleanRoomPoliciesLoading={cleanRoomPoliciesQuery.isLoading}
-          cleanRoomPoliciesError={cleanRoomPoliciesQuery.error}
-          onRetryCleanRoomPolicies={() => { void cleanRoomPoliciesQuery.refetch() }}
+          sources={catalog.sources}
+          references={catalog.resolvePolicySet(formData)}
+          onRetry={catalog.retry}
           isSubmitting={submitPolicySet.isPending}
           idDisabled={isEdit}
           onChange={handleChange}

@@ -12,9 +12,15 @@ vi.mock('react-router', async (importOriginal) => ({
   ...await importOriginal<typeof import('react-router')>(),
   useBlocker: () => ({ state: 'unblocked' as const }),
 }))
+const { snapshotState } = vi.hoisted(() => ({ snapshotState: { pending: false, error: null as Error | null, fetchStatus: 'idle', refetch: vi.fn() } }))
+
 vi.mock('@/generated/query/snapshot-policies/snapshot-policies.gen', () => ({
   useGetPolicies: () => ({
-    data: [
+    status: snapshotState.error ? 'error' : snapshotState.pending ? 'pending' : 'success',
+    fetchStatus: snapshotState.fetchStatus,
+    error: snapshotState.error,
+    refetch: snapshotState.refetch,
+    data: snapshotState.pending ? undefined : [
       { id: 'medium-6h', name: 'Medium — 6h', description: '', level: 'medium', frequency_value: 6, frequency_unit: 'hours', retention_value: 7, retention_unit: 'days', max_snapshots: null, enabled: true },
       { id: 'low-24h', name: 'Low — 24h', description: '', level: 'low', frequency_value: 24, frequency_unit: 'hours', retention_value: 30, retention_unit: 'days', max_snapshots: null, enabled: true },
     ],
@@ -71,13 +77,21 @@ afterEach(() => {
 })
 
 beforeEach(() => {
+  snapshotState.pending = false
+  snapshotState.error = null
+  snapshotState.fetchStatus = 'idle'
+  snapshotState.refetch.mockClear()
   mockUseRecoveryAppPolicies.mockReturnValue({
+    status: 'success',
+    fetchStatus: 'idle',
     data: [recoveryAppPolicy],
     isLoading: false,
     error: null,
     refetch: vi.fn(),
   } as unknown as ReturnType<typeof useGetRecoveryAppPolicies>)
   mockUseCleanRoomPolicies.mockReturnValue({
+    status: 'success',
+    fetchStatus: 'idle',
     data: [{ id: 'enforce-clean-target', name: 'Enforce Clean Target', description: 'Remove conflicts.', enabled: true }],
     isLoading: false,
     error: null,
@@ -86,6 +100,34 @@ beforeEach(() => {
 })
 
 describe('PolicySetModal', () => {
+  it.each(['fetching', 'paused'] as const)('prevents repeated retry while snapshot recovery is %s', fetchStatus => {
+    snapshotState.error = new Error('refresh failed')
+    snapshotState.fetchStatus = fetchStatus
+    renderModal({ policySet })
+    expect(screen.getByRole('button', { name: 'Retry Snapshot policies' })).toBeDisabled()
+    expect(screen.getByRole('radio', { name: 'Medium — 6h (medium-6h)' })).toBeChecked()
+  })
+
+  it('waits for snapshot data without claiming that no policies exist', () => {
+    snapshotState.pending = true
+    renderModal()
+    expect(screen.getByRole('status')).toHaveTextContent('Waiting for policy data.')
+    expect(screen.queryByText('No snapshot policies are available. Create a snapshot policy first.')).not.toBeInTheDocument()
+  })
+
+  it('keeps cached snapshot options, the edited draft and the discard guard after retry', () => {
+    snapshotState.error = new Error('refresh failed')
+    renderModal({ policySet })
+    fireEvent.change(screen.getByLabelText('Policy set name'), { target: { value: 'Edited draft' } })
+    expect(screen.getByRole('radio', { name: 'Medium — 6h (medium-6h)' })).toBeChecked()
+    expect(screen.getByRole('alert')).toHaveTextContent('Previously loaded data is shown.')
+    fireEvent.click(screen.getByRole('button', { name: 'Retry Snapshot policies' }))
+    expect(snapshotState.refetch).toHaveBeenCalledOnce()
+    expect(screen.getByLabelText('Policy set name')).toHaveValue('Edited draft')
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(screen.getByRole('dialog', { name: 'Discard unsaved policy set changes?' })).toBeInTheDocument()
+  })
+
   it('renders the id, name, description and available policy options', () => {
     renderModal()
 
@@ -158,6 +200,8 @@ describe('PolicySetModal', () => {
 
   it('requires a recovery application policy before submitting', () => {
     mockUseRecoveryAppPolicies.mockReturnValue({
+      status: 'success',
+      fetchStatus: 'idle',
       data: [],
       isLoading: false,
       error: null,
@@ -176,6 +220,8 @@ describe('PolicySetModal', () => {
 
   it('requires a clean room policy before submitting', () => {
     mockUseCleanRoomPolicies.mockReturnValue({
+      status: 'success',
+      fetchStatus: 'idle',
       data: [],
       isLoading: false,
       error: null,
@@ -196,6 +242,8 @@ describe('PolicySetModal', () => {
   it('shows a retry action when recovery application policies fail to load', () => {
     const refetch = vi.fn()
     mockUseRecoveryAppPolicies.mockReturnValue({
+      status: 'error',
+      fetchStatus: 'idle',
       data: [],
       isLoading: false,
       error: new Error('private backend details'),
@@ -203,19 +251,23 @@ describe('PolicySetModal', () => {
     } as unknown as ReturnType<typeof useGetRecoveryAppPolicies>)
     renderModal()
 
-    expect(screen.getByRole('alert')).toHaveTextContent('Recovery application policies could not be loaded.')
-    fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('Recovery application policy could not be refreshed. Previously loaded data is shown.')
+    fireEvent.click(screen.getByRole('button', { name: 'Retry Recovery application policy' }))
     expect(refetch).toHaveBeenCalledOnce()
   })
 
   it('shows backend detail for dependent policy lookup failures', () => {
     mockUseRecoveryAppPolicies.mockReturnValue({
+      status: 'error',
+      fetchStatus: 'idle',
       data: [],
       isLoading: false,
       error: new OrvalApiError(503, 'Unavailable', { detail: 'Recovery policy service is unavailable.' }),
       refetch: vi.fn(),
     } as unknown as ReturnType<typeof useGetRecoveryAppPolicies>)
     mockUseCleanRoomPolicies.mockReturnValue({
+      status: 'error',
+      fetchStatus: 'idle',
       data: [],
       isLoading: false,
       error: new OrvalApiError(503, 'Unavailable', { detail: 'Clean room policy service is unavailable.' }),
@@ -252,6 +304,6 @@ describe('PolicySetModal', () => {
       existingPolicySets: [policySet],
     })
 
-    expect(screen.getByText('Stored recovery application policy removed-policy is not available.')).toBeInTheDocument()
+    expect(screen.getByText('Policy removed-policy was not found in the last successfully loaded catalog.')).toBeInTheDocument()
   })
 })

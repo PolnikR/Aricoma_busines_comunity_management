@@ -12,6 +12,10 @@ export const submitPolicyBodyRetentionValueExclusiveMin = 0;
 
 export const submitPolicyBodyMaxSnapshotsOneExclusiveMin = 0;
 
+export const submitPolicyBodyFlashcopyCopyRateDefault = 0;
+export const submitPolicyBodyFlashcopyCopyRateMin = 0;
+export const submitPolicyBodyFlashcopyCopyRateMax = 150;
+
 export const submitPolicyBodyEnabledDefault = true;
 export const SubmitPolicyBody = zod.object({
   "id": zod.string(),
@@ -23,6 +27,7 @@ export const SubmitPolicyBody = zod.object({
   "retention_value": zod.int().gt(submitPolicyBodyRetentionValueExclusiveMin),
   "retention_unit": zod.enum(['minutes', 'hours', 'days']),
   "max_snapshots": zod.union([zod.int().gt(submitPolicyBodyMaxSnapshotsOneExclusiveMin),zod.null()]).exactOptional(),
+  "flashcopy_copy_rate": zod.int().min(submitPolicyBodyFlashcopyCopyRateMin).max(submitPolicyBodyFlashcopyCopyRateMax).default(submitPolicyBodyFlashcopyCopyRateDefault),
   "enabled": zod.boolean().default(submitPolicyBodyEnabledDefault)
 })
 

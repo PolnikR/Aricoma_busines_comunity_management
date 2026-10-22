@@ -49,7 +49,9 @@ export const RecoveryGroupsResponse = zod.object({
   "reason": zod.union([zod.string(),zod.null()]).exactOptional(),
   "dag": zod.union([zod.string(),zod.null()]).exactOptional(),
   "dag_id": zod.union([zod.string(),zod.null()]).exactOptional(),
-  "json": zod.union([zod.string(),zod.null()]).exactOptional()
+  "json": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "schedule": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "notes": zod.union([zod.array(zod.string()),zod.null()]).exactOptional()
 }),zod.null()]).exactOptional(),
   "rollback": zod.union([zod.object({
   "status": zod.enum(['ok', 'partial', 'failed', 'skipped']),

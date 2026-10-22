@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router'
 import { routes } from '@/app/routes'
 import { resolveUserFacingErrorMessage } from '@/shared/api/apiErrorMessage'
 import { Badge } from '@/shared/components/badge/Badge'
+import { Alert } from '@/shared/components/alert/Alert'
 import { Button } from '@/shared/components/button/Button'
 import { Field, Select } from '@/shared/components/form/FormControls'
 import { DetailField, DetailOverview, DetailView, DetailViewSection } from '@/shared/components/detail-view'
@@ -123,12 +124,13 @@ function getBaseColumns(t: ReturnType<typeof useTranslation>['t'], providers?: {
     },
   },
   {
-    id: 'submission',
-    header: t('tables.recovery.submission'),
-    cell: (app) => {
-      if (!app.submission) return <span className="text-text-subtle">—</span>
-      return <Badge color={getSubmissionBadgeColor(app.submission.status)} size="sm">{app.submission.status}</Badge>
-    },
+    id: 'orchestration',
+    header: t('tables.recoveryGroups.orchestration'),
+    cell: (app) => (
+      <Badge color={app.pushToOrchestrator ? 'success' : 'light'} size="sm">
+        {t(app.pushToOrchestrator ? 'common.yes' : 'common.no')}
+      </Badge>
+    ),
   },
   ]
 }
@@ -151,6 +153,7 @@ export function RecoveryApplicationsTable({
   const [pendingFilters, setPendingFilters] = useState<RecoveryApplicationFilters>(EMPTY_FILTERS)
   const [deleteTarget, setDeleteTarget] = useState<RecoveryApplicationListItem | null>(null)
   const [rollbackResult, setRollbackResult] = useState<{ appName: string; report: RollbackReport } | null>(null)
+  const [rollbackReportMissing, setRollbackReportMissing] = useState(false)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const triggerRefForMenu = useRef<HTMLButtonElement | null>(null)
   const errorDescription = resolveUserFacingErrorMessage(error, '')
@@ -258,8 +261,9 @@ export function RecoveryApplicationsTable({
     }] : []),
   ], [t, providers, platformProviders, openMenuId, onDelete])
 
-  const table = useTableState(rows, {
-    searchFields: ['id'],
+  const searchableRows = useMemo(() => rows.map(application => ({ id: application.id, name: application.data.application.name, application })), [rows])
+  const table = useTableState(searchableRows, {
+    searchFields: ['id', 'name'],
   })
 
   const currentMenuApp = useMemo(
@@ -361,6 +365,7 @@ export function RecoveryApplicationsTable({
 
   return (
     <>
+      {rollbackReportMissing ? <Alert variant="warning" title={t('recovery.application.rollback.reportUnavailable')} /> : null}
       <DataTableSurface
         ariaLabel={t('pages.recovery.tableAriaLabel')}
         toolbar={toolbar}
@@ -378,7 +383,7 @@ export function RecoveryApplicationsTable({
       >
         <DataTable
           columns={columns}
-          rows={table.pageItems}
+          rows={table.pageItems.map(row => row.application)}
           isLoading={isLoading}
           rowKey={(app) => app.id}
           density={table.density}
@@ -554,9 +559,11 @@ export function RecoveryApplicationsTable({
         onConfirm={() => {
           if (!deleteTarget || !onDelete || isDeleting) return
           const target = deleteTarget
+          setRollbackReportMissing(false)
           void (async () => {
             try {
               const result = await onDelete(target)
+              setRollbackReportMissing(Boolean(target.pushToOrchestrator && !result.rollback))
               if (result.rollback) {
                 setRollbackResult({ appName: target.data.application.name, report: result.rollback })
               }

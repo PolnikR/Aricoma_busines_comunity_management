@@ -14,7 +14,6 @@ export interface ProviderCreateFormData {
   role: string
   ipAddress: string
   url: string
-  port: string
   credentialId: string
   vmPrefix: string
   vmTags: string[]
@@ -177,7 +176,7 @@ export function ProviderCreateForm({
         </Field>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_7.5rem]">
+      <div>
         <Field label={t('forms.ip')} htmlFor="create-ipAddress">
           <Input
             id="create-ipAddress"
@@ -192,21 +191,6 @@ export function ProviderCreateForm({
           {errors.ipAddress ? <p className="mt-1 text-xs text-red-600">{errors.ipAddress}</p> : null}
         </Field>
 
-        <Field label={t('forms.port')} htmlFor="create-port">
-          <Input
-            id="create-port"
-            type="number"
-            min={1}
-            max={65535}
-            step={1}
-            value={data.port}
-            onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('port', event.target.value) }}
-            onKeyDown={handleKeyDown}
-            disabled={isSubmitting}
-            aria-invalid={Boolean(errors.port)}
-          />
-          {errors.port ? <p className="mt-1 text-xs text-red-600">{errors.port}</p> : null}
-        </Field>
       </div>
 
       {isPartnerProviderType(data.type) ? (

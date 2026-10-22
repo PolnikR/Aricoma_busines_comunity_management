@@ -29,7 +29,8 @@ import { VmwareProviderFilterSummary } from './VmwareProviderFilterSummary'
 import type { VmwareProviderFilter } from '../../helpers/vmwareProviderFilter'
 import { resolveVmwareInitialFilters } from '../../helpers/resolveVmwareInitialFilters'
 import { readProviderFilterSnapshot } from '../../state/providerFilterSession'
-import { vmwareInventoryQuery } from '../../model/inventoryQueries'
+import { VmwareInventoryUnavailableError, vmwareInventoryQuery } from '../../model/inventoryQueries'
+import { useProviderInventoryDeleted } from '@/shared/query/useProviderInventoryDeleted'
 
 const defaultFilters: VirtualMachineFilters = {
   search: '',
@@ -111,6 +112,7 @@ export function VmwareResourcesPage(props: VmwareResourcesPageProps) {
   const data = allData ? applyFiltersAndPagination(allData, query) : null
 
   const backgroundProviderId = backgroundPrefetchProvider?.id
+  const backgroundDeleted = useProviderInventoryDeleted(backgroundProviderId)
   const backgroundPrefix = backgroundPrefetchProvider?.vmPrefix ?? null
   const backgroundTag = backgroundPrefetchProvider?.vmTags?.map(tag => tag.trim()).find(Boolean) ?? ''
   const canPrefetch = role === 'source' && inventoryEnabled && !providersPending && !providersError
@@ -119,7 +121,7 @@ export function VmwareResourcesPage(props: VmwareResourcesPageProps) {
     && backgroundPrefetchProvider.credentialStatus !== 'missing' && backgroundProviderId !== selectedProvider.id
 
   useEffect(() => {
-    if (!canPrefetch || !backgroundProviderId) return
+    if (!canPrefetch || !backgroundProviderId || backgroundDeleted) return
     let disposed = false
     const run = () => {
       if (disposed) return
@@ -129,7 +131,8 @@ export function VmwareResourcesPage(props: VmwareResourcesPageProps) {
       }, new URLSearchParams(), readProviderFilterSnapshot({ role: 'source', resourceTab: 'vmware', providerId: backgroundProviderId }))
       const tag = getServerSideTagFilter(filters.tags)
       const options = vmwareInventoryQuery({ providerId: backgroundProviderId, namePrefix: filters.search, ...(tag ? { tag } : {}) })
-      if (queryClient.getQueryState(options.queryKey)?.status === 'error') return
+      const state = queryClient.getQueryState(options.queryKey)
+      if (state?.status === 'error' && !(state.error instanceof VmwareInventoryUnavailableError)) return
       void queryClient.prefetchQuery(options)
     }
     const idle = typeof window.requestIdleCallback === 'function'
@@ -139,7 +142,7 @@ export function VmwareResourcesPage(props: VmwareResourcesPageProps) {
       if (idle) window.cancelIdleCallback(id)
       else window.clearTimeout(id)
     }
-  }, [queryClient, canPrefetch, backgroundProviderId, backgroundPrefix, backgroundTag])
+  }, [queryClient, canPrefetch, backgroundProviderId, backgroundPrefix, backgroundTag, backgroundDeleted])
 
   useEffect(() => {
     if (!isFetching && data && data.page !== query.page) updateQuery({ page: data.page })

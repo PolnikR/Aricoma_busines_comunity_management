@@ -2,6 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { VmsResponse } from '@/generated/query/zod'
 import {
+  getProviderInventoryRevision,
+  isProviderInventoryDeleted,
+  isProviderInventoryRevisionCurrent,
+  type ProviderInventoryRevision,
+} from '@/shared/query/providerInventoryRevision'
+import { useProviderInventoryDeleted } from '@/shared/query/useProviderInventoryDeleted'
+import {
   fetchVmwareInventoryLive,
   normalizeVmwareInventorySearch,
   selectVmwareInventory,
@@ -13,6 +20,8 @@ import type { DiscoveryInventory } from '../model/discoveryTypes'
 const NAME_SEARCH_DEBOUNCE_MS = 300
 
 interface ForceRefreshSnapshot {
+  providerId: string
+  revision: ProviderInventoryRevision
   search: VmwareInventorySearch
   queryKey: readonly unknown[]
   queryHash: string
@@ -54,6 +63,7 @@ export function useVmwareResourceInventory({
   })
   const normalizedNamePrefix = normalizedSearch.namePrefix
   const currentProviderId = normalizedSearch.providerId
+  const isDeleted = useProviderInventoryDeleted(currentProviderId)
   const currentNamePrefix = normalizedNamePrefix ?? ''
   const hasNamePrefix = normalizedNamePrefix !== undefined
   const [debouncedNamePrefixState, setDebouncedNamePrefixState] = useState<DebouncedNamePrefixState>(() => ({
@@ -86,7 +96,8 @@ export function useVmwareResourceInventory({
   }
   const { queryKey, queryFn } = vmwareInventoryQuery(search)
   const queryHash = JSON.stringify(queryKey)
-  const canFetch = enabled && Boolean(currentProviderId) && !isDebouncing
+  const forceRefreshState = forceRefreshStates[queryHash]
+  const canFetch = enabled && Boolean(currentProviderId) && !isDebouncing && !isDeleted
 
   const query = useQuery<VmsResponse, Error, DiscoveryInventory>({
     queryKey,
@@ -96,7 +107,8 @@ export function useVmwareResourceInventory({
     // Keep the previous result visible while a new search for the same provider
     // loads. The generated key is ['POST', '/vms/search', params, body].
     placeholderData: (previousData, previousQuery) => {
-      const previousParams = previousQuery?.queryKey[2] as { provider_id?: string } | undefined
+      if (isDeleted || !previousQuery || queryClient.getQueryCache().find({ queryKey: previousQuery.queryKey, exact: true }) !== previousQuery) return undefined
+      const previousParams = previousQuery.queryKey[2] as { provider_id?: string } | undefined
       return previousParams?.provider_id === normalizedSearch.providerId ? previousData : undefined
     },
   })
@@ -108,7 +120,7 @@ export function useVmwareResourceInventory({
 
       const pendingRequestIds = state.pendingRequestIds.filter((requestId) => requestId !== snapshot.requestId)
       const nextState = {
-        ...state,
+        latestRequestId: state.latestRequestId,
         pendingRequestIds,
         error: state.latestRequestId === snapshot.requestId ? error : state.error,
       }
@@ -126,6 +138,7 @@ export function useVmwareResourceInventory({
     mutationFn: ({ search: snapshotSearch }) => fetchVmwareInventoryLive(snapshotSearch),
     onSuccess: (data, snapshot) => {
       if (latestForceRefreshRequestIds.current[snapshot.queryHash] !== snapshot.requestId) return
+      if (!isProviderInventoryRevisionCurrent(queryClient, snapshot.providerId, snapshot.revision)) return
       queryClient.setQueryData(snapshot.queryKey, data)
     },
     onSettled: (_, error, snapshot) => {
@@ -133,7 +146,11 @@ export function useVmwareResourceInventory({
     },
   })
   const forceRefresh = () => {
+    if (!currentProviderId) return Promise.reject(new Error('Live Refresh requires a provider ID'))
+    if (isProviderInventoryDeleted(queryClient, currentProviderId)) return Promise.reject(new Error('Live Refresh is unavailable for a deleted provider'))
     const snapshot = {
+      providerId: currentProviderId,
+      revision: getProviderInventoryRevision(queryClient, currentProviderId),
       search,
       queryKey,
       queryHash,
@@ -154,7 +171,6 @@ export function useVmwareResourceInventory({
     })
     return forceRefreshMutation.mutateAsync(snapshot)
   }
-  const forceRefreshState = forceRefreshStates[queryHash]
 
   const hasSettledProviderQuery = settledProviderId === normalizedSearch.providerId
 
@@ -169,20 +185,42 @@ export function useVmwareResourceInventory({
     return () => { cancelled = true }
   }, [canFetch, normalizedSearch.providerId, query.isPending])
 
-  return {
+  // An observer can retain its previous result after removeQueries. Expose a
+  // coherent inactive result while deletion is published to mounted consumers.
+  const result = isDeleted ? {
     ...query,
+    data: undefined,
+    dataUpdatedAt: 0,
+    error: null,
+    errorUpdatedAt: 0,
+    status: 'pending' as const,
+    fetchStatus: 'idle' as const,
+    isPending: true,
+    isSuccess: false,
+    isError: false,
+    isPlaceholderData: false,
+    isFetching: false,
+    isLoading: false,
+    isInitialLoading: false,
+    isRefetching: false,
+    isRefetchError: false,
+    isLoadingError: false,
+    isPaused: false,
+  } : query
+  return {
+    ...result,
     forceRefresh,
     isForceRefreshing: Boolean(forceRefreshState?.pendingRequestIds.length),
     forceRefreshError: forceRefreshState?.error ?? null,
     isDebouncing,
-    isInitialLoading: canFetch && query.isPending && !hasSettledProviderQuery,
-    isBackgroundFetching: query.isFetching && Boolean(query.data),
-    error: isDebouncing ? null : query.error,
-    isError: query.isError && !isDebouncing,
-    isEmpty: query.isSuccess
-      && !query.isPlaceholderData
-      && !query.isFetching
+    isInitialLoading: canFetch && result.isPending && !hasSettledProviderQuery,
+    isBackgroundFetching: result.isFetching && Boolean(result.data),
+    error: isDebouncing ? null : result.error,
+    isError: result.isError && !isDebouncing,
+    isEmpty: result.isSuccess
+      && !result.isPlaceholderData
+      && !result.isFetching
       && !isDebouncing
-      && query.data.virtualMachines.length === 0,
+      && result.data?.virtualMachines.length === 0,
   }
 }

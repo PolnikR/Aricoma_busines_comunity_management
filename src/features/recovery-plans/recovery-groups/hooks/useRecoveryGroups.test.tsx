@@ -123,6 +123,29 @@ describe('useRecoveryGroups', () => {
     expect(calls(mock, '/api/get_recovery_groups')).toHaveLength(0)
   })
 
+  it.each(['create', 'update'] as const)('preserves the push result alongside the mapped group on %s', async operation => {
+    const push = { status: 'pushed', dag_id: 'dag_real', dag: '/airflow/real.py', json: '/airflow/real.json' }
+    stubFetch({ '/api/submit_recovery_group': () => ({ recovery_groups: [wireGroup], orchestrator_push: push }) })
+    const { result } = renderHook(() => useRecoveryGroups(), { wrapper: createWrapper() })
+    await waitFor(() => { expect(result.current.groups).toHaveLength(1) })
+    let saved: unknown
+    await act(async () => {
+      saved = await (operation === 'create' ? result.current.create(draft) : result.current.update(draft.id, draft))
+    })
+    expect(saved).toMatchObject({ id: 'database_group', name: 'Database group', orchestratorPush: push })
+  })
+
+  it.each([null, undefined, { status: 'skipped', reason: 'Provider disabled', dag: null, dag_id: null, json: null }])(
+    'preserves missing or skipped push details when the submit omits the group record (%j)', async push => {
+      stubFetch({ '/api/submit_recovery_group': () => ({ recovery_groups: [], ...(push === undefined ? {} : { orchestrator_push: push }) }) })
+      const { result } = renderHook(() => useRecoveryGroups(), { wrapper: createWrapper() })
+      await waitFor(() => { expect(result.current.groups).toHaveLength(1) })
+      let saved: unknown
+      await act(async () => { saved = await result.current.create(draft) })
+      expect(saved).toMatchObject({ id: 'database_group', name: 'Database group', orchestratorPush: push ?? null })
+    },
+  )
+
   it('submits the group with orchestration params and refetches the list', async () => {
     const mock = stubFetch()
     const { result } = renderHook(() => useRecoveryGroups(), { wrapper: createWrapper() })

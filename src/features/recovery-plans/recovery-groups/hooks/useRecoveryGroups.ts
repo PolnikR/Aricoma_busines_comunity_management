@@ -8,7 +8,7 @@ import {
   useRollbackGroupFromOrchestrator,
   useSubmitRecoveryGroup,
 } from '@/generated/query/recovery-groups/recovery-groups.gen'
-import type { RecoveryGroupInventoryResponse, RecoveryGroupsResponse, RecoveryGroupsResponseOutput } from '@/generated/query/zod'
+import type { OrchestratorPushOutput, RecoveryGroupInventoryResponse, RecoveryGroupsResponse, RecoveryGroupsResponseOutput } from '@/generated/query/zod'
 import { selectProviders } from '@/features/providers-connectors/providers/model/selectProviders'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import { toProgrammaticId } from '@/shared/utils/programmaticId'
@@ -22,6 +22,10 @@ import type { RecoveryGroup, RecoveryGroupDraft, RollbackReport } from '../model
 import { RecoveryGroupsError } from '../api/recoveryGroupsErrors'
 import { validateRecoveryGroupDraft } from '../api/recoveryGroupsValidation'
 import { getRecoveryGroupTopologyError } from '../utils/recoveryGroupTopology'
+
+export type RecoveryGroupSubmitResult = RecoveryGroup & {
+  orchestratorPush: OrchestratorPushOutput | null
+}
 
 function toRecoveryGroups(response: RecoveryGroupsResponse, providers: ProviderRecord[]): RecoveryGroup[] {
   // validatingMutator hands select the parsed Output shape.
@@ -75,7 +79,7 @@ export function useRecoveryGroups() {
     mutation: typeof createMutation,
     draft: RecoveryGroupDraft,
     requestedId?: string,
-  ): Promise<RecoveryGroup> => {
+  ): Promise<RecoveryGroupSubmitResult> => {
     const validated = validateRecoveryGroupDraft(draft)
     const id = toProgrammaticId(requestedId ?? validated.id)
     if (!id) throw new RecoveryGroupsError('invalid_draft', 'Recovery group ID is required')
@@ -110,9 +114,10 @@ export function useRecoveryGroups() {
     })
     const returnedRecord = (response as RecoveryGroupsResponseOutput).recovery_groups
       .find(record => record.id === id)
-    return returnedRecord
+    const group = returnedRecord
       ? mapRecoveryGroupApiRecord(toRecoveryGroupReadRecord(returnedRecord), providers)
       : toRecoveryGroup(validated, id)
+    return { ...group, orchestratorPush: response.orchestrator_push ?? null }
   }
 
   const remove = async (group: RecoveryGroup): Promise<RollbackReport | null> => {

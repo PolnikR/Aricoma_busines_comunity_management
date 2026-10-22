@@ -48,7 +48,7 @@ export function RecoveryApplicationInventory({ runId, active, application }: Rec
   if (!runId) return <p className="px-5 py-6 text-sm text-text-subtle">{t('recoveryInventory.noRun')}</p>
   if (target.error) return <Alert className="m-5" variant="error" title={t('recoveryInventory.error')} description={target.error.message} />
   if (query.isLoading) return <p className="px-5 py-6 text-sm text-text-subtle">{t('recoveryInventory.loading')}</p>
-  if (query.error) {
+  if (query.error && !query.data) {
     return <FetchErrorAlert className="m-5" title={t('recoveryInventory.error')} retryLabel={t('buttons.retry')} isRetrying={query.isFetching} onRetry={() => { void query.refetch() }} />
   }
   if (!query.data) return null
@@ -58,6 +58,7 @@ export function RecoveryApplicationInventory({ runId, active, application }: Rec
 
   return (
     <div className="space-y-4 px-5 py-4">
+      {query.error ? <FetchErrorAlert title={t('recoveryInventory.refreshFailed')} retryLabel={t('buttons.retry')} isRetrying={query.isFetching} onRetry={() => { void query.refetch() }} /> : null}
       <div className="rounded-xl border border-border bg-surface-subtle p-3.5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">

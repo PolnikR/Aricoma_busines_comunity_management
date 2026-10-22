@@ -17,7 +17,7 @@ const policy: RecoveryAppPolicyRecordOutput = {
   frequency_value: 30, frequency_unit: 'days', retention_value: 2, retention_unit: 'days', boot_verify: false,
   snapshot_selection_mode: 'exact_time', snapshot_max_age_value: null, snapshot_max_age_unit: null,
   snapshot_target_time: '02:00', enabled: true,
-  target_lpar_prefix: 'dr_', manual_zoning: false, source_shutdown_timeout_seconds: 300, zoning_wait_minutes: 240,
+  target_lpar_prefix: 'dr_', manual_zoning: false, manual_wwpn_entry: false, source_shutdown_timeout_seconds: 300, zoning_wait_minutes: 240,
 }
 
 const latestPolicy: RecoveryAppPolicyRecordOutput = {
@@ -37,7 +37,7 @@ describe('RecoveryAppPoliciesTable', () => {
         isLoading={false}
         error={null}
         isRetrying={false}
-        onRetry={vi.fn()}
+        onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No request in this component test. */ }}
       />,
     )
 
@@ -47,7 +47,7 @@ describe('RecoveryAppPoliciesTable', () => {
 
   it('keeps static table content visible and dependent filters disabled while rows load', async () => {
     const user = userEvent.setup()
-    render(<RecoveryAppPoliciesTable policies={[]} isLoading error={null} isRetrying={false} onRetry={vi.fn()} />)
+    render(<RecoveryAppPoliciesTable policies={[]} isLoading error={null} isRetrying={false} onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No request in this component test. */ }} />)
 
     expect(screen.getByRole('region', { name: 'Recovery app policies table' })).toBeInTheDocument()
     expect(screen.getByRole('searchbox', { name: 'Search recovery app policies' })).toBeVisible()
@@ -63,7 +63,7 @@ describe('RecoveryAppPoliciesTable', () => {
   })
 
   it('shows schedule selection and opens an accessible detail drawer', async () => {
-    render(<RecoveryAppPoliciesTable policies={[policy]} isLoading={false} error={null} isRetrying={false} onRetry={vi.fn()} />)
+    render(<RecoveryAppPoliciesTable policies={[policy]} isLoading={false} error={null} isRetrying={false} onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No request in this component test. */ }} />)
 
     expect(screen.getByRole('searchbox', { name: 'Search recovery app policies' })).toBeInTheDocument()
     expect(screen.getByText('Every 30 days')).toBeInTheDocument()
@@ -110,7 +110,7 @@ describe('RecoveryAppPoliciesTable', () => {
         isLoading={false}
         error={null}
         isRetrying={false}
-        onRetry={vi.fn()}
+        onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No request in this component test. */ }}
       />,
     )
 
@@ -127,7 +127,7 @@ describe('RecoveryAppPoliciesTable', () => {
 
   it('shows the complete recovery policy GET payload without opening the drawer', async () => {
     const user = userEvent.setup()
-    render(<RecoveryAppPoliciesTable policies={[policy]} isLoading={false} error={null} isRetrying={false} onRetry={vi.fn()} />)
+    render(<RecoveryAppPoliciesTable policies={[policy]} isLoading={false} error={null} isRetrying={false} onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No request in this component test. */ }} />)
 
     await user.click(screen.getByRole('button', { name: 'View' }))
 
@@ -144,7 +144,7 @@ describe('RecoveryAppPoliciesTable', () => {
 
   it('keeps nullable selection fields in latest policy JSON', async () => {
     const user = userEvent.setup()
-    render(<RecoveryAppPoliciesTable policies={[latestPolicy]} isLoading={false} error={null} isRetrying={false} onRetry={vi.fn()} />)
+    render(<RecoveryAppPoliciesTable policies={[latestPolicy]} isLoading={false} error={null} isRetrying={false} onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No request in this component test. */ }} />)
 
     await user.click(screen.getByRole('button', { name: 'View' }))
 
@@ -157,7 +157,7 @@ describe('RecoveryAppPoliciesTable', () => {
 
   it('filters by snapshot selection mode', async () => {
     const user = userEvent.setup()
-    render(<RecoveryAppPoliciesTable policies={[policy, latestPolicy]} isLoading={false} error={null} isRetrying={false} onRetry={vi.fn()} />)
+    render(<RecoveryAppPoliciesTable policies={[policy, latestPolicy]} isLoading={false} error={null} isRetrying={false} onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No request in this component test. */ }} />)
 
     await user.click(screen.getByRole('button', { name: 'Filters' }))
     const dialog = screen.getByRole('dialog', { name: 'Filter recovery app policies' })
@@ -169,12 +169,12 @@ describe('RecoveryAppPoliciesTable', () => {
   })
 
   it('shows supported backend detail in the load error', () => {
-    render(<RecoveryAppPoliciesTable policies={[]} isLoading={false} error={new OrvalApiError(503, 'Unavailable', { detail: 'Recovery policy service unavailable.' })} isRetrying={false} onRetry={vi.fn()} />)
+    render(<RecoveryAppPoliciesTable policies={[]} isLoading={false} error={new OrvalApiError(503, 'Unavailable', { detail: 'Recovery policy service unavailable.' })} isRetrying={false} onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No request in this component test. */ }} />)
     expect(screen.getByRole('alert')).toHaveTextContent('Recovery policy service unavailable.')
   })
 
   it('keeps pagination available when cached policies remain after a refresh error', () => {
-    render(<RecoveryAppPoliciesTable policies={[policy]} isLoading={false} error={new Error('background refresh failed')} isRetrying={false} onRetry={vi.fn()} />)
+    render(<RecoveryAppPoliciesTable policies={[policy]} isLoading={false} error={new Error('background refresh failed')} isRetrying={false} onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No request in this component test. */ }} />)
     expect(screen.getByRole('alert')).toBeInTheDocument()
     expect(screen.getByLabelText('Rows per page')).toBeInTheDocument()
   })

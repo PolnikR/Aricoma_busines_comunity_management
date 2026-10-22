@@ -18,6 +18,7 @@ export const recoveryAppPoliciesResponseRecoveryAppPoliciesItemEnabledDefault = 
 export const recoveryAppPoliciesResponseRecoveryAppPoliciesItemTargetLparPrefixDefault = `dr_`;
 export const recoveryAppPoliciesResponseRecoveryAppPoliciesItemTargetLparPrefixRegExp = new RegExp('^[A-Za-z0-9._-]{0,12}$');
 export const recoveryAppPoliciesResponseRecoveryAppPoliciesItemManualZoningDefault = false;
+export const recoveryAppPoliciesResponseRecoveryAppPoliciesItemManualWwpnEntryDefault = false;
 export const recoveryAppPoliciesResponseRecoveryAppPoliciesItemSourceShutdownTimeoutSecondsDefault = 300;
 export const recoveryAppPoliciesResponseRecoveryAppPoliciesItemSourceShutdownTimeoutSecondsExclusiveMin = 0;
 
@@ -43,6 +44,7 @@ export const RecoveryAppPoliciesResponse = zod.object({
   "enabled": zod.boolean().default(recoveryAppPoliciesResponseRecoveryAppPoliciesItemEnabledDefault),
   "target_lpar_prefix": zod.string().regex(recoveryAppPoliciesResponseRecoveryAppPoliciesItemTargetLparPrefixRegExp).default(recoveryAppPoliciesResponseRecoveryAppPoliciesItemTargetLparPrefixDefault),
   "manual_zoning": zod.boolean().default(recoveryAppPoliciesResponseRecoveryAppPoliciesItemManualZoningDefault),
+  "manual_wwpn_entry": zod.boolean().default(recoveryAppPoliciesResponseRecoveryAppPoliciesItemManualWwpnEntryDefault),
   "source_shutdown_timeout_seconds": zod.int().gt(recoveryAppPoliciesResponseRecoveryAppPoliciesItemSourceShutdownTimeoutSecondsExclusiveMin).default(recoveryAppPoliciesResponseRecoveryAppPoliciesItemSourceShutdownTimeoutSecondsDefault),
   "zoning_wait_minutes": zod.int().gt(recoveryAppPoliciesResponseRecoveryAppPoliciesItemZoningWaitMinutesExclusiveMin).default(recoveryAppPoliciesResponseRecoveryAppPoliciesItemZoningWaitMinutesDefault)
 }))

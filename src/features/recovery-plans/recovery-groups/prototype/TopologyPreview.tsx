@@ -194,7 +194,7 @@ export function TopologyPreview() {
                   {step === 7 && <div className="grid gap-5">
                     <div><h2 className="text-base font-semibold">Policy Set</h2><p className="mt-1 text-sm text-text-muted">Choose the policies applied to this recovery group.</p></div>
                     <div className="grid min-h-72 overflow-hidden rounded-xl border border-border lg:grid-cols-2">
-                      <PolicySetPickerList policySets={policySets} selectedPolicySetId={policyId} recoveryPoliciesById={new Map([['daily', { name: 'Daily recovery verification' }]])} onSelect={setPolicyId} />
+                      <PolicySetPickerList policySets={policySets} selectedPolicySetId={policyId} resolveRecoveryPolicy={id => id === 'daily' ? { status: 'resolved', id, policy: { name: 'Daily recovery verification' }, verification: 'lastSuccess' } : id ? { status: 'missing', id, verification: 'lastSuccess' } : { status: 'notConfigured' }} onSelect={setPolicyId} />
                       <div className="p-5">{policy ? <><h3 className="text-sm font-semibold">{policy.name}</h3><p className="mt-2 text-sm text-text-muted">{policy.description}</p><dl className="mt-5 grid gap-3 text-sm"><dt className="text-text-muted">Application recovery</dt><dd>Daily recovery verification</dd><dt className="text-text-muted">Clean room</dt><dd>Enforce clean target</dd></dl></> : <EmptyState title="Select a policy set" description="Its configuration will appear here." />}</div>
                     </div>
                   </div>}

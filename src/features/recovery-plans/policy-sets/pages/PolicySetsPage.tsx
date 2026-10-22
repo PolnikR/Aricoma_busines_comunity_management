@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { usePostDeleteRefresh } from '../../hooks/usePostDeleteRefresh'
 import { Button } from '@/shared/components/button/Button'
 import { InventoryShell } from '@/shared/components/inventory-shell/InventoryShell'
 import { TableToolbar } from '@/shared/components/table/TableToolbar'
@@ -14,6 +15,7 @@ export function PolicySetsPage() {
   const { data: policySets = [], isLoading, isFetching, error, refetch } = useGetPolicySets({
     query: { select: selectPolicySets },
   })
+  const postDelete = usePostDeleteRefresh(() => refetch({ cancelRefetch: false, throwOnError: false }))
 
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
@@ -21,7 +23,7 @@ export function PolicySetsPage() {
         title={t('pages.policySets.title')}
         description={t('pages.policySets.description')}
         isFetching={isFetching}
-        onRefresh={() => { void refetch() }}
+        onRefresh={() => { void postDelete.refresh() }}
         actions={(
           <Button size="sm" variant="outline" onClick={() => { setIsCreateModalOpen(true) }}>
             {t('pages.policySets.addButton')}
@@ -36,10 +38,12 @@ export function PolicySetsPage() {
       >
         <PolicySetsTable
           policySets={policySets}
+          postDeletePhase={postDelete.phase}
+          onDeleted={postDelete.afterDelete}
           isLoading={isLoading}
           error={error instanceof Error ? error : null}
           isRetrying={isFetching}
-          onRetry={() => { void refetch() }}
+          onRetry={() => { void postDelete.refresh() }}
         />
       </InventoryShell>
 

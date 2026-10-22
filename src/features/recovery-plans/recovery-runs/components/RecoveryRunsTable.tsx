@@ -17,13 +17,14 @@ export interface RecoveryRunRow {
   name: string
   entityType: OrchestratedEntity['entityType']
   dagId: string
+  providerId: string
   latestRunState: LatestRunRequestState
 }
 
 function getColumns(
   t: ReturnType<typeof useTranslation>['t'],
   showEntityType: boolean,
-  onRetry: () => void,
+  onRetry: (row?: RecoveryRunRow) => void,
 ): ColumnDef<RecoveryRunRow>[] {
   const columns: ColumnDef<RecoveryRunRow>[] = [
     {
@@ -66,7 +67,7 @@ function getColumns(
               <button
                 type="button"
                 className="text-xs font-semibold underline"
-                onClick={(event) => { event.stopPropagation(); onRetry() }}
+                onClick={(event) => { event.stopPropagation(); onRetry(row) }}
               >
                 {t('buttons.retry')}
               </button>
@@ -119,7 +120,7 @@ interface RecoveryRunsTableProps {
   isLoading: boolean
   error: Error | null
   isRetrying: boolean
-  onRetry: () => void
+  onRetry: (row?: RecoveryRunRow) => void
   onSelectEntity: (entityType: RecoveryRunRow['entityType'], entityId: string) => void
   selectedEntityKey: string | null
 }

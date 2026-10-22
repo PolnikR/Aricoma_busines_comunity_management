@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { renderHook, waitFor } from '@testing-library/react'
+import { act, renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
+import { invalidateProviderMutation } from '@/shared/query/providerMutationInvalidation'
 import { useInfrastructureInventory } from './useInfrastructureInventory'
 import { createDiscoveryFetchHandlers, installDiscoveryFetch } from '../../resources/test/discoveryFetch'
 
@@ -25,6 +26,33 @@ beforeEach(() => {
 })
 
 describe('useInfrastructureInventory', () => {
+  it('clears a mounted deleted VMware observer and automatically recovers after recreate', async () => {
+    fetchVmwareInventory.mockReturnValueOnce({ count: 1, vms: [{ name: 'Old VM' }] })
+    fetchVmwareInventory.mockReturnValueOnce({ count: 1, vms: [{ name: 'Current VM' }] })
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    function Wrapper({ children }: { children: ReactNode }) {
+      return <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    }
+    const hook = renderHook(() => useInfrastructureInventory(provider('VMWARE', 'vcenter-01')), { wrapper: Wrapper })
+    await waitFor(() => { expect(hook.result.current.isSuccess).toBe(true) })
+    expect(hook.result.current.data).toMatchObject({ virtualMachines: [{ name: 'Old VM' }] })
+    await act(async () => {
+      await invalidateProviderMutation(client, ['deleteProvider'], { params: { provider_id: 'vcenter-01' } })
+    })
+    expect(hook.result.current.data).toBeUndefined()
+    expect(hook.result.current.isSuccess).toBe(false)
+    await act(async () => { await hook.result.current.refetch() })
+    expect(fetchVmwareInventory).toHaveBeenCalledTimes(1)
+    await act(async () => {
+      await invalidateProviderMutation(client, ['submitProvider'], { data: { id: 'vcenter-01' } })
+    })
+    await waitFor(() => { expect(hook.result.current.isSuccess).toBe(true) })
+    expect(hook.result.current.data).toMatchObject({ virtualMachines: [{ name: 'Current VM' }] })
+    expect(fetchVmwareInventory).toHaveBeenCalledTimes(2)
+    hook.unmount()
+    client.clear()
+  })
+
   it('loads VMware inventory with the selected provider id', async () => {
     const selected = provider('VMWARE', 'vcenter-01')
     const { result } = renderHook(() => useInfrastructureInventory(selected), { wrapper })

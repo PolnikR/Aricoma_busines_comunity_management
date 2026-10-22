@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router'
@@ -20,7 +20,14 @@ function renderWithProviders(ui: React.ReactElement) {
   )
 }
 
-function stubFetch() {
+function deferred() {
+  let resolve!: (response: Response) => void
+  const promise = new Promise<Response>(done => { resolve = done })
+  return { promise, resolve }
+}
+
+function stubFetch(refreshResponse: Promise<Response>) {
+  let reads = 0
   const policy = {
     id: 'critical-daily-latest',
     name: 'Critical — Daily DR Test',
@@ -40,6 +47,7 @@ function stubFetch() {
   const mock = vi.fn((url: string, init?: RequestInit) => {
     const method = init?.method ?? 'GET'
     if (url.startsWith('/api/get_recovery_app_policies')) {
+      if (++reads > 1) return refreshResponse
       return Promise.resolve(new Response(JSON.stringify({ recovery_app_policies: [policy] }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
@@ -62,7 +70,8 @@ describe('RecoveryAppPoliciesPage refetch', () => {
   afterEach(() => { vi.unstubAllGlobals() })
 
   it('renders the stubbed list through the real select and refetches after a delete', async () => {
-    const fetchMock = stubFetch()
+    const refresh = deferred()
+    const fetchMock = stubFetch(refresh.promise)
     const user = userEvent.setup()
     renderWithProviders(<RecoveryAppPoliciesPage />)
 
@@ -76,5 +85,14 @@ describe('RecoveryAppPoliciesPage refetch', () => {
       const urls = fetchMock.mock.calls.map(([url]) => url)
       expect(urls.filter(url => url.startsWith('/api/get_recovery_app_policies'))).toHaveLength(2)
     })
+
+    expect(await screen.findByRole('status', { name: "Loading recovery app policies" })).toHaveAttribute('aria-busy', 'true')
+    expect(screen.queryByRole('row', { name: "Critical — Daily DR Test" })).not.toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: "Policy" })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Refresh' })).toBeVisible()
+    await act(async () => { refresh.resolve(new Response(JSON.stringify({ recovery_app_policies: [] }), { status: 200 })); await refresh.promise })
+    await waitFor(() => { expect(screen.queryByRole('status', { name: "Loading recovery app policies" })).not.toBeInTheDocument() })
+    expect(screen.queryByRole('row', { name: "Critical — Daily DR Test" })).not.toBeInTheDocument()
+    expect(fetchMock.mock.calls.filter(([url]) => url.startsWith('/api/get_recovery_app_policies'))).toHaveLength(2)
   })
 })

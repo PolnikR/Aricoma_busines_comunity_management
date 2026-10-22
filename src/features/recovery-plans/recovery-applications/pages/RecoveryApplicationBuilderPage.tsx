@@ -7,7 +7,7 @@ import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { useTranslation } from '@/hooks/useTranslation'
 import { RecoveryAppBuilder } from '../components/RecoveryAppBuilder'
-import { RecoveryApplicationOrchestratorSuccessModal } from '../components/RecoveryApplicationOrchestratorSuccessModal'
+import { OrchestratorPushResultDialog } from '@/shared/components/modal/OrchestratorPushResultDialog'
 import { useSubmitRecoveryApplication } from '../hooks/useRecoveryApplications'
 import { toRecoveryApplicationData } from '../utils/recoveryApplicationFormMapper'
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
@@ -22,7 +22,7 @@ export function RecoveryApplicationBuilderPage() {
   const navigate = useNavigate()
   const submitApplication = useSubmitRecoveryApplication()
   const [isDirty, setIsDirty] = useState(false)
-  const [orchestratorPush, setOrchestratorPush] = useState<OrchestratorPush | null>(null)
+  const [orchestratorPush, setOrchestratorPush] = useState<OrchestratorPush | null | undefined>(undefined)
   const [orchestratedApplicationName, setOrchestratedApplicationName] = useState('')
   const [orchestratorProviderUrl, setOrchestratorProviderUrl] = useState<string | undefined>(undefined)
   const navigationGuard = useUnsavedChangesGuard(isDirty)
@@ -94,18 +94,19 @@ export function RecoveryApplicationBuilderPage() {
         onCancel={navigationGuard.cancelNavigation}
         onConfirm={navigationGuard.confirmNavigation}
       />
-      {orchestratorPush ? (
-        <RecoveryApplicationOrchestratorSuccessModal
+      {orchestratorPush !== undefined ? (
+        <OrchestratorPushResultDialog
+          entityType="application"
           open
           onClose={() => {
-            setOrchestratorPush(null)
+            setOrchestratorPush(undefined)
             setOrchestratedApplicationName('')
             navigationGuard.runWithoutBlocking(() => {
               void navigate('/recovery-plans/recovery-applications')
             })
           }}
-          applicationName={orchestratedApplicationName}
-          orchestratorPush={orchestratorPush}
+          entityName={orchestratedApplicationName}
+          result={orchestratorPush}
           providerUrl={orchestratorProviderUrl}
         />
       ) : null}

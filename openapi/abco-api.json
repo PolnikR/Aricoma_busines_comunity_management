@@ -5275,6 +5275,31 @@
               }
             ],
             "title": "Json"
+          },
+          "schedule": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Schedule"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
           }
         },
         "additionalProperties": true,
@@ -6196,6 +6221,11 @@
             "title": "Manual Zoning",
             "default": false
           },
+          "manual_wwpn_entry": {
+            "type": "boolean",
+            "title": "Manual Wwpn Entry",
+            "default": false
+          },
           "source_shutdown_timeout_seconds": {
             "type": "integer",
             "exclusiveMinimum": 0,
@@ -6348,6 +6378,11 @@
           "manual_zoning": {
             "type": "boolean",
             "title": "Manual Zoning",
+            "default": false
+          },
+          "manual_wwpn_entry": {
+            "type": "boolean",
+            "title": "Manual Wwpn Entry",
             "default": false
           },
           "source_shutdown_timeout_seconds": {
@@ -7260,6 +7295,13 @@
             ],
             "title": "Max Snapshots"
           },
+          "flashcopy_copy_rate": {
+            "type": "integer",
+            "maximum": 150,
+            "minimum": 0,
+            "title": "Flashcopy Copy Rate",
+            "default": 0
+          },
           "enabled": {
             "type": "boolean",
             "title": "Enabled",
@@ -7348,6 +7390,13 @@
               }
             ],
             "title": "Max Snapshots"
+          },
+          "flashcopy_copy_rate": {
+            "type": "integer",
+            "maximum": 150,
+            "minimum": 0,
+            "title": "Flashcopy Copy Rate",
+            "default": 0
           },
           "enabled": {
             "type": "boolean",
