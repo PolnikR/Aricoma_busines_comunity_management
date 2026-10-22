@@ -51,6 +51,68 @@ afterEach(() => {
 })
 
 describe('SnapshotPolicyModal', () => {
+  it('keeps the horizontal copy rate slider, exact value and presets synchronized', () => {
+    renderModal()
+    const slider = screen.getByRole('slider', { name: 'FlashCopy copy rate slider' })
+    const input = screen.getByRole('spinbutton', { name: 'FlashCopy copy rate' })
+    expect(slider).toHaveValue('0')
+    expect(slider).toHaveAttribute('min', '0')
+    expect(slider).toHaveAttribute('max', '150')
+    expect(slider).toHaveAttribute('step', '1')
+    expect(screen.getByText('Background copying off')).toBeVisible()
+    fireEvent.change(slider, { target: { value: '73' } })
+    expect(input).toHaveValue(73)
+    expect(screen.getByText('Background copying on')).toBeVisible()
+    fireEvent.change(input, { target: { value: '100' } })
+    expect(slider).toHaveValue('100')
+    expect(screen.getByRole('button', { name: '100' })).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(screen.getByRole('button', { name: '150' }))
+    expect(input).toHaveValue(150)
+    expect(slider).toHaveValue('150')
+    fireEvent.click(screen.getByRole('button', { name: '0' }))
+    expect(input).toHaveValue(0)
+    expect(slider).toHaveAttribute('aria-valuetext', '0 · Background copying off')
+  })
+
+  it('prefills the slider from an existing policy and keeps invalid numeric input for validation', () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    renderModal({ policy: { ...policy, flashcopy_copy_rate: 50 } })
+    const slider = screen.getByRole('slider', { name: 'FlashCopy copy rate slider' })
+    expect(slider).toHaveValue('50')
+    const input = screen.getByRole('spinbutton', { name: 'FlashCopy copy rate' })
+    fireEvent.change(input, { target: { value: '151' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Edit policy' }))
+    expect(input).toHaveValue(151)
+    expect(slider).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByText('Enter a whole number from 0 to 150')).toBeVisible()
+    expect(fetchMock).not.toHaveBeenCalled()
+    fireEvent.change(slider, { target: { value: '100' } })
+    expect(input).toHaveValue(100)
+    expect(screen.queryByText('Enter a whole number from 0 to 150')).not.toBeInTheDocument()
+  })
+
+  it('saves the slider value and disables all copy rate controls while saving', async () => {
+    const onClose = vi.fn()
+    let finish!: (response: Response) => void
+    const fetchMock = vi.fn<(url: string, init?: RequestInit) => Promise<Response>>(() => new Promise<Response>(resolve => { finish = resolve }))
+    vi.stubGlobal('fetch', fetchMock)
+    renderModal({ onClose })
+    fillCreateForm()
+    const slider = screen.getByRole('slider', { name: 'FlashCopy copy rate slider' })
+    fireEvent.change(slider, { target: { value: '73' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Create policy' }))
+    await waitFor(() => { expect(slider).toBeDisabled() })
+    expect(screen.getByRole('spinbutton', { name: 'FlashCopy copy rate' })).toBeDisabled()
+    for (const value of ['0', '50', '100', '150']) expect(screen.getByRole('button', { name: value })).toBeDisabled()
+    const init = fetchMock.mock.calls[0]?.[1]
+    if (typeof init?.body !== 'string') throw new Error('Expected a JSON submit body')
+    const payload: unknown = JSON.parse(init.body)
+    expect(payload).toMatchObject({ flashcopy_copy_rate: 73 })
+    finish(Response.json({ snapshot_policies: [{ ...policy, flashcopy_copy_rate: 73 }] }))
+    await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+  })
+
   it('renders the complete policy contract with enabled selected by default', () => {
     renderModal()
 

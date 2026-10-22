@@ -2,6 +2,7 @@ import type { ChangeEvent, KeyboardEvent } from 'react'
 import { CheckboxField, Field, Input, Select, Textarea } from '@/shared/components/form/FormControls'
 import { useTranslation } from '@/hooks/useTranslation'
 import { SNAPSHOT_POLICY_TIME_UNITS } from '../model/snapshotPolicyTypes'
+import { FlashCopyCopyRateField } from './FlashCopyCopyRateField'
 
 const POLICY_LEVELS = ['critical', 'high', 'medium', 'low'] as const
 
@@ -90,13 +91,7 @@ export function SnapshotPolicyForm({ data, errors, isSubmitting, idDisabled = fa
         </div>
       </div>
 
-      <div>
-        <Field label={t('snapshotPolicies.form.flashcopyCopyRate')} htmlFor="snapshot-policy-copy-rate">
-          <Input id="snapshot-policy-copy-rate" type="number" min={0} max={150} step={1} value={data.flashcopy_copy_rate} disabled={isSubmitting} invalid={Boolean(errors.flashcopy_copy_rate)} aria-describedby={errors.flashcopy_copy_rate ? 'snapshot-policy-copy-rate-help snapshot-policy-copy-rate-error' : 'snapshot-policy-copy-rate-help'} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('flashcopy_copy_rate', event.target.value) }} />
-        </Field>
-        <p id="snapshot-policy-copy-rate-help" className="mt-1 text-xs text-text-muted">{t('snapshotPolicies.form.flashcopyCopyRateHelp')}</p>
-        {errors.flashcopy_copy_rate ? <p id="snapshot-policy-copy-rate-error" className="mt-1 text-xs text-red-600">{errors.flashcopy_copy_rate}</p> : null}
-      </div>
+      <FlashCopyCopyRateField value={data.flashcopy_copy_rate} error={errors.flashcopy_copy_rate} disabled={isSubmitting} onKeyDown={handleKeyDown} onChange={value => { onChange('flashcopy_copy_rate', value) }} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:items-end">
         <Field label={t('snapshotPolicies.form.maxSnapshots')} htmlFor="snapshot-policy-max-snapshots">
