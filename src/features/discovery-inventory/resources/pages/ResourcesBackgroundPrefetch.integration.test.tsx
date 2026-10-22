@@ -1,3 +1,4 @@
+import { invalidateProviderMutation } from '@/shared/query/providerMutationInvalidation'
 import { StrictMode, type PropsWithChildren } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, cleanup, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react'
@@ -92,6 +93,54 @@ beforeEach(() => {
 afterEach(() => { cleanup(); client.clear(); vi.unstubAllGlobals(); vi.restoreAllMocks() })
 
 describe('Resources background VMware prefetch', () => {
+  it('discards a pending background HTTP response after delete/recreate even when abort is ignored', async () => {
+    let finishOld!: (response: Response) => void
+    const pending = new Promise<Response>(resolve => { finishOld = resolve })
+    secondResponse = () => pending
+    render(<ResourcesPage />, { wrapper })
+    await screen.findByText('FIRST')
+    await idle()
+    await waitFor(() => { expect(inventoryCalls('vm-10')).toHaveLength(1) })
+    await act(async () => {
+      await invalidateProviderMutation(client, ['deleteProvider'], { params: { provider_id: 'vm-10' } })
+    })
+    secondResponse = () => Promise.resolve(json(inventory('CURRENT')))
+    await act(async () => {
+      await invalidateProviderMutation(client, ['submitProvider'], { data: { id: 'vm-10' } })
+    })
+    await waitFor(() => { expect(callbacks.size).toBeGreaterThan(0) })
+    await idle()
+    await waitFor(() => { expect(client.isFetching()).toBe(0) })
+    await act(async () => { finishOld(json(inventory('STALE'))); await pending })
+    expect(client.getQueryData(vmwareInventoryQuery({ providerId: 'vm-10' }).queryKey)).toMatchObject({ vms: [{ name: 'CURRENT' }] })
+    expect(inventoryCalls('vm-10')).toHaveLength(2)
+    expect(screen.getByText('FIRST')).toBeVisible()
+  })
+
+  it('blocks queued background work for a deleted provider and resumes after recreate without remount', async () => {
+    render(<ResourcesPage />, { wrapper })
+    await screen.findByText('FIRST')
+    await waitFor(() => { expect(callbacks.size).toBeGreaterThan(0) })
+    await act(async () => {
+      await invalidateProviderMutation(client, ['deleteProvider'], { params: { provider_id: 'vm-10' } })
+    })
+    await idle()
+    await waitFor(() => { expect(client.isFetching()).toBe(0) })
+    expect(inventoryCalls('vm-10')).toHaveLength(0)
+    expect(screen.getByText('FIRST')).toBeVisible()
+    // Another existing caller (for example Dashboard) may leave a lifecycle
+    // rejection under this same key while the provider is deleted.
+    await client.prefetchQuery(vmwareInventoryQuery({ providerId: 'vm-10' }))
+    expect(client.getQueryState(vmwareInventoryQuery({ providerId: 'vm-10' }).queryKey)?.status).toBe('error')
+    await act(async () => {
+      await invalidateProviderMutation(client, ['submitProvider'], { data: { id: 'vm-10' } })
+    })
+    await waitFor(() => { expect(callbacks.size).toBeGreaterThan(0) })
+    await idle()
+    await waitFor(() => { expect(inventoryCalls('vm-10')).toHaveLength(1) })
+    expect(client.getQueryData(vmwareInventoryQuery({ providerId: 'vm-10' }).queryKey)).toMatchObject({ vms: [{ name: 'SECOND' }] })
+  })
+
   it('starts only the second sorted source inventory after the first tab is usable and idle', async () => {
     await prepareDashboard()
     expect(inventoryCalls('vm-10')).toHaveLength(0)

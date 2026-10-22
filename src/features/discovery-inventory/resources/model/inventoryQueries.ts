@@ -1,3 +1,5 @@
+import type { QueryFunctionContext } from '@tanstack/react-query'
+import { getProviderInventoryRevision, isProviderInventoryDeleted, isProviderInventoryRevisionCurrent } from '@/shared/query/providerInventoryRevision'
 import { getGetPowerVmQueryKey, getPowerVm } from '@/generated/query/ibm-power/ibm-power.gen'
 import { getGetVdisksByVmQueryKey, getVdisksByVm } from '@/generated/query/discovery/discovery.gen'
 import { getGetVolumesQueryKey, getVolumes } from '@/generated/query/storage-volumes/storage-volumes.gen'
@@ -57,11 +59,22 @@ function vmwareSearchRequest(search: VmwareInventorySearch, forceRefresh = false
   return { body, params }
 }
 
+export class VmwareInventoryUnavailableError extends Error {}
+
 export function vmwareInventoryQuery(search: VmwareInventorySearch) {
   const { body, params } = vmwareSearchRequest(search)
   return {
     queryKey: getPostVmsSearchQueryKey(body, params),
-    queryFn: ({ signal }: { signal: AbortSignal }) => postVmsSearch(body, params, { signal }),
+    queryFn: async ({ client, signal }: Pick<QueryFunctionContext, 'client' | 'signal'>) => {
+      const id = params?.provider_id
+      if (isProviderInventoryDeleted(client, id)) throw new VmwareInventoryUnavailableError('VMware inventory is unavailable for a deleted provider')
+      const revision = id ? getProviderInventoryRevision(client, id) : undefined
+      const data = await postVmsSearch(body, params, { signal })
+      if (id && revision && (isProviderInventoryDeleted(client, id) || !isProviderInventoryRevisionCurrent(client, id, revision))) {
+        throw new VmwareInventoryUnavailableError('VMware inventory belongs to an obsolete provider revision')
+      }
+      return data
+    },
   }
 }
 

@@ -19,6 +19,9 @@ function dependentProvider(query: Query, platform: boolean): string | undefined 
 
 async function refreshDependents(client: QueryClient, id: string, platform: boolean, deleted: boolean) {
   if (!platform) invalidateProviderInventoryRevision(client, [id])
+  // Evict synchronously before publishing deletion: fetchQuery may otherwise
+  // return fresh cached data without running the guarded queryFn.
+  if (deleted && !platform) client.removeQueries({ predicate: query => dependentProvider(query, platform) === id })
   const operation = platform ? undefined : beginProviderInventoryMutation(client, id, deleted)
   const predicate = (query: Query) => {
     const provider = dependentProvider(query, platform)
@@ -26,8 +29,7 @@ async function refreshDependents(client: QueryClient, id: string, platform: bool
   }
   await client.cancelQueries({ predicate })
   if (operation && !operation.isCurrent()) return
-  if (deleted) client.removeQueries({ predicate: query => dependentProvider(query, platform) === id })
-  if (operation && !operation.isCurrent()) return
+  if (deleted && platform) client.removeQueries({ predicate: query => dependentProvider(query, platform) === id })
   await client.invalidateQueries({ predicate })
   operation?.complete()
 }

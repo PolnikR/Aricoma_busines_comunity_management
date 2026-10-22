@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { STANDARD_QUERY_OPTIONS } from '@/shared/query/cachePolicy'
+import { invalidateProviderMutation } from '@/shared/query/providerMutationInvalidation'
 import { getGetProvidersQueryKey } from '@/generated/query/providers/providers.gen'
 import { emptyPowerResponse, emptyVolumesResponse } from '@/features/discovery-inventory/resources/test/discoveryFetch'
 import { vmwareInventoryQuery } from '@/features/discovery-inventory/resources/model/inventoryQueries'
@@ -38,6 +39,40 @@ beforeEach(() => {
 afterEach(() => { cleanup(); client.clear(); vi.unstubAllGlobals() })
 
 describe('RecoveryGroupBuilder inventory prefetch', () => {
+  it('discards a pending Provider-step response after delete/recreate without replacing the new prefetch', async () => {
+    let finishOld!: (response: Response) => void
+    const pending = new Promise<Response>(resolve => { finishOld = resolve })
+    fetchMock.mockImplementationOnce(() => pending)
+    show()
+    fireEvent.click(screen.getByRole('button', { name: 'Provider' }))
+    await waitFor(() => { expect(fetchMock).toHaveBeenCalledTimes(1) })
+    await act(async () => {
+      await invalidateProviderMutation(client, ['deleteProvider'], { params: { provider_id: 'compute' } })
+      await invalidateProviderMutation(client, ['submitProvider'], { data: { id: 'compute' } })
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Details' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Provider' }))
+    await waitFor(() => { expect(fetchMock).toHaveBeenCalledTimes(2) })
+    await waitFor(() => { expect(client.isFetching()).toBe(0) })
+    await act(async () => { finishOld(Response.json({ count: 1, vms: [{ name: 'STALE' }] })); await pending })
+    expect(client.getQueryData(vmwareInventoryQuery({ providerId: 'compute', namePrefix: 'APP', tag: 'prod' }).queryKey)).toMatchObject({ vms: [{ name: 'APP-01' }] })
+  })
+
+  it('blocks the actual Provider-step prefetch after delete and retries the same scope after recreate', async () => {
+    await invalidateProviderMutation(client, ['deleteProvider'], { params: { provider_id: 'compute' } })
+    show()
+    fireEvent.click(screen.getByRole('button', { name: 'Provider' }))
+    await waitFor(() => { expect(client.isFetching()).toBe(0) })
+    expect(fetchMock).not.toHaveBeenCalled()
+    await act(async () => {
+      await invalidateProviderMutation(client, ['submitProvider'], { data: { id: 'compute' } })
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Details' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Provider' }))
+    await waitFor(() => { expect(fetchMock).toHaveBeenCalledTimes(1) })
+    expect(fetchMock).toHaveBeenCalledWith('/api/vms/search?provider_id=compute', expect.objectContaining({ body: '{"tag":"prod","name_prefix":"APP"}' }))
+  })
+
   it.each([
     { type: 'IBM_POWER', workloadType: 'ibm_power_virtual_machines' as const, resourceType: 'vm' as const, providerId: 'power', endpoint: '/api/get_power_vm?provider_id=power' },
     { type: 'FLASHCOPY', workloadType: 'ibm_flashsystem' as const, resourceType: 'volume' as const, providerId: 'flash', endpoint: '/api/get_volumes?provider_id=flash' },

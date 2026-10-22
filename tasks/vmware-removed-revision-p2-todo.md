@@ -1,4 +1,260 @@
-﻿# Úlohy: P2 regresia removedRevision
+# Úlohy: VMware refetch/prefetch a stale placeholder follow-up
+
+Dátum: 2026-10-22. Aktuálny plán: prvá časť [vmware-removed-revision-p2-plan.md](vmware-removed-revision-p2-plan.md). Stav: F1–F5 dokončené inline; focused testy → lint → cielený typecheck overené; pôvodná P2 história je zachovaná pod čiarou. Bez commitu/pushu, reset/stash, zmeny vetvy/worktree alebo subagentov. Default Snapshot Policy task súbory sa nemenia.
+
+## F1: Spoločná query hranica a deleted observer
+
+**Popis:** Najprv vytvoriť nový cohesive integračný suite s real createAppQueryClient, reálnym resource hookom, generated provider mutations a riadenými HTTP Promise. Reprodukovať nové A–D hrany a následne zaviesť minimálnu ochranu v query facade a deleted hook výstupe. Pôvodný veľký hook suite sa nereorganizuje.
+
+**Akceptačné kritériá:**
+- [x] Reálny hook.refetch, priame client.fetchQuery a client.prefetchQuery po delete A nezačnú VMware HTTP ani nevrátia fake empty success. Pending normálny fetch vrátane transportu ignorujúceho abort nezapíše stale VM ani prechodne, aj po delete→recreate rovnakého ID. Cache/error/Promise výsledky sa overujú samostatne pre každú API cestu.
+- [x] **P2 – RED→GREEN fresh-cache hit:** Čerstvé `Old VM` v QueryCache s default `staleTime=15 min`; úspešný delete A pozastaviť po nastavení deleted markeru na `await cancelQueries` pred fyzickým `removeQueries`. V tomto okne zavolať `client.fetchQuery` aj `client.prefetchQuery` pre A. Baseline musí potvrdiť, že `fetchQuery` vie vrátiť Old VM pri 0 volaniach queryFn. Po oprave nesmie vrátiť stale VM, urobiť nové VMware HTTP ani fake empty success. Overiť reálnu fetchQuery návratovú hodnotu (cache subscriber sám nestačí), prefetch Promise, QueryCache pred/po release, HTTP/queryFn counts a oba delete/recreate interleavingy; queryFn-only fix nestačí.
+- [x] **P3 – RED→GREEN pending normal query po UPDATE:** Pre úspešný infra provider UPDATE aj credential UPDATE udržať bežný `/vms/search` pending, zmeniť revision a dokončiť oneskorenú starú odpoveď (tiež transport ignorujúci abort). Nesmie dôjsť k stale zápisu; stále pripojený hook automaticky načíta presne `Current VM` bez remountu/manual refreshu. Po neúspechu nového aktuálneho fetchu focus/reconnect obnoví query. Overiť counts, retry 0/1, neprítomnosť fetch loopu a že credential UPDATE netvorí deleted marker.
+- [x] queryFn získava správny vykonávajúci client z TanStack kontextu, kontroluje deleted pred generated fetcherom a oba revision údaje + deleted pred vrátením dát. Factory(search), generated key aj fetcher a signal zostanú zachované. Direct queryFn testy doplnia client, nie globálny fallback. Retry=0/1 a HTTP error správanie sa otestujú bez nekonečných pending/retry slučiek.
+- [x] Deleted A s nezmeneným ID nevystavuje Old VM ani retained placeholder; data, status, isSuccess/isPlaceholderData/isEmpty/isInitialLoading a fetchStatus sú konzistentné. Validný provider počas debounce/filtrovania zachová placeholder. Recreate obnoví auto/refetch/prefetch/Live Refresh; B a druhý QueryClient zostanú funkčné. Pôvodné P2 assertions sa neoslabia.
+
+**Overenie:**
+- [x] RED pred opravou potvrdené pre refetch, P2 fresh-cache hit a placeholder (4 failed / 6 passed); pending normal update/late-response scenáre boli GREEN už na baseline, teda nejde o potvrdenú pôvodnú regresiu. Dôvody aj výsledky skutočných FE tokov sú zaznamenané nižšie.
+- [x] `node node_modules/vitest/vitest.mjs run src/features/discovery-inventory/resources/hooks/vmwareInventoryLifecycle.test.tsx src/features/discovery-inventory/resources/model/inventoryQueries.test.ts src/features/discovery-inventory/resources/helpers/virtualMachinesHelpers.test.ts src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx`
+- [x] QueryCache subscriber zachytí aj prechodný stale write; pri blocked API Promise skončí, prefetch nevytvorí unhandled rejection a netvrdí úspešné prázdne inventory.
+
+**Závislosti:** Schválený follow-up plán; git status a aktuálne súbory vrátane necommitnutých helper zmien.
+**Súbory (5, medium):**
+- `src/features/discovery-inventory/resources/model/inventoryQueries.ts`
+- `src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.ts`
+- `src/features/discovery-inventory/resources/hooks/vmwareInventoryLifecycle.test.tsx` (nový)
+- `src/features/discovery-inventory/resources/model/inventoryQueries.test.ts`
+- `src/features/discovery-inventory/resources/helpers/virtualMachinesHelpers.test.ts`
+
+## F2: Initial Resources prefetch s oneskoreným provider listom
+
+**Popis:** Overiť Dashboard useInitialResourcePrefetch a reálne následné Resources/Recovery Group observers, keď stale alebo oneskorený provider list stále ponúka A po jeho úspešnom delete. Nepovažovať vynechanie v UI výbere za dôkaz ochrany factory.
+
+**Akceptačné kritériá:**
+- [x] Riadený provider-list response alebo idle callback spustený až po delete A nespustí VMware HTTP pre A. Skutočný prefetch Promise zostane korektný, žiadne obnovené dáta A ani unhandled rejection.
+- [x] Neodstránený vybraný B alebo druhý klient funguje; po recreate A nový legitímny prefetch a pripojený observer načítajú aktuálne dáta. Zachované scope/tag/name parametre, source/target správanie a zdieľanie cache medzi Dashboard/Resources/RG.
+- [x] Žiadny nový deleted store, factory signature argument na každom callerovi ani caller-only náhrada centrálneho guardu. Produkčný initial-prefetch hook sa mení len ak jeho vlastná reprodukcia ukáže scheduling chybu; inak test-only slice.
+
+**Overenie:**
+- [x] `node node_modules/vitest/vitest.mjs run src/features/discovery-inventory/resources/hooks/useInitialResourcePrefetch.test.tsx src/features/discovery-inventory/resources/pages/ResourcesPrefetch.integration.test.tsx src/features/discovery-inventory/resources/hooks/vmwareInventoryLifecycle.test.tsx`
+- [x] Ovládať idle callback a list/inventory Promise, bez sleep. Zmerať inventory HTTP podľa provider ID, nie iba celkový počet requestov zahŕňajúci provider list.
+
+**Závislosti:** F1.
+**Súbory (2–3, medium):** `src/features/discovery-inventory/resources/hooks/useInitialResourcePrefetch.test.tsx`, `src/features/discovery-inventory/resources/pages/ResourcesPrefetch.integration.test.tsx`; `src/features/discovery-inventory/resources/hooks/useInitialResourcePrefetch.ts` iba pri potvrdenom defekte.
+
+## Checkpoint A: Zdieľaná fetch hranica
+
+- [x] Explicitný refetch/fetchQuery/prefetch aj pending normálny fetch sú chránené. P2 fresh-cache hit bez queryFn má samostatnú lifecycle-safe ochranu pred `removeQueries`, bez query key zmien alebo fake success; obe poradia delete/recreate zostanú funkčné.
+- [x] Dashboard initial prefetch bol overený reálnym callerom; samotné isolated QueryObserver pozorovanie sa nevydáva za integračný dôkaz.
+- [x] Pôvodných 138 testov zostáva zelených; P3 provider/credential UPDATE počas pending normálneho fetchu automaticky obnoví `Current VM`, prípadne cez focus/reconnect bez remountu. Review Promise/error/retry/cancellation, cache-hit a QueryClient kontextu pred pokračovaním.
+
+## F3: Background a Recovery Group prefetch po recreate
+
+**Popis:** Reprodukovať skutočné idle background prefetch a RG Builder step prefetch so stale provider props/listom a znova po recreate. Vyhodnotiť pôvodnú background error-skip podmienku a spúšťacie závislosti.
+
+**Akceptačné kritériá:**
+- [x] Idle callback naplánovaný pred delete, vykonaný po delete, nespustí HTTP A. Rovnaké platí pre skutočný RG Builder prefetch scope. Nový pending/late fetch nezapíše starú generáciu, B funguje.
+- [x] Po recreate rovnakého ID bez remountu sa opäť dá vykonať legitímny background/RG prefetch. Lifecycle-blocked error query neblokuje obnovu navždy; skutočné backend chyby zachovajú pôvodný skip/retry zámer.
+- [x] Ak je nutná malá zmena VmwareResourcesPage error-skip alebo scheduling availability, je odvodená z RED testu a používa jediný existujúci helper. Centrálna queryFn ochrana zostáva rozhodujúca. Bez duplicitných requests/fetch loopu alebo všeobecného retry mechanizmu.
+
+**Overenie:**
+- [x] `node node_modules/vitest/vitest.mjs run src/features/discovery-inventory/resources/pages/ResourcesBackgroundPrefetch.integration.test.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupBuilder.prefetch.test.tsx src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.test.tsx`
+- [x] Kontrolovať skutečný idle/step spúšťač, HTTP/provider/key, QueryCache medzistavy a presný počet nových fetchov po recreate; bez manuálneho cache resetu na maskovanie error-skip chyby.
+
+**Závislosti:** F1 a F2.
+**Súbory (3–4, medium):** `src/features/discovery-inventory/resources/pages/ResourcesBackgroundPrefetch.integration.test.tsx`, `src/features/recovery-plans/recovery-groups/components/RecoveryGroupBuilder.prefetch.test.tsx`, `src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.test.tsx`; `src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.tsx` len pri potvrdenej medzere.
+
+## F4: Stale placeholder v reálnom UI a ďalšom observeri
+
+**Popis:** Overiť výstup resource hooku cez skutočné tabuľky/metriky a Recovery Groups, aj novo nájdený Infrastructure caller. Test neodstráni komponent len preto, že bežná stránka po refetchi providerov zmení výber.
+
+**Akceptačné kritériá:**
+- [x] Načítať Old VM, zmeniť filter na pending query s placeholderom, úspešne delete A a ponechať ID aj komponent pripojené. Hook data, VirtualMachinesTable, VirtualMachineMetrics ani RG resourceNames/metadata neprezentujú Old VM ako platné inventory; isEmpty neznamená fake success empty. Overiť aj interval marker=true pred skončením fyzického removeQueries.
+- [x] Recreate obnoví aktuálne zobrazenie v tom istom observeri; filtrovanie/debounce platného providera a prechod medzi A/B zachová správne cached/placeholder dáta. Pending stará generácia sa neobjaví po recreate.
+- [x] useInfrastructureInventory reálne používa centrálny guard pri normálnom query aj explicitnom refetch; vyhodnotiť jeho data/status po delete a obnovu. Prípadný vlastný reprodukovaný lifecycle/observer nedostatok riešiť minimálne existujúcim helperom, bez infra refaktoringu.
+
+**Overenie:**
+- [x] `node node_modules/vitest/vitest.mjs run src/features/discovery-inventory/resources/components/vmware/VmwareDeletedInventory.integration.test.tsx src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.test.tsx src/features/recovery-plans/recovery-groups/hooks/useRecoveryGroupResourceInventory.test.tsx src/features/discovery-inventory/infrastructure/hooks/useInfrastructureInventory.test.tsx`
+- [x] V novej UI integrácii nemockovať resource hook alebo table/metrics na komponenty, ktoré by stale problém skryli. HTTP a asynchrónne poradie mockovať cez riadené Promise.
+
+**Závislosti:** F1–F3.
+**Súbory (3–4, medium):** `src/features/discovery-inventory/resources/components/vmware/VmwareDeletedInventory.integration.test.tsx` (nový), `src/features/recovery-plans/recovery-groups/hooks/useRecoveryGroupResourceInventory.test.tsx`, `src/features/discovery-inventory/infrastructure/hooks/useInfrastructureInventory.test.tsx`; `src/features/discovery-inventory/infrastructure/hooks/useInfrastructureInventory.ts` iba pri potvrdenom defekte.
+
+## Checkpoint B: Všetky existujúce vstupy a zobrazenie
+
+- [x] Zmapovaných päť priamych produkčných factory callerov a nepriamy RG hook má konkrétne výsledky reprodukcie; bezpečnosť jednej cesty sa neprenáša tvrdením na ostatné.
+- [x] Deleted A nemá nové bežné HTTP, cache write ani stale observer/UI dáta; B a druhý client fungujú a recreate obnovuje celý tok.
+- [x] Bez oslabených assertions, vypnutých testov, nového cache/state ownera, generated zmien alebo nesúvisiacich refaktorov. Inline review architektúry, retry a lifecycle hraníc.
+
+## F5: Focused regresie a odovzdanie
+
+**Popis:** Zopakovať pôvodnú P2 sadu a všechny dotknuté nové cesty; zreferovať iba skutočne potvrdené chyby a vykonané kontroly. Oddeliť preexistujúce helper/OpenAPI/locale diffy a prípadné súbežné Git commity od vlastných follow-up zmien.
+
+**Akceptačné kritériá:**
+- [x] Pôvodných 138 prípadov aj nové A–F integrácie vrátane **P2 fresh cache hitu počas delete** a **P3 pending normal fetch po provider/credential UPDATE s automatickým zotavením** sú zelené. Report rozlišuje pred/po a potvrdené/nepotvrdené scenáre, zoznam callerov a dôkaz pre refetch/prefetch/pending/placeholder/recreate.
+- [x] Cielený typecheck upravených súborov, focused ESLint a git diff --check prejdú alebo sú presne doložené nezávislé cudzie chyby bez ich opráv. Nové untracked test/docs súbory majú samostatnú read-only whitespace/final-newline kontrolu bez stage.
+- [x] Kompletný zoznam vlastných zmenených súborov, Promise/error/retry sémantika, Resources/RG dopad a riziká sú zaznamenané; bez vlastného commitu/pushu/stash/reset/worktree. Default task a cudzie Snapshot Policy súbory sa nemenia.
+
+**Overenie (plánované, nie výsledky):**
+- [x] Explicitný focused Vitest zoznam:
+
+```powershell
+$vmwareFollowupTests=@(
+  'src/shared/query/providerInventoryRevision.test.ts'
+  'src/shared/query/providerMutationInvalidation.test.tsx'
+  'src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx'
+  'src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.test.tsx'
+  'src/features/recovery-plans/recovery-groups/hooks/useRecoveryGroupResourceInventory.test.tsx'
+  'src/features/discovery-inventory/resources/model/inventoryQueries.test.ts'
+  'src/features/discovery-inventory/resources/helpers/virtualMachinesHelpers.test.ts'
+  'src/features/discovery-inventory/resources/hooks/vmwareInventoryLifecycle.test.tsx'
+  'src/features/discovery-inventory/resources/hooks/useInitialResourcePrefetch.test.tsx'
+  'src/features/discovery-inventory/resources/pages/ResourcesPrefetch.integration.test.tsx'
+  'src/features/discovery-inventory/resources/pages/ResourcesBackgroundPrefetch.integration.test.tsx'
+  'src/features/recovery-plans/recovery-groups/components/RecoveryGroupBuilder.prefetch.test.tsx'
+  'src/features/discovery-inventory/infrastructure/hooks/useInfrastructureInventory.test.tsx'
+  'src/features/discovery-inventory/resources/components/vmware/VmwareDeletedInventory.integration.test.tsx'
+)
+node node_modules/vitest/vitest.mjs run @vmwareFollowupTests
+```
+
+- [x] Cielený TypeScript createProgram nad 14 upravenými súbormi a ich importmi podľa posledného pokynu používateľa (presný príkaz v reporte).
+- [x] `node node_modules/eslint/bin/eslint.js <explicitne-vlastne-zmenene-TS-TSX-subory> --max-warnings 0`; výsledný presný zoznam/príkaz uložiť v reporte podľa skutočného rozsahu F1–F4, nie automaticky lintovať celý zdieľaný diff.
+- [x] `git diff --check`, `git status --short` a read-only whitespace/final-newline kontrola nových untracked súborov. Žiadne git add ako validačná pomôcka.
+- [x] Kompletnú suite ani production build nespúšťať; browser/live backend QA neprezentovať ako vykonanú bez skutočného behu.
+
+**Závislosti:** F1–F4.
+**Súbory (2, small):** `tasks/vmware-removed-revision-p2-plan.md`, `tasks/vmware-removed-revision-p2-todo.md`.
+
+## Evidencia plánovania follow-up
+
+- [x] Doplnené celé zadanie P3 od používateľa a zmapovaných päť produkčných factory callerov vrátane Infrastructure, ktorý nebol v pôvodnom zozname.
+- [x] Overený aktuálny queryFn kontext, error/prefetch/retryer mechanizmus a background error-skip. Nezamieňať throw CancelledError za automatické zrušenie retries.
+- [x] Čerstvý pôvodný baseline: 138 passed, 0 failed, päť súborov. Nové A–F integračné scenáre zatiaľ netestované.
+- [x] Follow-up review doplnil F1, checkpoint A a F5 o P2 fresh cache hit počas delete pred `removeQueries` (queryFn sa nevolá) a P3 zotavenie pending normálneho fetchu po provider/credential UPDATE.
+- [x] Žiadne implementačné/testové zmeny počas tohto plánovania; rozširujú sa iba používateľom už určené samostatné VMware task súbory.
+- [x] Používateľ schválil aktuálny follow-up plán F1–F5 pokynom vykonať inline, testy → lint → typecheck upravených súborov.
+
+## Výsledky vykonania follow-up — 2026-10-22
+
+### Reprodukcia a príčiny
+
+- Prvý nový lifecycle suite: **4 failed / 6 passed**. Dva retry varianty skutočného hook.refetch po generated delete vrátili success; enabled=false nie je hranica explicitného fetchu. Fresh fetchQuery počas pozastaveného delete vrátil Old VM bez nového HTTP, pretože fresh cache obchádza queryFn. Same-provider filter placeholder zostal po removeQueries success s Old VM.
+- Background integrácia: po delete a recreate sa nový idle callback nenaplánoval. Komponent neodoberal lifecycle druhého providera; navyše bezpodmienečný skip error query mohol zachovať odmietnutie z prefetchu počas deleted stavu aj po recreate.
+- Infrastructure integrácia: po delete si stále pripojený observer ponechal predchádzajúce data/success. Samostatný hook nemal deleted subscription. Nový test následne rozšírený na konkrétne Old VM → Current VM.
+- **Nepotvrdené ako pôvodná regresia:** šesť prvých pending/cancellation/update prípadov bolo zelených už pred opravou. Existujúca TanStack cancellation pri reálnych provider mutations zablokovala neskoré normálne odpovede aj pri transporte ignorujúcom abort. Nevykazujeme ich ako pôvodné zlyhania. Nový pre/post revision guard je dodatočná spoločná ochrana; priame uncancelled queryFn testy overujú provider update, credential update aj delete/recreate ABA.
+- Chyby dvoch nových testových fixtures boli opravené: opakované čítanie tej istej Response v delayed-list variante teraz používa clone; reálna tabuľka počas background/placeholder fetchu skrýva riadky skeletonom, preto UI test overuje ponechané metriky pred delete a zmiznutie stale metrík aj riadkov po delete. Pôvodné assertions žiadneho existujúceho testu sa neoslabili.
+
+### Implementované hranice
+
+1. vmwareInventoryQuery číta client a signal z native QueryFunctionContext. Pred generated HTTP odmietne deleted provider; po odpovedi overí deleted aj oba revision tokeny. Stará generácia sa nevráti ako query data. Query key, factory(search), generated validation/fetcher aj abort signal zostali zachované.
+2. Infra delete synchrónne odstráni scoped dependent queries pred publikovaním markeru a prvým await. Fresh fetchQuery/prefetchQuery tak nenájdu staré dáta. Zostávajú pôvodné operation identity checks a conditional complete; starý delete po novšom recreate už nemá oneskorený remove krok. Platform delete si zachováva pôvodné remove po cancellation.
+3. Placeholder je povolený iba pre platného providera a pôvodnú query stále prítomnú v cache. Retained observer starej odstránenej query sa nemôže použiť po recreate. Deleted výstup resource hooku je konzistentne pending/idle, bez data, success, placeholder, loading alebo fake empty success.
+4. Nový useProviderInventoryDeleted iba zdieľa existujúcu useSyncExternalStore subscription; nevlastní stav ani cache. Používa sa v resource hooku, Infrastructure hooku a pre background provider. Deleted store aj revision tokeny zostávajú výhradne v providerInventoryRevision.ts, ktorý sa nemenil.
+5. Background prefetch znovu naplánuje idle callback po recreate a rozlišuje VmwareInventoryUnavailableError od skutočných HTTP chýb. Bežné speculative HTTP chyby si zachovávajú pôvodný skip/retry zámer. Initial Dashboard a RG Builder produkčné call sites nepotrebovali zmenu.
+
+### Promise a retry sémantika
+
+Blokovaný alebo obsolete výsledok odmietne VmwareInventoryUnavailableError. fetchQuery rejectuje; refetch bez throwOnError vracia error result bez inventory, s throwOnError rejectuje; prefetchQuery korektne skončí Promise<void>. Nevytvára sa undefined query success ani fiktívne prázdne inventory. Žiadna vlastná retry slučka alebo cancellation shortcut: zachováva sa retry policy klienta. Testované retry 0 a 1, pri každom pokuse sa deleted kontroluje pred HTTP. Normálne HTTP zlyhania zachovávajú retry/error správanie a následnú focus/reconnect obnovu. Po recreate sa legitímne auto/refetch/prefetch/Live Refresh cesty obnovia bez remountu.
+
+### Skutočne upravené súbory
+
+Produkcia:
+
+- src/features/discovery-inventory/resources/model/inventoryQueries.ts — spoločný queryFn guard a rozlíšiteľná lifecycle chyba.
+- src/shared/query/providerMutationInvalidation.ts — synchronná infra delete eviction; nevyhnutná odchýlka od pôvodného odhadu F1 iba dvoch produkčných súborov, preukázaná fresh-cache RED testom.
+- src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.ts — placeholder platnosť a deleted output.
+- src/shared/query/useProviderInventoryDeleted.ts — zdieľaná existujúca React subscription pre tri skutočné použitia.
+- src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.tsx — background lifecycle scheduling a error-skip rozlíšenie.
+- src/features/discovery-inventory/infrastructure/hooks/useInfrastructureInventory.ts — deleted subscription a enabled.
+
+Testy:
+
+- src/features/discovery-inventory/resources/hooks/vmwareInventoryLifecycle.test.tsx — 19 nových deterministických API/lifecycle prípadov.
+- src/features/discovery-inventory/resources/components/vmware/VmwareDeletedInventory.integration.test.tsx — reálna Resources stránka/tabuľka/metriky a RG resourceNames/metadata; hook ani UI komponenty nie sú mockované.
+- src/features/discovery-inventory/resources/hooks/useInitialResourcePrefetch.test.tsx — queued idle a oneskorený provider list, A/B a recreate.
+- src/features/discovery-inventory/resources/pages/ResourcesBackgroundPrefetch.integration.test.tsx — skutočný background idle, lifecycle error a recreate bez remountu.
+- src/features/recovery-plans/recovery-groups/components/RecoveryGroupBuilder.prefetch.test.tsx — skutočný Provider-step prefetch a návrat na step po recreate.
+- src/features/discovery-inventory/infrastructure/hooks/useInfrastructureInventory.test.tsx — mounted delete/refetch/recreate s Old VM a Current VM.
+- src/features/discovery-inventory/resources/model/inventoryQueries.test.ts a src/features/discovery-inventory/resources/helpers/virtualMachinesHelpers.test.ts — priame queryFn testy odovzdávajú skutočný QueryClient.
+
+Evidencia: tieto dva samostatné VMware plan/todo dokumenty. RG consumer reprodukcia je v novom cohesive UI suite, preto pôvodný useRecoveryGroupResourceInventory.test.tsx nebolo treba meniť. ResourcesPrefetch.integration.test.tsx a pôvodných päť P2 testových súborov zostávajú nezmenené a sú súčasťou finálneho focused behu.
+
+### Doterajšie overenie
+
+- Pôvodný baseline pri plánovaní: 138/138 v piatich súboroch.
+- F1 po minimálnej ochrane: 90/90 v štyroch súboroch.
+- Rozšírené callers/UI: 66/66 v šiestich súboroch.
+- Spoločný beh presného F5 zoznamu vyššie: **225/225, 14 súborov**, exit 0; zahŕňa nezmenených pôvodných 138 prípadov.
+- Po poslednom spresnení platform/infra delete poradia: providerMutationInvalidation.test.tsx + vmwareInventoryLifecycle.test.tsx, **41/41**, exit 0.
+- Prvý lint: štyri lokálne diagnostiky, opravené bez suppressions. Po oprave nepovinného operátora a testových typov/callbacku: lifecycle + pôvodný hook suite **84/84**, exit 0. Finálne lint/typecheck/Git výsledky sú uvedené v nasledujúcej sekcii.
+
+### Finálne kontroly
+
+Posledný pokyn používateľa vyžaduje typecheck upravených súborov. Preto sa v tomto follow-up nepúšťal celý npm.cmd run typecheck/tsc -b: použil sa TypeScript createProgram s presnými 14 vlastnými TS/TSX rootmi, ich importmi, projektovými deklaráciami a test setup deklaráciami; rovnaké compilerOptions z tsconfig.app.json, noEmit=true, bez potlačenia diagnostík.
+
+- Po poslednej typovej úprave a pridaní dvoch pending caller testov: **120/120 v 5 súboroch**, exit 0. Tieto výsledky dopĺňajú spoločný úspešný 225-case beh vyššie; finálny 14-file beh po posledných zmenách sa zbytočne neopakoval. Finálny stav tak zahŕňa 227 odlišných overených prípadov; nejde o tvrdenie jedného 227-case behu.
+- ESLint nad všetkými 14 vlastnými TS/TSX súbormi: exit 0. Po následných typových/testových úpravách zopakovaný lint štyroch dotknutých súborov: exit 0.
+- Cielený TypeScript: **14 modified TS/TSX roots, imported dependencies and project/test declarations; 0 diagnostics**, exit 0.
+- git diff --check: exit 0; git diff --cached --name-only: prázdny; git status --short: len 14 vlastných TS/TSX + dva VMware task dokumenty. Nové tri TS/TSX a oba Markdown dokumenty majú samostatnú read-only whitespace/final-newline kontrolu. Žiadny stage/commit/push.
+- V rámci prvého typechecku boli dve lokálne diagnostiky: optional data po deleted projekcii a VMware-only isEmpty na union type RG hooku. Opravené explicitnou optional chain a runtime toMatchObject assertion so zachovaním rovnakej hodnotovej kontroly; následné testy/lint/typecheck sú zelené. Kompletná suite ani production build neboli spustené.
+
+Presné finálne testy:
+
+```powershell
+node node_modules/vitest/vitest.mjs run src/features/discovery-inventory/resources/components/vmware/VmwareDeletedInventory.integration.test.tsx src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx src/features/discovery-inventory/resources/hooks/vmwareInventoryLifecycle.test.tsx src/features/discovery-inventory/resources/pages/ResourcesBackgroundPrefetch.integration.test.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupBuilder.prefetch.test.tsx
+```
+
+Presný zoznam lint/typecheck vstupov a reprodukovateľný posledný typecheck:
+
+```powershell
+$vmwareFollowupChangedFiles=@(
+  'src/features/discovery-inventory/infrastructure/hooks/useInfrastructureInventory.test.tsx'
+  'src/features/discovery-inventory/infrastructure/hooks/useInfrastructureInventory.ts'
+  'src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.tsx'
+  'src/features/discovery-inventory/resources/helpers/virtualMachinesHelpers.test.ts'
+  'src/features/discovery-inventory/resources/hooks/useInitialResourcePrefetch.test.tsx'
+  'src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.ts'
+  'src/features/discovery-inventory/resources/model/inventoryQueries.test.ts'
+  'src/features/discovery-inventory/resources/model/inventoryQueries.ts'
+  'src/features/discovery-inventory/resources/pages/ResourcesBackgroundPrefetch.integration.test.tsx'
+  'src/features/recovery-plans/recovery-groups/components/RecoveryGroupBuilder.prefetch.test.tsx'
+  'src/shared/query/providerMutationInvalidation.ts'
+  'src/features/discovery-inventory/resources/components/vmware/VmwareDeletedInventory.integration.test.tsx'
+  'src/features/discovery-inventory/resources/hooks/vmwareInventoryLifecycle.test.tsx'
+  'src/shared/query/useProviderInventoryDeleted.ts'
+)
+node node_modules/eslint/bin/eslint.js @vmwareFollowupChangedFiles --max-warnings 0
+@'
+import ts from 'typescript';
+import path from 'node:path';
+const roots = process.argv.slice(2);
+const configPath = path.resolve('tsconfig.app.json');
+const configFile = ts.readConfigFile(configPath, ts.sys.readFile);
+if (configFile.error) throw new Error(ts.flattenDiagnosticMessageText(configFile.error.messageText, '\n'));
+const config = ts.parseJsonConfigFileContent(configFile.config, ts.sys, path.dirname(configPath));
+const declarations = config.fileNames.filter(file => file.endsWith('.d.ts'));
+const rootNames = [...roots, 'src/test-utils/setup.ts', 'src/test-utils/setupUnit.ts', ...declarations];
+const program = ts.createProgram(rootNames, { ...config.options, noEmit: true, incremental: false });
+const diagnostics = [...config.errors, ...ts.getPreEmitDiagnostics(program)];
+if (diagnostics.length) process.stdout.write(ts.formatDiagnosticsWithColorAndContext(diagnostics, { getCanonicalFileName: file => file, getCurrentDirectory: ts.sys.getCurrentDirectory, getNewLine: () => '\n' }));
+console.log('Focused TypeScript: ' + roots.length + ' modified TS/TSX roots, imported dependencies and project/test declarations; ' + diagnostics.length + ' diagnostics.');
+process.exitCode = diagnostics.length ? 1 : 0;
+'@ | node --input-type=module - @vmwareFollowupChangedFiles
+```
+### Dopad a hranice
+
+Overené všetkých päť priamych produkčných callerov factory: resource useQuery/refetch, Dashboard initial prefetch, Resources background idle, RG Builder step a Infrastructure useQuery/refetch; nepriamy RG resource hook je overený samostatne cez resourceNames a metadata. Provider B a rovnaké ID druhého QueryClient zostali nezávislé. Platné placeholder/debounce/cache/filter/latest-request správanie pokrýva nezmenená pôvodná sada aj existing prefetch integrácie. Nové testy používajú riadené Promise, žiadne sleep operácie.
+
+Zostáva pôvodná hranica lokálne oznámených úspešných mutations v danom QueryClient; iný browser tab/klient bez oznámenia delete sa nesynchronizuje. Nie je podporovaný svojvoľný externý setQueryData po delete. Kompletná suite, production build, browser E2E ani živý backend sa nespúšťali. Bez zmeny vetvy, subagentov, stage, commitu, pushu, resetu, stashu, worktree alebo zásahu do Snapshot Policy/OpenAPI/generated/locales.
+
+---
+
+## Historická evidencia dokončenej P2 opravy
+
+Nasledujúce pôvodné P2 úlohy a report patria predchádzajúcej oprave, nie aktuálnym F1–F5.
+
+# Úlohy: P2 regresia removedRevision
 
 Dátum: 2026-10-22. Plán: [vmware-removed-revision-p2-plan.md](vmware-removed-revision-p2-plan.md).
 Stav: spresnený plán schválený pokynom vykonať inline; P2-1 až P2-4 a oba checkpointy dokončené a overené. Používateľ schválil samostatné cesty kvôli súbežnému Snapshot Policy plánu v tasks/plan.md a tasks/todo.md. Bez commitu/pushu, stash/reset, zmeny vetvy, worktree alebo subagentov.

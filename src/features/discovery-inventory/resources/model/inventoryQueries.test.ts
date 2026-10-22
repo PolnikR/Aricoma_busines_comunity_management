@@ -1,3 +1,4 @@
+import { QueryClient } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   createFlashSystemInventorySelect,
@@ -26,7 +27,7 @@ describe('discovery inventory queries', () => {
 
   it('searches VMware inventory with the provider as param and filters as body', async () => {
     const mock = stubFetch({ count: 0, vms: [] })
-    await vmwareInventoryQuery({ providerId: ' vcenter-01 ', folderName: 'Apps', tag: 'prod', namePrefix: 'WEB' }).queryFn({ signal })
+    await vmwareInventoryQuery({ providerId: ' vcenter-01 ', folderName: 'Apps', tag: 'prod', namePrefix: 'WEB' }).queryFn({ signal, client: new QueryClient() })
 
     expect(mock.mock.calls[0]?.[0]).toBe('/api/vms/search?provider_id=vcenter-01')
     expect(mock.mock.calls[0]?.[1]).toMatchObject({ method: 'POST' })
