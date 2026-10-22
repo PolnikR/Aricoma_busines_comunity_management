@@ -154,9 +154,9 @@ git diff --check
 
 ### Task 6: Migrate Recovery Applications
 
-- [ ] Replace selected-detail coordination with one unconditional hook call using `entityType: 'application'` and the existing provider snapshot.
-- [ ] Feed state, URL, displayRunId and canViewRecoveryRuns to the existing consumers; preserve caller-owned Push-gated inventory run and exact navigation callback.
-- [ ] Remove only newly unused orchestration imports/variables; retain provider query, raw row links and unrelated workflows.
+- [x] Replace selected-detail coordination with one unconditional hook call using `entityType: 'application'` and the existing provider snapshot.
+- [x] Feed state, URL, displayRunId and canViewRecoveryRuns to the existing consumers; preserve caller-owned Push-gated inventory run and exact navigation callback.
+- [x] Remove only newly unused orchestration imports/variables; retain provider query, raw row links and unrelated workflows.
 
 **Dependencies:** Task 5. **Scope:** Small, table plus its existing test only if setup needs adaptation.
 

@@ -23,10 +23,9 @@ import {
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { ChecklistResultDialog } from '@/shared/components/modal/ChecklistResultDialog'
-import { useLatestOrchestratorRun } from '@/features/recovery-plans/recovery-runs/hooks/useLatestOrchestratorRun'
+import { useSelectedOrchestrationDetails } from '@/features/recovery-plans/recovery-runs/hooks/useSelectedOrchestrationDetails'
 import { useGetPlatformProviders } from '@/generated/query/platform-providers/platform-providers.gen'
 import { selectPlatformProviders } from '@/features/platform-administration/platform-providers/model/selectPlatformProviders'
-import { normalizeAirflowDagId } from '@/config/externalServices'
 import { AirflowDagLink } from '@/shared/components/airflow/AirflowDagLink'
 import type { RecoveryApplicationListItem } from '../model/recoveryApplicationTypes'
 import type { RollbackReport } from '../model/recoveryApplicationTypes'
@@ -36,7 +35,6 @@ import { RecoveryApplicationRollbackResultModal } from './RecoveryApplicationRol
 import { RecoveryApplicationInventory } from './RecoveryApplicationInventory'
 import { RecoveryGroupOrchestrationStatus } from '@/features/recovery-plans/recovery-groups/components/RecoveryGroupOrchestrationStatus'
 import {
-  getRecoveryGroupOrchestrationState,
   orchestrationMetaText,
 } from '@/features/recovery-plans/recovery-groups/helpers/recoveryGroupOrchestrationState'
 
@@ -184,25 +182,12 @@ export function RecoveryApplicationsTable({
     isLoading: isPlatformProvidersLoading,
     isError: isPlatformProvidersError,
   } = useGetPlatformProviders({ type: 'all' }, { query: { select: selectPlatformProviders } })
-  const selectedOrchestrationProviderUrl = platformProviders.find(
-    provider => provider.id === selected?.orchestrationProviderId,
-  )?.url
   const selectedAirflowRunId = selected?.pushToOrchestrator ? selected.airflowRunId : null
-  const isSelectedOrchestrated = Boolean(
-    selectedAirflowRunId && selected?.orchestrationProviderId,
-  )
-  const selectedDagId = selectedAirflowRunId ? normalizeAirflowDagId(selectedAirflowRunId) : null
-  const latestRunState = useLatestOrchestratorRun(
-    isSelectedOrchestrated ? (selected?.orchestrationProviderId ?? null) : null,
-    selectedDagId,
-  )
-  const orchestrationState = selected
-    ? getRecoveryGroupOrchestrationState(
-        selected,
-        { providers: platformProviders, isLoading: isPlatformProvidersLoading, isError: isPlatformProvidersError },
-        latestRunState,
-      )
-    : null
+  const orchestration = useSelectedOrchestrationDetails({
+    entityType: 'application',
+    selected,
+    providers: { providers: platformProviders, isLoading: isPlatformProvidersLoading, isError: isPlatformProvidersError },
+  })
 
   const columns = useMemo(() => [
     ...getBaseColumns(t, providers),
@@ -427,7 +412,7 @@ export function RecoveryApplicationsTable({
           statuses={[
             <ApplicationStatusBadge key="status" app={selected} />,
           ]}
-          meta={orchestrationState ? orchestrationMetaText(orchestrationState, t) : null}
+          meta={orchestration ? orchestrationMetaText(orchestration.state, t) : null}
           headerActions={<KeyedHelpPopover helpKey="recoveryApplications.help" sections={['tiers', 'policySet', 'orchestration']} />}
           ariaLabel={t('drawer.applicationDetail')}
           closeLabel={t('drawer.closeApplication')}
@@ -476,12 +461,12 @@ export function RecoveryApplicationsTable({
             </DetailOverview>
           </DetailViewSection>
           <DetailViewSection id="orchestration" title={t('details.tabs.orchestration')} icon={ExecutionIcon}>
-            {orchestrationState ? (
+            {orchestration ? (
               <RecoveryGroupOrchestrationStatus
-                state={orchestrationState}
-                airflowRunId={isSelectedOrchestrated ? selectedAirflowRunId : null}
-                providerUrl={selectedOrchestrationProviderUrl}
-                onViewRecoveryRuns={isSelectedOrchestrated ? () => {
+                state={orchestration.state}
+                airflowRunId={orchestration.displayRunId}
+                providerUrl={orchestration.providerUrl}
+                onViewRecoveryRuns={orchestration.canViewRecoveryRuns ? () => {
                   void navigate(`${routes.recoveryRuns}?tab=applications&entityType=application&entityId=${encodeURIComponent(selected.id)}`)
                 } : undefined}
               />
