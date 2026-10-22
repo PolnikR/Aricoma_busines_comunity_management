@@ -34,6 +34,16 @@ describe('validatingMutator', () => {
       .rejects.toMatchObject({ name: 'GeneratedResponseContractError', operation: 'GET /get_credentials' })
   })
 
+  it.each([undefined, 50])('normalizes snapshot copy rate %s through the response registry', async rate => {
+    stubFetch({ snapshot_policies: [{
+      id: 'hourly', name: 'Hourly', frequency_value: 1, frequency_unit: 'hours',
+      retention_value: 1, retention_unit: 'days', flashcopy_copy_rate: rate,
+    }] })
+    await expect(validatingMutator('/get_policies', { method: 'GET' })).resolves.toMatchObject({
+      snapshot_policies: [{ id: 'hourly', flashcopy_copy_rate: rate ?? 0 }],
+    })
+  })
+
   it('throws a contract error naming the operation', async () => {
     stubFetch({ roles: [] })
     await expect(validatingMutator('/get_roles_permissions', { method: 'GET' }))
