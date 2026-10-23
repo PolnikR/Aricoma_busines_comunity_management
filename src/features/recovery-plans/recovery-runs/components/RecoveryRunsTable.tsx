@@ -1,13 +1,12 @@
 import { useTranslation } from '@/hooks/useTranslation'
 import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { Badge } from '@/shared/components/badge/Badge'
-import { Input } from '@/shared/components/form/FormControls'
-import { SearchIcon } from '@/shared/icons/Icons'
 import {
   DataTable,
   DataTableSurface,
   DataTablePagination,
   DataTableRequestState,
+  DataTableToolbar,
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { formatRunDuration, formatRunTimestamp, runStatusBadgeColor } from '../helpers/formatRecoveryRun'
@@ -33,8 +32,8 @@ function getColumns(
       header: t('recoveryRuns.table.application'),
       cell: row => (
         <>
-          <span className="block font-semibold leading-4 text-text-primary">{row.name}</span>
-          <span className="block font-mono text-[11px] leading-3 text-text-muted">{row.id}</span>
+          <span className="block font-semibold text-text-primary">{row.name}</span>
+          <span className="mt-0.5 block font-mono text-[11px] text-text-subtle">{row.id}</span>
         </>
       ),
     },
@@ -148,18 +147,12 @@ export function RecoveryRunsTable({
   const errorDetail = extractBackendErrorDetail(error)
 
   const toolbar = (
-    <div className="shrink-0 border-b border-border pb-2">
-      <Input
-        size="sm"
-        type="search"
-        className="sm:w-72"
-        value={search}
-        onChange={event => { onSearchChange(event.target.value) }}
-        placeholder={t('recoveryRuns.search.placeholder')}
-        aria-label={t('recoveryRuns.search.label')}
-        leadingIcon={<SearchIcon className="size-4" />}
-      />
-    </div>
+    <DataTableToolbar
+        searchValue={search}
+        onSearchChange={onSearchChange}
+        searchPlaceholder={t('recoveryRuns.search.placeholder')}
+        searchLabel={t('recoveryRuns.search.label')}
+    />
   )
 
   const pagination = (!error || hasCachedData) ? (
@@ -174,7 +167,7 @@ export function RecoveryRunsTable({
   ) : null
 
   return (
-    <DataTableSurface variant="flat" ariaLabel={t('recoveryRuns.tableLabel')} toolbar={toolbar} pagination={pagination}>
+    <DataTableSurface ariaLabel={t('recoveryRuns.tableLabel')} toolbar={toolbar} pagination={pagination}>
         <DataTableRequestState
           hasCachedData={hasCachedData}
           error={error ? {
@@ -186,10 +179,6 @@ export function RecoveryRunsTable({
           } : null}
         >
           <DataTable
-            layout="contained"
-            minWidthClassName="min-w-160 w-full"
-            headerCellClassName="whitespace-nowrap px-2 first:pl-0 last:pr-0 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-text-muted"
-            cellClassName="px-2 first:pl-0 last:pr-0 py-1.5 text-xs text-text-secondary align-middle"
             columns={getColumns(t, showEntityType, onRetry)}
             rows={rows}
             isLoading={isLoading}
