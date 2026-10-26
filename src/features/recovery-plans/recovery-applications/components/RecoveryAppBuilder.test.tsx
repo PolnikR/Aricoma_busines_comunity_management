@@ -589,7 +589,7 @@ describe('RecoveryAppBuilder', () => {
     })
 
     it.each(['missing', 'incompatible', 'unpublished'] as const)('preliminary Save permits an assigned %s Group but final validation rejects it', async state => {
-      recoveryGroupsQuery.current.groups = state === 'missing' ? [] : recoveryGroupsQuery.current.groups.map(group => group.id === 'database_group' ? {
+      recoveryGroupsQuery.current.groups = state === 'missing' ? [] : recoveryGroupsQuery.current.groups.map(group => group.id === 'database_group' && group.sourceCategory === 'backup_system_workload' ? {
         ...group, ...(state === 'incompatible' ? { workloadType: 'ibm_power_virtual_machines' } : { pushToOrchestrator: false }),
       } : group)
       const initialData = draftFixture()
