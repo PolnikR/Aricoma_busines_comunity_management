@@ -22,7 +22,7 @@ import { isRecoveryGroupCompatible, isRecoveryGroupEligible } from '../utils/rec
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { AppMetadataForm } from './AppMetadataForm'
 import { TierCanvas } from './TierCanvas'
-import { applyConfirmedSourceChange, createApplicationDraft, planApplicationMetadataChange } from '../model/recoveryApplicationDraft'
+import { applyConfirmedSourceChange, assignRecoveryGroup, createApplicationDraft, planApplicationMetadataChange, removeRecoveryGroup } from '../model/recoveryApplicationDraft'
 import type { ApplicationMetadataPatch, SourceChangeProposal } from '../model/recoveryApplicationDraft'
 import { getEligiblePlatformProviders, getEligibleSourceProviders, getEligibleTargetProviders } from '../utils/eligibleProviders'
 import { isValidRecoveryApplicationFileName, isValidRecoveryApplicationName } from '../utils/recoveryApplicationFileName'
@@ -152,44 +152,19 @@ export function RecoveryAppBuilder({
 
   const handleRecoveryGroupAdded = useCallback((tierId: string, groupId: string) => {
     if (isFormDisabled) return
-    const selectedGroup = availableGroups.find(group => group.id === groupId)
-    if (!selectedGroup) return
-
-    setFormState(prev => {
-      const newTiers = new Map(prev.tiers)
-      const tier = newTiers.get(tierId)
-      if (!tier) return prev
-
-      newTiers.set(tierId, {
-        ...tier,
-        recovery_group: {
-          id: selectedGroup.id,
-          name: selectedGroup.name,
-          description: selectedGroup.description,
-          vms: selectedGroup.resources.map((name, index) => ({
-            name,
-            order: index + 1,
-            ...selectedGroup.vmMetadataByName?.[name],
-          })),
-        },
-      })
-      return { ...prev, tiers: newTiers }
-    })
+    const context = { providers: providersQuery.data ?? [], groups, lockedProviders }
+    const result = assignRecoveryGroup(formState, tierId, groupId, context)
+    if (!result.notifyDirty) return
+    setFormState(current => assignRecoveryGroup(current, tierId, groupId, context).draft)
     onDirtyChange?.(true)
-  }, [availableGroups, isFormDisabled, onDirtyChange])
+  }, [formState, groups, isFormDisabled, lockedProviders, onDirtyChange, providersQuery.data])
 
   const handleRecoveryGroupRemoved = useCallback((tierId: string) => {
     if (isFormDisabled) return
-    setFormState(prev => {
-      const tier = prev.tiers.get(tierId)
-      if (!tier?.recovery_group) return prev
-
-      const newTiers = new Map(prev.tiers)
-      newTiers.set(tierId, { order: tier.order, description: tier.description })
-      return { ...prev, tiers: newTiers }
-    })
-    onDirtyChange?.(true)
-  }, [isFormDisabled, onDirtyChange])
+    const result = removeRecoveryGroup(formState, tierId)
+    setFormState(current => removeRecoveryGroup(current, tierId).draft)
+    if (result.notifyDirty) onDirtyChange?.(true)
+  }, [formState, isFormDisabled, onDirtyChange])
 
   const handleRecoveryVmSelectionChange = useCallback((tierId: string, vmName: string, selected: boolean) => {
     if (isFormDisabled) return

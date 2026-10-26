@@ -1,3 +1,4 @@
+import { StrictMode } from 'react'
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest'
@@ -303,6 +304,20 @@ describe('RecoveryAppBuilder', () => {
       await userEvent.setup().click(screen.getByRole('button', { name: 'Orchestration' }))
       await userEvent.setup().click(screen.getByRole('button', { name: 'Save Application' }))
     }
+
+    it('composes queued Group assignments and removal with one dirty notification per event in StrictMode', async () => {
+      const onDirtyChange = vi.fn()
+      render(<StrictMode><RecoveryAppBuilder initialData={draftFixture()} onDirtyChange={onDirtyChange} /></StrictMode>)
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Recovery groups & tiers' }))
+      act(() => {
+        canvasProps().onRecoveryGroupAdded?.('tier_id', 'database_group')
+        canvasProps().onRecoveryGroupAdded?.('web', 'database_group')
+        canvasProps().onRecoveryGroupRemoved?.('tier_id')
+      })
+      expect(canvasProps().tiers['tier_id']).toEqual({ order: 3, description: 'Database tier' })
+      expect(canvasProps().tiers['web']?.recovery_group?.vms).toEqual([{ name: 'DB-01', order: 1 }, { name: 'DB-02', order: 2 }])
+      expect(onDirtyChange.mock.calls).toEqual([[true], [true], [true]])
+    })
 
     it.each(['missing_group', 'lpar_group', 'unresolved_group', 'unpublished_group'])('rejects %s assignment without dirty, but eligible assignment to an absent tier notifies dirty', async groupId => {
       recoveryGroupsQuery.current.groups.push({ ...fixtureValue(recoveryGroupsQuery.current.groups[0]), id: 'unpublished_group', pushToOrchestrator: false })
