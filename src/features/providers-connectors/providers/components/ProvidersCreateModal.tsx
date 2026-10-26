@@ -39,6 +39,7 @@ const EMPTY_FORM: ProviderCreateFormData = {
   vmTags: [],
   backingStorageProviderIds: [],
   partnerProviderId: '',
+  managedSystem: '',
   notificationEmail: '',
   cacheRefreshSeconds: '',
 }
@@ -58,6 +59,7 @@ function createInitialForm(provider?: ProviderRecord): ProviderCreateFormData {
         vmTags: [...(provider.vmTags ?? [])],
         backingStorageProviderIds: [...(provider.backingStorageProviderIds ?? [])],
         partnerProviderId: provider.partnerProviderId ?? '',
+        managedSystem: provider.managedSystem ?? '',
         notificationEmail: provider.notificationEmail ?? '',
         cacheRefreshSeconds: provider.cacheRefreshSeconds === null || provider.cacheRefreshSeconds === undefined
           ? ''
@@ -95,6 +97,7 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     || formData.cacheRefreshSeconds !== initialForm.cacheRefreshSeconds
     || formData.vmPrefix !== initialForm.vmPrefix
     || formData.partnerProviderId !== initialForm.partnerProviderId
+    || formData.managedSystem !== initialForm.managedSystem
     || formData.vmTags.length !== initialForm.vmTags.length
     || formData.vmTags.some((tag, index) => tag !== initialForm.vmTags[index])
     || formData.backingStorageProviderIds.length !== initialForm.backingStorageProviderIds.length
@@ -143,18 +146,21 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
           vmTags: nextConfig.vmTags ? prev.vmTags : [],
           backingStorageProviderIds: nextConfig.backingStorageProviderIds ? prev.backingStorageProviderIds : [],
           partnerProviderId: '',
+          managedSystem: nextConfig.managedSystem ? prev.managedSystem : '',
         }
       }
       return { ...prev, [field]: value }
     })
     setErrors(prev => {
-      const next = { ...prev, [field]: undefined }
+      const next = { ...prev }
+      Reflect.deleteProperty(next, field)
       if (field === 'type') {
         const nextConfig = getProviderFieldConfig(value)
-        if (!nextConfig.vmPrefix) next.vmPrefix = undefined
-        if (!nextConfig.vmTags) next.vmTags = undefined
-        if (!nextConfig.backingStorageProviderIds) next.backingStorageProviderIds = undefined
-        if (!nextConfig.partnerProviderId) next.partnerProviderId = undefined
+        if (!nextConfig.vmPrefix) delete next.vmPrefix
+        if (!nextConfig.vmTags) delete next.vmTags
+        if (!nextConfig.backingStorageProviderIds) delete next.backingStorageProviderIds
+        if (!nextConfig.partnerProviderId) delete next.partnerProviderId
+        if (!nextConfig.managedSystem) delete next.managedSystem
       }
       return next
     })
@@ -239,6 +245,9 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     }
     if (fieldConfig.partnerProviderId && (!provider || formData.partnerProviderId !== initialForm.partnerProviderId)) {
       record.partnerProviderId = formData.partnerProviderId.trim() || null
+    }
+    if (fieldConfig.managedSystem && (!provider || formData.managedSystem !== initialForm.managedSystem)) {
+      record.managedSystem = formData.managedSystem.trim() || null
     }
     record.notificationEmail = formData.notificationEmail.trim() || null
     record.cacheRefreshSeconds = formData.cacheRefreshSeconds.trim() ? Number(formData.cacheRefreshSeconds) : null

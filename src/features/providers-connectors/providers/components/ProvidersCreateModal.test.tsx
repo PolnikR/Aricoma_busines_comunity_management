@@ -57,6 +57,69 @@ function fillValidForm() {
 describe('ProvidersCreateModal', () => {
   const flashA: ProviderRecord = { ...mockProviderA, id: 'flash-a', name: 'Array A', type: 'FLASHCOPY' }
   const flashB: ProviderRecord = { ...mockProviderA, id: 'flash-b', name: 'Array B', type: 'FLASHCOPY', role: 'target' }
+  it.each(['create', 'unchanged', 'replace', 'clear'])('submits the IBM Power managed system on %s', async action => {
+    const provider: ProviderRecord = { ...mockProviderA, type: 'IBM_POWER', managedSystem: 'system-a' }
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    const onClose = vi.fn()
+    renderWithQueryClient(<ProvidersCreateModal open onClose={onClose} existingProviders={action === 'create' ? [] : [provider]}
+      {...(action === 'create' ? {} : { provider })} />)
+    if (action === 'create') {
+      fillValidForm()
+      fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'IBM_POWER' } })
+    } else expect(screen.getByLabelText('Managed system')).toHaveValue('system-a')
+    if (action !== 'unchanged') {
+      fireEvent.change(screen.getByLabelText('Managed system'), { target: { value: action === 'clear' ? '' : ' system-b ' } })
+    }
+    fireEvent.click(screen.getByRole('button', { name: action === 'create' ? 'Create provider' : 'Edit provider' }))
+    await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+    expect(JSON.parse((fetchMock.mock.calls[0]?.[1] as RequestInit).body as string)).toMatchObject({
+      type: 'IBM_POWER', managedSystem: action === 'clear' ? null : action === 'unchanged' ? 'system-a' : 'system-b',
+    })
+    vi.unstubAllGlobals()
+  })
+
+  it('clears managed system on IBM_POWER → VMWARE → IBM_POWER but retains backing storage', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    renderWithQueryClient(<ProvidersCreateModal open onClose={vi.fn()} existingProviders={[flashA]} />)
+    fillValidForm()
+    fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'IBM_POWER' } })
+    fireEvent.change(screen.getByLabelText('Managed system'), { target: { value: 'system-a' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Backing storage providers' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Array A — flash-a' }))
+    fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'VMWARE' } })
+    expect(screen.queryByLabelText('Managed system')).not.toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'IBM_POWER' } })
+    expect(screen.getByLabelText('Managed system')).toHaveValue('')
+    fireEvent.click(screen.getByRole('button', { name: 'Create provider' }))
+    await waitFor(() => { expect(fetchMock).toHaveBeenCalledOnce() })
+    expect(JSON.parse((fetchMock.mock.calls[0]?.[1] as RequestInit).body as string)).toMatchObject({ managedSystem: null, backingStorageProviderIds: ['flash-a'] })
+    vi.unstubAllGlobals()
+  })
+
+  it('warns before closing when only managed system changes', () => {
+    const provider: ProviderRecord = { ...mockProviderA, type: 'IBM_POWER', managedSystem: 'system-a' }
+    const onClose = vi.fn()
+    renderWithQueryClient(<ProvidersCreateModal open onClose={onClose} existingProviders={[provider]} provider={provider} />)
+    fireEvent.change(screen.getByLabelText('Managed system'), { target: { value: 'system-b' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(onClose).not.toHaveBeenCalled()
+    expect(screen.getByRole('heading', { name: 'Discard unsaved provider changes?' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }))
+    expect(onClose).toHaveBeenCalledOnce()
+  })
+
+  it.each(['absent', 'null'])('does not mark an unchanged %s managed system dirty', value => {
+    const provider: ProviderRecord = { ...mockProviderA, type: 'IBM_POWER', ...(value === 'null' ? { managedSystem: null } : {}) }
+    const onClose = vi.fn()
+    renderWithQueryClient(<ProvidersCreateModal open onClose={onClose} existingProviders={[provider]} provider={provider} />)
+    expect(screen.getByLabelText('Managed system')).toHaveValue('')
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(onClose).toHaveBeenCalledOnce()
+    expect(screen.queryByRole('heading', { name: 'Discard unsaved provider changes?' })).not.toBeInTheDocument()
+  })
+
   it.each(['VMWARE', 'FLASHCOPY', 'HITACHI', 'IBM_POWER'] as const)('creates only fields relevant to %s', async type => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
@@ -67,10 +130,10 @@ describe('ProvidersCreateModal', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Create provider' }))
     await waitFor(() => { expect(fetchMock).toHaveBeenCalledOnce() })
     const body = JSON.parse((fetchMock.mock.calls[0]?.[1] as RequestInit).body as string) as Record<string, unknown>
-    expect(body.partnerProviderId).toBeNull()
+    expect(body['partnerProviderId']).toBeNull()
     if (type === 'VMWARE') {
-      expect(body.vmPrefix).toBe('stale-')
-      expect(body.vmTags).toEqual([])
+      expect(body['vmPrefix']).toBe('stale-')
+      expect(body['vmTags']).toEqual([])
     } else {
       expect(body).not.toHaveProperty('vmPrefix')
       expect(body).not.toHaveProperty('vmTags')

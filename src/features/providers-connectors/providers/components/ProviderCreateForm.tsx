@@ -19,6 +19,7 @@ export interface ProviderCreateFormData {
   vmTags: string[]
   backingStorageProviderIds: string[]
   partnerProviderId: string
+  managedSystem: string
   notificationEmail: string
   cacheRefreshSeconds: string
 }
@@ -232,6 +233,16 @@ export function ProviderCreateForm({
           {errors.cacheRefreshSeconds ? <p className="mt-1 text-xs text-red-600">{errors.cacheRefreshSeconds}</p> : null}
         </Field>
       </div>
+
+      {fieldConfig.managedSystem ? (
+        <Field label={t('forms.managedSystem')} htmlFor="create-managedSystem">
+          <Input id="create-managedSystem" type="text" value={data.managedSystem} aria-label={t('forms.managedSystem')}
+            onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('managedSystem', event.target.value) }}
+            onKeyDown={handleKeyDown} disabled={isSubmitting} aria-invalid={Boolean(errors.managedSystem)} />
+          <p className="mt-1 text-xs text-text-muted">{t('forms.managedSystemHelper')}</p>
+          {errors.managedSystem ? <p className="mt-1 text-xs text-red-600">{errors.managedSystem}</p> : null}
+        </Field>
+      ) : null}
 
       {fieldConfig.vmPrefix || fieldConfig.vmTags ? <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {fieldConfig.vmPrefix ? <Field label={t('forms.vmPrefix')} htmlFor="create-vmPrefix">

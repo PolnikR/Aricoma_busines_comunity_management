@@ -991,6 +991,8 @@
   "forms.vmTags": "VM tags",
   "forms.vmTagsSelect": "Select VM tags",
   "forms.vmTagsEmpty": "No VM tags available.",
+  "forms.managedSystem": "Managed system",
+  "forms.managedSystemHelper": "SystemName of the managed system. Needed for Power rollback when the HMC manages multiple systems.",
   "forms.ipRequired": "IP address is required",
   "forms.ipExample": "e.g., 10.99.99.40",
   "forms.port": "Port",

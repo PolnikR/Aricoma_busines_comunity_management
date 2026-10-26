@@ -962,6 +962,8 @@
   "forms.vmTags": "VM tagy",
   "forms.vmTagsSelect": "Vyberte VM tagy",
   "forms.vmTagsEmpty": "Nie sú dostupné žiadne VM tagy.",
+  "forms.managedSystem": "Spravovaný systém",
+  "forms.managedSystemHelper": "SystemName spravovaného systému. Potrebný pri Power rollbacku, ak HMC spravuje viac systémov.",
   "forms.ipRequired": "Zadajte IP adresu.",
   "forms.ipExample": "napr. 10.99.99.40",
   "forms.port": "Port",

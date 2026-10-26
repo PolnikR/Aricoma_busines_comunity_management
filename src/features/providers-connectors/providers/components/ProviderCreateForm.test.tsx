@@ -18,6 +18,7 @@ const data = {
   vmTags: ['saved-tag'],
   backingStorageProviderIds: [],
   partnerProviderId: '',
+  managedSystem: '',
   notificationEmail: 'provider-alerts@example.test',
   cacheRefreshSeconds: '120',
 }
@@ -163,6 +164,7 @@ describe('ProviderCreateForm', () => {
     expect(screen.queryByRole('button', { name: 'Backing storage providers' }) !== null).toBe(backing)
     expect(screen.queryByLabelText('VM prefix') !== null).toBe(type === 'VMWARE')
     expect(screen.queryByLabelText('VM tags') !== null).toBe(type === 'VMWARE')
+    expect(screen.queryByLabelText('Managed system') !== null).toBe(type === 'IBM_POWER')
     for (const label of ['Description', 'IP address', 'Role', 'URL', 'Notification email', 'Credentials']) {
       expect(screen.getByLabelText(label)).toBeInTheDocument()
     }
