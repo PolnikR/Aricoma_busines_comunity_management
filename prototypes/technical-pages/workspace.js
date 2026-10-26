@@ -28,8 +28,6 @@ const pages = {
 let page = 'resources';
 let platform = 'all';
 let sort = { key: null, direction: 1 };
-let selected = resources[0].id;
-let detailOpen = true;
 let opener = null;
 const tones = { Healthy: ['good', '✓'], Completed: ['good', '✓'], Attention: ['warn', '!'], Disconnected: ['bad', '×'], Failed: ['bad', '×'], Running: ['info', '↻'] };
 // All interpolated fields below originate exclusively from the fixed fixtures above.
@@ -46,20 +44,16 @@ function renderMetrics() {
   platforms.forEach((name, i) => { $(`#scope-${['vmware', 'power', 'flash'][i]}`).textContent = records.filter(r => r.platform === name).length; });
 }
 
-function renderDetail() {
-  const record = pages[page].records.find(r => r.id === selected);
-  $('#inspector').hidden = !detailOpen;
-  $('#workspace-body').classList.toggle('detail-hidden', !detailOpen);
-  $('#detail-toggle').setAttribute('aria-expanded', String(detailOpen));
-  $('#detail-toggle').textContent = detailOpen ? 'Hide detail ⇥' : 'Show detail ⇤';
-  if (!record) {
-    $('#detail-content').innerHTML = '<div class="detail-identity"><h2 id="detail-title">No record selected</h2><p>Select a name from the filtered table.</p></div>';
-    return;
-  }
-  $('#detail-content').innerHTML = `<div class="detail-identity">${badge(record.status)}<h2 id="detail-title" tabindex="-1">${record.name}</h2><p class="mono">${record.id} / ${record.platform}</p></div>
-    <section class="detail-section"><h3>Technical properties</h3>${properties([['Provider', record.provider], [page === 'resources' ? 'Location' : 'Direction', record.site], ['Recovery group', record.group], [page === 'resources' ? 'Provisioned' : 'Duration', page === 'resources' ? `${record.capacity.toLocaleString('en-US')} GiB` : record.duration === null ? 'In progress' : `${record.duration} s`], ['Captured at', `${record.updated} CET`]])}</section>
-    <section class="detail-section"><h3>${page === 'resources' ? 'Recovery context' : 'Execution context'}</h3><div class="path"><p>${record.provider}<small>Source provider</small></p><p>${record.name}<small>${page === 'resources' ? 'Infrastructure resource' : 'Recovery execution'}</small></p><p>${record.group}<small>${record.group === 'Unassigned' ? 'No recovery group assigned' : 'Associated recovery group'}</small></p></div></section>
-    <p class="detail-note">${record.status === 'Disconnected' ? 'Provider connection requires inspection. The displayed inventory may be out of date.' : record.status === 'Failed' ? 'This sample run failed. A production view should expose the failed step and execution log here.' : record.group === 'Unassigned' ? 'This resource is not assigned to a recovery group. Group assignment alone does not establish recoverability.' : 'Group membership is shown for context. Recovery readiness requires separate validation.'}</p>`;
+function openDetail(button) {
+  const record = pages[page].records.find(r => r.id === button.dataset.record);
+  opener = button;
+  $('#detail-entity').textContent = page === 'resources' ? 'Resource' : 'Recovery run';
+  $('#detail-title').textContent = record.name;
+  $('#detail-status').innerHTML = badge(record.status);
+  $('#detail-meta').textContent = record.id;
+  $('#detail-content').innerHTML = properties([['Platform', record.platform], ['Provider', record.provider], [page === 'resources' ? 'Location' : 'Direction', record.site], ['Recovery group', record.group], [page === 'resources' ? 'Provisioned' : 'Duration', page === 'resources' ? `${record.capacity.toLocaleString('en-US')} GiB` : record.duration === null ? 'In progress' : `${record.duration} s`], ['Captured at', `${record.updated} CET`]]);
+  $('#detail-dialog').showModal();
+  $('#close-detail').focus();
 }
 
 function renderTable() {
@@ -71,9 +65,8 @@ function renderTable() {
     if (right === null) return -1;
     return sort.direction * (typeof left === 'number' ? left - right : String(left).localeCompare(String(right)));
   });
-  if (!rows.some(r => r.id === selected)) selected = rows[0]?.id ?? null;
   $('#columns').innerHTML = `<tr>${pages[page].columns.map(([key, label]) => `<th scope="col" aria-sort="${sort.key === key ? sort.direction === 1 ? 'ascending' : 'descending' : 'none'}" class="${['capacity', 'duration'].includes(key) ? 'numeric' : ''}"><button data-sort="${key}">${label} <span aria-hidden="true">${sort.key === key ? sort.direction === 1 ? '↑' : '↓' : '↕'}</span></button></th>`).join('')}</tr>`;
-  $('#rows').innerHTML = rows.map((r, i) => `<tr class="${r.id === selected && detailOpen ? 'selected' : ''}">${pages[page].columns.map(([key]) => {
+  $('#rows').innerHTML = rows.map((r, i) => `<tr>${pages[page].columns.map(([key]) => {
     if (key === 'name') return `<td><span class="row-index">${String(i + 1).padStart(2, '0')}</span><button class="record-name" data-record="${r.id}" aria-label="Inspect ${r.name}">${r.name}</button></td>`;
     if (key === 'status') return `<td>${badge(r.status)}</td>`;
     return `<td class="${['capacity', 'duration'].includes(key) ? 'numeric' : ['group', 'site', 'updated'].includes(key) ? 'mono' : ''}">${r[key] === null ? '—' : typeof r[key] === 'number' ? r[key].toLocaleString('en-US') : r[key]}</td>`;
@@ -81,7 +74,6 @@ function renderTable() {
   $('#filter-count').textContent = `${rows.length} / ${pages[page].records.length} records`;
   $('#row-count').textContent = `${rows.length ? `1–${rows.length}` : '0'} of ${rows.length} matching records · all results shown`;
   $('#empty').hidden = rows.length !== 0;
-  renderDetail();
 }
 
 function resetFilters() {
@@ -90,7 +82,7 @@ function resetFilters() {
   renderTable();
 }
 function switchPage(next) {
-  page = next; sort = { key: null, direction: 1 }; selected = pages[page].records[0].id; opener = null;
+  page = next; sort = { key: null, direction: 1 }; opener = null;
   $('#page-title').textContent = $('#breadcrumb-page').textContent = pages[page].title;
   $('#breadcrumb-section').textContent = pages[page].section;
   $('#page-description').textContent = pages[page].description;
@@ -100,11 +92,6 @@ function switchPage(next) {
   $$('[data-page]').forEach(button => { if (button.dataset.page === page) button.setAttribute('aria-current', 'page'); else button.removeAttribute('aria-current'); });
   document.title = `ABCO · ${pages[page].title} · Design preview`;
   renderMetrics(); resetFilters();
-}
-function closeDetail() {
-  detailOpen = false; renderTable();
-  const target = $$('[data-record]').find(button => button.dataset.record === opener);
-  (target || $('#detail-toggle')).focus();
 }
 $$('[data-page]').forEach(button => button.addEventListener('click', () => switchPage(button.dataset.page)));
 $$('[data-platform]').forEach(button => button.addEventListener('click', () => {
@@ -122,10 +109,20 @@ $('#columns').addEventListener('click', event => {
 });
 $('#rows').addEventListener('click', event => {
   const button = event.target.closest('[data-record]'); if (!button) return;
-  selected = opener = button.dataset.record; detailOpen = true; renderTable(); $('#detail-title').focus();
+  openDetail(button);
 });
-$('#detail-toggle').addEventListener('click', () => { detailOpen = !detailOpen; renderTable(); });
-$('#close-detail').addEventListener('click', closeDetail);
+$('#close-detail').addEventListener('click', () => $('#detail-dialog').close());
+$('#detail-dialog').addEventListener('close', () => { $('#detail-content').replaceChildren(); opener?.focus(); });
+$('#detail-dialog').addEventListener('keydown', event => {
+  if (event.key !== 'Tab') return;
+  const buttons = $$('#detail-dialog button');
+  if (event.shiftKey && document.activeElement === buttons[0]) { event.preventDefault(); buttons.at(-1).focus(); }
+  else if (!event.shiftKey && document.activeElement === buttons.at(-1)) { event.preventDefault(); buttons[0].focus(); }
+});
+$('#detail-dialog').addEventListener('click', event => {
+  const box = $('#detail-dialog').getBoundingClientRect();
+  if (event.target === $('#detail-dialog') && (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom)) $('#detail-dialog').close();
+});
 $('#density').addEventListener('click', () => {
   const comfortable = $('#data-table').classList.toggle('comfortable');
   $('#density').setAttribute('aria-pressed', String(comfortable));
@@ -136,7 +133,6 @@ $('#theme').addEventListener('click', () => {
   $('#theme').setAttribute('aria-pressed', String(dark)); $('#theme').textContent = dark ? 'Light theme' : 'Dark theme';
 });
 document.addEventListener('keydown', event => {
-  if (event.key === 'Escape' && detailOpen) closeDetail();
-  if (event.key === '/' && !event.ctrlKey && !event.metaKey && !event.altKey && !event.target.closest('input,select,textarea,button,[contenteditable]')) { event.preventDefault(); $('#search').focus(); }
+  if (event.key === '/' && !$('#detail-dialog').open && !event.ctrlKey && !event.metaKey && !event.altKey && !event.target.closest('input,select,textarea,button,[contenteditable]')) { event.preventDefault(); $('#search').focus(); }
 });
 switchPage('resources');

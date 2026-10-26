@@ -56,8 +56,9 @@ try {
     await send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...box, button: 'left', clickCount: 1 });
   };
   const key = async (key, code = key) => {
-    await send('Input.dispatchKeyEvent', { type: 'keyDown', key, code, ...(key === 'Enter' ? { text: '\r', windowsVirtualKeyCode: 13 } : {}) });
-    await send('Input.dispatchKeyEvent', { type: 'keyUp', key, code });
+    const windowsVirtualKeyCode = { Enter: 13, Escape: 27, Tab: 9, Home: 36, ArrowDown: 40 }[key] ?? 0;
+    await send('Input.dispatchKeyEvent', { type: 'keyDown', key, code, windowsVirtualKeyCode, ...(key === 'Enter' ? { text: '\r' } : {}) });
+    await send('Input.dispatchKeyEvent', { type: 'keyUp', key, code, windowsVirtualKeyCode });
   };
   const resize = width => send('Emulation.setDeviceMetricsOverride', { width, height: 1000, deviceScaleFactor: 1, mobile: false });
   const navigate = async () => {
@@ -86,7 +87,7 @@ try {
     await click('#search'); await send('Input.insertText', { text: 'no-such-record' });
     assert.equal(await evaluate('document.querySelector("#empty").hidden'), false);
     assert.equal(await evaluate('document.querySelectorAll("[data-record]").length'), 0);
-    assert.match(await evaluate('document.querySelector("#detail-content").textContent'), /No record selected/);
+    assert.equal(await evaluate('document.querySelector("#detail-dialog").open'), false);
     await click('#reset');
     assert.equal(await evaluate('document.querySelectorAll("[data-record]").length'), total);
     await click('#status'); await key('Home'); await key('ArrowDown'); await key('Enter');
@@ -99,13 +100,23 @@ try {
     assert.equal(await evaluate(`document.querySelector('[data-sort="${numeric}"]').parentElement.getAttribute('aria-sort')`), 'ascending');
     await click('[data-record]');
     const selectedName = await evaluate('document.querySelector("#detail-title").textContent');
-    assert.equal(await evaluate('document.activeElement.id'), 'detail-title');
+    assert.equal(await evaluate('document.activeElement.id'), 'close-detail');
+    assert.equal(await evaluate('document.querySelector("#detail-dialog").matches(":modal")'), true);
+    await key('Tab'); await key('Tab');
+    assert.equal(await evaluate('document.activeElement.id'), 'close-detail', 'Focus stays inside the modal');
     await key('Escape');
-    assert.equal(await evaluate('document.querySelector("#inspector").hidden'), true);
+    assert.equal(await evaluate('document.querySelector("#detail-dialog").open'), false);
     assert.equal(await evaluate('document.activeElement.textContent'), selectedName, 'Escape restores record focus');
     assert.equal(await evaluate('document.activeElement.matches("[data-record]")'), true);
     await key('Enter');
-    assert.equal(await evaluate('document.querySelector("#inspector").hidden'), false, 'Keyboard reopens selected record');
+    assert.equal(await evaluate('document.querySelector("#detail-dialog").open'), true, 'Keyboard reopens selected record');
+    await click('#close-detail');
+    assert.equal(await evaluate('document.querySelector("#detail-dialog").open'), false);
+    assert.equal(await evaluate('document.activeElement.matches("[data-record]")'), true);
+    await key('Enter');
+    await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: 4, y: 4, button: 'left', clickCount: 1 });
+    await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: 4, y: 4, button: 'left', clickCount: 1 });
+    assert.equal(await evaluate('document.querySelector("#detail-dialog").open'), false, 'Backdrop closes the dialog');
     await click('#density');
     assert.equal(await evaluate('document.querySelector("#rows td").getBoundingClientRect().height'), 44);
     await click('#density');
@@ -119,15 +130,23 @@ try {
     for (const width of [320, 768, 1024, 1440]) {
       await resize(width);
       assert.ok(await evaluate('document.documentElement.scrollWidth <= innerWidth'), `${page}/${theme}: page overflow at ${width}`);
-      assert.ok(await evaluate('document.querySelector(".table-scroll").scrollWidth >= document.querySelector(".table-scroll").clientWidth'));
+      assert.ok(await evaluate('Math.abs(document.querySelector(".table-area").getBoundingClientRect().width - document.querySelector(".data-workspace").getBoundingClientRect().width) < 1'), 'Table always occupies the full workspace width');
+      assert.equal(await evaluate('document.querySelectorAll(".inspector, #detail-toggle").length'), 0);
       const shot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
       await writeFile(join(profile, `${page}-${theme}-${width}.png`), Buffer.from(shot.data, 'base64'));
+      await click('[data-record]');
+      assert.ok(await evaluate('(() => { const box = document.querySelector("#detail-dialog").getBoundingClientRect(); return box.left >= 0 && box.right <= innerWidth && box.top >= 0 && box.bottom <= innerHeight; })()'), `Dialog fits at ${width}`);
+      const modalTree = await send('Accessibility.getFullAXTree');
+      assert.ok(modalTree.nodes.some(node => !node.ignored && node.role?.value === 'dialog' && node.name?.value), 'Dialog has an accessible name');
+      const modalShot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
+      await writeFile(join(profile, `${page}-${theme}-${width}-dialog.png`), Buffer.from(modalShot.data, 'base64'));
+      await key('Escape');
     }
     // Contrast checks for foreground/background token pairs actually used by this template.
     const ratios = await evaluate(`(() => {
       const s = getComputedStyle(document.documentElement);
       const luminance = token => { const hex = s.getPropertyValue(token).trim().slice(1); const full = hex.length === 3 ? [...hex].map(c => c+c).join('') : hex; const rgb = [0,2,4].map(i => parseInt(full.slice(i,i+2),16)/255).map(c => c <= .04045 ? c/12.92 : ((c+.055)/1.055)**2.4); return rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722; };
-      return [['--text','--surface'],['--muted','--surface'],['--muted','--subtle'],['--accent','--accent-soft'],['--success','--success-bg'],['--warning','--warning-bg'],['--danger','--danger-bg'],['--nav-muted','--nav'],['--nav-muted','--nav-active']].map(([a,b]) => { const x=luminance(a), y=luminance(b); return { pair:a+'/'+b, ratio:(Math.max(x,y)+.05)/(Math.min(x,y)+.05) }; });
+      return [['--text','--surface'],['--muted','--surface'],['--muted','--subtle'],['--accent','--accent-soft'],['--success','--success-bg'],['--warning','--warning-bg'],['--danger','--danger-bg']].map(([a,b]) => { const x=luminance(a), y=luminance(b); return { pair:a+'/'+b, ratio:(Math.max(x,y)+.05)/(Math.min(x,y)+.05) }; });
     })()`);
     ratios.forEach(({ pair, ratio }) => assert.ok(ratio >= 4.5, `${theme} ${pair}: ${ratio}`));
     const tree = await send('Accessibility.getFullAXTree');
