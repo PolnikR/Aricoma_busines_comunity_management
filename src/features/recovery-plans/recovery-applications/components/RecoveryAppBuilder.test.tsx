@@ -387,6 +387,22 @@ describe('RecoveryAppBuilder', () => {
       expect([...initialData.tiers]).toEqual([...before.tiers])
     })
 
+    it('composes queued VM selections in StrictMode while keeping dirty notifications at event level', async () => {
+      const initialData = draftFixture()
+      const before = structuredClone(initialData)
+      const onDirtyChange = vi.fn()
+      render(<StrictMode><RecoveryAppBuilder initialData={initialData} onDirtyChange={onDirtyChange} /></StrictMode>)
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Recovery groups & tiers' }))
+      act(() => {
+        canvasProps().onRecoveryVmSelectionChange?.('tier_id', 'DB-02', true)
+        canvasProps().onRecoveryVmSelectionChange?.('tier_id', 'DB-01', false)
+        canvasProps().onRecoveryVmSelectionChange?.('tier_id', 'DB-01', true)
+      })
+      expect(canvasProps().tiers['tier_id']?.recovery_group?.vms).toEqual([{ name: 'DB-02', order: 1 }, { name: 'DB-01', order: 2 }])
+      expect(onDirtyChange.mock.calls).toEqual([[true], [true], [true]])
+      expect(initialData).toEqual(before)
+    })
+
     it('allows unknown VM names and missing live Group data, retaining selection order and callback dirty no-ops', async () => {
       const initialData = draftFixture()
       initialData.tiers.set('empty', { order: 7, description: 'No Group' })

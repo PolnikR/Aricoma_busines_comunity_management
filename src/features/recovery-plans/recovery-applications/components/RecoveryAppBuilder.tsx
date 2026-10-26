@@ -22,7 +22,7 @@ import { isRecoveryGroupCompatible, isRecoveryGroupEligible } from '../utils/rec
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { AppMetadataForm } from './AppMetadataForm'
 import { TierCanvas } from './TierCanvas'
-import { applyConfirmedSourceChange, assignRecoveryGroup, createApplicationDraft, planApplicationMetadataChange, removeRecoveryGroup } from '../model/recoveryApplicationDraft'
+import { applyConfirmedSourceChange, assignRecoveryGroup, createApplicationDraft, planApplicationMetadataChange, removeRecoveryGroup, selectRecoveryVm } from '../model/recoveryApplicationDraft'
 import type { ApplicationMetadataPatch, SourceChangeProposal } from '../model/recoveryApplicationDraft'
 import { getEligiblePlatformProviders, getEligibleSourceProviders, getEligibleTargetProviders } from '../utils/eligibleProviders'
 import { isValidRecoveryApplicationFileName, isValidRecoveryApplicationName } from '../utils/recoveryApplicationFileName'
@@ -168,30 +168,11 @@ export function RecoveryAppBuilder({
 
   const handleRecoveryVmSelectionChange = useCallback((tierId: string, vmName: string, selected: boolean) => {
     if (isFormDisabled) return
-    setFormState(prev => {
-      const tier = prev.tiers.get(tierId)
-      if (!tier?.recovery_group) return prev
-
-      const alreadySelected = tier.recovery_group.vms.some(vm => vm.name === vmName)
-      if (alreadySelected === selected) return prev
-
-      const selectedGroup = compatibleGroups.find(group => group.id === tier.recovery_group?.id)
-      const nextVms = selected
-        ? [...tier.recovery_group.vms, { name: vmName, ...selectedGroup?.vmMetadataByName?.[vmName] }]
-        : tier.recovery_group.vms.filter(vm => vm.name !== vmName)
-
-      const newTiers = new Map(prev.tiers)
-      newTiers.set(tierId, {
-        ...tier,
-        recovery_group: {
-          ...tier.recovery_group,
-          vms: nextVms.map((vm, index) => ({ ...vm, order: index + 1 })),
-        },
-      })
-      return { ...prev, tiers: newTiers }
-    })
-    onDirtyChange?.(true)
-  }, [compatibleGroups, isFormDisabled, onDirtyChange])
+    const context = { providers: providersQuery.data ?? [], groups, lockedProviders }
+    const result = selectRecoveryVm(formState, tierId, vmName, selected, context)
+    setFormState(current => selectRecoveryVm(current, tierId, vmName, selected, context).draft)
+    if (result.notifyDirty) onDirtyChange?.(true)
+  }, [formState, groups, isFormDisabled, lockedProviders, onDirtyChange, providersQuery.data])
 
   const handleTierEdit = useCallback((tierId: string, newTierId: string, updates: { tierDescription: string }) => {
     if (isFormDisabled) return
