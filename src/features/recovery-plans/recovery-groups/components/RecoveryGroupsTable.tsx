@@ -29,17 +29,15 @@ import { RecoveryGroupInventorySummary } from './RecoveryGroupInventorySummary'
 import { RecoveryGroupOrchestrationStatus } from './RecoveryGroupOrchestrationStatus'
 import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { useTranslation } from '@/hooks/useTranslation'
-import { normalizeAirflowDagId } from '@/config/externalServices'
 import { AirflowDagLink } from '@/shared/components/airflow/AirflowDagLink'
 import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { useGetPolicySets } from '@/generated/query/policy-sets/policy-sets.gen'
 import { selectPolicySets } from '@/features/recovery-plans/policy-sets/model/selectPolicySets'
 import { useGetPlatformProviders } from '@/generated/query/platform-providers/platform-providers.gen'
 import { selectPlatformProviders } from '@/features/platform-administration/platform-providers/model/selectPlatformProviders'
-import { useLatestOrchestratorRun } from '@/features/recovery-plans/recovery-runs/hooks/useLatestOrchestratorRun'
+import { useSelectedOrchestrationDetails } from '@/features/recovery-plans/recovery-runs/hooks/useSelectedOrchestrationDetails'
 import { toRecoveryGroupJson } from '../helpers/mapRecoveryGroups'
-import { getRecoveryGroupOrchestrationState, orchestrationMetaText } from '../helpers/recoveryGroupOrchestrationState'
-import type { OrchestrationState } from '../helpers/recoveryGroupOrchestrationState'
+import { orchestrationMetaText } from '../helpers/recoveryGroupOrchestrationState'
 import type { RecoveryGroup } from '../model/recoveryGroupTypes'
 import { RecoveryGroupRollbackResultModal } from './RecoveryGroupRollbackResultModal'
 import {
@@ -129,29 +127,16 @@ export function RecoveryGroupsTable({
     searchFields: ['id', 'name', 'description'],
   })
   const selected = rows.find(group => group.id === selectedId) ?? null
-  const selectedOrchestrationProviderUrl = platformProviders.find(
-    provider => provider.id === selected?.orchestrationProviderId,
-  )?.url
   const jsonViewed = rows.find(group => group.id === jsonViewId) ?? null
   const activeFilterCount = Number(Boolean(filters.workloadType)) + Number(Boolean(filters.resourceType))
   const errorDescription = extractBackendErrorDetail(error)
 
   const navigate = useNavigate()
-  const isSelectedOrchestrated = Boolean(selected?.pushToOrchestrator && selected.airflowRunId && selected.orchestrationProviderId)
-  const selectedDagId = isSelectedOrchestrated && selected?.airflowRunId
-    ? normalizeAirflowDagId(selected.airflowRunId)
-    : null
-  const latestRunState = useLatestOrchestratorRun(
-    isSelectedOrchestrated ? (selected?.orchestrationProviderId ?? null) : null,
-    selectedDagId,
-  )
-  const orchestrationState: OrchestrationState | null = selected
-    ? getRecoveryGroupOrchestrationState(
-        selected,
-        { providers: platformProviders, isLoading: isPlatformProvidersLoading, isError: isPlatformProvidersError },
-        latestRunState,
-      )
-    : null
+  const orchestration = useSelectedOrchestrationDetails({
+    entityType: 'group',
+    selected,
+    providers: { providers: platformProviders, isLoading: isPlatformProvidersLoading, isError: isPlatformProvidersError },
+  })
   const inventorySummaryText = (group: RecoveryGroup) => {
     if (group.resourceCount === 0) return t('recoveryGroups.drawer.noResources')
     return t(group.resourceType === 'vm' ? 'recoveryGroups.drawer.vmCount' : 'recoveryGroups.drawer.volumeCount', {
@@ -429,7 +414,7 @@ export function RecoveryGroupsTable({
               <Badge key="provider" color="warning" size="sm">{t('pages.recoveryGroups.providerUnavailable')}</Badge>
             ) : null,
           ]}
-          meta={orchestrationState ? orchestrationMetaText(orchestrationState, t) : null}
+          meta={orchestration ? orchestrationMetaText(orchestration.state, t) : null}
           headerActions={
             <KeyedHelpPopover helpKey="recoveryGroups.help" sections={['local', 'remote', 'flashCopy', 'metroMirror', 'orchestration']} />
           }
@@ -493,12 +478,12 @@ export function RecoveryGroupsTable({
             icon={ExecutionIcon}
             description={t('recoveryGroups.detail.orchestrationDescription')}
           >
-            {orchestrationState ? (
+            {orchestration ? (
               <RecoveryGroupOrchestrationStatus
-                state={orchestrationState}
-                airflowRunId={selected.airflowRunId}
-                providerUrl={selectedOrchestrationProviderUrl}
-                onViewRecoveryRuns={isSelectedOrchestrated ? () => {
+                state={orchestration.state}
+                airflowRunId={orchestration.displayRunId}
+                providerUrl={orchestration.providerUrl}
+                onViewRecoveryRuns={orchestration.canViewRecoveryRuns ? () => {
                   void navigate(`${routes.recoveryRuns}?tab=groups&entityType=group&entityId=${encodeURIComponent(selected.id)}`)
                 } : undefined}
               />

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useMemo, useState } from 'react'
+import { useCallback, useEffect, useId, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { flashSystemInventoryQuery, powerInventoryQuery, vdisksByVmQuery, vmwareInventoryQuery } from '@/features/discovery-inventory/resources/model/inventoryQueries'
 import { resolveVmwareProviderFilter } from '@/features/discovery-inventory/resources/helpers/vmwareProviderFilter'
@@ -11,7 +11,6 @@ import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErro
 import { TruncatedText } from '@/shared/components/truncated-text/TruncatedText'
 import { ListSkeleton } from '@/shared/components/list-skeleton/ListSkeleton'
 import { WizardSteps } from '@/shared/components/wizard-steps/WizardSteps'
-import { isProgrammaticIdAvailable } from '@/shared/utils/programmaticId'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useGetProviders } from '@/generated/query/providers/providers.gen'
 import { selectProviders } from '@/features/providers-connectors/providers/model/selectProviders'
@@ -19,11 +18,10 @@ import { useGetPlatformProviders } from '@/generated/query/platform-providers/pl
 import { selectPlatformProviders } from '@/features/platform-administration/platform-providers/model/selectPlatformProviders'
 import { useGetPolicySets } from '@/generated/query/policy-sets/policy-sets.gen'
 import { selectPolicySets } from '@/features/recovery-plans/policy-sets/model/selectPolicySets'
-import { getRecoveryGroupResourceOption } from '../config/recoveryGroupResourceOptions'
 import { useRecoveryGroupRelatedVolumes } from '../hooks/useRecoveryGroupRelatedVolumes'
 import type { RecoveryGroup, RecoveryGroupDraft, RecoveryGroupVmMetadata } from '../model/recoveryGroupTypes'
 import { calculateRecoveryGroupStepIndices } from '../utils/calculateRecoveryGroupStepIndices'
-import { isCredentialOk, filterByPlatformProviderCredentialStatus } from '@/features/providers-connectors/providers/utils/credentialStatusChecks'
+import { filterByPlatformProviderCredentialStatus } from '@/features/providers-connectors/providers/utils/credentialStatusChecks'
 import { RecoveryGroupDetailsStep } from './RecoveryGroupDetailsStep'
 import { RecoveryGroupOrchestrationStep } from './RecoveryGroupOrchestrationStep'
 import { RecoveryGroupPolicySetStep } from './RecoveryGroupPolicySetStep'
@@ -33,8 +31,7 @@ import { RecoveryGroupTypeStep } from './RecoveryGroupTypeStep'
 import { RecoveryGroupTopologyStep } from './RecoveryGroupTopologyStep'
 import { RecoveryGroupMetroMirrorFields } from './RecoveryGroupMetroMirrorFields'
 import { useRecoveryGroupMetroMirrorRelationships } from '../hooks/useRecoveryGroupMetroMirrorRelationships'
-import { reconcileMetroMirrorPrefill } from '../utils/reconcileMetroMirrorPrefill'
-import { getRecoveryGroupTopologyError } from '../utils/recoveryGroupTopology'
+import { initializeDraft, transitionDraft, resolveEffectiveDraft, getDraftReadiness, type DraftEvent } from '../model/recoveryGroupDraftLifecycle'
 
 interface RecoveryGroupBuilderProps {
   onCreate: (draft: RecoveryGroupDraft) => void
@@ -45,26 +42,6 @@ interface RecoveryGroupBuilderProps {
   existingIds?: string[]
   isSaving?: boolean
   isInitialLoading?: boolean
-}
-
-const INITIAL_DRAFT: RecoveryGroupDraft = {
-  id: '',
-  name: '',
-  description: '',
-  sourceCategory: null,
-  workloadType: null,
-  resourceType: null,
-  providerId: null,
-  policySetId: null,
-  resources: [],
-  relatedVolumeProviderId: null,
-  relatedVolumes: [],
-  orchestrationProviderId: null,
-  pushToOrchestrator: false,
-  topology: null,
-  metroMirrorMode: null,
-  consistencyGroupId: '',
-  auxiliaryNamesByVolume: {},
 }
 
 export function RecoveryGroupBuilder({
@@ -86,161 +63,59 @@ export function RecoveryGroupBuilder({
     ? allProviders
     : allProviders.filter(provider => provider.role === 'source')
   const [step, setStep] = useState(1)
-  const [draftState, setDraft] = useState<RecoveryGroupDraft>(() => initialData
-    ? {
-        id: initialData.id,
-        name: initialData.name,
-        description: initialData.description,
-        sourceCategory: initialData.sourceCategory,
-        workloadType: initialData.workloadType,
-        resourceType: initialData.resourceType,
-        providerId: initialData.providerId,
-        policySetId: initialData.policySetId,
-        resources: [...initialData.resources],
-        relatedVolumeProviderId: initialData.resourceType === 'volume' ? initialData.providerId : initialData.relatedVolumeProviderId ?? null,
-        relatedVolumes: [...initialData.relatedVolumes],
-        vmMetadataByName: initialData.vmMetadataByName,
-        orchestrationProviderId: initialData.orchestrationProviderId ?? null,
-        pushToOrchestrator: initialData.pushToOrchestrator ?? false,
-        topology: initialData.topology ?? 'local',
-        metroMirrorMode: initialData.metroMirrorMode ?? null,
-        consistencyGroupId: initialData.consistencyGroupId ?? '',
-        auxiliaryNamesByVolume: { ...initialData.auxiliaryNamesByVolume },
-      }
-    : INITIAL_DRAFT)
-  const [hasConsistencyOverride, setHasConsistencyOverride] = useState(Boolean(initialData?.consistencyGroupId?.trim()))
-  // The backend rejects any update of a pushed group; it is read-only until rolled back.
-  const pushedLock = initialData?.pushToOrchestrator === true
-  // A Managed group keeps backend-generated ids after a partial rollback; only a clean one is editable.
-  const managedProvisionedLock = !pushedLock && initialData?.metroMirrorMode === 'managed'
-    && (Boolean(initialData.consistencyGroupId?.trim())
-      || Object.values(initialData.auxiliaryNamesByVolume ?? {}).some(name => name.trim()))
-  const readOnly = pushedLock || managedProvisionedLock
-  const updateDraft = (update: Partial<RecoveryGroupDraft>) => {
-    if (readOnly) return
-    setDraft(current => ({ ...current, ...update }))
-    onDirtyChange?.(true)
-  }
+  const [lifecycle, setLifecycle] = useState(() => initializeDraft(initialData))
   const handleMetadataAvailable = useCallback((metadata: Record<string, RecoveryGroupVmMetadata>) => {
-    setDraft(current => ({
-      ...current,
-      vmMetadataByName: { ...current.vmMetadataByName, ...metadata },
-    }))
+    setLifecycle(current => transitionDraft(current, { type: 'metadataAvailable', metadata }).state)
   }, [])
-  const idAvailable = isProgrammaticIdAvailable(
-    draftState.id,
-    existingIds,
-    initialData?.id,
-  )
-  const detailsValid = Boolean(
-    draftState.id
-    && idAvailable
-    && draftState.name.trim()
-    && draftState.description.trim(),
-  )
-  const typeValid = Boolean(draftState.sourceCategory && draftState.workloadType && draftState.resourceType)
-  const selectedOption = getRecoveryGroupResourceOption(draftState.workloadType)
-  const providerValid = Boolean(
-    draftState.providerId
-    && selectedOption
-    && (draftState.resourceType === 'volume' ? allProviders : providers).some(provider => (
-      provider.id === draftState.providerId
-      && provider.type === selectedOption.providerType
-      && isCredentialOk(provider)
-    )),
-  )
-  // Until the provider list resolves the scope is unknown, so VM inventory waits for it.
-  const selectedProvider = providers.find(provider => provider.id === draftState.providerId)
-  const selectedProviderScope = selectedProvider
-    ? { vmPrefix: selectedProvider.vmPrefix ?? null, vmTags: selectedProvider.vmTags ?? [] }
-    : undefined
   const policySetQuery = useGetPolicySets({ query: { select: selectPolicySets } })
   const policySets = policySetQuery.data ?? []
-  const policySetValid = Boolean(draftState.policySetId)
   const platformProvidersQuery = useGetPlatformProviders({ type: 'all' }, { query: { select: selectPlatformProviders } })
   const eligiblePlatformProviders = filterByPlatformProviderCredentialStatus(platformProvidersQuery.data ?? [])
     .filter(provider => provider.type === 'AIRFLOW')
-  const soleEligibleProviderId = eligiblePlatformProviders.length === 1
-    ? (eligiblePlatformProviders[0]?.id ?? null)
-    : null
-  const orchestrationValid = Boolean(
-    (draftState.orchestrationProviderId ?? soleEligibleProviderId)
-    && eligiblePlatformProviders.some(provider => provider.id === (draftState.orchestrationProviderId ?? soleEligibleProviderId)),
-  )
-  const hasRelatedStorageStep = draftState.resourceType === 'vm'
-  const {
-    resourcesStepIndex,
-    relatedStorageStepIndex,
-    policySetStepIndex,
-    orchestrationStepIndex,
-    lastStep,
-  } = calculateRecoveryGroupStepIndices(hasRelatedStorageStep)
+  const baseObservation = {
+    editAuthority: initialData, providers: allProviders, providerStatus: providerQuery,
+    eligibleOrchestrationProviderIds: eligiblePlatformProviders.map(provider => provider.id),
+  }
+  const request = resolveEffectiveDraft(lifecycle, baseObservation)
+  // Until the provider list resolves the scope is unknown, so VM inventory waits for it.
+  const selectedProvider = providers.find(provider => provider.id === request.draft.providerId)
+  const selectedProviderScope = selectedProvider
+    ? { vmPrefix: selectedProvider.vmPrefix ?? null, vmTags: selectedProvider.vmTags ?? [] }
+    : undefined
+  const hasRelatedStorageStep = request.hasRelatedStorageStep
+  const { resourcesStepIndex, relatedStorageStepIndex, policySetStepIndex, orchestrationStepIndex, lastStep } = calculateRecoveryGroupStepIndices(hasRelatedStorageStep)
   const relatedVolumesDiscovery = useRecoveryGroupRelatedVolumes(
-    draftState.providerId,
-    draftState.resources,
-    draftState.relatedVolumeProviderId ?? null,
+    request.relatedVolumeRequest.computeProviderId,
+    request.relatedVolumeRequest.vmNames,
+    request.relatedVolumeRequest.sourceId,
     hasRelatedStorageStep && step === relatedStorageStepIndex,
   )
-
-  const discoveryKey = JSON.stringify([draftState.relatedVolumeProviderId, draftState.providerId, [...draftState.resources].sort()])
-  const [discoveryExclusions, setDiscoveryExclusions] = useState<{ key: string; removed: string[]; all: boolean }>({ key: '', removed: [], all: false })
-  const selectionDraft = useMemo(() => {
-    const orchestrationProviderId = draftState.orchestrationProviderId ?? soleEligibleProviderId
-    const exclusions = discoveryExclusions.key === discoveryKey ? discoveryExclusions : null
-    const discovered = hasRelatedStorageStep
-      && draftState.relatedVolumeProviderId
-      && relatedVolumesDiscovery.flashcopyProviderId === draftState.relatedVolumeProviderId
-      && !relatedVolumesDiscovery.error && !relatedVolumesDiscovery.isLoading && !exclusions?.all
-      ? relatedVolumesDiscovery.discoveredVolumeNames.filter(name => !exclusions?.removed.includes(name)) : []
-    return {
-      ...draftState,
-      orchestrationProviderId,
-      relatedVolumes: [...new Set([...(draftState.relatedVolumes ?? []), ...discovered])],
-    }
-  }, [draftState, soleEligibleProviderId, discoveryKey, discoveryExclusions, hasRelatedStorageStep, relatedVolumesDiscovery])
-
-  const selectedVolumes = selectionDraft.resourceType === 'volume' ? selectionDraft.resources : selectionDraft.relatedVolumes
-  // Prune only after discovery settles, so temporary loading never deletes saved corrections.
-  const selectionKey = JSON.stringify([...selectedVolumes].sort())
-  const [previousSelectionKey, setPreviousSelectionKey] = useState<string | null>(null)
-  const discoverySettled = !hasRelatedStorageStep || (relatedVolumesDiscovery.isResolved && !relatedVolumesDiscovery.isLoading && !relatedVolumesDiscovery.error)
-  if (discoverySettled && previousSelectionKey !== selectionKey) {
-    setPreviousSelectionKey(selectionKey)
-    const activeNames = new Set(selectedVolumes)
-    const overrides = draftState.auxiliaryNamesByVolume ?? {}
-    if (Object.keys(overrides).some(name => !activeNames.has(name))) {
-      setDraft({ ...draftState, auxiliaryNamesByVolume: Object.fromEntries(Object.entries(overrides).filter(([name]) => activeNames.has(name))) })
-    }
-  }
-
-  const allowLegacyLocal = (initialData?.resourceType === 'vm'
-    && (initialData.topology ?? 'local') === 'local'
-    && !initialData.relatedVolumeProviderId && initialData.relatedVolumes.length === 0
-    && !selectionDraft.relatedVolumeProviderId && selectionDraft.relatedVolumes.length === 0)
-  const topologyValid = !providerQuery.isLoading && !providerQuery.isFetching && !providerQuery.error
-    && getRecoveryGroupTopologyError(selectionDraft, allProviders, allowLegacyLocal) === null
-  const metroExisting = draftState.topology === 'metro_mirror' && draftState.metroMirrorMode === 'existing'
-  // Managed CG id and auxiliary names are backend-generated and only shown read-only.
-  const metroManaged = draftState.topology === 'metro_mirror' && draftState.metroMirrorMode === 'managed'
+  const relatedObservation = { ...baseObservation, related: { ...relatedVolumesDiscovery, identity: request.discoveryIdentity } }
+  const selection = resolveEffectiveDraft(lifecycle, relatedObservation)
   const relationships = useRecoveryGroupMetroMirrorRelationships(
-    draftState.relatedVolumeProviderId ?? null, selectedVolumes, metroExisting && topologyValid && discoverySettled,
+    selection.relationshipLookup.sourceId, selection.relationshipLookup.names, selection.relationshipLookup.enabled,
   )
-  const prefill = reconcileMetroMirrorPrefill(selectedVolumes, draftState.auxiliaryNamesByVolume ?? {},
-    hasConsistencyOverride ? draftState.consistencyGroupId ?? '' : undefined, relationships.data)
-  const draft = {
-    ...selectionDraft,
-    consistencyGroupId: metroExisting ? prefill.consistencyGroupId : metroManaged ? draftState.consistencyGroupId ?? '' : '',
-    auxiliaryNamesByVolume: metroExisting ? prefill.auxiliaryNamesByVolume : metroManaged ? draftState.auxiliaryNamesByVolume ?? {} : {},
-  }
-  const storageValid = draft.topology !== 'metro_mirror' || (selectedVolumes.length > 0 && (metroManaged
-    || (Boolean(draft.consistencyGroupId.trim()) && selectedVolumes.every(name => draft.auxiliaryNamesByVolume[name]?.trim()))))
-  const discoveryValid = !hasRelatedStorageStep || (!relatedVolumesDiscovery.isLoading && !relatedVolumesDiscovery.error)
-  const baseValid = detailsValid && topologyValid && typeValid && providerValid
-  const readyForPrefetch = baseValid && providerQuery.isSuccess && !readOnly && !isInitialLoading
-  const { providerId: inventoryProviderId, workloadType, resources: selectedResourceNames, relatedVolumeProviderId } = draftState
+  const observation = { ...relatedObservation, relationships: relationships.data }
+  const resolution = resolveEffectiveDraft(lifecycle, observation)
+  const { draft, selectedVolumes, metroExisting, metroManaged, prefill, allowLegacyLocal } = resolution
+  const observationEvent = resolution.selectionObservation
+  useEffect(() => {
+    if (!observationEvent) return
+    let cancelled = false
+    // Observe committed Discovery asynchronously; cancelled renders cannot publish cleanup.
+    queueMicrotask(() => {
+      if (!cancelled) setLifecycle(current => transitionDraft(current, observationEvent, {
+        related: { ...relatedVolumesDiscovery, identity: observationEvent.identity },
+      }).state)
+    })
+    return () => { cancelled = true }
+  }, [observationEvent, relatedVolumesDiscovery])
+  const readiness = getDraftReadiness(lifecycle, resolution, { ...observation, step, existingIds, isInitialLoading })
+  const { detailsValid, topologyValid, typeValid, resourcesValid, storageValid, policySetValid,
+    baseValid, downstreamValid, canContinue, canCreate, readyForPrefetch, storageProviderValid, pushedLock, readOnly } = readiness
+  const { providerId: inventoryProviderId, workloadType, resources: selectedResourceNames, relatedVolumeProviderId } = request.selectionDraft
   const { prefix: inventoryPrefix, tag: inventoryTag } = resolveVmwareProviderFilter(selectedProviderScope)
   const inventoryScopeKnown = selectedProvider !== undefined
-  const storageProviderValid = allProviders.some(provider => provider.id === relatedVolumeProviderId && provider.type === 'FLASHCOPY' && isCredentialOk(provider))
 
   useEffect(() => {
     if (step !== 4 || !readyForPrefetch || !inventoryProviderId) return
@@ -272,21 +147,11 @@ export function RecoveryGroupBuilder({
     }
   }, [queryClient, step, resourcesStepIndex, readyForPrefetch, hasRelatedStorageStep, inventoryProviderId, relatedVolumeProviderId, storageProviderValid, selectedResourceNames])
 
-  const resourcesValid = draft.resources.length > 0 && (hasRelatedStorageStep || storageValid)
-  const downstreamValid = baseValid && resourcesValid && storageValid && discoveryValid
-  const changeSource = (update: Partial<RecoveryGroupDraft>) => {
-    if (('topology' in update && update.topology !== draftState.topology)
-      || ('metroMirrorMode' in update && update.metroMirrorMode !== draftState.metroMirrorMode)
-      || ('relatedVolumeProviderId' in update && update.relatedVolumeProviderId !== draftState.relatedVolumeProviderId)) {
-      setHasConsistencyOverride(false)
-    }
-    if ('relatedVolumeProviderId' in update && update.relatedVolumeProviderId !== draft.relatedVolumeProviderId) {
-      setDiscoveryExclusions({ key: '', removed: [], all: false })
-      updateDraft({ ...update, relatedVolumes: [], auxiliaryNamesByVolume: {}, consistencyGroupId: '',
-        ...(draft.resourceType === 'volume' ? { providerId: update.relatedVolumeProviderId ?? null, resources: [] } : {}) })
-    } else updateDraft(update)
+  const send = (event: DraftEvent) => {
+    const context = observation
+    if (transitionDraft(lifecycle, event, context).notifyDirty) onDirtyChange?.(true)
+    setLifecycle(current => transitionDraft(current, event, context).state)
   }
-  const removeAuxiliary = (name: string) => Object.fromEntries(Object.entries(draftState.auxiliaryNamesByVolume ?? {}).filter(([key]) => key !== name))
   const showAuxiliaryHint = hasRelatedStorageStep && step === relatedStorageStepIndex && metroExisting && !storageValid
   const managedAuxiliaryNames = metroManaged ? draft.auxiliaryNamesByVolume : {}
   const renderVolumeContent = metroManaged ? (Object.keys(managedAuxiliaryNames).length > 0 ? (name: string) => (
@@ -304,7 +169,7 @@ export function RecoveryGroupBuilder({
         placeholder={t('pages.recoveryGroupBuilder.topology.auxiliary')}
         value={draft.auxiliaryNamesByVolume[name] ?? ''}
         invalid={!draft.auxiliaryNamesByVolume[name]?.trim()}
-        onChange={event => { updateDraft({ auxiliaryNamesByVolume: { ...draftState.auxiliaryNamesByVolume, [name]: event.target.value } }) }} />
+        onChange={event => { send({ type: 'auxiliaryChanged', name, value: event.target.value }) }} />
     </div>
   ) : undefined
 
@@ -317,7 +182,7 @@ export function RecoveryGroupBuilder({
     missingNamesCount={selectedVolumes.filter(name => !draft.auxiliaryNamesByVolume[name]?.trim()).length}
     providerName={allProviders.find(provider => provider.id === draft.relatedVolumeProviderId)?.name}
     value={draft.consistencyGroupId}
-    onChange={value => { setHasConsistencyOverride(true); updateDraft({ consistencyGroupId: value }) }}
+    onChange={value => { send({ type: 'consistencyGroupChanged', value }) }}
     loading={relationships.isLoading} error={relationships.error instanceof Error ? relationships.error : null}
     onRetry={() => { void relationships.refetch() }} warning={relationships.data?.warning ?? ''}
     unresolvedCount={prefill.unresolvedVolumes.length}
@@ -334,14 +199,6 @@ export function RecoveryGroupBuilder({
     { id: 'policy-set', label: t('pages.recoveryGroupBuilder.steps.policySet'), disabled: !downstreamValid },
     { id: 'orchestration', label: t('pages.recoveryGroupBuilder.steps.orchestration'), disabled: !downstreamValid || !policySetValid },
   ]
-  const canContinue = step === 1 ? detailsValid
-    : step === 2 ? detailsValid && topologyValid
-      : step === 3 ? detailsValid && topologyValid && typeValid
-        : step === 4 ? baseValid
-          : step === resourcesStepIndex ? baseValid && resourcesValid
-            : step === policySetStepIndex ? downstreamValid && policySetValid
-              : downstreamValid
-  const canCreate = !readOnly && downstreamValid && policySetValid && orchestrationValid
 
   return (
     <fieldset className="contents" disabled={isInitialLoading} aria-busy={isInitialLoading}>
@@ -367,12 +224,12 @@ export function RecoveryGroupBuilder({
                 description={draft.description}
                 existingIds={existingIds}
                 {...(initialData ? { currentId: initialData.id, disableId: true } : {})}
-                onChange={updateDraft}
+                onChange={values => { send({ type: 'detailsChanged', values }) }}
               />
             ) : null}
             {step === 2 ? <RecoveryGroupTopologyStep draft={draft} providers={allProviders}
               isLoading={providerQuery.isLoading || providerQuery.isFetching} error={providerQuery.error instanceof Error ? providerQuery.error : null}
-              onRetry={() => { void providerQuery.refetch() }} onChange={changeSource} allowLegacyLocal={allowLegacyLocal} isEditing={Boolean(initialData)} /> : null}
+              onRetry={() => { void providerQuery.refetch() }} onChange={send} allowLegacyLocal={allowLegacyLocal} isEditing={Boolean(initialData)} /> : null}
             {step === 3 ? (
               <RecoveryGroupTypeStep
                 sourceCategory={draft.sourceCategory}
@@ -382,34 +239,8 @@ export function RecoveryGroupBuilder({
                 providerError={providerQuery.error instanceof Error ? providerQuery.error : null}
                 onRetryProviders={() => { void providerQuery.refetch() }}
                 readOnly={Boolean(initialData)}
-                onCategoryChange={(sourceCategory) => {
-                  updateDraft({
-                    sourceCategory,
-                    workloadType: null,
-                    resourceType: null,
-                    providerId: null,
-                    resources: [],
-                    vmMetadataByName: {},
-                    auxiliaryNamesByVolume: {},
-                    relatedVolumes: [],
-                  })
-                }}
-                onSelect={(sourceCategory, workloadType, resourceType) => {
-                  updateDraft({
-                    sourceCategory,
-                    workloadType,
-                    resourceType,
-                    providerId: resourceType === 'volume' ? draft.relatedVolumeProviderId ?? null : draft.workloadType === workloadType ? draft.providerId : null,
-                    resources: draft.workloadType === workloadType ? draft.resources : [],
-                    vmMetadataByName: draft.workloadType === workloadType
-                      ? draft.vmMetadataByName
-                      : {},
-                    auxiliaryNamesByVolume: draft.workloadType === workloadType ? draftState.auxiliaryNamesByVolume : {},
-                    relatedVolumes: draft.workloadType === workloadType
-                      ? draft.relatedVolumes
-                      : [],
-                  })
-                }}
+                onCategoryChange={category => { send({ type: 'categoryChanged', category }) }}
+                onSelect={(category, workload, resourceType) => { send({ type: 'workloadSelected', category, workload, resourceType }) }}
               />
             ) : null}
             {step === 4 ? (
@@ -422,15 +253,7 @@ export function RecoveryGroupBuilder({
                   workloadType={draft.workloadType}
                   providers={providers}
                   selectedProviderId={draft.providerId}
-                  onSelect={(providerId) => {
-                    updateDraft({
-                      providerId,
-                      resources: draft.providerId === providerId ? draft.resources : [],
-                      vmMetadataByName: draft.providerId === providerId ? draft.vmMetadataByName : {},
-                      relatedVolumes: draft.providerId === providerId ? draft.relatedVolumes : [],
-                      auxiliaryNamesByVolume: draft.providerId === providerId ? draftState.auxiliaryNamesByVolume : {},
-                    })
-                  }}
+                  onSelect={providerId => { send({ type: 'providerSelected', providerId }) }}
                 />
               ) : null
             ) : null}
@@ -444,17 +267,8 @@ export function RecoveryGroupBuilder({
                     {...(selectedProviderScope ? { providerScope: selectedProviderScope } : {})}
                     resources={draft.resources}
                     renderItemContent={draft.resourceType === 'volume' ? renderVolumeContent : undefined}
-                    onAdd={resource => {
-                      if (!draft.resources.includes(resource)) {
-                        updateDraft({ resources: [...draft.resources, resource] })
-                      }
-                    }}
-                    onRemove={resource => {
-                      updateDraft({
-                        resources: draft.resources.filter(item => item !== resource),
-                        ...(draft.resourceType === 'volume' ? { auxiliaryNamesByVolume: removeAuxiliary(resource) } : {}),
-                      })
-                    }}
+                    onAdd={name => { send({ type: 'resourceAdded', name }) }}
+                    onRemove={name => { send({ type: 'resourceRemoved', name }) }}
                     onMetadataAvailable={handleMetadataAvailable}
                   />
                 </div>
@@ -478,29 +292,14 @@ export function RecoveryGroupBuilder({
                   <div className="flex min-h-64 min-w-0 flex-1 flex-col">
                     <RecoveryGroupResourcesStep
                       compact
-                      onClear={() => {
-                        updateDraft({ relatedVolumes: [], auxiliaryNamesByVolume: {} })
-                        setDiscoveryExclusions({ key: discoveryKey, removed: [], all: true })
-                      }}
+                      onClear={() => { send({ type: 'relatedSelectionCleared' }) }}
                       workloadType="ibm_flashsystem"
                       providerId={draft.relatedVolumeProviderId}
                       resources={draft.relatedVolumes}
                       selectionHint={showAuxiliaryHint ? <p id={auxiliaryHintId} role="status" className="mt-1 text-xs text-text-secondary">{t('pages.recoveryGroupBuilder.topology.auxiliaryRequired')}</p> : undefined}
                       renderItemContent={renderVolumeContent}
-                      onAdd={resource => {
-                        const relatedVolumes = draft.relatedVolumes
-                        if (!relatedVolumes.includes(resource)) {
-                          updateDraft({ relatedVolumes: [...(draftState.relatedVolumes ?? []), resource] })
-                        }
-                      }}
-                      onRemove={resource => {
-                        setDiscoveryExclusions(current => ({ key: discoveryKey, all: current.key === discoveryKey && current.all,
-                          removed: [...(current.key === discoveryKey ? current.removed : []), resource] }))
-                        updateDraft({
-                          relatedVolumes: (draftState.relatedVolumes ?? []).filter(item => item !== resource),
-                          auxiliaryNamesByVolume: removeAuxiliary(resource),
-                        })
-                      }}
+                      onAdd={name => { send({ type: 'relatedVolumeAdded', name }) }}
+                      onRemove={name => { send({ type: 'relatedVolumeRemoved', name }) }}
                     />
                   </div>
                 ) : (
@@ -516,7 +315,7 @@ export function RecoveryGroupBuilder({
                 policySets={policySets}
                 isLoading={policySetQuery.isLoading}
                 selectedPolicySetId={draft.policySetId}
-                onSelect={(policySetId) => { updateDraft({ policySetId }) }}
+                onSelect={(policySetId) => { send({ type: 'policySelected', policySetId }) }}
               />
             ) : null}
             {step === orchestrationStepIndex ? (
@@ -527,8 +326,8 @@ export function RecoveryGroupBuilder({
                 onRetry={() => { void platformProvidersQuery.refetch() }}
                 pushToOrchestrator={draft.pushToOrchestrator}
                 selectedProviderId={draft.orchestrationProviderId}
-                onPushToOrchestratorChange={value => { updateDraft({ pushToOrchestrator: value }) }}
-                onProviderSelect={providerId => { updateDraft({ orchestrationProviderId: providerId }) }}
+                onPushToOrchestratorChange={value => { send({ type: 'pushChanged', value }) }}
+                onProviderSelect={providerId => { send({ type: 'orchestrationProviderSelected', providerId }) }}
               />
             ) : null}
             </fieldset>

@@ -13,6 +13,27 @@ function wrapper() {
 const response = (name: string) => new Response(JSON.stringify({ name: 'VM', count_vm: 1, count_ibm: 1, vdisks: { disk: { name } } }), { status: 200, headers: { 'Content-Type': 'application/json' } })
 
 describe('useRecoveryGroupRelatedVolumes', () => {
+  it.each(['compute', 'power'])('reuses %s disks when only Source or VM order changes and fetches only added VMs', async compute => {
+    const fetch = vi.fn((input: string) => {
+      const url = new URL(input, 'http://localhost')
+      expect([...url.searchParams.keys()].sort()).toEqual(['provider_id', 'vm_name'])
+      expect(url.searchParams.get('provider_id')).toBe(compute)
+      return Promise.resolve(response(url.searchParams.get('vm_name') ?? ''))
+    })
+    vi.stubGlobal('fetch', fetch)
+    const { result, rerender } = renderHook(({ source, names }) => useRecoveryGroupRelatedVolumes(compute, names, source, true), {
+      initialProps: { source: 'first', names: ['A', 'B'] }, wrapper: wrapper(),
+    })
+    await waitFor(() => { expect(result.current.discoveredVolumeNames).toEqual(['A', 'B']) })
+    rerender({ source: 'second', names: ['B', 'A'] })
+    expect(result.current.flashcopyProviderId).toBe('second')
+    expect(result.current.discoveredVolumeNames).toEqual(['B', 'A'])
+    expect(fetch).toHaveBeenCalledTimes(2)
+    rerender({ source: 'second', names: ['B', 'C'] })
+    await waitFor(() => { expect(result.current.discoveredVolumeNames).toEqual(['B', 'C']) })
+    expect(fetch).toHaveBeenCalledTimes(3)
+  })
+
   afterEach(() => { vi.unstubAllGlobals() })
   it('uses the current compute provider and ignores a late result for the previous provider', async () => {
     let finishOld: (value: Response) => void = () => { throw new Error('Request not started') }

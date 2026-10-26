@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { useMemo } from 'react'
+import { useParams } from 'react-router'
 import { resolveUserFacingErrorMessage } from '@/shared/api/apiErrorMessage'
 import { Button } from '@/shared/components/button/Button'
 import { Alert } from '@/shared/components/alert/Alert'
@@ -14,13 +14,13 @@ import {
   useRecoveryApplications,
   useSubmitRecoveryApplication,
 } from '../hooks/useRecoveryApplications'
+import { useRecoveryApplicationSaveCompletion } from '../hooks/useRecoveryApplicationSaveCompletion'
 import {
   lockedProvidersOf,
   toRecoveryApplicationData,
   toRecoveryApplicationFormState,
 } from '../utils/recoveryApplicationFormMapper'
-import type { OrchestratorPush, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
-import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
+import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 import { toRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
 import { useGetPlatformProviders } from '@/generated/query/platform-providers/platform-providers.gen'
 import { useGetProviders } from '@/generated/query/providers/providers.gen'
@@ -29,16 +29,11 @@ import { selectPlatformProviders } from '@/features/platform-administration/plat
 
 export function RecoveryApplicationEditorPage() {
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const { id = '' } = useParams<{ id: string }>()
   const { data: applications, isLoading, error, isFetching, refetch } = useRecoveryApplications()
   const submitApplication = useSubmitRecoveryApplication()
-  const [isDirty, setIsDirty] = useState(false)
-  const [orchestratorPush, setOrchestratorPush] = useState<OrchestratorPush | null | undefined>(undefined)
-  const [orchestratedApplicationName, setOrchestratedApplicationName] = useState('')
-  const [orchestratorProviderUrl, setOrchestratorProviderUrl] = useState<string | undefined>(undefined)
-  const navigationGuard = useUnsavedChangesGuard(isDirty)
   const { data: platformProviders = [] } = useGetPlatformProviders({ type: 'all' }, { query: { select: selectPlatformProviders } })
+  const completion = useRecoveryApplicationSaveCompletion({ platformProviders })
   const { data: providers = [] } = useGetProviders({ role: 'all' }, { query: { select: selectProviders } })
   const loadErrorDescription = resolveUserFacingErrorMessage(error, t('pages.recoveryEditor.requestFailed'))
   const submitErrorDescription = resolveUserFacingErrorMessage(submitApplication.error, '')
@@ -54,32 +49,23 @@ export function RecoveryApplicationEditorPage() {
     [application],
   )
 
-  const navigateToApplications = () => {
-    void navigate('/recovery-plans/recovery-applications')
-  }
-
-  const goBack = () => {
-    navigationGuard.requestNavigation(navigateToApplications)
-  }
-
   const handleSave = (formState: RecoveryApplicationFormState): void => {
+    const data = toRecoveryApplicationData(formState, providers, lockedProviders)
+    if (!completion.beginSave()) return
+    const submitted = {
+      name: formState.name,
+      pushToOrchestrator: formState.pushToOrchestrator,
+      orchestrationProviderId: formState.orchestrationProviderId,
+    }
     submitApplication.mutate({
       providerId: formState.orchestrationProviderId,
-      data: toRecoveryApplicationData(formState, providers, lockedProviders),
+      data,
       pushToOrchestrator: formState.pushToOrchestrator,
     }, {
       onSuccess: (response) => {
-        setIsDirty(false)
-        if (formState.pushToOrchestrator && 'orchestrator_push' in response) {
-          setOrchestratedApplicationName(formState.name)
-          setOrchestratorProviderUrl(platformProviders.find(
-            provider => provider.id === formState.orchestrationProviderId,
-          )?.url ?? undefined)
-          setOrchestratorPush(response.orchestrator_push)
-          return
-        }
-        navigationGuard.runWithoutBlocking(navigateToApplications)
+        completion.completeSave({ submitted, response })
       },
+      onError: completion.failSave,
     })
   }
 
@@ -89,7 +75,7 @@ export function RecoveryApplicationEditorPage() {
         <PageHeader
           title={t('pages.recoveryEditor.title')}
           description={t('pages.recoveryEditor.loadDescription')}
-          actions={<Button size="sm" variant="outline" onClick={goBack}>{t('buttons.back')}</Button>}
+          actions={<Button size="sm" variant="outline" disabled={completion.isSaving} onClick={completion.requestBack}>{t('buttons.back')}</Button>}
         />
         <div className="flex min-h-0 flex-1 flex-col p-4">
           <FetchErrorAlert
@@ -111,7 +97,7 @@ export function RecoveryApplicationEditorPage() {
         <PageHeader
           title={t('pages.recoveryEditor.notFound')}
           description={t('pages.recoveryEditor.notFoundDescription')}
-          actions={<Button size="sm" variant="outline" onClick={goBack}>{t('buttons.back')}</Button>}
+          actions={<Button size="sm" variant="outline" disabled={completion.isSaving} onClick={completion.requestBack}>{t('buttons.back')}</Button>}
         />
       </div>
     )
@@ -124,7 +110,7 @@ export function RecoveryApplicationEditorPage() {
           ? <span className="flex items-center gap-2">{t('buttons.edit')} <SkeletonBlock className="h-7 w-44" /></span>
           : `${t('buttons.edit')} ${initialData?.name ?? ''}`}
         description={t('pages.recoveryEditor.saveDescription')}
-        actions={<Button size="sm" variant="outline" onClick={goBack}>{t('buttons.back')}</Button>}
+        actions={<Button size="sm" variant="outline" disabled={completion.isSaving} onClick={completion.requestBack}>{t('buttons.back')}</Button>}
       />
       <div className="flex flex-1 flex-col lg:min-h-0">
         {submitApplication.error ? (
@@ -137,11 +123,11 @@ export function RecoveryApplicationEditorPage() {
         ) : null}
         <RecoveryAppBuilder
           key={initialData?.fileName ?? 'loading'}
-          onCancel={goBack}
+          onCancel={completion.requestBack}
           {...(initialData ? { initialData } : {})}
           onSave={handleSave}
-          onDirtyChange={setIsDirty}
-          isSaving={submitApplication.isPending}
+          onDirtyChange={completion.markDirty}
+          isSaving={completion.isSaving}
           disableFileName
           isInitialLoading={isLoading}
           lockPushToOrchestrator={application?.pushToOrchestrator === true}
@@ -149,27 +135,23 @@ export function RecoveryApplicationEditorPage() {
         />
       </div>
       <ConfirmDialog
-        open={navigationGuard.isNavigationBlocked}
+        open={completion.discardDialog.open}
         title={t('recovery.builder.discardDialog.title')}
         message={t('recovery.builder.discardDialog.message')}
         cancelLabel={t('recovery.builder.discardDialog.cancel')}
         confirmLabel={t('recovery.builder.discardDialog.confirm')}
         tone="danger"
-        onCancel={navigationGuard.cancelNavigation}
-        onConfirm={navigationGuard.confirmNavigation}
+        onCancel={completion.discardDialog.cancel}
+        onConfirm={completion.discardDialog.confirm}
       />
-      {orchestratorPush !== undefined ? (
+      {completion.pushDialog !== null ? (
         <OrchestratorPushResultDialog
           entityType="application"
           open
-          onClose={() => {
-            setOrchestratorPush(undefined)
-            setOrchestratedApplicationName('')
-            navigationGuard.runWithoutBlocking(navigateToApplications)
-          }}
-          entityName={orchestratedApplicationName}
-          result={orchestratorPush}
-          providerUrl={orchestratorProviderUrl}
+          onClose={completion.dismissPushDialog}
+          entityName={completion.pushDialog.entityName}
+          result={completion.pushDialog.result}
+          providerUrl={completion.pushDialog.providerUrl}
         />
       ) : null}
     </div>

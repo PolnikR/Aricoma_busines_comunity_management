@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>ABCO · Technical workspace concept</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="workspace.css">
+  <script src="workspace.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to workspace</a>
+  <div class="app-layout">
+    <aside class="navigation">
+      <a class="brand" href="index.html" aria-label="Aricoma home"><img src="../../public/aricoma-logo.png" alt="" width="36" height="36"><span>Aricoma<small>Business Continuity Management</small></span></a>
+      <nav aria-label="Preview pages">
+        <p class="eyebrow">DISCOVERY &amp; INVENTORY</p>
+        <button data-page="resources" aria-current="page"><span class="nav-icon" aria-hidden="true">▦</span> Resources <span class="nav-count">24</span></button>
+        <p class="eyebrow">RECOVERY OPERATIONS</p>
+        <button data-page="runs"><span class="nav-icon" aria-hidden="true">▷</span> Recovery runs <span class="nav-count">18</span></button>
+      </nav>
+      <div class="nav-bottom"><span class="avatar">OP</span><div>Operations team<small>Local HTML prototype</small></div></div>
+    </aside>
+    <section class="content-shell" aria-label="Application workspace">
+    <header class="app-header">
+      <span class="header-caption">Business Continuity Management</span>
+      <div class="header-end"><span class="demo-label">PREVIEW · SAMPLE DATA</span><button id="theme" aria-pressed="false">Dark theme</button><span class="avatar" aria-label="Operations user">OP</span></div>
+    </header>
+    <main id="main" tabindex="-1">
+      <div class="breadcrumb">Workspace <span>/</span> <span id="breadcrumb-section">Discovery &amp; inventory</span> <span>/</span> <strong id="breadcrumb-page">Resources</strong></div>
+      <section class="page-heading" aria-labelledby="page-title">
+        <div><div class="heading-line"><h1 id="page-title">Resources</h1><span id="total-badge" class="count-badge">24</span></div><p id="page-description">Inspect infrastructure, protection coverage and recovery dependencies.</p></div>
+        <div class="heading-actions"><button id="density" aria-pressed="false">Density: compact</button></div>
+      </section>
+      <dl id="metrics" class="metrics" aria-label="Summary for all sample records"></dl>
+      <section class="data-workspace" aria-label="Data workspace">
+        <div class="scope-bar" role="group" aria-label="Platform filter">
+          <button data-platform="all" aria-pressed="true">All platforms <span id="scope-all">24</span></button>
+          <button data-platform="VMware" aria-pressed="false">VMware <span id="scope-vmware">12</span></button>
+          <button data-platform="IBM Power" aria-pressed="false">IBM Power <span id="scope-power">6</span></button>
+          <button data-platform="FlashSystem" aria-pressed="false">FlashSystem <span id="scope-flash">6</span></button>
+          <span class="scope-note">FIXTURE · 26 OCT 2026, 09:42 CET</span>
+        </div>
+        <div class="toolbar">
+          <label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Search name, ID, location…" aria-label="Search records"><kbd aria-hidden="true">/</kbd></label>
+          <label class="status-filter">Status <select id="status"><option value="all">All statuses</option></select></label>
+          <button id="reset">Reset filters</button><span id="filter-count" class="result-count" role="status" aria-live="polite"></span>
+        </div>
+        <div class="workspace-body">
+          <div class="table-area">
+            <div class="table-scroll" role="region" aria-label="Records table, scroll for more columns" tabindex="0">
+              <table id="data-table"><caption class="sr-only" id="table-caption">Sample infrastructure resources</caption><thead id="columns"></thead><tbody id="rows"></tbody></table>
+            </div>
+            <div id="empty" class="empty" hidden><span class="empty-symbol" aria-hidden="true">∅</span><h2>No matching records</h2><p>Try another search or reset the filters above.</p></div>
+            <footer class="table-footer"><span id="row-count"></span><span>Click a name to open details <span aria-hidden="true">↗</span></span></footer>
+          </div>
+        </div>
+      </section>
+      <footer class="workspace-footer"><span><span class="environment-dot" aria-hidden="true"></span> Local preview <span class="muted">/ No backend connection</span></span><span>ABCO <span class="muted">/ Technical workspace study · 01</span></span></footer>
+    </main>
+    </section>
+  </div>
+  <dialog id="detail-dialog" aria-labelledby="detail-title">
+    <header class="dialog-header"><div><p id="detail-entity" class="muted"></p><div class="dialog-title-line"><h2 id="detail-title"></h2><span id="detail-status"></span><span id="detail-meta" class="muted mono"></span></div></div><button id="close-detail" aria-label="Close record detail" autofocus>×</button></header>
+    <div class="dialog-body"><nav class="dialog-navigation" aria-label="Detail sections"><button aria-current="true">Overview</button></nav><section class="dialog-content" aria-labelledby="overview-title"><h3 id="overview-title">Overview</h3><div id="detail-content"></div></section></div>
+  </dialog>
+  <noscript>This interactive design preview requires JavaScript. All records are synthetic.</noscript>
+</body>
+</html>

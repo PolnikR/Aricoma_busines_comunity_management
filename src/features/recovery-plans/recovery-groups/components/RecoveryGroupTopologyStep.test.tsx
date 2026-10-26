@@ -13,14 +13,14 @@ describe('RecoveryGroupTopologyStep', () => {
     expect(screen.queryByRole('option', { name: 'Bad FS' })).not.toBeInTheDocument()
     expect(screen.queryByDisplayValue('Target FS')).not.toBeInTheDocument()
     await userEvent.setup().selectOptions(screen.getByLabelText('Topology mode'), 'metro_mirror')
-    expect(props.onChange).toHaveBeenCalledWith({ topology: 'metro_mirror', metroMirrorMode: 'existing', consistencyGroupId: '', auxiliaryNamesByVolume: {} })
+    expect(props.onChange).toHaveBeenCalledWith({ type: 'topologyChanged', topology: 'metro_mirror' })
   })
   it('shows a derived read-only target and clears Metro values for Local', async () => {
     render(<RecoveryGroupTopologyStep {...props} draft={{ topology: 'metro_mirror', relatedVolumeProviderId: 'source', metroMirrorMode: 'existing', consistencyGroupId: '001' }} />)
     expect(screen.queryByLabelText('Consistency group ID')).not.toBeInTheDocument()
     expect(screen.getByDisplayValue('Target FS')).toHaveAttribute('readonly')
     await userEvent.setup().selectOptions(screen.getByLabelText('Topology mode'), 'local')
-    expect(props.onChange).toHaveBeenCalledWith({ topology: 'local', metroMirrorMode: null, consistencyGroupId: '', auxiliaryNamesByVolume: {} })
+    expect(props.onChange).toHaveBeenCalledWith({ type: 'topologyChanged', topology: 'local' })
   })
   it('lets a new group select Managed and clears Existing values', async () => {
     const onChange = vi.fn()
@@ -28,7 +28,7 @@ describe('RecoveryGroupTopologyStep', () => {
     expect(screen.getByRole('option', { name: 'Managed relationship' })).toBeEnabled()
     expect(screen.getByLabelText('Metro Mirror configuration')).toBeEnabled()
     await userEvent.setup().selectOptions(screen.getByLabelText('Metro Mirror configuration'), 'managed')
-    expect(onChange).toHaveBeenCalledWith({ metroMirrorMode: 'managed', consistencyGroupId: '', auxiliaryNamesByVolume: {} })
+    expect(onChange).toHaveBeenCalledWith({ type: 'metroModeChanged', mode: 'managed' })
   })
   it('keeps topology, source and mode editable for a new Managed draft', async () => {
     const onChange = vi.fn()
@@ -39,7 +39,7 @@ describe('RecoveryGroupTopologyStep', () => {
     const mode = screen.getByLabelText('Metro Mirror configuration')
     expect(mode).toBeEnabled()
     await userEvent.setup().selectOptions(mode, 'existing')
-    expect(onChange).toHaveBeenCalledWith({ metroMirrorMode: 'existing', consistencyGroupId: '', auxiliaryNamesByVolume: {} })
+    expect(onChange).toHaveBeenCalledWith({ type: 'metroModeChanged', mode: 'existing' })
   })
   it('locks the mode of an edited Existing group but keeps topology and source editable', () => {
     render(<RecoveryGroupTopologyStep {...props} isEditing draft={{ topology: 'metro_mirror', relatedVolumeProviderId: 'source', metroMirrorMode: 'existing', consistencyGroupId: '001' }} />)

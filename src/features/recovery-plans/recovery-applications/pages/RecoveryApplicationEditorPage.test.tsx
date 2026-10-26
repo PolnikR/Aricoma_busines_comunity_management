@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
@@ -13,7 +13,7 @@ import type { SubmitRecoveryApplicationInput } from '../model/recoveryApplicatio
 const navigate = vi.fn()
 const mutate = vi.fn<(
   input: SubmitRecoveryApplicationInput,
-  options: { onSuccess: (response: SubmitDagResponse) => void },
+  options: { onSuccess: (response: SubmitDagResponse) => void; onError: () => void },
 ) => void>()
 const refetch = vi.fn()
 const submitMutation = {
@@ -160,6 +160,72 @@ beforeEach(() => {
 })
 
 describe('RecoveryApplicationEditorPage', () => {
+  it('navigates back directly when the edit draft is clean', async () => {
+    render(<RecoveryApplicationEditorPage />)
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Back' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-applications')
+  })
+
+  it.each([false, true])('clears dirty state after a locked successful save (push=%s)', async push => {
+    const user = userEvent.setup()
+    render(<RecoveryApplicationEditorPage />)
+    await user.click(screen.getByRole('button', { name: 'Change builder' }))
+    await user.click(screen.getByRole('button', { name: push ? 'Save orchestrated' : 'Save unchanged' }))
+    expect(screen.getByRole('button', { name: 'Back' })).toBeDisabled()
+    const before = new Event('beforeunload', { cancelable: true })
+    window.dispatchEvent(before)
+    expect(before.defaultPrevented).toBe(true)
+    const call = mutate.mock.calls[0]
+    if (!call) throw new Error('Expected submission')
+    act(() => { call[1].onSuccess({ applications: [], ...(push ? { orchestrator_push: null } : {}) }) })
+    const after = new Event('beforeunload', { cancelable: true })
+    window.dispatchEvent(after)
+    expect(after.defaultPrevented).toBe(false)
+    if (push) {
+      expect(navigate).not.toHaveBeenCalled()
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Close' }))
+    }
+    expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-applications')
+  })
+
+  it.each([false, true])('resolves stale discard when Save starts and completes (push=%s)', async push => {
+    const user = userEvent.setup()
+    render(<RecoveryApplicationEditorPage />)
+    await user.click(screen.getByRole('button', { name: 'Change builder' }))
+    await user.click(screen.getByRole('button', { name: 'Back' }))
+    expect(screen.getByRole('dialog', { name: 'Discard unsaved changes?' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: push ? 'Save orchestrated' : 'Save unchanged' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    const call = mutate.mock.calls[0]
+    if (!call) throw new Error('Expected submission')
+    act(() => { call[1].onSuccess({ applications: [], ...(push ? { orchestrator_push: null } : {}) }) })
+    expect(screen.queryByRole('dialog', { name: 'Discard unsaved changes?' })).not.toBeInTheDocument()
+    if (push) {
+      expect(navigate).not.toHaveBeenCalled()
+      await user.click(screen.getByRole('button', { name: 'Close' }))
+    }
+    expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-applications')
+    expect(navigate).toHaveBeenCalledOnce()
+  })
+
+  it('rejects duplicate submissions and restores normal dirty Back after failure', async () => {
+    const user = userEvent.setup()
+    render(<RecoveryApplicationEditorPage />)
+    await user.click(screen.getByRole('button', { name: 'Change builder' }))
+    await user.click(screen.getByRole('button', { name: 'Save unchanged' }))
+    await user.click(screen.getByRole('button', { name: 'Save unchanged' }))
+    expect(mutate).toHaveBeenCalledOnce()
+    const call = mutate.mock.calls[0]
+    if (!call) throw new Error('Expected submission')
+    act(() => { call[1].onError() })
+    expect(screen.getByRole('button', { name: 'Back' })).toBeEnabled()
+    await user.click(screen.getByRole('button', { name: 'Back' }))
+    expect(screen.getByRole('dialog', { name: 'Discard unsaved changes?' })).toBeInTheDocument()
+    expect(navigate).not.toHaveBeenCalled()
+  })
+
   it('passes manual-only schedule and notes from the edit response to the shared push dialog', async () => {
     const user = userEvent.setup()
     render(<RecoveryApplicationEditorPage />)
