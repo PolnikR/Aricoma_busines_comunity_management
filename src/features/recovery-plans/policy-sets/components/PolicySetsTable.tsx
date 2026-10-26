@@ -41,7 +41,7 @@ function getColumns(
       cell: policySet => (
         <>
           <span className="block font-semibold text-text-primary">{policySet.name}</span>
-          <span className="mt-1 block font-mono text-[11px] text-text-secondary">{policySet.id}</span>
+          <span className="mt-0.5 block font-mono text-[11px] text-text-subtle">{policySet.id}</span>
         </>
       ),
     },
@@ -57,11 +57,7 @@ function getColumns(
       id: 'policies',
       header: t('tables.policySet.policies'),
       align: 'right',
-      cell: policySet => (
-        <span className="inline-flex min-w-8 items-center justify-center rounded-md border border-border-strong bg-accent-soft px-2 py-1 text-xs font-semibold tabular-nums text-text-primary">
-          {countPolicies(policySet)}
-        </span>
-      ),
+      cell: policySet => String(countPolicies(policySet)),
     },
     {
       id: 'json',
@@ -69,7 +65,7 @@ function getColumns(
       cell: policySet => (
         <Button
           size="xs"
-          variant="outline"
+          variant="soft"
           onClick={(event: React.MouseEvent) => {
             event.stopPropagation()
             onViewJson(policySet.id)

@@ -8,8 +8,6 @@ import { PolicySetsTable } from '../components/PolicySetsTable'
 import { PolicySetModal } from '../components/PolicySetModal'
 import { useGetPolicySets } from '@/generated/query/policy-sets/policy-sets.gen'
 import { selectPolicySets } from '../model/selectPolicySets'
-import styles from './PolicySetsPage.module.css'
-import { cn } from '@/shared/utils/cn'
 
 export function PolicySetsPage() {
   const { t } = useTranslation()
@@ -20,7 +18,7 @@ export function PolicySetsPage() {
   const postDelete = usePostDeleteRefresh(() => refetch({ cancelRefetch: false, throwOnError: false }))
 
   return (
-    <div className={cn(styles.page, 'flex min-h-full flex-col lg:h-full lg:min-h-0')}>
+    <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <TableToolbar
         title={t('pages.policySets.title')}
         description={t('pages.policySets.description')}
