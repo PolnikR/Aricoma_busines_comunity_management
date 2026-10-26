@@ -1,9 +1,21 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ProviderCreateForm } from './ProviderCreateForm'
 
-vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+import en from '@/locales/en.json'
+import sk from '@/locales/sk.json'
+const locale = vi.hoisted((): { language: 'en' | 'sk' } => ({ language: 'en' }))
+vi.mock('@/hooks/useTranslation', () => ({
+  useTranslation: () => ({
+    t: (key: string) => {
+      const dictionary: Record<string, string> = locale.language === 'en' ? en : sk
+      return dictionary[key] ?? key
+    },
+    language: locale.language,
+  }),
+}))
+beforeEach(() => { locale.language = 'en' })
 
 const data = {
   id: 'provider-1',
@@ -239,4 +251,232 @@ describe('ProviderCreateForm', () => {
     expect(screen.queryByRole('checkbox', { name: 'missing-tag' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'VM tags' })).toHaveFocus()
   })
+})
+
+// Approved copy, independent of runtime dictionaries.
+const expectedHelp = [
+  {
+    "field": "role",
+    "type": "VMWARE",
+    "en": {
+      "title": "Role",
+      "trigger": "Help: Role",
+      "intro": "Choose the source (production) or target (recovery environment) side of a recovery. Documented default: source."
+    },
+    "sk": {
+      "title": "Rola",
+      "trigger": "Nápoveda: Rola",
+      "intro": "Vyberte zdrojovú stranu (produkcia) alebo cieľovú stranu (prostredie obnovy). Dokumentovaná predvolená hodnota: source."
+    }
+  },
+  {
+    "field": "credentialId",
+    "type": "VMWARE",
+    "en": {
+      "title": "Credential",
+      "trigger": "Help: Credential",
+      "intro": "Stored credential used to sign in to this provider. Resolved for each request; its status can be OK, missing or not set. Default: not set."
+    },
+    "sk": {
+      "title": "Prihlasovacie údaje",
+      "trigger": "Nápoveda: Prihlasovacie údaje",
+      "intro": "Uložené prihlasovacie údaje na prihlásenie k poskytovateľovi. Vyhodnocujú sa pri každej požiadavke; ich stav môže byť v poriadku, chýbajúce alebo nenastavené. Predvolene: nenastavené."
+    }
+  },
+  {
+    "field": "url",
+    "type": "VMWARE",
+    "en": {
+      "title": "URL",
+      "trigger": "Help: URL",
+      "intro": "Base URL of the provider’s web or REST endpoint. Default: not set."
+    },
+    "sk": {
+      "title": "URL",
+      "trigger": "Nápoveda: URL",
+      "intro": "Základná URL webového alebo REST rozhrania poskytovateľa. Predvolene: nenastavená."
+    }
+  },
+  {
+    "field": "vmPrefix",
+    "type": "VMWARE",
+    "en": {
+      "title": "VM name prefix",
+      "trigger": "Help: VM name prefix",
+      "intro": "Optional default name-prefix filter for narrowing the selection of VMware Resources. Default: not set (no prefix filter)."
+    },
+    "sk": {
+      "title": "Prefix názvu VM",
+      "trigger": "Nápoveda: Prefix názvu VM",
+      "intro": "Voliteľný predvolený filter podľa prefixu názvu na zúženie výberu VMware Resources. Predvolene: nenastavený (bez filtra podľa prefixu)."
+    }
+  },
+  {
+    "field": "vmTags",
+    "type": "VMWARE",
+    "en": {
+      "title": "VM tags",
+      "trigger": "Help: VM tags",
+      "intro": "Optional default list of tag names used as a filter to narrow the selection of VMware Resources. Default: an empty list (no tag filter)."
+    },
+    "sk": {
+      "title": "Tagy VM",
+      "trigger": "Nápoveda: Tagy VM",
+      "intro": "Voliteľný predvolený zoznam názvov tagov používaný ako filter na zúženie výberu VMware Resources. Predvolene: prázdny zoznam (bez filtra podľa tagov)."
+    }
+  },
+  {
+    "field": "notificationEmail",
+    "type": "VMWARE",
+    "en": {
+      "title": "Notification email",
+      "trigger": "Help: Notification email",
+      "intro": "Email address for notifications about failures of this provider. Enter a valid email address. A recovery group’s notification email takes precedence over its volume provider’s address. Default: not set."
+    },
+    "sk": {
+      "title": "Notifikačný email",
+      "trigger": "Nápoveda: Notifikačný email",
+      "intro": "Emailová adresa na oznámenia o zlyhaniach poskytovateľa. Zadajte platnú emailovú adresu. Notifikačný email skupiny obnovy má prednosť pred adresou jej poskytovateľa zväzkov. Predvolene: nenastavená."
+    }
+  },
+  {
+    "field": "cacheRefreshSeconds",
+    "type": "VMWARE",
+    "en": {
+      "title": "Cache refresh interval",
+      "trigger": "Help: Cache refresh interval",
+      "intro": "Discovery cache refresh interval for this provider, in seconds. Use a positive whole number. When not set, the default for this provider type from the cache configuration is used."
+    },
+    "sk": {
+      "title": "Interval obnovovania cache",
+      "trigger": "Nápoveda: Interval obnovovania cache",
+      "intro": "Interval obnovovania cache zisťovania zdrojov tohto poskytovateľa v sekundách. Použite kladné celé číslo. Ak nie je nastavený, použije sa predvolený interval pre daný typ poskytovateľa z konfigurácie cache."
+    }
+  },
+  {
+    "field": "backingStorageProviderIds",
+    "type": "VMWARE",
+    "en": {
+      "title": "Backing storage providers",
+      "trigger": "Help: Backing storage providers",
+      "intro": "Select the FLASHCOPY or HITACHI storage providers that back this compute environment. Each ID must refer to an existing storage provider and appear only once. Default: an empty list."
+    },
+    "sk": {
+      "title": "Poskytovatelia podkladového úložiska",
+      "trigger": "Nápoveda: Poskytovatelia podkladového úložiska",
+      "intro": "Vyberte poskytovateľov úložiska FLASHCOPY alebo HITACHI, ktorí zabezpečujú úložisko tohto výpočtového prostredia. Každé ID musí odkazovať na existujúceho poskytovateľa úložiska a môže byť uvedené iba raz. Predvolene: prázdny zoznam."
+    }
+  },
+  {
+    "field": "partnerProviderId",
+    "type": "FLASHCOPY",
+    "en": {
+      "title": "Partner provider",
+      "trigger": "Help: Partner provider",
+      "intro": "Select the partner FlashSystem in a Metro Mirror system partnership. It must be an existing FLASHCOPY provider other than this provider. Default: not set."
+    },
+    "sk": {
+      "title": "Partnerský poskytovateľ",
+      "trigger": "Nápoveda: Partnerský poskytovateľ",
+      "intro": "Vyberte partnerský FlashSystem v systémovom partnerstve Metro Mirror. Musí ísť o existujúceho poskytovateľa FLASHCOPY odlišného od tohto poskytovateľa. Predvolene: nenastavený."
+    }
+  },
+  {
+    "field": "managedSystem",
+    "type": "IBM_POWER",
+    "en": {
+      "title": "Managed system",
+      "trigger": "Help: Managed system",
+      "intro": "SystemName of the managed system whose LPARs may be affected by Power rollback. Required when the HMC manages multiple systems. Default: not set."
+    },
+    "sk": {
+      "title": "Spravovaný systém",
+      "trigger": "Nápoveda: Spravovaný systém",
+      "intro": "SystemName spravovaného systému, ktorého LPAR môže ovplyvniť Power rollback. Je potrebný, ak HMC spravuje viac systémov. Predvolene: nenastavený."
+    }
+  }
+] as const
+
+const helpMatrix = [
+  { type: 'VMWARE', fields: ['id', 'name', 'description', 'type', 'role', 'ipAddress', 'backingStorageProviders', 'cacheRefreshSeconds', 'vmPrefix', 'vmTags', 'credentials', 'url', 'notificationEmail'], help: ['role', 'credentialId', 'url', 'vmPrefix', 'vmTags', 'notificationEmail', 'cacheRefreshSeconds', 'backingStorageProviderIds'] },
+  { type: 'FLASHCOPY', fields: ['id', 'name', 'description', 'type', 'role', 'ipAddress', 'partnerProviderId', 'cacheRefreshSeconds', 'credentials', 'url', 'notificationEmail'], help: ['role', 'partnerProviderId', 'credentialId', 'url', 'notificationEmail', 'cacheRefreshSeconds'] },
+  { type: 'HITACHI', fields: ['id', 'name', 'description', 'type', 'role', 'ipAddress', 'cacheRefreshSeconds', 'credentials', 'url', 'notificationEmail'], help: ['role', 'credentialId', 'url', 'notificationEmail', 'cacheRefreshSeconds'] },
+  { type: 'IBM_POWER', fields: ['id', 'name', 'description', 'type', 'role', 'ipAddress', 'backingStorageProviders', 'cacheRefreshSeconds', 'managedSystem', 'credentials', 'url', 'notificationEmail'], help: ['role', 'credentialId', 'url', 'notificationEmail', 'cacheRefreshSeconds', 'backingStorageProviderIds', 'managedSystem'] },
+]
+
+function helpForm(type: string, edit = false, callbacks = { onChange: vi.fn(), onSubmit: vi.fn(), onTagsChange: vi.fn(), onBackingStorageChange: vi.fn() }) {
+  return <ProviderCreateForm data={{ ...data, type }} errors={{}} isSubmitting={false}
+    credentials={credentials} credentialsLoading={false} credentialsError={false}
+    onRetryCredentials={vi.fn()} idDisabled={edit} typeDisabled={edit} {...callbacks} />
+}
+
+function expectedCopy(field: string) {
+  const copy = expectedHelp.find(item => item.field === field)
+  if (!copy) throw new Error('Missing expected help fixture: ' + field)
+  return copy
+}
+
+function assertHelpMap(help: string[]) {
+  const triggers = screen.queryAllByRole('button', { name: /^Help:/ })
+  expect(triggers.map(button => button.getAttribute('aria-label')).sort()).toEqual(
+    help.map(field => expectedCopy(field).en.trigger).sort(),
+  )
+  for (const field of help) {
+    const copy = expectedCopy(field)
+    const trigger = screen.getByRole('button', { name: copy.en.trigger })
+    expect(trigger.closest('label')).toBeNull()
+    const label = trigger.parentElement?.parentElement?.querySelector('label')
+    expect(label).toBeInTheDocument()
+    const id = field === 'credentialId' ? 'credentials' : field === 'backingStorageProviderIds' ? 'backingStorageProviders' : field
+    expect(label).toHaveAttribute('for', 'create-' + id)
+    expect(document.getElementById('create-' + id)).toHaveAccessibleName(label?.textContent ?? undefined)
+  }
+}
+
+describe('Provider field help', () => {
+  it.each(helpMatrix.flatMap(row => [false, true].map(edit => ({ ...row, edit }))))(
+    'renders exactly the approved $type fields and help (edit=$edit)', ({ type, fields, help, edit }) => {
+      const { container } = render(helpForm(type, edit))
+      expect([...container.querySelectorAll('input[id], select[id], button[id]')].map(input => input.id.replace('create-', '')).sort()).toEqual([...fields].sort())
+      assertHelpMap(help)
+      expect(screen.getByLabelText('Type')).toHaveProperty('disabled', edit)
+    },
+  )
+  it.each(['', 'unknown'])('has no help for type %s', type => {
+    render(helpForm(type))
+    expect(screen.queryAllByRole('button', { name: /^Help:/ })).toHaveLength(0)
+  })
+  it('updates help with provider type transitions and removes stale help', () => {
+    const view = render(helpForm(''))
+    for (const row of [...helpMatrix, ...[...helpMatrix].reverse()]) {
+      view.rerender(helpForm(row.type))
+      assertHelpMap(row.help)
+    }
+    view.rerender(helpForm(''))
+    expect(screen.queryAllByRole('button', { name: /^Help:/ })).toHaveLength(0)
+  })
+  it.each(['en', 'sk'] as const)('has exactly thirty translated help keys in %s', language => {
+    const dictionary = language === 'en' ? en : sk
+    expect(Object.keys(dictionary).filter(key => key.startsWith('providers.fieldHelp.')).sort()).toEqual(
+      expectedHelp.flatMap(({ field }) => ['title', 'trigger', 'intro'].map(suffix => 'providers.fieldHelp.' + field + '.' + suffix)).sort(),
+    )
+  })
+  it.each(expectedHelp.flatMap(item => (['en', 'sk'] as const).map(language => ({ ...item, language }))))(
+    'shows approved $language copy for $field without changing the form', async ({ field, type, language, ...copy }) => {
+      locale.language = language
+      const callbacks = { onChange: vi.fn(), onSubmit: vi.fn(), onTagsChange: vi.fn(), onBackingStorageChange: vi.fn() }
+      const user = userEvent.setup()
+      render(helpForm(type, false, callbacks))
+      const expected = copy[language]
+      await user.click(screen.getByRole('button', { name: expected.trigger }))
+      const dialog = screen.getByRole('dialog', { name: expected.title })
+      expect(within(dialog).getByText(expected.intro)).toBeInTheDocument()
+      expect(dialog).not.toHaveTextContent('providers.fieldHelp.' + field)
+      await user.click(within(dialog).getByRole('button', { name: language === 'en' ? 'Close help' : 'Zavrieť nápovedu' }))
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      for (const callback of Object.values(callbacks)) expect(callback).not.toHaveBeenCalled()
+      expect(document.getElementById('create-url')).toHaveValue(data.url)
+      expect(document.getElementById('create-role')).toHaveValue('source')
+    },
+  )
 })

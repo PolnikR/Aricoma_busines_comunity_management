@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ProvidersCreateModal } from './ProvidersCreateModal'
@@ -55,6 +56,92 @@ function fillValidForm() {
 }
 
 describe('ProvidersCreateModal', () => {
+  it.each(['create', 'edit'] as const)('dismisses field help before the %s modal without changing values', async mode => {
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    try {
+      const { container } = renderWithQueryClient(
+        <ProvidersCreateModal open onClose={onClose} existingProviders={[mockProviderA]}
+          {...(mode === 'edit' ? { provider: mockProviderA } : {})} />,
+      )
+      if (mode === 'create') {
+        fillValidForm()
+        // Settle the existing ID-on-blur normalization before the help comparison.
+        fireEvent.blur(screen.getByLabelText('ID'))
+      }
+      const values = () => [...container.querySelectorAll<HTMLInputElement | HTMLSelectElement>('input, select')]
+        .map(control => [control.id, control.value])
+      const before = values()
+      const trigger = screen.getByRole('button', { name: 'Help: Role' })
+      await user.click(trigger)
+      expect(screen.getByRole('dialog', { name: 'Role' })).toBeInTheDocument()
+      await user.keyboard('{Escape}')
+      expect(screen.queryByRole('dialog', { name: 'Role' })).not.toBeInTheDocument()
+      expect(screen.getByRole('dialog', { name: mode === 'create' ? 'Create provider' : 'Edit provider' })).toBeInTheDocument()
+      expect(values()).toEqual(before)
+      expect(onClose).not.toHaveBeenCalled()
+      expect(fetchMock).not.toHaveBeenCalled()
+
+      await user.click(trigger)
+      await user.click(screen.getByRole('button', { name: 'Close help' }))
+      expect(screen.queryByRole('dialog', { name: 'Role' })).not.toBeInTheDocument()
+      expect(trigger).toHaveFocus()
+      expect(values()).toEqual(before)
+      await user.keyboard('{Escape}')
+      if (mode === 'edit') {
+        // Help alone must not make the pristine edit dirty.
+        expect(onClose).toHaveBeenCalledOnce()
+        expect(screen.queryByRole('heading', { name: 'Discard unsaved provider changes?' })).not.toBeInTheDocument()
+      } else {
+        expect(onClose).not.toHaveBeenCalled()
+        expect(screen.getByRole('heading', { name: 'Discard unsaved provider changes?' })).toBeInTheDocument()
+        await user.click(screen.getByRole('button', { name: 'Stay' }))
+        expect(values()).toEqual(before)
+      }
+      expect(fetchMock).not.toHaveBeenCalled()
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
+  it.each(['VMWARE', 'FLASHCOPY', 'HITACHI', 'IBM_POWER'] as const)('keeps the %s edit payload identical after field help', async type => {
+    const user = userEvent.setup()
+    const provider: ProviderRecord = {
+      ...mockProviderA, type, vmPrefix: ' legacy prefix ', vmTags: ['saved-tag', 'missing-tag'],
+      managedSystem: ' legacy system ', backingStorageProviderIds: ['missing-storage'], partnerProviderId: 'missing-partner',
+    }
+    const fetchMock = vi.fn<typeof fetch>().mockImplementation(() => Promise.resolve(new Response(JSON.stringify({ providers: [] }), { status: 200 })))
+    vi.stubGlobal('fetch', fetchMock)
+    try {
+      for (const withHelp of [false, true]) {
+        const onClose = vi.fn()
+        const view = renderWithQueryClient(<ProvidersCreateModal open onClose={onClose} existingProviders={[provider]} provider={provider} />)
+        if (withHelp) {
+          await user.click(screen.getByRole('button', { name: 'Help: Credential' }))
+          await user.keyboard('{Escape}')
+          expect(onClose).not.toHaveBeenCalled()
+        }
+        await user.click(screen.getByRole('button', { name: 'Edit provider' }))
+        await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+        view.unmount()
+      }
+      expect(fetchMock).toHaveBeenCalledTimes(2)
+      const bodies = fetchMock.mock.calls.map(([, init]) => {
+        if (typeof init?.body !== 'string') throw new Error('Expected a JSON request body')
+        return JSON.parse(init.body) as unknown
+      })
+      expect(bodies[1]).toEqual(bodies[0])
+      expect(bodies[1]).toMatchObject({
+        vmPrefix: provider.vmPrefix, vmTags: provider.vmTags, managedSystem: provider.managedSystem,
+        backingStorageProviderIds: provider.backingStorageProviderIds, partnerProviderId: provider.partnerProviderId,
+      })
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
   const flashA: ProviderRecord = { ...mockProviderA, id: 'flash-a', name: 'Array A', type: 'FLASHCOPY' }
   const flashB: ProviderRecord = { ...mockProviderA, id: 'flash-b', name: 'Array B', type: 'FLASHCOPY', role: 'target' }
   it('restores the original managed system when the modal reopens', () => {
