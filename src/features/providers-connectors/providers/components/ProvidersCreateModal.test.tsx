@@ -57,6 +57,111 @@ function fillValidForm() {
 describe('ProvidersCreateModal', () => {
   const flashA: ProviderRecord = { ...mockProviderA, id: 'flash-a', name: 'Array A', type: 'FLASHCOPY' }
   const flashB: ProviderRecord = { ...mockProviderA, id: 'flash-b', name: 'Array B', type: 'FLASHCOPY', role: 'target' }
+  it.each(['VMWARE', 'FLASHCOPY', 'HITACHI', 'IBM_POWER'] as const)('creates only fields relevant to %s', async type => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    renderWithQueryClient(<ProvidersCreateModal open onClose={vi.fn()} existingProviders={[]} />)
+    fillValidForm()
+    fireEvent.change(screen.getByLabelText('VM prefix'), { target: { value: 'stale-' } })
+    fireEvent.change(screen.getByLabelText('Type'), { target: { value: type } })
+    fireEvent.click(screen.getByRole('button', { name: 'Create provider' }))
+    await waitFor(() => { expect(fetchMock).toHaveBeenCalledOnce() })
+    const body = JSON.parse((fetchMock.mock.calls[0]?.[1] as RequestInit).body as string) as Record<string, unknown>
+    expect(body.partnerProviderId).toBeNull()
+    if (type === 'VMWARE') {
+      expect(body.vmPrefix).toBe('stale-')
+      expect(body.vmTags).toEqual([])
+    } else {
+      expect(body).not.toHaveProperty('vmPrefix')
+      expect(body).not.toHaveProperty('vmTags')
+    }
+    expect('backingStorageProviderIds' in body).toBe(type === 'VMWARE' || type === 'IBM_POWER')
+    expect(body).not.toHaveProperty('credentialStatus')
+    vi.unstubAllGlobals()
+  })
+
+  it.each(['VMWARE', 'FLASHCOPY', 'HITACHI', 'IBM_POWER'] as const)('preserves all historical fields when editing %s', async type => {
+    const provider: ProviderRecord = {
+      ...mockProviderA, type, vmPrefix: ' legacy prefix ', vmTags: ['saved-tag', 'missing-tag'],
+      managedSystem: ' legacy system ', backingStorageProviderIds: ['missing-storage'], partnerProviderId: 'missing-partner',
+    }
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    renderWithQueryClient(<ProvidersCreateModal open onClose={vi.fn()} existingProviders={[provider]} provider={provider} />)
+    fireEvent.change(screen.getByLabelText('Provider name'), { target: { value: 'Renamed' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Edit provider' }))
+    await waitFor(() => { expect(fetchMock).toHaveBeenCalledOnce() })
+    const body = JSON.parse((fetchMock.mock.calls[0]?.[1] as RequestInit).body as string) as Record<string, unknown>
+    for (const field of ['vmPrefix', 'vmTags', 'managedSystem', 'backingStorageProviderIds', 'partnerProviderId'] as const) {
+      expect(body[field]).toEqual(provider[field])
+    }
+    expect(body).not.toHaveProperty('credentialStatus')
+    vi.unstubAllGlobals()
+  })
+
+  it.each([
+    {},
+    { vmPrefix: null, partnerProviderId: null, managedSystem: null, vmTags: [], backingStorageProviderIds: [] },
+  ])('preserves absent and empty historical fields: %j', async specificFields => {
+    const provider = { ...mockProviderA, ...specificFields }
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    renderWithQueryClient(<ProvidersCreateModal open onClose={vi.fn()} existingProviders={[provider]} provider={provider} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Edit provider' }))
+    await waitFor(() => { expect(fetchMock).toHaveBeenCalledOnce() })
+    const body = JSON.parse((fetchMock.mock.calls[0]?.[1] as RequestInit).body as string) as Record<string, unknown>
+    for (const field of ['vmPrefix', 'vmTags', 'managedSystem', 'backingStorageProviderIds', 'partnerProviderId'] as const) {
+      expect(field in body).toBe(field in specificFields)
+      if (field in specificFields) expect(body[field]).toEqual(specificFields[field])
+    }
+    vi.unstubAllGlobals()
+  })
+
+  it.each(['IBM_POWER', 'FLASHCOPY'])('does not restore VMware filters after VMWARE → %s → VMWARE', async intermediateType => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    renderWithQueryClient(<ProvidersCreateModal open onClose={vi.fn()} existingProviders={[]} />)
+    fillValidForm()
+    fireEvent.change(screen.getByLabelText('VM prefix'), { target: { value: 'old-' } })
+    fireEvent.change(screen.getByLabelText('Type'), { target: { value: intermediateType } })
+    fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'VMWARE' } })
+    expect(screen.getByLabelText('VM prefix')).toHaveValue('')
+    fireEvent.click(screen.getByRole('button', { name: 'Create provider' }))
+    await waitFor(() => { expect(fetchMock).toHaveBeenCalledOnce() })
+    expect(JSON.parse((fetchMock.mock.calls[0]?.[1] as RequestInit).body as string)).toMatchObject({ vmPrefix: null, vmTags: [] })
+    vi.unstubAllGlobals()
+  })
+
+  it('does not validate a hidden historical self partner on Hitachi', async () => {
+    const provider: ProviderRecord = { ...mockProviderA, type: 'HITACHI', partnerProviderId: mockProviderA.id }
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    renderWithQueryClient(<ProvidersCreateModal open onClose={vi.fn()} existingProviders={[provider]} provider={provider} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Edit provider' }))
+    await waitFor(() => { expect(fetchMock).toHaveBeenCalledOnce() })
+    expect(JSON.parse((fetchMock.mock.calls[0]?.[1] as RequestInit).body as string)).toMatchObject({ partnerProviderId: provider.id })
+    vi.unstubAllGlobals()
+  })
+
+  it('keeps the draft and historical fields after backend rejection', async () => {
+    const provider: ProviderRecord = { ...mockProviderA, type: 'HITACHI', vmTags: ['legacy-tag'], managedSystem: 'legacy-system' }
+    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(new Response(JSON.stringify({ detail: 'Historical fields rejected' }), { status: 400 })))
+    vi.stubGlobal('fetch', fetchMock)
+    const onClose = vi.fn()
+    renderWithQueryClient(<ProvidersCreateModal open onClose={onClose} existingProviders={[provider]} provider={provider} />)
+    fireEvent.change(screen.getByLabelText('Provider name'), { target: { value: 'Unsaved rename' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Edit provider' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Historical fields rejected')
+    expect(screen.getByLabelText('Provider name')).toHaveValue('Unsaved rename')
+    expect(onClose).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Edit provider' }))
+    await waitFor(() => { expect(fetchMock).toHaveBeenCalledTimes(2) })
+    for (const [, init] of fetchMock.mock.calls) {
+      expect(JSON.parse((init as RequestInit).body as string)).toMatchObject({ vmTags: ['legacy-tag'], managedSystem: 'legacy-system', name: 'Unsaved rename' })
+    }
+    vi.unstubAllGlobals()
+  })
+
   it.each(['create', 'edit', 'clear'])('submits the FlashSystem partner on %s', async mode => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)

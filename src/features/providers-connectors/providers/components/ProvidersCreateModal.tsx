@@ -12,8 +12,9 @@ import { useGetCredentials } from '@/generated/query/credentials/credentials.gen
 import { selectCredentials } from '../../credentials/model/selectCredentials'
 import { useSubmitProvider } from '@/generated/query/providers/providers.gen'
 import { ProviderCreateForm } from './ProviderCreateForm'
-import type { ProviderRecord, ProviderRole, ProviderSubmitData, ProviderType } from '../model/providerTypes'
-import { isComputeProviderType, isPartnerProviderType, isStorageProviderType } from '../model/providerCategory'
+import { PROVIDER_TYPES, type ProviderRecord, type ProviderRole, type ProviderSubmitData } from '../model/providerTypes'
+import { isPartnerProviderType, isStorageProviderType } from '../model/providerCategory'
+import { getProviderFieldConfig } from '../model/providerFieldConfig'
 import type { ProviderCreateFormData } from './ProviderCreateForm'
 
 interface ProvidersCreateModalProps {
@@ -73,13 +74,14 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     query: { enabled: open, select: selectCredentials },
   })
   const isEdit = Boolean(provider)
-  const tagsEnabled = open && isEdit && provider?.type === 'VMWARE'
+  const tagsEnabled = open && isEdit && getProviderFieldConfig(provider?.type ?? '').vmTags
   const tagsQuery = useTags(provider?.id ?? null, tagsEnabled)
   const [formData, setFormData] = useState<ProviderCreateFormData>(EMPTY_FORM)
   const [errors, setErrors] = useState<Partial<Record<keyof ProviderCreateFormData, string>>>({})
   const [submitError, setSubmitError] = useState<unknown>(null)
   const submitErrorDescription = extractBackendErrorDetail(submitError)
   const initialForm = createInitialForm(provider)
+  const fieldConfig = getProviderFieldConfig(formData.type)
   const isDirty = open && (
     formData.id !== initialForm.id
     || formData.name !== initialForm.name
@@ -133,20 +135,29 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
         }
       }
 
-      return { ...prev, [field]: value,
-        // Backing storage survives a switch between compute types; a partner never survives a type change.
-        ...(field === 'type' && !isComputeProviderType(value) ? { backingStorageProviderIds: [] } : {}),
-        ...(field === 'type' ? { partnerProviderId: '' } : {}),
+      if (field === 'type' && !isEdit && value !== prev.type) {
+        const nextConfig = getProviderFieldConfig(value)
+        return {
+          ...prev, type: value,
+          vmPrefix: nextConfig.vmPrefix ? prev.vmPrefix : '',
+          vmTags: nextConfig.vmTags ? prev.vmTags : [],
+          backingStorageProviderIds: nextConfig.backingStorageProviderIds ? prev.backingStorageProviderIds : [],
+          partnerProviderId: '',
+        }
       }
+      return { ...prev, [field]: value }
     })
-    if (field in errors && errors[field]) {
-      setErrors((prev) => {
-        const newErrors = { ...prev }
-        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-        delete newErrors[field]
-        return newErrors
-      })
-    }
+    setErrors(prev => {
+      const next = { ...prev, [field]: undefined }
+      if (field === 'type') {
+        const nextConfig = getProviderFieldConfig(value)
+        if (!nextConfig.vmPrefix) next.vmPrefix = undefined
+        if (!nextConfig.vmTags) next.vmTags = undefined
+        if (!nextConfig.backingStorageProviderIds) next.backingStorageProviderIds = undefined
+        if (!nextConfig.partnerProviderId) next.partnerProviderId = undefined
+      }
+      return next
+    })
     setSubmitError(null)
   }
 
@@ -173,9 +184,9 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
     }
     if (!formData.name.trim()) newErrors.name = t('forms.nameRequired')
     if (!formData.description.trim()) newErrors.description = t('forms.descriptionRequired')
-    if (!formData.type) newErrors.type = t('forms.typeRequired')
+    if (!PROVIDER_TYPES.some(type => type === formData.type)) newErrors.type = t('forms.typeRequired')
     if (!formData.role) newErrors.role = t('forms.roleRequired')
-    if (formData.partnerProviderId && formData.partnerProviderId === (isEdit ? formData.id.trim() : normalizedId)) {
+    if (fieldConfig.partnerProviderId && formData.partnerProviderId && formData.partnerProviderId === (isEdit ? formData.id.trim() : normalizedId)) {
       newErrors.partnerProviderId = t('forms.partnerProviderSelf')
     }
     if (!formData.ipAddress.trim()) newErrors.ipAddress = t('forms.ipRequired')
@@ -192,7 +203,8 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
   }
 
   const handleSubmit = () => {
-    if (!validate()) return
+    const type = PROVIDER_TYPES.find(type => type === formData.type)
+    if (!validate() || !type) return
 
     setSubmitError(null)
 
@@ -200,17 +212,34 @@ export function ProvidersCreateModal({ open, onClose, existingProviders, provide
       id: isEdit ? formData.id.trim() : toProgrammaticId(formData.id),
       name: formData.name.trim(),
       description: formData.description.trim(),
-      type: formData.type as ProviderType,
+      type,
       ipAddress: formData.ipAddress.trim(),
       credentialId: formData.credentialId || null,
       role: formData.role as ProviderRole,
-      partnerProviderId: formData.partnerProviderId.trim() || null,
+      // Upsert is not a PATCH: retain original specific fields, including hidden legacy values.
+      ...(!provider ? { partnerProviderId: null } : {}),
+      ...(provider?.vmPrefix !== undefined ? { vmPrefix: provider.vmPrefix } : {}),
+      ...(provider?.vmTags !== undefined ? { vmTags: [...provider.vmTags] } : {}),
+      ...(provider?.backingStorageProviderIds !== undefined ? { backingStorageProviderIds: [...provider.backingStorageProviderIds] } : {}),
+      ...(provider?.partnerProviderId !== undefined ? { partnerProviderId: provider.partnerProviderId } : {}),
+      ...(provider?.managedSystem !== undefined ? { managedSystem: provider.managedSystem } : {}),
     }
     const url = formData.url.trim()
     if (url) record.url = url
-    record.vmPrefix = formData.vmPrefix.trim() || null
-    record.vmTags = [...formData.vmTags]
-    if (isComputeProviderType(formData.type)) record.backingStorageProviderIds = [...formData.backingStorageProviderIds]
+    if (fieldConfig.vmPrefix && (!provider || formData.vmPrefix !== initialForm.vmPrefix)) {
+      record.vmPrefix = formData.vmPrefix.trim() || null
+    }
+    if (fieldConfig.vmTags && (!provider || formData.vmTags.length !== initialForm.vmTags.length
+      || formData.vmTags.some((tag, index) => tag !== initialForm.vmTags[index]))) {
+      record.vmTags = [...formData.vmTags]
+    }
+    if (fieldConfig.backingStorageProviderIds && (!provider || formData.backingStorageProviderIds.length !== initialForm.backingStorageProviderIds.length
+      || formData.backingStorageProviderIds.some(id => !initialForm.backingStorageProviderIds.includes(id)))) {
+      record.backingStorageProviderIds = [...formData.backingStorageProviderIds]
+    }
+    if (fieldConfig.partnerProviderId && (!provider || formData.partnerProviderId !== initialForm.partnerProviderId)) {
+      record.partnerProviderId = formData.partnerProviderId.trim() || null
+    }
     record.notificationEmail = formData.notificationEmail.trim() || null
     record.cacheRefreshSeconds = formData.cacheRefreshSeconds.trim() ? Number(formData.cacheRefreshSeconds) : null
 
