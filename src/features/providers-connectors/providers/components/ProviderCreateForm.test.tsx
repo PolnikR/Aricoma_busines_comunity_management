@@ -261,12 +261,12 @@ const expectedHelp = [
     "en": {
       "title": "Role",
       "trigger": "Help: Role",
-      "intro": "Choose the source (production) or target (recovery environment) side of a recovery. Documented default: source."
+      "intro": "Choose the source (production) or target (recovery environment) side of a recovery."
     },
     "sk": {
       "title": "Rola",
       "trigger": "Nápoveda: Rola",
-      "intro": "Vyberte zdrojovú stranu (produkcia) alebo cieľovú stranu (prostredie obnovy). Dokumentovaná predvolená hodnota: source."
+      "intro": "Vyberte zdrojovú stranu (produkcia) alebo cieľovú stranu (prostredie obnovy)."
     }
   },
   {
@@ -275,12 +275,12 @@ const expectedHelp = [
     "en": {
       "title": "Credential",
       "trigger": "Help: Credential",
-      "intro": "Stored credential used to sign in to this provider. Resolved for each request; its status can be OK, missing or not set. Default: not set."
+      "intro": "Stored credential used to sign in to this provider. Resolved for each request; its status can be OK, missing or not set."
     },
     "sk": {
       "title": "Prihlasovacie údaje",
       "trigger": "Nápoveda: Prihlasovacie údaje",
-      "intro": "Uložené prihlasovacie údaje na prihlásenie k poskytovateľovi. Vyhodnocujú sa pri každej požiadavke; ich stav môže byť v poriadku, chýbajúce alebo nenastavené. Predvolene: nenastavené."
+      "intro": "Uložené prihlasovacie údaje na prihlásenie k poskytovateľovi. Vyhodnocujú sa pri každej požiadavke; ich stav môže byť v poriadku, chýbajúce alebo nenastavené."
     }
   },
   {
@@ -289,12 +289,12 @@ const expectedHelp = [
     "en": {
       "title": "URL",
       "trigger": "Help: URL",
-      "intro": "Base URL of the provider’s web or REST endpoint. Default: not set."
+      "intro": "Base URL of the provider’s web or REST endpoint."
     },
     "sk": {
       "title": "URL",
       "trigger": "Nápoveda: URL",
-      "intro": "Základná URL webového alebo REST rozhrania poskytovateľa. Predvolene: nenastavená."
+      "intro": "Základná URL webového alebo REST rozhrania poskytovateľa."
     }
   },
   {
@@ -303,12 +303,12 @@ const expectedHelp = [
     "en": {
       "title": "VM name prefix",
       "trigger": "Help: VM name prefix",
-      "intro": "Optional default name-prefix filter for narrowing the selection of VMware Resources. Default: not set (no prefix filter)."
+      "intro": "Optional name-prefix filter for narrowing the selection of VMware Resources."
     },
     "sk": {
       "title": "Prefix názvu VM",
       "trigger": "Nápoveda: Prefix názvu VM",
-      "intro": "Voliteľný predvolený filter podľa prefixu názvu na zúženie výberu VMware Resources. Predvolene: nenastavený (bez filtra podľa prefixu)."
+      "intro": "Voliteľný filter podľa prefixu názvu na zúženie výberu VMware Resources."
     }
   },
   {
@@ -317,12 +317,12 @@ const expectedHelp = [
     "en": {
       "title": "VM tags",
       "trigger": "Help: VM tags",
-      "intro": "Optional default list of tag names used as a filter to narrow the selection of VMware Resources. Default: an empty list (no tag filter)."
+      "intro": "Optional list of tag names used as a filter to narrow the selection of VMware Resources."
     },
     "sk": {
       "title": "Tagy VM",
       "trigger": "Nápoveda: Tagy VM",
-      "intro": "Voliteľný predvolený zoznam názvov tagov používaný ako filter na zúženie výberu VMware Resources. Predvolene: prázdny zoznam (bez filtra podľa tagov)."
+      "intro": "Voliteľný zoznam názvov tagov používaný ako filter na zúženie výberu VMware Resources."
     }
   },
   {
@@ -331,12 +331,12 @@ const expectedHelp = [
     "en": {
       "title": "Notification email",
       "trigger": "Help: Notification email",
-      "intro": "Email address for notifications about failures of this provider. Enter a valid email address. A recovery group’s notification email takes precedence over its volume provider’s address. Default: not set."
+      "intro": "Email address for notifications about failures of this provider. Enter a valid email address. A recovery group’s notification email takes precedence over its volume provider’s address."
     },
     "sk": {
       "title": "Notifikačný email",
       "trigger": "Nápoveda: Notifikačný email",
-      "intro": "Emailová adresa na oznámenia o zlyhaniach poskytovateľa. Zadajte platnú emailovú adresu. Notifikačný email skupiny obnovy má prednosť pred adresou jej poskytovateľa zväzkov. Predvolene: nenastavená."
+      "intro": "Emailová adresa na oznámenia o zlyhaniach poskytovateľa. Zadajte platnú emailovú adresu. Notifikačný email skupiny obnovy má prednosť pred adresou jej poskytovateľa zväzkov."
     }
   },
   {
@@ -345,12 +345,12 @@ const expectedHelp = [
     "en": {
       "title": "Cache refresh interval",
       "trigger": "Help: Cache refresh interval",
-      "intro": "Discovery cache refresh interval for this provider, in seconds. Use a positive whole number. When not set, the default for this provider type from the cache configuration is used."
+      "intro": "Discovery cache refresh interval for this provider, in seconds. Use a positive whole number."
     },
     "sk": {
       "title": "Interval obnovovania cache",
       "trigger": "Nápoveda: Interval obnovovania cache",
-      "intro": "Interval obnovovania cache zisťovania zdrojov tohto poskytovateľa v sekundách. Použite kladné celé číslo. Ak nie je nastavený, použije sa predvolený interval pre daný typ poskytovateľa z konfigurácie cache."
+      "intro": "Interval obnovovania cache zisťovania zdrojov tohto poskytovateľa v sekundách. Použite kladné celé číslo."
     }
   },
   {
@@ -359,12 +359,12 @@ const expectedHelp = [
     "en": {
       "title": "Backing storage providers",
       "trigger": "Help: Backing storage providers",
-      "intro": "Select the FLASHCOPY or HITACHI storage providers that back this compute environment. Each ID must refer to an existing storage provider and appear only once. Default: an empty list."
+      "intro": "Select the FLASHCOPY or HITACHI storage providers that back this compute environment. Each ID must refer to an existing storage provider and appear only once."
     },
     "sk": {
       "title": "Poskytovatelia podkladového úložiska",
       "trigger": "Nápoveda: Poskytovatelia podkladového úložiska",
-      "intro": "Vyberte poskytovateľov úložiska FLASHCOPY alebo HITACHI, ktorí zabezpečujú úložisko tohto výpočtového prostredia. Každé ID musí odkazovať na existujúceho poskytovateľa úložiska a môže byť uvedené iba raz. Predvolene: prázdny zoznam."
+      "intro": "Vyberte poskytovateľov úložiska FLASHCOPY alebo HITACHI, ktorí zabezpečujú úložisko tohto výpočtového prostredia. Každé ID musí odkazovať na existujúceho poskytovateľa úložiska a môže byť uvedené iba raz."
     }
   },
   {
@@ -373,12 +373,12 @@ const expectedHelp = [
     "en": {
       "title": "Partner provider",
       "trigger": "Help: Partner provider",
-      "intro": "Select the partner FlashSystem in a Metro Mirror system partnership. It must be an existing FLASHCOPY provider other than this provider. Default: not set."
+      "intro": "Select the partner FlashSystem in a Metro Mirror system partnership. It must be an existing FLASHCOPY provider other than this provider."
     },
     "sk": {
       "title": "Partnerský poskytovateľ",
       "trigger": "Nápoveda: Partnerský poskytovateľ",
-      "intro": "Vyberte partnerský FlashSystem v systémovom partnerstve Metro Mirror. Musí ísť o existujúceho poskytovateľa FLASHCOPY odlišného od tohto poskytovateľa. Predvolene: nenastavený."
+      "intro": "Vyberte partnerský FlashSystem v systémovom partnerstve Metro Mirror. Musí ísť o existujúceho poskytovateľa FLASHCOPY odlišného od tohto poskytovateľa."
     }
   },
   {
@@ -387,12 +387,12 @@ const expectedHelp = [
     "en": {
       "title": "Managed system",
       "trigger": "Help: Managed system",
-      "intro": "SystemName of the managed system whose LPARs may be affected by Power rollback. Required when the HMC manages multiple systems. Default: not set."
+      "intro": "SystemName of the managed system whose LPARs may be affected by Power rollback. Required when the HMC manages multiple systems."
     },
     "sk": {
       "title": "Spravovaný systém",
       "trigger": "Nápoveda: Spravovaný systém",
-      "intro": "SystemName spravovaného systému, ktorého LPAR môže ovplyvniť Power rollback. Je potrebný, ak HMC spravuje viac systémov. Predvolene: nenastavený."
+      "intro": "SystemName spravovaného systému, ktorého LPAR môže ovplyvniť Power rollback. Je potrebný, ak HMC spravuje viac systémov."
     }
   }
 ] as const
