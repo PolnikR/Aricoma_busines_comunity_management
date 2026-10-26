@@ -161,7 +161,7 @@ export function ProviderCreateForm({
         </Field>
 
         <div className="block">
-          <div className="mb-1.5 flex items-center gap-1.5">
+          <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
             <label htmlFor="create-role" className="text-xs font-medium text-text-secondary">{t('forms.role')}</label>
             {showCommonHelp ? <KeyedHelpPopover helpKey="providers.fieldHelp.role" sections={[]} /> : null}
           </div>
@@ -198,7 +198,7 @@ export function ProviderCreateForm({
 
         {fieldConfig.partnerProviderId ? (
           <div className="block">
-            <div className="mb-1.5 flex items-center gap-1.5">
+            <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
               <label htmlFor="create-partnerProviderId" className="text-xs font-medium text-text-secondary">{t('forms.partnerProvider')}</label>
               <KeyedHelpPopover helpKey="providers.fieldHelp.partnerProviderId" sections={[]} />
             </div>
@@ -216,7 +216,7 @@ export function ProviderCreateForm({
 
         {fieldConfig.backingStorageProviderIds ? (
           <div className="block">
-            <div className="mb-1.5 flex items-center gap-1.5">
+            <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
               <label htmlFor="create-backingStorageProviders" className="text-xs font-medium text-text-secondary">{t('forms.backingStorageProviders')}</label>
               <KeyedHelpPopover helpKey="providers.fieldHelp.backingStorageProviderIds" sections={[]} />
             </div>
@@ -229,7 +229,7 @@ export function ProviderCreateForm({
         ) : null}
 
         <div className="block">
-          <div className="mb-1.5 flex items-center gap-1.5">
+          <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
             <label htmlFor="create-cacheRefreshSeconds" className="text-xs font-medium text-text-secondary">{t('forms.cacheRefreshSeconds')}</label>
             {showCommonHelp ? <KeyedHelpPopover helpKey="providers.fieldHelp.cacheRefreshSeconds" sections={[]} /> : null}
           </div>
@@ -250,7 +250,7 @@ export function ProviderCreateForm({
 
         {fieldConfig.managedSystem ? (
           <div className="block">
-            <div className="mb-1.5 flex items-center gap-1.5">
+            <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
               <label htmlFor="create-managedSystem" className="text-xs font-medium text-text-secondary">{t('forms.managedSystem')}</label>
               <KeyedHelpPopover helpKey="providers.fieldHelp.managedSystem" sections={[]} />
             </div>
@@ -263,7 +263,7 @@ export function ProviderCreateForm({
         ) : null}
 
         {fieldConfig.vmPrefix ? <div className="block">
-          <div className="mb-1.5 flex items-center gap-1.5">
+          <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
             <label htmlFor="create-vmPrefix" className="text-xs font-medium text-text-secondary">{t('forms.vmPrefix')}</label>
             <KeyedHelpPopover helpKey="providers.fieldHelp.vmPrefix" sections={[]} />
           </div>
@@ -280,7 +280,7 @@ export function ProviderCreateForm({
         </div> : null}
 
         {fieldConfig.vmTags ? <div className="block">
-          <div className="mb-1.5 flex items-center gap-1.5">
+          <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
             <label htmlFor="create-vmTags" className="text-xs font-medium text-text-secondary">{t('forms.vmTags')}</label>
             <KeyedHelpPopover helpKey="providers.fieldHelp.vmTags" sections={[]} />
           </div>
@@ -302,7 +302,7 @@ export function ProviderCreateForm({
         </div> : null}
 
         <div className="block">
-          <div className="mb-1.5 flex items-center gap-1.5">
+          <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
             <label htmlFor="create-credentials" className="text-xs font-medium text-text-secondary">{t('forms.credentials')}</label>
             {showCommonHelp ? <KeyedHelpPopover helpKey="providers.fieldHelp.credentialId" sections={[]} /> : null}
           </div>
@@ -337,7 +337,7 @@ export function ProviderCreateForm({
         </div>
 
         <div className="block">
-          <div className="mb-1.5 flex items-center gap-1.5">
+          <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
             <label htmlFor="create-url" className="text-xs font-medium text-text-secondary">{t('forms.url')}</label>
             {showCommonHelp ? <KeyedHelpPopover helpKey="providers.fieldHelp.url" sections={[]} /> : null}
           </div>
@@ -354,7 +354,7 @@ export function ProviderCreateForm({
         </div>
 
         <div className="block">
-          <div className="mb-1.5 flex items-center gap-1.5">
+          <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
             <label htmlFor="create-notificationEmail" className="text-xs font-medium text-text-secondary">{t('forms.notificationEmail')}</label>
             {showCommonHelp ? <KeyedHelpPopover helpKey="providers.fieldHelp.notificationEmail" sections={[]} /> : null}
           </div>
