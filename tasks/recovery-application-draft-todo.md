@@ -469,5 +469,14 @@ For each future completed task, record the relevant HEAD, modified paths, comman
 - `git diff --check`: passed; final document assertions, typechecked API declarations, archive links and scope/status checks passed before documentation commit.
 - Browser: exact original Edit method/URL/body parity;14 extended scenario groups; full Create request oracle; exactly4 extended submissions; zero unexpected runtime/console/network errors. Intentional Save/provider failures and unseeded policy-detail501 responses are recorded in the browser report.
 - Method deviation: isolated Edge CDP, no Playwright trace, no physical pointer gesture or real Keycloak session. Original Create browser baseline and every synthetic pending-mutation permutation were not executed; complete Create wire tests and focused component/domain Save-guard tests provide their separate evidence.
-- [Browser acceptance report](C:/Users/polnikr/AppData/Local/Temp/recovery-application-draft-evidence-20261026-wAFat4/browser-acceptance-report.md), [final source review](C:/Users/polnikr/AppData/Local/Temp/recovery-application-draft-evidence-20261026-wAFat4/final-review.md). Archive contains per-phase command reports and raw browser evidence; runtime profiles/cache were excluded. Scratch harnesses can be restored to their recorded repo-local evidence path to rerun.
+- [Browser acceptance report](C:/Users/polnikr/AppData/Local/Temp/recovery-application-draft-evidence-20261026-wAFat4/browser-acceptance-report.md), [final source review](C:/Users/polnikr/AppData/Local/Temp/recovery-application-draft-evidence-20261026-wAFat4/final-review.md). Archive contains per-phase command reports and raw browser evidence; runtime profiles/cache were excluded. Run corrected archived harnesses directly from OS temp with the repository as cwd; never restore them into the checkout.
 - Full suite and production build were not run. Branch remains `spike/ant-design-shell`; no push/merge/worktree creation. Final human acceptance is the sole open checklist item.
+
+## Post-handoff dev-server recovery
+
+- [x] Reproduced real localhost5173 dependency failure: `@tanstack/react-virtual` returned504 `Outdated Optimize Dep`; initial fixture Vite host had overwritten the shared default cache.
+- [x] Restarted the existing Vite optimizer through the config watcher without changing configuration content; dependency returned200 and126 static modules loaded without errors.
+- [x] Real-server isolated Edge dynamic import passed; no authenticated full-page claim, writes or user-session access.
+- [x] Corrected four archived harnesses to use OS-temp private caches/profiles and reject in-repository execution; syntax and actual guard checks passed with live cache unchanged.
+
+Detailed cause, recovery and evidence are in the plan's post-handoff incident section. Source code is unchanged; no full suite or build rerun for this operational fix.
