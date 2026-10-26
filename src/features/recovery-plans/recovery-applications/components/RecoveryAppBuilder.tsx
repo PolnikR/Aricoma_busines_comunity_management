@@ -24,9 +24,9 @@ import { AppMetadataForm } from './AppMetadataForm'
 import { TierCanvas } from './TierCanvas'
 import { addApplicationTier, applyApplicationTierOrder, applyConfirmedSourceChange, assignRecoveryGroup, createApplicationDraft, deleteApplicationTier, editApplicationTier, planApplicationMetadataChange, removeRecoveryGroup, selectRecoveryVm } from '../model/recoveryApplicationDraft'
 import type { ApplicationMetadataPatch, SourceChangeProposal } from '../model/recoveryApplicationDraft'
-import { getEligiblePlatformProviders, getEligibleSourceProviders, getEligibleTargetProviders } from '../utils/eligibleProviders'
-import { isValidRecoveryApplicationFileName, isValidRecoveryApplicationName } from '../utils/recoveryApplicationFileName'
-import { storedProvidersProblem, validateRecoveryApplication } from '../utils/validateRecoveryApplication'
+import { getEligiblePlatformProviders } from '../utils/eligibleProviders'
+import { getRecoveryApplicationDraftReadiness } from '../model/recoveryApplicationDraftReadiness'
+import { validateRecoveryApplication } from '../utils/validateRecoveryApplication'
 import type { DraftRecoveryTier, LockedProviders, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
 interface RecoveryAppBuilderProps {
@@ -77,10 +77,6 @@ export function RecoveryAppBuilder({
     refresh: refreshGroups,
   } = useRecoveryGroups()
 
-  const eligibleSourceProviders = useMemo(
-    () => getEligibleSourceProviders(providersQuery.data ?? []),
-    [providersQuery.data],
-  )
   const eligiblePlatformProviders = useMemo(
     () => getEligiblePlatformProviders(platformProvidersQuery.data ?? []),
     [platformProvidersQuery.data],
@@ -202,20 +198,14 @@ export function RecoveryAppBuilder({
     if (result.notifyDirty) onDirtyChange?.(true)
   }, [formState, isFormDisabled, onDirtyChange])
 
-  const sourceProvider = eligibleSourceProviders.find(provider => provider.id === formState.platform)
-  const detailsValid = Boolean(
-    isValidRecoveryApplicationFileName(formState.fileName)
-    && isValidRecoveryApplicationName(formState.name)
-    && formState.description.trim()
-    && (lockedProviders !== null || (sourceProvider
-      && getEligibleTargetProviders(providersQuery.data ?? [], sourceProvider.type)
-        .some(provider => provider.id === formState.targetProviderId))),
-  )
-  const tiersValid = formState.tiers.size > 0
-    && Array.from(formState.tiers.values()).every(tier => Boolean(tier.recovery_group))
-  const policySetValid = Boolean(formState.policySetId.trim())
-  const orchestrationValid = !formState.pushToOrchestrator
-    || eligiblePlatformProviders.some(provider => provider.id === formState.orchestrationProviderId)
+  const { detailsValid, tiersValid, policySetValid, canContinue, canSave, lockedProvidersError } = getRecoveryApplicationDraftReadiness(formState, {
+    step: step === 1 || step === 2 || step === 3 ? step : 4,
+    providers: providersQuery.data,
+    providersError: providersQuery.error,
+    platformProviders: platformProvidersQuery.data ?? [],
+    areGroupsLoading,
+    lockedProviders,
+  })
 
   const steps = [
     { id: 'details', label: t('pages.recoveryBuilder.steps.details') },
@@ -235,18 +225,6 @@ export function RecoveryAppBuilder({
       disabled: !detailsValid || !tiersValid || !policySetValid,
     },
   ]
-
-  const canContinue = step === 1 ? detailsValid : step === 2 ? tiersValid : policySetValid
-  // A saved application whose stored providers cannot be submitted stays
-  // viewable, but Save is blocked and the reason shown on every step. Until the
-  // providers load (or after a failed fetch) there is no verdict yet.
-  const providersLoaded = Boolean(providersQuery.data) && !providersQuery.error
-  const lockedProvidersError = lockedProviders && providersLoaded
-    ? storedProvidersProblem(lockedProviders, providersQuery.data ?? [])
-    : null
-  // Stored groups are checked against the current list, so wait for it.
-  const canSave = detailsValid && tiersValid && policySetValid && orchestrationValid && !areGroupsLoading
-    && (!lockedProviders || (providersLoaded && !lockedProvidersError))
 
   const handleSave = () => {
     if (isFormDisabled) return
