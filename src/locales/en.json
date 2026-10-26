@@ -1983,6 +1983,7 @@
   "recoveryAppPolicies.validation.unitRequired": "Select a time unit",
   "recoveryAppPolicies.validation.targetTime": "Enter a valid time",
   "recoveryAppPolicies.validation.positiveInteger": "Enter a positive whole number",
+  "recoveryAppPolicies.validation.intervalMinutes": "Enter a whole number of minutes, at least 15 and a multiple of 15.",
   "recoveryAppPolicies.validation.lparPrefix": "Use up to 12 letters, digits, dots, underscores or hyphens",
   "recoveryAppPolicies.discard.title": "Discard unsaved policy changes?",
   "recoveryAppPolicies.discard.message": "All unsaved policy changes will be lost.",

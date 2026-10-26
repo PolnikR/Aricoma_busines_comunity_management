@@ -1946,6 +1946,7 @@
   "recoveryAppPolicies.validation.unitRequired": "Vyberte časovú jednotku",
   "recoveryAppPolicies.validation.targetTime": "Zadajte platný čas",
   "recoveryAppPolicies.validation.positiveInteger": "Zadajte kladné celé číslo",
+  "recoveryAppPolicies.validation.intervalMinutes": "Zadajte celý počet minút, aspoň 15 a násobok 15.",
   "recoveryAppPolicies.validation.lparPrefix": "Použite najviac 12 písmen, číslic, bodiek, podčiarkovníkov alebo pomlčiek",
   "recoveryAppPolicies.discard.title": "Zahodiť neuložené zmeny politiky?",
   "recoveryAppPolicies.discard.message": "Všetky neuložené zmeny politiky sa stratia.",

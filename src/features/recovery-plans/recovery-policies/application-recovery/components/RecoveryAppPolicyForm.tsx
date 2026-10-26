@@ -87,7 +87,7 @@ export function RecoveryAppPolicyForm({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="grid grid-cols-[1fr_1.2fr] gap-2">
           <Field label={t('recoveryAppPolicies.form.frequency')} htmlFor="recovery-app-policy-frequency">
-            <Input id="recovery-app-policy-frequency" type="number" min={1} step={1} value={data.frequency_value} disabled={isSubmitting} invalid={Boolean(errors.frequency_value)} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('frequency_value', event.target.value) }} />
+            <Input id="recovery-app-policy-frequency" type="number" min={data.frequency_unit === 'minutes' ? 15 : 1} step={data.frequency_unit === 'minutes' ? 15 : 1} value={data.frequency_value} disabled={isSubmitting} invalid={Boolean(errors.frequency_value)} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('frequency_value', event.target.value) }} />
           </Field>
           <Field label={t('recoveryAppPolicies.form.frequencyUnit')} htmlFor="recovery-app-policy-frequency-unit">
             <Select id="recovery-app-policy-frequency-unit" value={data.frequency_unit} disabled={isSubmitting} onChange={(event: ChangeEvent<HTMLSelectElement>) => { onChange('frequency_unit', event.target.value) }}>
@@ -98,7 +98,7 @@ export function RecoveryAppPolicyForm({
         </div>
         <div className="grid grid-cols-[1fr_1.2fr] gap-2">
           <Field label={t('recoveryAppPolicies.form.retention')} htmlFor="recovery-app-policy-retention">
-            <Input id="recovery-app-policy-retention" type="number" min={1} step={1} value={data.retention_value} disabled={isSubmitting} invalid={Boolean(errors.retention_value)} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('retention_value', event.target.value) }} />
+            <Input id="recovery-app-policy-retention" type="number" min={data.retention_unit === 'minutes' ? 15 : 1} step={data.retention_unit === 'minutes' ? 15 : 1} value={data.retention_value} disabled={isSubmitting} invalid={Boolean(errors.retention_value)} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('retention_value', event.target.value) }} />
           </Field>
           <Field label={t('recoveryAppPolicies.form.retentionUnit')} htmlFor="recovery-app-policy-retention-unit">
             <Select id="recovery-app-policy-retention-unit" value={data.retention_unit} disabled={isSubmitting} onChange={(event: ChangeEvent<HTMLSelectElement>) => { onChange('retention_unit', event.target.value) }}>

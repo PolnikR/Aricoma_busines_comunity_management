@@ -84,6 +84,67 @@ function renderModal(props: Partial<React.ComponentProps<typeof RecoveryAppPolic
 afterEach(() => vi.unstubAllGlobals())
 
 describe('RecoveryAppPolicyModal', () => {
+  it('starts both intervals at one day and clears only the changed unit pair', () => {
+    renderModal()
+    for (const label of ['Frequency', 'Retention']) {
+      const input = screen.getByLabelText(label)
+      const unit = screen.getByLabelText(`${label} unit`)
+      expect(input).toHaveValue(1)
+      expect(unit).toHaveValue('days')
+      for (const next of ['minutes', 'hours', 'days']) {
+        fireEvent.change(unit, { target: { value: next } })
+        expect(input).toHaveValue(null)
+        expect(input).toHaveAttribute('min', next === 'minutes' ? '15' : '1')
+        expect(input).toHaveAttribute('step', next === 'minutes' ? '15' : '1')
+        expect(input).not.toHaveAttribute('max')
+        fireEvent.change(input, { target: { value: '30' } })
+        fireEvent.change(unit, { target: { value: next } })
+        expect(input).toHaveValue(30)
+      }
+    }
+    expect(screen.getByLabelText('Frequency')).toHaveValue(30)
+    expect(screen.getByLabelText('Zoning wait (minutes)')).toHaveAttribute('step', '1')
+  })
+
+  it.each(['Frequency', 'Retention'])('blocks invalid minute %s on save and Enter', label => {
+    const fetchMock = stubSubmitResponse()
+    renderModal({ policy })
+    const input = screen.getByLabelText(label)
+    fireEvent.change(screen.getByLabelText(`${label} unit`), { target: { value: 'minutes' } })
+    for (const value of ['', ' ', '0', '-15', '1.5', '1', '7', '20', 'invalid', 'Infinity']) {
+      fireEvent.change(input, { target: { value } })
+      fireEvent.click(screen.getByRole('button', { name: 'Edit policy' }))
+      expect(input).toHaveAttribute('aria-invalid', 'true')
+      fireEvent.keyDown(input, { key: 'Enter' })
+      expect(fetchMock).not.toHaveBeenCalled()
+    }
+  })
+
+  it.each([15, 30, 45, 60, 75, 90, 600])('submits minute intervals %s without imposing the backend minimum', async value => {
+    const fetchMock = stubSubmitResponse()
+    const onClose = vi.fn()
+    renderModal({ policy: { ...policy, frequency_unit: 'minutes', frequency_value: value, retention_unit: 'minutes', retention_value: value }, onClose })
+    fireEvent.click(screen.getByRole('button', { name: 'Edit policy' }))
+    await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+    expect(submittedBody(fetchMock)).toMatchObject({ frequency_value: value, frequency_unit: 'minutes', retention_value: value, retention_unit: 'minutes' })
+  })
+
+  it('opens legacy invalid minutes without changing values or dirty state', () => {
+    const onClose = vi.fn()
+    renderModal({ policy: { ...policy, frequency_value: 7, frequency_unit: 'minutes', retention_value: 7, retention_unit: 'minutes' }, onClose })
+    expect(screen.getByLabelText('Frequency')).toHaveValue(7)
+    expect(screen.getByLabelText('Retention')).toHaveValue(7)
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(onClose).toHaveBeenCalledOnce()
+  })
+
+  it('displays backend interval rejection details without a local fixed minimum', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json({ detail: 'Configured recovery interval is too short.' }, { status: 422 })))
+    renderModal({ policy: { ...policy, frequency_value: 15, frequency_unit: 'minutes' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Edit policy' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Configured recovery interval is too short.')
+  })
+
   it.each(['Manual zoning', 'Manual WWPN entry'])('explains ignored IBM Power frequency for %s while retaining its payload', async mode => {
     const fetchMock = stubSubmitResponse()
     const onClose = vi.fn()
@@ -97,8 +158,8 @@ describe('RecoveryAppPolicyModal', () => {
     expect(info.compareDocumentPosition(screen.getByLabelText('Snapshot selection')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(screen.getByLabelText('Frequency')).toBeEnabled()
     expect(screen.getByLabelText('Frequency unit')).toBeEnabled()
-    fireEvent.change(screen.getByLabelText('Frequency'), { target: { value: '7' } })
     fireEvent.change(screen.getByLabelText('Frequency unit'), { target: { value: 'days' } })
+    fireEvent.change(screen.getByLabelText('Frequency'), { target: { value: '7' } })
     fireEvent.click(screen.getByRole('checkbox', { name: mode }))
     expect(screen.queryByText(text)).not.toBeInTheDocument()
     expect(screen.getByLabelText('Frequency')).toHaveValue(7)
@@ -246,10 +307,10 @@ describe('RecoveryAppPolicyModal', () => {
     fireEvent.change(screen.getByLabelText('Policy name'), { target: { value: 'High weekly' } })
     fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Weekly' } })
     fireEvent.change(screen.getByLabelText('Level'), { target: { value: 'high' } })
-    fireEvent.change(screen.getByLabelText('Frequency'), { target: { value: '7' } })
     fireEvent.change(screen.getByLabelText('Frequency unit'), { target: { value: 'days' } })
-    fireEvent.change(screen.getByLabelText('Retention'), { target: { value: '1' } })
+    fireEvent.change(screen.getByLabelText('Frequency'), { target: { value: '7' } })
     fireEvent.change(screen.getByLabelText('Retention unit'), { target: { value: 'days' } })
+    fireEvent.change(screen.getByLabelText('Retention'), { target: { value: '1' } })
     fireEvent.change(screen.getByLabelText('Snapshot selection'), { target: { value: 'time_range' } })
     fireEvent.change(screen.getByLabelText('Maximum snapshot age'), { target: { value: '2' } })
     fireEvent.change(screen.getByLabelText('Maximum snapshot age unit'), { target: { value: 'hours' } })
@@ -297,7 +358,7 @@ describe('RecoveryAppPolicyModal', () => {
     const init = fetchMock.mock.calls[0]?.[1] as RequestInit
     expect(JSON.parse(init.body as string)).toEqual({
       id: 'critical-daily', name: 'Critical daily', description: 'Daily', level: 'critical',
-      frequency_value: 1, frequency_unit: 'minutes', retention_value: 1, retention_unit: 'days',
+      frequency_value: 1, frequency_unit: 'days', retention_value: 1, retention_unit: 'days',
       boot_verify: false, snapshot_selection_mode: 'latest', enabled: true,
       target_lpar_prefix: 'dr_', manual_zoning: false, manual_wwpn_entry: false, source_shutdown_timeout_seconds: 300, zoning_wait_minutes: 240,
     })
