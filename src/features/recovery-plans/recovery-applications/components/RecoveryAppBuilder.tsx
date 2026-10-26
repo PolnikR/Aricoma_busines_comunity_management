@@ -22,7 +22,7 @@ import { isRecoveryGroupCompatible, isRecoveryGroupEligible } from '../utils/rec
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { AppMetadataForm } from './AppMetadataForm'
 import { TierCanvas } from './TierCanvas'
-import { applyConfirmedSourceChange, assignRecoveryGroup, createApplicationDraft, planApplicationMetadataChange, removeRecoveryGroup, selectRecoveryVm } from '../model/recoveryApplicationDraft'
+import { addApplicationTier, applyApplicationTierOrder, applyConfirmedSourceChange, assignRecoveryGroup, createApplicationDraft, deleteApplicationTier, editApplicationTier, planApplicationMetadataChange, removeRecoveryGroup, selectRecoveryVm } from '../model/recoveryApplicationDraft'
 import type { ApplicationMetadataPatch, SourceChangeProposal } from '../model/recoveryApplicationDraft'
 import { getEligiblePlatformProviders, getEligibleSourceProviders, getEligibleTargetProviders } from '../utils/eligibleProviders'
 import { isValidRecoveryApplicationFileName, isValidRecoveryApplicationName } from '../utils/recoveryApplicationFileName'
@@ -176,38 +176,31 @@ export function RecoveryAppBuilder({
 
   const handleTierEdit = useCallback((tierId: string, newTierId: string, updates: { tierDescription: string }) => {
     if (isFormDisabled) return
-    setFormState(prev => {
-      const newTiers = new Map(prev.tiers)
-      const oldTier = newTiers.get(tierId)
-      if (!oldTier) return prev
-      if (newTierId !== tierId) newTiers.delete(tierId)
-      newTiers.set(newTierId, { ...oldTier, description: updates.tierDescription })
-      return { ...prev, tiers: newTiers }
-    })
-    onDirtyChange?.(true)
-  }, [isFormDisabled, onDirtyChange])
+    const result = editApplicationTier(formState, tierId, newTierId, updates)
+    setFormState(current => editApplicationTier(current, tierId, newTierId, updates).draft)
+    if (result.notifyDirty) onDirtyChange?.(true)
+  }, [formState, isFormDisabled, onDirtyChange])
 
   const handleTierAdd = useCallback((tierId: string, tier: DraftRecoveryTier) => {
     if (isFormDisabled) return
-    setFormState(prev => ({ ...prev, tiers: new Map(prev.tiers).set(tierId, tier) }))
-    onDirtyChange?.(true)
-  }, [isFormDisabled, onDirtyChange])
+    const result = addApplicationTier(formState, tierId, tier)
+    setFormState(current => addApplicationTier(current, tierId, tier).draft)
+    if (result.notifyDirty) onDirtyChange?.(true)
+  }, [formState, isFormDisabled, onDirtyChange])
 
   const handleTierDelete = useCallback((tierId: string) => {
     if (isFormDisabled) return
-    setFormState(prev => {
-      const newTiers = new Map(prev.tiers)
-      newTiers.delete(tierId)
-      return { ...prev, tiers: newTiers }
-    })
-    onDirtyChange?.(true)
-  }, [isFormDisabled, onDirtyChange])
+    const result = deleteApplicationTier(formState, tierId)
+    setFormState(current => deleteApplicationTier(current, tierId).draft)
+    if (result.notifyDirty) onDirtyChange?.(true)
+  }, [formState, isFormDisabled, onDirtyChange])
 
   const handleTierReorder = useCallback((reorderedTiers: Record<string, DraftRecoveryTier>) => {
     if (isFormDisabled) return
-    setFormState(prev => ({ ...prev, tiers: new Map(Object.entries(reorderedTiers)) }))
-    onDirtyChange?.(true)
-  }, [isFormDisabled, onDirtyChange])
+    const result = applyApplicationTierOrder(formState, reorderedTiers)
+    setFormState(current => applyApplicationTierOrder(current, reorderedTiers).draft)
+    if (result.notifyDirty) onDirtyChange?.(true)
+  }, [formState, isFormDisabled, onDirtyChange])
 
   const sourceProvider = eligibleSourceProviders.find(provider => provider.id === formState.platform)
   const detailsValid = Boolean(

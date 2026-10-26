@@ -305,6 +305,28 @@ describe('RecoveryAppBuilder', () => {
       await userEvent.setup().click(screen.getByRole('button', { name: 'Save Application' }))
     }
 
+    it('composes queued tier additions, rename and deletion in StrictMode without replaying dirty events', async () => {
+      const initialData = draftFixture()
+      const before = structuredClone(initialData)
+      const onDirtyChange = vi.fn()
+      render(<StrictMode><RecoveryAppBuilder initialData={initialData} onDirtyChange={onDirtyChange} /></StrictMode>)
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Recovery groups & tiers' }))
+      const lateTier = { ...fixtureValue(initialData.tiers.get('web')), order: 9, description: 'Late' }
+      act(() => {
+        canvasProps().onTierAdd?.('late', lateTier)
+        canvasProps().onTierEdit?.('tier_id', 'renamed', { tierDescription: 'Renamed' })
+        canvasProps().onTierDelete?.('web')
+        canvasProps().onTierAdd?.('last', { order: 10, description: 'Last' })
+      })
+      expect(Object.entries(canvasProps().tiers)).toEqual([
+        ['late', lateTier],
+        ['renamed', { ...fixtureValue(initialData.tiers.get('tier_id')), description: 'Renamed' }],
+        ['last', { order: 10, description: 'Last' }],
+      ])
+      expect(onDirtyChange.mock.calls).toEqual([[true], [true], [true], [true]])
+      expect(initialData).toEqual(before)
+    })
+
     it('composes queued Group assignments and removal with one dirty notification per event in StrictMode', async () => {
       const onDirtyChange = vi.fn()
       render(<StrictMode><RecoveryAppBuilder initialData={draftFixture()} onDirtyChange={onDirtyChange} /></StrictMode>)
