@@ -1820,6 +1820,7 @@
   "snapshotPolicies.validation.descriptionRequired": "Popis je povinný",
   "snapshotPolicies.validation.levelRequired": "Úroveň je povinná",
   "snapshotPolicies.validation.positiveInteger": "Zadajte kladné celé číslo",
+  "snapshotPolicies.validation.frequencyMinutes": "Zadajte celý počet minút, aspoň 15 a násobok 15.",
   "snapshotPolicies.discard.title": "Zahodiť neuložené zmeny politiky?",
   "snapshotPolicies.discard.message": "Všetky neuložené zmeny politiky sa stratia.",
   "snapshotPolicies.discard.stay": "Pokračovať v úpravách",

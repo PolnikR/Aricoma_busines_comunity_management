@@ -81,7 +81,7 @@ export function SnapshotPolicyForm({ data, errors, isSubmitting, idDisabled = fa
       <div className="grid grid-cols-1 gap-4 border-t border-border pt-4 sm:grid-cols-2">
         <div className="grid max-w-52 grid-cols-[4.5rem_minmax(0,1fr)] gap-2">
           <Field label={t('snapshotPolicies.form.frequency')} htmlFor="snapshot-policy-frequency">
-            <Input id="snapshot-policy-frequency" type="number" min={1} step={1} value={data.frequency_value} disabled={isSubmitting} invalid={Boolean(errors.frequency_value)} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('frequency_value', event.target.value) }} />
+            <Input id="snapshot-policy-frequency" type="number" min={data.frequency_unit === 'minutes' ? 15 : 1} step={data.frequency_unit === 'minutes' ? 15 : 1} value={data.frequency_value} disabled={isSubmitting} invalid={Boolean(errors.frequency_value)} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('frequency_value', event.target.value) }} />
           </Field>
           <Field label={t('snapshotPolicies.form.frequencyUnit')} htmlFor="snapshot-policy-frequency-unit" className="self-end [&>span]:sr-only">
             <Select id="snapshot-policy-frequency-unit" value={data.frequency_unit} disabled={isSubmitting} onChange={(event: ChangeEvent<HTMLSelectElement>) => { onChange('frequency_unit', event.target.value) }}>

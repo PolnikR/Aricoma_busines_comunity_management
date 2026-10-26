@@ -1857,6 +1857,7 @@
   "snapshotPolicies.validation.descriptionRequired": "Description is required",
   "snapshotPolicies.validation.levelRequired": "Level is required",
   "snapshotPolicies.validation.positiveInteger": "Enter a positive whole number",
+  "snapshotPolicies.validation.frequencyMinutes": "Enter a whole number of minutes, at least 15 and a multiple of 15.",
   "snapshotPolicies.discard.title": "Discard unsaved policy changes?",
   "snapshotPolicies.discard.message": "All unsaved policy changes will be lost.",
   "snapshotPolicies.discard.stay": "Keep editing",

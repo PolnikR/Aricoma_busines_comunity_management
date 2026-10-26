@@ -39,8 +39,8 @@ function fillCreateForm() {
   fireEvent.change(screen.getByLabelText('Policy name'), { target: { value: 'High — hourly' } })
   fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Every hour.' } })
   fireEvent.change(screen.getByLabelText('Level'), { target: { value: 'high' } })
-  fireEvent.change(screen.getByLabelText('Frequency'), { target: { value: '1' } })
   fireEvent.change(screen.getByLabelText('Frequency unit'), { target: { value: 'hours' } })
+  fireEvent.change(screen.getByLabelText('Frequency'), { target: { value: '1' } })
   fireEvent.change(screen.getByLabelText('Retention'), { target: { value: '1' } })
   fireEvent.change(screen.getByLabelText('Retention unit'), { target: { value: 'days' } })
   fireEvent.change(screen.getByLabelText('Maximum snapshots'), { target: { value: '24' } })
@@ -51,6 +51,70 @@ afterEach(() => {
 })
 
 describe('SnapshotPolicyModal', () => {
+  it('starts with a valid 15 minute frequency and clears only the frequency on a unit change', () => {
+    renderModal()
+    const frequency = screen.getByLabelText('Frequency')
+    const unit = screen.getByLabelText('Frequency unit')
+    expect(frequency).toHaveValue(15)
+    expect(frequency).toHaveAttribute('min', '15')
+    expect(frequency).toHaveAttribute('step', '15')
+    expect(frequency).not.toHaveAttribute('max')
+    for (const nextUnit of ['hours', 'days', 'minutes']) {
+      fireEvent.change(unit, { target: { value: nextUnit } })
+      expect(frequency).toHaveValue(null)
+      expect(frequency).toHaveAttribute('min', nextUnit === 'minutes' ? '15' : '1')
+      expect(frequency).toHaveAttribute('step', nextUnit === 'minutes' ? '15' : '1')
+      expect(screen.getByLabelText('Retention')).toHaveValue(1)
+      expect(screen.getByLabelText('Retention unit')).toHaveValue('days')
+      fireEvent.change(frequency, { target: { value: '30' } })
+      fireEvent.change(unit, { target: { value: nextUnit } })
+      expect(frequency).toHaveValue(30)
+    }
+  })
+
+  it.each(['', '0', '-15', '1.5', '5', '7', '20', 'invalid', 'Infinity'])('blocks invalid minute frequency "%s" on save and Enter', value => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    renderModal({ policy })
+    const frequency = screen.getByLabelText('Frequency')
+    fireEvent.change(frequency, { target: { value } })
+    fireEvent.click(screen.getByRole('button', { name: 'Edit policy' }))
+    expect(frequency).toHaveAttribute('aria-invalid', 'true')
+    fireEvent.keyDown(frequency, { key: 'Enter' })
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it.each([15, 30, 45, 60, 75, 90])('submits the valid minute interval %s unchanged', async frequency => {
+    const onClose = vi.fn()
+    const fetchMock = vi.fn<(url: string, init?: RequestInit) => Promise<Response>>().mockResolvedValue(Response.json({ snapshot_policies: [{ ...policy, frequency_value: frequency }] }))
+    vi.stubGlobal('fetch', fetchMock)
+    renderModal({ policy, onClose })
+    fireEvent.change(screen.getByLabelText('Frequency'), { target: { value: String(frequency) } })
+    fireEvent.click(screen.getByRole('button', { name: 'Edit policy' }))
+    await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+    expect(fetchMock.mock.calls[0]?.[1]?.body).toContain(`"frequency_value":${String(frequency)},`)
+  })
+
+  it('blocks save and Enter until a frequency is reentered after changing the unit', () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    renderModal({ policy })
+    fireEvent.change(screen.getByLabelText('Frequency unit'), { target: { value: 'hours' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Edit policy' }))
+    fireEvent.keyDown(screen.getByLabelText('Frequency'), { key: 'Enter' })
+    expect(screen.getByLabelText('Frequency')).toHaveAttribute('aria-invalid', 'true')
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it.each([5, 7, 20])('preserves historical %s minutes without marking the opened form dirty', frequency => {
+    const onClose = vi.fn()
+    renderModal({ policy: { ...policy, frequency_value: frequency }, onClose })
+    expect(screen.getByLabelText('Frequency')).toHaveValue(frequency)
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(onClose).toHaveBeenCalledOnce()
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+  })
+
   it('keeps the horizontal copy rate slider, exact value and presets synchronized', () => {
     renderModal()
     const slider = screen.getByRole('slider', { name: 'FlashCopy copy rate slider' })
