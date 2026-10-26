@@ -131,15 +131,16 @@ vi.mock('./AppMetadataForm', async (importOriginal) => {
 vi.mock('./TierCanvas', async (importOriginal) => {
   const { TierCanvas: ActualTierCanvas } = await importOriginal<typeof import('./TierCanvas')>()
   return {
-  TierCanvas: ({
+  TierCanvas: (props: React.ComponentProps<typeof ActualTierCanvas>) => {
+    callbackHarness.canvas = props
+    const {
     tiers,
     recoveryGroupVmOptions,
     onRecoveryGroupAdded,
     onRecoveryGroupRemoved,
     onRecoveryVmSelectionChange,
     ...tierActions
-  }: React.ComponentProps<typeof ActualTierCanvas>) => {
-    callbackHarness.canvas = { tiers, recoveryGroupVmOptions, onRecoveryGroupAdded, onRecoveryGroupRemoved, onRecoveryVmSelectionChange, ...tierActions }
+    } = props
     return canvasMode.real ? (
     <ActualTierCanvas
       {...tierActions}
@@ -292,6 +293,183 @@ describe('RecoveryAppBuilder', () => {
     expect(screen.getByRole('button', { name: 'Recovery groups & tiers' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Policy set' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Orchestration' })).toBeDisabled()
+  })
+
+  describe('draft Group, VM and tier callback transitions', () => {
+    const vmMetadata = { order: 8, hostname: 'db.example.test', ip_address: '192.0.2.10', os: 'Linux', cpu: 8, memory_gb: 32, storage_gb: 200 }
+
+    async function saveFromWizard() {
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Orchestration' }))
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Save Application' }))
+    }
+
+    it.each(['missing_group', 'lpar_group', 'unresolved_group', 'unpublished_group'])('rejects %s assignment without dirty, but eligible assignment to an absent tier notifies dirty', async groupId => {
+      recoveryGroupsQuery.current.groups.push({ ...fixtureValue(recoveryGroupsQuery.current.groups[0]), id: 'unpublished_group', pushToOrchestrator: false })
+      const initialData = draftFixture()
+      const before = structuredClone(initialData)
+      const onDirtyChange = vi.fn()
+      const onSave = vi.fn()
+      render(<RecoveryAppBuilder initialData={initialData} onSave={onSave} onDirtyChange={onDirtyChange} />)
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Recovery groups & tiers' }))
+      act(() => { canvasProps().onRecoveryGroupAdded?.('tier_id', groupId) })
+      expect(onDirtyChange).not.toHaveBeenCalled()
+      expect(Object.entries(canvasProps().tiers)).toEqual([...before.tiers])
+      act(() => { canvasProps().onRecoveryGroupAdded?.('absent', 'database_group') })
+      expect(onDirtyChange.mock.calls).toEqual([[true]])
+      await saveFromWizard()
+      expect(onSave).toHaveBeenCalledExactlyOnceWith(before)
+      expect(initialData).toEqual(before)
+    })
+
+    it.each([
+      ['VMware', 'vmware-01', 'vmware-target-01', 'database_group', 'DB-01', 'DB-02'],
+      ['IBM Power', 'power-01', 'power-01', 'lpar_group', 'aix01', 'aix02'],
+    ])('copies every %s VM field with assignment precedence, then reindexes selection and preserves survivor metadata', async (_label, platform, targetProviderId, groupId, firstName, secondName) => {
+      recoveryGroupsQuery.current.groups = recoveryGroupsQuery.current.groups.map(group => group.id === groupId ? {
+        ...group, resources: [firstName, secondName], vmMetadataByName: { [firstName]: { ...vmMetadata }, [secondName]: { hostname: 'second-original', cpu: 2 } },
+      } : group)
+      const queryBefore = structuredClone(recoveryGroupsQuery.current.groups)
+      const initialData = { ...draftFixture(), platform, targetProviderId, tiers: new Map([['tier_id', { order: 3, description: 'Database tier' }]]) }
+      const before = structuredClone(initialData)
+      const onSave = vi.fn()
+      const onDirtyChange = vi.fn()
+      const props = { initialData, onSave, onDirtyChange }
+      const { rerender } = render(<RecoveryAppBuilder {...props} />)
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Recovery groups & tiers' }))
+      act(() => { canvasProps().onRecoveryGroupAdded?.('tier_id', groupId) })
+      const assigned = {
+        id: groupId, name: _label === 'VMware' ? 'Database Group' : 'LPAR Group', description: _label === 'VMware' ? 'Database recovery group' : 'AIX recovery group',
+        vms: [{ name: firstName, ...vmMetadata }, { name: secondName, order: 2, hostname: 'second-original', cpu: 2 }],
+      }
+      expect(canvasProps().tiers['tier_id']).toEqual({ order: 3, description: 'Database tier', recovery_group: assigned })
+      expect(recoveryGroupsQuery.current.groups).toEqual(queryBefore)
+      await saveFromWizard()
+      expect(onSave).toHaveBeenNthCalledWith(1, { ...initialData, tiers: new Map([['tier_id', { order: 3, description: 'Database tier', recovery_group: assigned }]]) })
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Recovery groups & tiers' }))
+      act(() => { canvasProps().onRecoveryVmSelectionChange?.('tier_id', firstName, true) })
+      expect(canvasProps().tiers['tier_id']?.recovery_group).toEqual(assigned)
+      recoveryGroupsQuery.current.groups = recoveryGroupsQuery.current.groups.map(group => group.id === groupId ? {
+        ...group, pushToOrchestrator: false, vmMetadataByName: { [firstName]: { hostname: 'fresh-host', cpu: 16 }, [secondName]: { hostname: 'query-changed', cpu: 99 } },
+      } : group)
+      const refreshedQuery = structuredClone(recoveryGroupsQuery.current.groups)
+      rerender(<RecoveryAppBuilder {...props} />)
+      act(() => { canvasProps().onRecoveryVmSelectionChange?.('tier_id', firstName, false) })
+      expect(canvasProps().tiers['tier_id']?.recovery_group?.vms).toEqual([{ name: secondName, order: 1, hostname: 'second-original', cpu: 2 }])
+      act(() => { canvasProps().onRecoveryVmSelectionChange?.('tier_id', firstName, true) })
+      const expectedTier = { order: 3, description: 'Database tier', recovery_group: { ...assigned, vms: [
+        { name: secondName, order: 1, hostname: 'second-original', cpu: 2 }, { name: firstName, order: 2, hostname: 'fresh-host', cpu: 16 },
+      ] } }
+      expect(canvasProps().tiers['tier_id']).toEqual(expectedTier)
+      expect(onDirtyChange.mock.calls).toEqual([[true], [true], [true], [true]])
+      expect(recoveryGroupsQuery.current.groups).toEqual(refreshedQuery)
+      recoveryGroupsQuery.current.groups = recoveryGroupsQuery.current.groups.map(group => ({ ...group, pushToOrchestrator: true }))
+      rerender(<RecoveryAppBuilder {...props} />)
+      await saveFromWizard()
+      expect(onSave).toHaveBeenCalledTimes(2)
+      expect(onSave).toHaveBeenNthCalledWith(2, { ...initialData, tiers: new Map([['tier_id', expectedTier]]) })
+      expect(initialData).toEqual(before)
+      expect([...initialData.tiers]).toEqual([...before.tiers])
+    })
+
+    it('allows unknown VM names and missing live Group data, retaining selection order and callback dirty no-ops', async () => {
+      const initialData = draftFixture()
+      initialData.tiers.set('empty', { order: 7, description: 'No Group' })
+      const before = structuredClone(initialData)
+      const onDirtyChange = vi.fn()
+      const props = { initialData, onDirtyChange }
+      const { rerender } = render(<RecoveryAppBuilder {...props} />)
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Recovery groups & tiers' }))
+      act(() => { canvasProps().onRecoveryVmSelectionChange?.('tier_id', 'unknown', true) })
+      recoveryGroupsQuery.current.groups = []
+      rerender(<RecoveryAppBuilder {...props} />)
+      act(() => { canvasProps().onRecoveryVmSelectionChange?.('tier_id', 'missing-group-vm', true) })
+      const expected = [
+        { name: 'DB-01', order: 1, hostname: 'stored-host' }, { name: 'unknown', order: 2 }, { name: 'missing-group-vm', order: 3 },
+      ]
+      expect(canvasProps().tiers['tier_id']?.recovery_group?.vms).toEqual(expected)
+      act(() => { canvasProps().onRecoveryVmSelectionChange?.('tier_id', 'unknown', true) })
+      act(() => { canvasProps().onRecoveryVmSelectionChange?.('tier_id', 'absent', false) })
+      act(() => { canvasProps().onRecoveryVmSelectionChange?.('absent', 'DB-01', true) })
+      act(() => { canvasProps().onRecoveryVmSelectionChange?.('empty', 'DB-01', true) })
+      expect(canvasProps().tiers['tier_id']?.recovery_group?.vms).toEqual(expected)
+      expect(canvasProps().tiers['empty']).toEqual({ order: 7, description: 'No Group' })
+      expect(onDirtyChange.mock.calls).toEqual(Array.from({ length: 6 }, () => [true]))
+      expect(initialData).toEqual(before)
+    })
+
+    it('removes only Group content, retaining Map position, tier order and description even for missing-removal callbacks', async () => {
+      const initialData = draftFixture()
+      const before = structuredClone(initialData)
+      const onDirtyChange = vi.fn()
+      render(<RecoveryAppBuilder initialData={initialData} onDirtyChange={onDirtyChange} />)
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Recovery groups & tiers' }))
+      act(() => { canvasProps().onRecoveryGroupRemoved?.('tier_id') })
+      act(() => { canvasProps().onRecoveryGroupRemoved?.('tier_id') })
+      act(() => { canvasProps().onRecoveryGroupRemoved?.('absent') })
+      expect(Object.entries(canvasProps().tiers)).toEqual([
+        ['tier_id', { order: 3, description: 'Database tier' }], ['web', before.tiers.get('web')],
+      ])
+      expect(onDirtyChange.mock.calls).toEqual([[true], [true], [true]])
+      expect(initialData).toEqual(before)
+    })
+
+    it('edits, renames, adds, deletes and applies reorder records without sorting Map insertion or losing metadata', async () => {
+      const initialData = draftFixture()
+      const before = structuredClone(initialData)
+      const onDirtyChange = vi.fn()
+      const onSave = vi.fn()
+      render(<RecoveryAppBuilder initialData={initialData} onDirtyChange={onDirtyChange} onSave={onSave} />)
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Recovery groups & tiers' }))
+      act(() => { canvasProps().onTierEdit?.('tier_id', 'renamed', { tierDescription: 'Edited database' }) })
+      expect(Object.keys(canvasProps().tiers)).toEqual(['web', 'renamed'])
+      const renamed = { ...fixtureValue(before.tiers.get('tier_id')), description: 'Edited database' }
+      expect(canvasProps().tiers['renamed']).toEqual(renamed)
+      act(() => { canvasProps().onTierEdit?.('renamed', 'renamed', { tierDescription: 'Edited again' }) })
+      const updated = { ...renamed, description: 'Edited again' }
+      const added = { ...fixtureValue(before.tiers.get('web')), order: 4, description: 'Added tier' }
+      act(() => { canvasProps().onTierAdd?.('added', added) })
+      act(() => { canvasProps().onTierDelete?.('web') })
+      expect(Object.entries(canvasProps().tiers)).toEqual([['renamed', updated], ['added', added]])
+      const reordered = { added: { ...added, order: 2 }, renamed: { ...updated, order: 1 } }
+      const reorderBefore = structuredClone(reordered)
+      act(() => { canvasProps().onTierReorder?.(reordered) })
+      expect(Object.entries(canvasProps().tiers)).toEqual([['added', reordered.added], ['renamed', reordered.renamed]])
+      act(() => { canvasProps().onTierEdit?.('absent', 'ignored', { tierDescription: 'Ignored' }) })
+      act(() => { canvasProps().onTierDelete?.('absent') })
+      expect(onDirtyChange.mock.calls).toEqual(Array.from({ length: 7 }, () => [true]))
+      await saveFromWizard()
+      expect(onSave).toHaveBeenCalledExactlyOnceWith({ ...initialData, tiers: new Map(Object.entries(reordered)) })
+      expect(reordered).toEqual(reorderBefore)
+      expect(added).toEqual({ ...fixtureValue(before.tiers.get('web')), order: 4, description: 'Added tier' })
+      expect(initialData).toEqual(before)
+      expect([...initialData.tiers]).toEqual([...before.tiers])
+    })
+
+    it('keeps last-tier deletion and normalized collision checks in the UI while direct callbacks retain their preconditions', async () => {
+      canvasMode.real = true
+      const initialData = draftFixture()
+      initialData.tiers.delete('web')
+      const before = structuredClone(initialData)
+      const onDirtyChange = vi.fn()
+      render(<RecoveryAppBuilder initialData={initialData} onDirtyChange={onDirtyChange} />)
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Recovery groups & tiers' }))
+      expect(screen.getByRole('button', { name: /delete/i })).toBeDisabled()
+      await userEvent.setup().click(screen.getByRole('button', { name: '+' }))
+      fireEvent.change(screen.getByPlaceholderText('tier_id'), { target: { value: 'Tíer ID' } })
+      fireEvent.change(screen.getByPlaceholderText('Tier description'), { target: { value: ' New tier ' } })
+      expect(screen.getByRole('button', { name: 'Create' })).toBeDisabled()
+      expect(onDirtyChange).not.toHaveBeenCalled()
+      fireEvent.change(screen.getByPlaceholderText('tier_id'), { target: { value: 'Néw Tier' } })
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Create' }))
+      expect(canvasProps().tiers['new_tier']).toEqual({ order: 4, description: 'New tier' })
+      act(() => { canvasProps().onTierDelete?.('new_tier') })
+      act(() => { canvasProps().onTierDelete?.('tier_id') })
+      expect(canvasProps().tiers).toEqual({})
+      act(() => { canvasProps().onTierAdd?.('Unnormalized ID', { order: 12, description: ' Direct ' }) })
+      expect(canvasProps().tiers).toEqual({ 'Unnormalized ID': { order: 12, description: ' Direct ' } })
+      expect(onDirtyChange.mock.calls).toEqual([[true], [true], [true], [true]])
+      expect(initialData).toEqual(before)
+    })
   })
 
   it('keeps the next step disabled until a target provider is selected', () => {
@@ -628,7 +806,7 @@ describe('RecoveryAppBuilder', () => {
       await userEvent.setup().click(screen.getByRole('button', { name: 'Application details' }))
       act(() => { metadataProps().onMetadataChange?.({ platform: 'power-01', targetProviderId: '', name: 'Proposed' }) })
       act(() => { metadataProps().onMetadataChange?.({ name: 'Intervening', description: 'Latest description', targetProviderId: 'vmware-target-01' }) })
-      act(() => { canvasProps().onTierAdd('late', { order: 9, description: 'Late tier', recovery_group: fixtureValue(initialData.tiers.get('web')).recovery_group }) })
+      act(() => { canvasProps().onTierAdd?.('late', { order: 9, description: 'Late tier', recovery_group: fixtureValue(initialData.tiers.get('web')).recovery_group }) })
       const previousProviders = providersQuery.current.data
       providersQuery.current.data = previousProviders.map(provider => provider.id === 'power-01' ? { ...provider, type: 'VMWARE' } : provider)
       onTestFinished(() => { providersQuery.current.data = previousProviders })
