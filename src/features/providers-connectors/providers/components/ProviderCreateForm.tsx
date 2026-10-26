@@ -99,8 +99,8 @@ export function ProviderCreateForm({
   }
 
   return (
-    <div className="space-y-4 px-6 py-4">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+    <div className="space-y-3 px-6 py-4">
+      <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">
         <Field label={t('forms.id')} htmlFor="create-id">
           <Input
             id="create-id"
@@ -145,7 +145,7 @@ export function ProviderCreateForm({
         {errors.description ? <p className="mt-1 text-xs text-red-600">{errors.description}</p> : null}
       </Field>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">
         <Field label={t('forms.type')} htmlFor="create-type">
           <Select
             id="create-type"
@@ -181,7 +181,7 @@ export function ProviderCreateForm({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:[&>:last-child:nth-child(odd)]:col-span-2">
+      <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2 md:[&>:last-child:nth-child(odd)]:col-span-2">
         <Field label={t('forms.ip')} htmlFor="create-ipAddress">
           <Input
             id="create-ipAddress"
@@ -209,13 +209,12 @@ export function ProviderCreateForm({
               {partnerMissing ? <option value={data.partnerProviderId} disabled>{data.partnerProviderId} ({t('forms.partnerProviderUnavailable')})</option> : null}
               {partnerOptions.map(provider => <option key={provider.id} value={provider.id}>{provider.name} — {provider.id}</option>)}
             </Select>
-            <p className="mt-1 text-xs text-text-muted">{t('forms.partnerProviderHelper')}</p>
             {errors.partnerProviderId ? <p role="alert" className="mt-1 text-xs text-red-600">{errors.partnerProviderId}</p> : null}
           </div>
         ) : null}
 
         {fieldConfig.backingStorageProviderIds ? (
-          <div className="block">
+          <div className="block [&>div>button]:h-10 [&>div>button]:justify-between [&>div>button]:px-3 [&>div>button]:py-0">
             <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
               <label htmlFor="create-backingStorageProviders" className="text-xs font-medium text-text-secondary">{t('forms.backingStorageProviders')}</label>
               <KeyedHelpPopover helpKey="providers.fieldHelp.backingStorageProviderIds" sections={[]} />
@@ -224,7 +223,6 @@ export function ProviderCreateForm({
               options={storageOptions} value={data.backingStorageProviderIds}
               onChange={onBackingStorageChange} disabled={isSubmitting}
               placeholder={t('forms.backingStorageProvidersSelect')} emptyText={t('forms.backingStorageProvidersEmpty')} />
-            <p className="mt-1 text-xs text-text-muted">{t('forms.backingStorageProvidersHelper')}</p>
           </div>
         ) : null}
 
@@ -244,7 +242,6 @@ export function ProviderCreateForm({
             disabled={isSubmitting}
             aria-invalid={Boolean(errors.cacheRefreshSeconds)}
           />
-          <p className="mt-1 text-xs text-text-muted">{t('forms.cacheRefreshSecondsHelper')}</p>
           {errors.cacheRefreshSeconds ? <p className="mt-1 text-xs text-red-600">{errors.cacheRefreshSeconds}</p> : null}
         </div>
 
@@ -257,7 +254,6 @@ export function ProviderCreateForm({
             <Input id="create-managedSystem" type="text" value={data.managedSystem} aria-label={t('forms.managedSystem')}
               onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('managedSystem', event.target.value) }}
               onKeyDown={handleKeyDown} disabled={isSubmitting} aria-invalid={Boolean(errors.managedSystem)} />
-            <p className="mt-1 text-xs text-text-muted">{t('forms.managedSystemHelper')}</p>
             {errors.managedSystem ? <p className="mt-1 text-xs text-red-600">{errors.managedSystem}</p> : null}
           </div>
         ) : null}
@@ -279,7 +275,7 @@ export function ProviderCreateForm({
           {errors.vmPrefix ? <p className="mt-1 text-xs text-red-600">{errors.vmPrefix}</p> : null}
         </div> : null}
 
-        {fieldConfig.vmTags ? <div className="block">
+        {fieldConfig.vmTags ? <div className="block [&>div>button]:h-10 [&>div>button]:justify-between [&>div>button]:px-3 [&>div>button]:py-0">
           <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
             <label htmlFor="create-vmTags" className="text-xs font-medium text-text-secondary">{t('forms.vmTags')}</label>
             <KeyedHelpPopover helpKey="providers.fieldHelp.vmTags" sections={[]} />
