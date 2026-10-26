@@ -3,7 +3,7 @@ import { Field, Input, Select } from '@/shared/components/form/FormControls'
 import { MultiSelect } from '@/shared/components/form/MultiSelect'
 import { useTranslation } from '@/hooks/useTranslation'
 import { PROVIDER_ROLES, PROVIDER_TYPES } from '../model/providerTypes'
-import { isComputeProviderType, isPartnerProviderType } from '../model/providerCategory'
+import { getProviderFieldConfig } from '../model/providerFieldConfig'
 import type { CredentialRecord } from '@/generated/query/zod'
 
 export interface ProviderCreateFormData {
@@ -76,6 +76,7 @@ export function ProviderCreateForm({
   onSubmit,
 }: ProviderCreateFormProps) {
   const { t } = useTranslation()
+  const fieldConfig = getProviderFieldConfig(data.type)
   const partnerOptions = partnerProviders.filter(provider => provider.id !== data.id)
   const partnerMissing = data.partnerProviderId && !partnerOptions.some(provider => provider.id === data.partnerProviderId)
   const storageOptions = [
@@ -193,7 +194,7 @@ export function ProviderCreateForm({
 
       </div>
 
-      {isPartnerProviderType(data.type) ? (
+      {fieldConfig.partnerProviderId ? (
         <Field label={t('forms.partnerProvider')} htmlFor="create-partnerProviderId">
           <Select id="create-partnerProviderId" value={data.partnerProviderId} aria-label={t('forms.partnerProvider')}
             disabled={isSubmitting} aria-invalid={Boolean(errors.partnerProviderId)}
@@ -208,7 +209,7 @@ export function ProviderCreateForm({
       ) : null}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {isComputeProviderType(data.type) ? (
+        {fieldConfig.backingStorageProviderIds ? (
           <Field label={t('forms.backingStorageProviders')} htmlFor="create-backingStorageProviders">
             <MultiSelect id="create-backingStorageProviders" label={t('forms.backingStorageProviders')}
               options={storageOptions} value={data.backingStorageProviderIds}
@@ -235,8 +236,8 @@ export function ProviderCreateForm({
         </Field>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <Field label={t('forms.vmPrefix')} htmlFor="create-vmPrefix">
+      {fieldConfig.vmPrefix || fieldConfig.vmTags ? <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {fieldConfig.vmPrefix ? <Field label={t('forms.vmPrefix')} htmlFor="create-vmPrefix">
           <Input
             id="create-vmPrefix"
             type="text"
@@ -247,9 +248,9 @@ export function ProviderCreateForm({
             aria-invalid={Boolean(errors.vmPrefix)}
           />
           {errors.vmPrefix ? <p className="mt-1 text-xs text-red-600">{errors.vmPrefix}</p> : null}
-        </Field>
+        </Field> : null}
 
-        <Field label={t('forms.vmTags')} htmlFor="create-vmTags">
+        {fieldConfig.vmTags ? <Field label={t('forms.vmTags')} htmlFor="create-vmTags">
           <Select
             id="create-vmTags"
             value={selectedVmTag}
@@ -272,8 +273,8 @@ export function ProviderCreateForm({
               ) : null}
             </p>
           ) : null}
-        </Field>
-      </div>
+        </Field> : null}
+      </div> : null}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Field label={t('forms.credentials')} htmlFor="create-credentials">

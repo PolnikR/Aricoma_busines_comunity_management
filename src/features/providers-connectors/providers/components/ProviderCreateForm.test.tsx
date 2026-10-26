@@ -139,6 +139,8 @@ describe('ProviderCreateForm', () => {
     ['IBM_POWER', true, false],
     ['FLASHCOPY', false, true],
     ['HITACHI', false, false],
+    ['', false, false],
+    ['unknown', false, false],
   ])('shows the relationship fields that %s supports (backing=%s, partner=%s)', (type, backing, partner) => {
     render(
       <ProviderCreateForm
@@ -159,6 +161,11 @@ describe('ProviderCreateForm', () => {
     )
 
     expect(screen.queryByRole('button', { name: 'Backing storage providers' }) !== null).toBe(backing)
+    expect(screen.queryByLabelText('VM prefix') !== null).toBe(type === 'VMWARE')
+    expect(screen.queryByLabelText('VM tags') !== null).toBe(type === 'VMWARE')
+    for (const label of ['Description', 'IP address', 'Role', 'URL', 'Notification email', 'Credentials']) {
+      expect(screen.getByLabelText(label)).toBeInTheDocument()
+    }
     const partnerSelect = screen.queryByLabelText('Partner FlashSystem provider')
     expect(partnerSelect !== null).toBe(partner)
     if (partnerSelect) {
