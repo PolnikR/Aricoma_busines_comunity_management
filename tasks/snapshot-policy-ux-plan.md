@@ -1,6 +1,6 @@
 # Snapshot Policy – plán UX úprav
 
-Stav: návrh na schválenie, implementácia nezačala. Dátum: 26. 10. 2026.
+Stav: implementované inline na pokyn používateľa; automatické overenie prešlo, vizuálne overenie zostáva otvorené. Dátum: 26. 10. 2026.
 Úlohy: [snapshot-policy-ux-todo.md](snapshot-policy-ux-todo.md).
 
 ## Cieľ a hranice
@@ -23,7 +23,7 @@ Podľa posledného pokynu používateľa nápoveda nebude uvádzať predvolené 
 
 Feature cesty vyššie sú relatívne k `src/features/recovery-plans/recovery-policies/`; shared a locales k `src/`.
 
-Autoritatívna referencia: [backend Policy parameters – SnapshotPolicy](https://pages.esas.autocont.sk/abco-be-507ccc/parameters/policies.html). Stránku sa pri plánovaní nepodarilo načítať; samostatný `Policy parameters.html` nie je v repozitári. Texty nižšie vychádzajú z definícií priložených používateľom, nie z nezávisle overeného HTML. Pred implementáciou texty porovnať s dostupnou sekciou SnapshotPolicy; prípadný rozpor vyriešiť pred ich zapísaním. Backendové minimum a FE požiadavka na násobky 15 sú rôzne pravidlá.
+Autoritatívna referencia: [backend Policy parameters – SnapshotPolicy](https://pages.esas.autocont.sk/abco-be-507ccc/parameters/policies.html). Webová stránka nebola dostupná. Pri implementácii sa cez Computer Use podarilo prečítať celý otvorený dokument `Policy parameters.html` v Poznámkovom bloku a porovnať sekciu SnapshotPolicy s textami nižšie. Významy sú zhodné vrátane prednosti Maximum snapshots, zaokrúhlenia odvodeného počtu snímok, závislosti FlashCopy od zdroja a ignorovania parametra pre Hitachi VSP. Backendové minimum a FE požiadavka na násobky 15 sú rôzne pravidlá. Default informácie z HTML sa do nápovedy nepreniesli.
 
 ## Rozloženie
 
@@ -47,9 +47,7 @@ Použiť existujúci grid štýl: prvý riadok jedna kolóna, od `sm` dve; druh�
 
 Create začína na `15 minutes`. Žiadne maximum 60 minút. Ručne zadanú chybnú hodnotu ponechať viditeľnú, označiť chybu a zablokovať API submit cez existujúcu validačnú bránu vrátane Enter. HTML atribúty samy nestačia. Retention sa nesmie normalizovať ani prevádzať.
 
-Navrhované rozhodnutie na schválenie: pri vedomej zmene jednotky zachovať dĺžku intervalu, ak je presne vyjadriteľná; inak zaokrúhliť nahor na najbližší povolený krok cieľovej jednotky. Pre kladné konečné číslo: previesť zdroj na minúty, vydeliť dĺžkou cieľovej jednotky a použiť `max(minimum, ceil(hodnota / krok) × krok)`. Hodnotu a jednotku aktualizovať jednou funkčnou aktualizáciou stavu v modale, aby nemohli vzniknúť nesúladné medzistavy. Príklady: 1 hour → 60 minutes, 90 minutes → 2 hours, 1 day → 24 hours, 7 minutes → 1 hour. Pri zaokrúhlení bezprostredne zobraziť inline `role="status"` s výsledným intervalom a dôvodom. Ide o novú požadovanú FE interakciu, nie tvrdenie backendovej dokumentácie.
-
-Ak je číslo prázdne, nečíselné alebo nekladné, prepnutie jednotky odmietnuť, ponechať celý pár a zobraziť lokalizovanú chybu. Používateľ najprv opraví číslo; nikdy sa nedopĺňa skrytá náhradná hodnota. Pri presnom prevode nevzniká zaokrúhľovacie oznámenie. Oznámenie o zaokrúhlení odstrániť pri ďalšej ručnej úprave Frequency alebo opätovnom otvorení modalu; nie je súčasťou payloadu ani dirty porovnania.
+Pri manuálnej zmene `frequency_unit` sa nastaví nová jednotka a `frequency_value` sa vyprázdni na `''`, bez ohľadu na pôvodnú číselnú hodnotu. Žiadny prepočet, zaokrúhľovanie, automatická náhradná hodnota ani oznamovacia hláška. Používateľ zadá číslo nanovo podľa minima a kroku novej jednotky. Zmeniť oba údaje v jednej aktualizácii form state, aby bol stav konzistentný; pri opätovnom výbere nezmenenej jednotky hodnotu nemazať. Prázdnu alebo neplatnú Frequency existujúca validačná brána odmietne pri Save aj Enter, takže sa neodošle API request. Retention a jej jednotka zostávajú nedotknuté.
 
 Historické Edit hodnoty (5, 7, 20 minút) načítať presne, bez efektu meniaceho dáta a bez dirty stavu pri otvorení. Až validácia pri uložení vyžaduje platnú novú Frequency; zablokuje aj uloženie iného poľa, kým používateľ frekvenciu vedome neopraví. Žiadna výnimka prepúšťajúca neplatný interval do celého submit payloadu. Zatvorenie bez úprav ostane bez dirty potvrdenia.
 
@@ -58,10 +56,8 @@ Nové texty mimo nápovedy (ploché locale kľúče):
 | Kľúč pod `snapshotPolicies.` | EN | SK |
 |---|---|---|
 | `validation.frequencyMinutes` | Enter a whole number of minutes, at least 15 and a multiple of 15. | Zadajte celý počet minút, aspoň 15 a násobok 15. |
-| `validation.frequencyBeforeUnitChange` | Enter a positive frequency before changing its unit. | Pred zmenou jednotky zadajte kladnú frekvenciu. |
-| `form.frequencyRounded` | The interval was rounded up to {value} {unit} to use a valid whole step. | Interval sa zaokrúhlil nahor na {value} {unit}, aby zodpovedal povolenému celému kroku. |
 
-Interpoláciu vykonať spôsobom používaným projektom (`t(...).replace(...)`); `{unit}` pochádza z existujúcich prekladov jednotiek. Pri chybách prevodu zachovať pôvodné jednotky aj číslo.
+Ďalšie kľúče pre prevod jednotiek, zaokrúhlenie alebo oznamovacie hlášky nevytvárať; pri zmene jednotky sa hodnota jednoducho vyprázdni.
 
 ## Integrácia šiestich otáznikov
 
@@ -147,9 +143,9 @@ Nasledujúce JSON bloky sú ploché dodatky do locale máp. Neobsahujú informá
 
 | Riziko | Dopad | Opatrenie |
 |---|---|---|
-| Zaokrúhlenie pri prepnutí jednotky mení interval | vysoký | Schváliť pravidlo, viditeľné oznámenie, testy oboch smerov a bez horného limitu 60 |
+| Zmena jednotky ponechá neplatné staré číslo | stredný | Pri skutočnej zmene jednotky vyprázdniť `frequency_value`, vyžiadať nové číslo a blokovať prázdny submit; bez prepočtov |
 | Staršiu politiku nemožno uložiť bez opravy Frequency | stredný | Bez zmeny pri načítaní; vysvetľujúca chyba až pri validácii, test žiadneho requestu |
-| Neoverený backend HTML zdroj | stredný | Pred zapísaním prekladov porovnať s originálom; nepridávať ďalšie účinky |
+| Nedostupný backend web | stredný | Významy overené v otvorenej lokálnej kópii HTML; bez dodatočných účinkov |
 | Shared DetailField ovplyvní iné detaily | stredný | Voliteľný slot bez zmeny string labelu a pôvodného DOM bez slotu; focused shared test |
 | Popover koliduje s nadradeným modalom | stredný | Skutočná integrácia: focus, Enter, Escape, dirty guard a payload |
 | SK texty zúžia formulár | stredný | Overiť EN/SK pri 320, 375 a 768 px aj desktop; žiadny horizontálny scroll |
@@ -158,10 +154,24 @@ Akceptácia zahŕňa: poradie a responzivitu, všetky hodnotové pravidlá, pres
 
 Focused testy spúšťať po príslušnej úlohe, ESLint len na zmenených TS/TSX súboroch. EN/SK JSON validovať parserom a kontrolou zhodných nových kľúčov. Vizuálne overenie robiť v reálnom prehliadači; jsdom nedokazuje layout. Kompletnú sadu ani produkčný build nespúšťať automaticky. Po úspešnom overení každej implementačnej úlohy vytvoriť samostatný commit podľa AGENTS.md.
 
-## Body na schválenie pred implementáciou
+## Schválenie a výsledok implementácie
 
-- Schváliť tento plán a TODO vrátane prevodu jednotiek so zaokrúhlením nahor a viditeľným oznámením.
-- Potvrdiť navrhnutý postup pre historické neplatné frekvencie a minimálny slot `DetailField.labelHelp`.
-- Získať dostupné originálne HTML na porovnanie významov; jeho nedostupnosť neblokuje odovzdanie návrhu plánu.
+- Používateľ pokynom „inline, načítaj plán todo a pracuj“ schválil realizáciu aktuálneho plánu vrátane vyprázdnenia Frequency pri zmene jednotky.
+- Historické hodnoty zostávajú nezmenené pri otvorení Edit a pred uložením vyžadujú platnú frekvenciu.
+- `DetailField.labelHelp` bol už integrovaný zo súbežnej práce; znovu použitý bez shared produkčnej úpravy. Testy existujúceho slotu prešli.
+- Lokalizované integračné pokrytie všetkých troch pohľadov je v novom `SnapshotPolicyHelp.test.tsx`; existujúce modal testy pokrývajú validáciu, prepínanie, DOM poradie a izoláciu nápovedy od stavu.
 
-Implementácia čaká na následné schválenie používateľom podľa zadania.
+Automatické overenie: 90 testov v piatich súboroch (`SnapshotPolicyModal`, `FlashCopyCopyRateField`, `SnapshotPolicyHelp`, `SnapshotPoliciesTable`, shared `DetailContent`), focused ESLint a focused TypeScript cez dočasný `.superpowers/snapshot-policy-ux-tsconfig.json` (po kontrole odstránený). Dočasný config rozširoval `tsconfig.app.json`, zahŕňal snapshot `components/*.tsx`, `src/test-utils/setup.ts` a `src/**/*.d.ts`, bez inkrementálneho výstupu. Obsahová kontrola locale potvrdila 18 zhodných fieldHelp kľúčov pre každý jazyk, platný JSON, absenciu default textov a nezmenené pôvodné `snapshotPolicies.help.*` oproti `66ecdf23`. Kompletná testovacia sada ani build neboli spustené.
+
+Spustené záverečné príkazy (PowerShell používa `npm.cmd` kvôli execution policy):
+
+```powershell
+npm.cmd exec -- vitest run src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPolicyModal.test.tsx src/features/recovery-plans/recovery-policies/snapshot/components/FlashCopyCopyRateField.test.tsx src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPolicyHelp.test.tsx src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPoliciesTable.test.tsx src/shared/components/detail-view/DetailContent.test.tsx
+npm.cmd exec -- eslint src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPolicyForm.tsx src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPolicyModal.tsx src/features/recovery-plans/recovery-policies/snapshot/components/FlashCopyCopyRateField.tsx src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPolicyModal.test.tsx src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPolicyHelp.test.tsx src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPoliciesTable.tsx src/shared/components/detail-view/DetailField.tsx src/shared/components/detail-view/DetailContent.test.tsx --max-warnings 0
+npm.cmd exec -- tsc -p .superpowers/snapshot-policy-ux-tsconfig.json --noEmit
+git diff --check
+```
+
+Po typovej oprave nového lokalizačného testu bol ešte raz spustený `npm.cmd exec -- vitest run src/features/recovery-plans/recovery-policies/snapshot/components/SnapshotPolicyHelp.test.tsx` (6 testov) a ESLint tohto súboru. Implementačné commity: `b1da12a4` (Frequency), `4d201c00` (poradie), `974dfabf` (Create/Edit help), `19993f79` (Display a EN/SK integrácia).
+
+Vizuálne overenie nebolo dokončené: Computer Use pri otvorení samostatnej lokálnej karty ukončil UI ovládanie, pretože na Windows nedokázal spoľahlivo určiť aktuálnu URL. Ďalšie UI vstupy sa nevykonali. Responzivitu pri 320/375/768 px a desktop, mobile/touch a vykreslenie popovera pri okraji viewportu treba ešte skontrolovať v prehliadači. Automatické testy sa nevydávajú za dôkaz vizuálnej správnosti.
