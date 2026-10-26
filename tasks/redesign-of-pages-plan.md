@@ -1,103 +1,96 @@
-# Redesign of pages — ABCO / Linear + Tremor
+﻿# Redesign of pages — spoločný vzhľad ABCO / Linear + Tremor
 
-Stav: návrh plánu na review; implementácia nezačala.
+Stav: revidovaný implementačný plán na review; táto relácia mení iba dokumentáciu.
 Úlohy: [redesign-of-pages-todo.md](redesign-of-pages-todo.md).
-Referencia: [samostatný HTML template](../prototypes/policy-sets-modern.html), commit `20c682d4`.
+Vizuálna referencia: [HTML template](../prototypes/policy-sets-modern.html), commit `20c682d4`.
 
 ## Cieľ a rozsah
 
-Preniesť vizuálnu hierarchiu prototypu do existujúcej aplikácie ABCO: čitateľné názvy, sekundárne identifikátory, jemné oddeľovače, kompaktné ovládanie a obsah bez zbytočných vnorených rámov. Zachovať ABCO paletu, typografiu, aplikačný shell a funkčné kontrakty.
+Modernizovať EXISTUJÚCI spoločný layout tabuľkových stránok ABCO cez shared komponenty. Zmena spoločných defaultov sa má prejaviť na všetkých ich konzumentoch. Policy sets je jedna z kontrolných stránok, nie samostatný pilot ani hranica implementácie. Používateľ doložil existujúci jednotný vzhľad na Resources, Providers a Identity; tieto stránky tvoria povinnú kontrolnú vzorku.
 
-Pracovný predpoklad po používateľovom pomenovaní „redesign of pages“: Policy sets je prvá implementačná etapa; ďalšie tabuľkové stránky sú kandidáti na následný rollout. Používateľ zatiaľ nepotvrdil, že rozsah zahŕňa všetky stránky. Tento dokument preto neoprávňuje plošnú zmenu formulárov, builderov, dashboardov alebo detailov.
+Preniesť hierarchiu Linear/Tremor (typografia, jemné deliace čiary, kompaktné toolbary, vyvážené rozostupy) do existujúcich ABCO tokenov a komponentov. Neimplementovať paralelný dizajnový systém ani lokálne kópie tabuľky pre každú feature.
 
-Výstup tejto relácie sú iba dva plánovacie dokumenty. `tasks/plan.md` a `tasks/todo.md` patria FlashCopy s otvorenými browser kontrolami a zostávajú nedotknuté. Názov nových dokumentov vychádza z používateľovho „redesign of pages“.
+Rozsah zahŕňa všetkých konzumentov shared tabuľkových/inventory komponentov: Resources, Providers, Credentials, Recovery Applications/Groups, Policies/Policy sets, Recovery runs, Identity a Audit; audit v T1 doplní úplný zoznam podľa aktuálneho kódu. Aj vložené tabuľky v detailoch sú konzumenti na kontrolu kompatibility. Nejde o kompletný redesign formulárov, builderov, dashboardov alebo samotného DetailView.
 
-## Východiskový stav a závislosti
+## Overený základ
 
-- `PolicySetsPage` používa `TableToolbar`, `InventoryShell`, `PolicySetsTable` a existujúci `PolicySetModal`.
-- `InventoryShell` vkladá `Card`; `DataTableSurface` pridáva ďalší zaoblený rám a flex/grid výškový kontrakt. Tieto komponenty majú ďalších konzumentov; globálna zmena defaultov nie je bezpečný pilot.
-- `PolicySetsTable` vlastní výber, detail, JSON, edit/delete a `useTableState`. Zdroj údajov ostáva `useGetPolicySets` + `selectPolicySets`; post-delete refresh riadi `usePostDeleteRefresh`.
-- `useTableState` poskytuje vyhľadávanie, predicate, stránkovanie a hustotu. Zmena search/page size resetuje stránku; samotná zmena predicate ju neresetuje.
-- Existujúce lokálne `PolicySetsPage.module.css` pridáva modrú hlavičku, zebra riadky a hrubšie čiary. Nahradiť tieto vlastné pravidlá novým vzhľadom, nevrstviť nad ne ďalšie protichodné override štýly.
-- Predošlý plán [scroll layoutu](policy-set-table-scroll-plan.md) dokumentuje odrezanú pagination. Zachovanie ohraničeného desktop scrollu je funkčná požiadavka.
-- [Globálny technický redesign](global-table-visual-redesign-plan.md) a [technické stránky](technical-pages-redesign-plan.md) majú iný prototyp a širší rozsah. Tento plán ich automaticky neruší, neoznačuje ako dokončené ani nepreberá ich merge, vetvové či sidebar úlohy. Pri rolloute treba najprv zladiť prekrývajúce sa zmeny.
+- CodeGraph pri príprave hlási 57 volaní DataTable, 40 DataTableSurface a 26 TableToolbar. Ide o volania, nie počty stránok; konkrétny zoznam sa overí pred implementáciou.
+- DataTable vlastní hlavičku, riadky, hustotu, selection/focus a horizontálny scroll; feature column definitions môžu vzhľad prebiť cez headerCellClassName/cellClassName.
+- DataTableSurface vlastní toolbar/body/pagination a výškový grid. InventoryPanel ho skladá s DataTableRequestState; ResourceInventoryPanel je adaptér/reexport, nie dôvod na druhú implementáciu vzhľadu.
+- InventoryShell pridáva obal, hlavičku a vnútorné odsadenie. TableToolbar skladá PageHeader a akcie. Skutočný stav aktuálnej pracovnej vetvy je autoritatívny, nie stav popísaný v historickom pláne.
+- PolicySetsPage.module.css je lokálna výnimka z poslednej úpravy: modrá hlavička, zebra a silnejšie čiary. Pri centrálnom redizajne ju odstrániť alebo zúžiť, aby neprebíjala spoločný výsledok.
+- Existujúci scroll kontrakt je funkčný záväzok; historická regresia je popísaná v [policy-set-table-scroll-plan.md](policy-set-table-scroll-plan.md).
 
-## ABCO vizuálny kontrakt
+## Architektonické rozhodnutia
 
-| Prvok návrhu | Prenesenie do ABCO |
+1. Nový vzhľad implementovať ako spoločný default na úrovni DataTable, DataTableSurface, InventoryShell, DataTableToolbar, RowDensityToggle, DataTablePagination a tabuľkovej hlavičky TableToolbar. Nepridávať vzhľadový opt-in na každú stránku. Výnimka je prípustná iba pre konkrétny auditovaný layout, napríklad virtualizovanú tabuľku s meranou výškou riadkov.
+2. InventoryPanel a nízkoúrovňový Table meniť iba ak audit ukáže pravidlo, ktoré patrí práve tam; nezdvojovať štýly, ktoré už zdedia. Globálny Card, Button, Input, Badge ani PageHeader nepreštýlovať bez auditu netabuľkových konzumentov. V rámci tohto rozsahu preferovať existujúce styling props/composition na tabuľkovej vrstve.
+3. Zachovať verejné funkčné props, callbacky, URL stav, filtre, search, sort, výber, pagination, hustotu, refresh/retry, loading/empty/error/cached-error, sticky prvky a virtualizáciu. Žiadna zmena API, generated súborov, query keys, doménových pravidiel alebo obsahu metrík.
+4. Lokálne zmeny slúžia na odstránenie prekážajúcich override štýlov a zosúladenie samostatných tabuliek s tým istým vizuálnym kontraktom. Bez plošného prepisovania feature komponentov alebo generických selektorov zasahujúcich všetky table na stránke.
+5. Obsah buniek je feature-specific. Prototypové odznaky Snapshot/Recovery/Clean room sa nemajú pridávať do shared DataTable ani preniesť do ostatných domén. Tento vizuálny rez nepridáva nový clean-room filter, nové metriky, demo header/avatar ani statické počty z HTML. Existujúce odznaky a ich význam zostávajú.
+6. Nepresúvať používateľské menu ani meniť AppShell/routing. Linear/Tremor sú referencie, nie nové závislosti. Zachovať preklady EN/SK/CS a existujúci font aplikácie.
+
+## Spoločný ABCO vizuálny kontrakt
+
+| Oblasť | Cieľ |
 |---|---|
-| Neutrálna pracovná plocha | Existujúce `page`, `surface`, `surface-subtle`, `surface-muted`; žiadna nová globálna paleta |
-| Modré akcie | ABCO `accent`, `accent-hover`, `focus`; kontrast textu overiť, nie predpokladať |
-| Typografia | Existujúci font aplikácie; monospace iba ID/JSON; nenahrádzať globálne fonty Interom |
-| Hierarchia textu | Hlavný názov `text-primary`, ID a popisy dostatočne kontrastné `text-secondary`; malý text nepoužívať automaticky s `text-subtle` |
-| Obal tabuľky | Jedna ľahká plocha v existujúcom AppShell; jemná hranica, obmedzený radius, bez reťazca vnorených kariet |
-| Hlavička a riadky | Jemné tónovanie, tenké oddeľovače, jasný hover/selection/focus; bez povinnej výraznej zebry |
-| Hustota | Zachovať compact/comfortable aj pôvodný default; viacriadkový obsah sa nesmie rezať na pevnú výšku |
-| Politiky | Odznaky typov odvodené z reálnych referenčných ID, spolu s počtom; farba neoznačuje validitu referencie |
-| Akcie a detail | Existujúci Button, DetailView, JsonViewerModal, ConfirmDialog; žiadne kopírovanie demo dialógu |
-| Témy | Light a dark z rovnakých sémantických tokenov; žiadne natvrdo zadané biele pozadie v feature |
+| Paleta | Existujúce page/surface/surface-subtle/surface-muted, border, text-primary/text-secondary a accent/focus; light aj dark |
+| Typografia | Jasná hierarchia názov → ID/popisy, čitateľné 12–14 px podľa existujúcej škály; monospace iba technické hodnoty; žiadny nový globálny font |
+| Plochy | Zachovať existujúci hlavný rám ABCO, jemné členenie dátovej plochy, odstrániť len skutočne nadbytočné vnorené rámovanie; neobnoviť karty, ktoré už boli odstránené |
+| Tabuľka | Subtílna hlavička, jemné oddeľovače, jasný hover/selected/focus; nezaťažovať každý riadok výrazným rámom či tieňom |
+| Ovládanie | Zarovnaný search, filtre, density a akcie; existujúce ovládače a labely zostávajú, aj keď sa v prototype nenachádzajú |
+| Rozmery | Konzistentná shared spacing škála; compact/comfortable zachovať, viacriadkový obsah neorezať pevnou výškou |
+| Kontrast | Text 4.5:1 (veľký 3:1), focus a relevantné ovládacie hranice 3:1; namerať v oboch témach |
+| Scroll | Zachovať min-h-0/min-w-0, ohraničený desktop body a dostupnú pagination; horizontálny scroll v tabuľke, mobil prirodzene scrolluje |
 
-Prototyp je referencia vzhľadu, nie nový produktový kontrakt. Neprenášať demo avatar/header, statické počty 4/2, ukážkové názvy referencií, footer s inšpiráciami ani nefunkčné Create upozornenie. Nepridávať knižnice Linear/Tremor, externé fonty či nové API.
+Pri krátkej bežnej tabuľke má pagination nasledovať obsah bez veľkej prázdnej plochy vnútri rámu. Nevnucovať auto-height virtualizovaným alebo zámerne výškovo ohraničeným zoznamom: rozlíšiť obsahový a viewportový layout v zdieľanej vrstve iba ak merania potvrdia potrebu. Krátky dataset aj nízky viewport s dlhým datasetom musia prejsť pred prijatím výškovej zmeny.
 
-## Rozhodnutia pre pilot
+## Etapy a závislosti
 
-1. **Vzhľad lokálne.** Znovu použiť funkčné shared komponenty. Použiť existujúce styling props; chýbajúci hook doplniť iba ako konkrétny opt-in, ak sa bez neho nedá rozumne zachovať layout. Bez globálnych CSS selektorov, zásahu do všetkých `Card` alebo prepisu shared defaultov.
-2. **Bez rozšírenia funkcionality.** Zachovať existujúci search, density, pagination a Refresh. Nový filter „With clean room“ a sumarizačný pás z HTML sú voliteľný follow-up, nie súčasť vizuálneho pilotu. Nevytvárať predstieranú záložku bez funkcie.
-3. **Odznaky z údajov.** Snapshot/Recovery/Clean room zobraziť len pri neprázdnom príslušnom ID; počet vychádza z rovnakého pravidla ako dnes. Nulová konfigurácia má lokalizovaný neutrálny text. Prítomnosť ID neznamená, že katalóg referenciu vyriešil; existujúce missing/unknown/cached-error vysvetlenia ostávajú v detaile. Žiadne dodatočné per-row requesty.
-4. **Výška a scroll.** Pri krátkom obsahu pagination bezprostredne pod riadkami. Pri dlhom obsahu na desktope ohraničené telo, prístupný toolbar/pagination a jediný vertikálny scroll owner; horizontálny scroll patrí tabuľke. Mobile používa prirodzený scroll stránky. Neodstrániť `min-h-0` iba kvôli krátkemu screenshotu.
-5. **Interakcie.** Zachovať klávesnicové otvorenie riadku a existujúci výber. JSON neotvára zároveň detail; skontrolovať click aj Enter/Space. Ak sa odhalí preexistujúca chyba bublania udalostí, zaznamenať ju a opraviť len potrebný rozsah s behavior testom.
-6. **Lokalizácia.** Nové názvy typov a nulový stav doplniť v EN/SK/CS, preferovať vhodné existujúce kľúče. Žiadne anglické reťazce z template priamo v JSX.
+T1 audit konzumentov a baseline → T2 shared obaly → T3 shared tabuľka/skeleton → checkpoint A.
+T4 toolbar/hustota → T5 pagination/hlavička → checkpoint B.
+T6 Policy sets override → T7 VMware kompatibilita → T8 Power/FlashSystem kompatibilita → checkpoint C.
+T9 ostatní konzumenti a lokálne výnimky → T10 browser QA a odovzdanie → checkpoint D.
 
-## Poradie a checkpointy
+Každý implementačný rez sa overí na reálnej stránke a ponechá aplikáciu použiteľnú. T2–T5 sú spoločné zmeny, nie osobitné migrácie stránok. T6–T9 sú kontrola zdedeného výsledku a oprava iba preukázaných výnimiek. Súbory, testy a merateľné kritériá sú v task liste.
 
-```text
-T1 baseline a vizuálny kontrakt
-  -> T2 lokálny layout ABCO
-  -> checkpoint A (scroll + vzhľad)
-  -> T3 preklady odznakov
-  -> T4 reálne bunky a akcie
-  -> checkpoint B (funkčné regresie)
-  -> T5 browser QA
-  -> T6 zhodnotenie pilotu a mapa rolloutu
-```
+## Matica povinného overenia
 
-Detailné kritériá, súbory a príkazy sú v task liste. Pilot robiť sekvenčne: layout a bunky zdieľajú rovnakú stránku. Paralelné úpravy týchto súborov neprinášajú prínos.
+| Rodina | Čo zachovať a preveriť |
+|---|---|
+| Resources VMware | Provider tabs, metriky, search/filter, URL Back/Forward, hustota, dlhé hodnoty, horizontálny/vertikálny scroll a výber |
+| Resources Power a FlashSystem | Platformové stĺpce, filtre, detailové akcie, scroll a virtualizácia tam, kde ju aktuálny kód používa |
+| Providers a Credentials | Typ/role/status odznaky, citlivé hodnoty nezverejniť, filtre, JSON a detail |
+| Identity | Users/Clients/Roles a vnorené tabuľky, ich tabs, pagination, keyboard a dialógy |
+| Recovery a Policies | Search/pagination, CRUD dialógy, post-delete refresh, reference warnings, JSON; bez zmien payloadov |
+| Recovery runs a Audit | URL/filter stav, časové hodnoty, lazy dáta, history detail, loading/cached-error |
+| Ďalší konzumenti | Všetci nájdení v T1 musia mať výsledok kontroly alebo konkrétny zdôvodnený layoutový rozdiel |
 
-## Overenie
+## Overovanie a bezpečný postup
 
-- Focused Vitest: `PolicySetsPage.test.tsx`, `PolicySetsTable.test.tsx`, `PolicySetsRefetch.test.tsx`; `PolicySetModal.test.tsx` pri regresnom overení zachovaného CRUD.
-- Pri dotyku shared komponentu pridať jeho konkrétny test, nie celý suite. Shared props/type kontrakt vyžaduje aj `npm.cmd run typecheck`.
-- ESLint explicitne na zmenených TS/TSX súboroch, JSON parse a kontrola nových i18n kľúčov, `git diff --check`.
-- Reálny browser: 320, 768, 1024, 1440 px; aj nízky desktop 1280×600; light/dark, compact/comfortable, 0/4/viac než jedna stránka záznamov, dlhé ID/popisy.
-- Loading, empty, no-match, fatal error, cached error, retry a post-delete refresh nesmú byť nahradené prázdnou tabuľkou. Focus, Escape, návrat focusu, názvy ovládačov, čitateľnosť a horizontálny scroll skontrolovať v browseri.
-- Kontrast textu aspoň 4.5:1 (veľký text 3:1), ovládacie hranice a focus 3:1. Úspešný DOM test nedokazuje contrast/layout.
-- Browser fixture používa vlastný `cacheDir` a izolovaný profil mimo repozitára. Nikdy nesmie prepísať cache živého Vite servera. Pri localhost kontrole overiť obsah stránky a konzolu, nie iba HTTP 200: SPA fallback môže vrátiť nesprávnu stránku s 200.
-- Rozlíšiť fixture browser, reálny aplikačný browser a jsdom. Pri nedostupnom browseri zostáva T5 otvorené; netvrdiť vizuálne dokončenie.
-- Plný build ani kompletná test suite nie sú default. Každá overená implementačná úloha má vlastný atomický commit; žiadny push/merge bez zadania.
+- Focused Vitest konkrétnych shared súborov po každom reze a priamo dotknuté feature testy; príkazy v task liste. ESLint iba zmenené TS/TSX, git diff --check.
+- Po T5 spustiť npm.cmd run typecheck pre zdieľaný rozsah; neskôr zopakovať iba ak sa zmenia typy alebo vzniknú nové pochybnosti. Plný build a kompletná suite nie sú default; prípadné rozšírenie testov odôvodniť konkrétnym dopadom.
+- Reálny browser: 320/768/1024/1440 px, nízky desktop 1280×600, light/dark, compact/comfortable; 0, krátky a viacstránkový dataset. Pre každý layoutový typ pokryť loading, no-match, fatal/cached error a retry.
+- Tab/Enter/Space, Escape a návrat focusu, JSON bez súčasného otvorenia riadku, dostupnosť všetkých akcií, konzola a network. Zistené preexistujúce chyby oddeliť od regresií; nesúvisiace opravy neprimiešať.
+- Browser fixtures musia mať vlastný Vite cacheDir a izolovaný profil mimo repozitára, nesmú prepísať cache živého servera. Overiť identitu stránky; HTTP 200 môže byť iba SPA fallback.
+- Screenshoty a výsledky označiť ako fixture alebo reálna aplikácia. jsdom ani HTTP fetch nie sú vizuálne browser overenie. Pri nedostupnom browseri príslušné checklisty ostávajú otvorené.
+- Mutácie testovať iba na izolovaných fixture dátach alebo určených testovacích záznamoch; bez nevyžiadaného mazania produkčných údajov.
+- Každý overený rez atomicky commitnúť iba s vlastnými zmenami. Tento plán nezadáva push, merge ani zmenu vetvy.
 
-## Následný rollout (zatiaľ nie implementačné zadanie)
+## Vzťah k ostatným plánom
 
-Po prijatí pilotu vytvoriť konkrétnu maticu route → komponenty → výnimky → testy. Kandidáti: ostatné Policies, Providers, Recovery Groups/Applications, Recovery runs, Resources a administratívne zoznamy. Overiť skutočných konzumentov cez CodeGraph. Resources s virtualizáciou a provider filtrami zaradiť samostatne, nie pod generický CSS zásah.
+Táto revízia na výslovný pokyn používateľa nahrádza predchádzajúci Policy sets pilot v týchto dvoch súboroch. Spoločný rozsah je potvrdený; nežiadať znovu povolenie na jednotlivých konzumentov.
 
-Pred prvým spoločným defaultom rozhodnúť o opt-in variante alebo migrácii konkrétnej skupiny konzumentov. Každá ďalšia úloha má najviac približne päť súborov a vlastné browser scenáre. Audit existujúcich plánov musí určiť vlastníctvo zmeny a cieľovú vetvu; starý pokyn o merge do `test` sa nesmie automaticky vykonať v tejto práci.
+[Globálny technický redesign](global-table-visual-redesign-plan.md) a [technické stránky](technical-pages-redesign-plan.md) slúžia ako história a zdroj funkčných invariantov. Pre vzhľad riešený touto prácou má prednosť nový Linear/Tremor template prispôsobený ABCO. Staré checklisty neoznačovať za dokončené a nepreberať z nich merge do test ani presun účtu do sidebaru. Aktuálny kód a používateľove screenshoty sú baseline, nie predpoklad, že historický redesign ešte nebol zavedený.
 
-## Riziká
+## Riziká a rozhodnutia počas auditu
 
 | Riziko | Dopad | Ošetrenie |
 |---|---|---|
-| Shared CSS zmení ostatné stránky | Vysoký | Lokálny pilot, audit konzumentov pred extrakciou |
-| Kratšia plocha odreže pagination | Vysoký | Dlhý dataset a nízky viewport už v T2 |
-| Odznak naznačuje validnú referenciu | Stredný | Označovať iba typ/prítomnosť, zachovať katalogové stavy |
-| Svetlý subtílny dizajn má slabý kontrast | Stredný | ABCO tokeny a namerané hodnoty v oboch témach |
-| Súbežný technický redesign prepíše pilot | Vysoký | Explicitné vlastníctvo súborov a kontrola aktuálneho diffu |
-| Browser overenie nebude dostupné | Vysoký | Uviesť blokátor, držať vizuálny checkpoint otvorený |
+| Zmena shared defaultu ovplyvní vnorené tabuľky | Vysoký | Kompletná matica konzumentov vrátane netradičných umiestnení |
+| Lokálne override skryjú nový vzhľad | Stredný | Vyhľadať styling props/CSS a odstrániť len konfliktnú časť |
+| Auto-height poškodí scroll/virtualizáciu | Vysoký | Výškový kontrakt merať skoro, výnimky explicitné a úzke |
+| Subtílna paleta zhorší čitateľnosť | Stredný | Nameraný kontrast a reálne screenshoty oboch tém |
+| Súbežné úpravy rovnakých komponentov | Vysoký | Pred každým rezom stav Gitu a vlastníctvo zmien |
 
-## Otvorené body na review
-
-- Potvrdiť, či názov znamená aj rollout na všetky tabuľkové stránky, alebo iba pomenovanie Policy sets pilotu.
-- Pilot teraz nezavádza nové clean-room filtre či metriky. Ak sa majú preniesť aj tieto funkcie z HTML, doplniť samostatný slice so search/pagination reset kontraktom.
-- Rozšírenie na formuláre, buildery a vnútorný vzhľad detailov vyžaduje vlastný rozsah.
-
-## Overenie plánovacích dokumentov
-
-Kontrola lokálnych odkazov, existencie pomenovaných súborov, počtu úloh, kritérií a závislostí; `git diff --check`. Implementačné testy ani browser QA sa počas tvorby plánu nevykonávajú.
+Otvorené sú len implementačné detaily auditu: kompletný zoznam konzumentov, preukázané výškové výnimky a presné lokálne override. Rozsah už nie je otvorená otázka. Shared zmeny vykonávať sekvenčne; nezávislé kontroly hotových stránok možno oddeliť, nie súbežne editovať shared súbory.
