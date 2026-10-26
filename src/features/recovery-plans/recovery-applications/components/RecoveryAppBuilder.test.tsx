@@ -878,6 +878,59 @@ describe('RecoveryAppBuilder', () => {
       expect(initialData).toEqual(before)
     })
 
+    it.each([
+      ['unknown to known', 'source-gone', 'vmware-01', ''],
+      ['known to unknown', 'vmware-01', '', ''],
+      ['both unknown', 'source-gone', '', 'target-gone'],
+      ['same type with invalid target', 'vmware-01', 'vmware-02', 'target-gone'],
+    ])('derives target reset from strict provider lookup types: %s', (_label, platform, nextSource, expectedTarget) => {
+      const previousProviders = fixtureValue(providersQuery.current.data)
+      providersQuery.current.data = [...previousProviders, { ...fixtureValue(previousProviders[0]), id: 'vmware-02' }]
+      onTestFinished(() => { providersQuery.current.data = previousProviders })
+      const initialData = { ...draftFixture(), platform, targetProviderId: 'target-gone', tiers: new Map([['tier_id', { order: 1, description: 'Tier' }]]) }
+      const onDirtyChange = vi.fn()
+      render(<RecoveryAppBuilder initialData={initialData} onDirtyChange={onDirtyChange} />)
+      act(() => { metadataProps().onMetadataChange?.({ platform: nextSource }) })
+      expect(metadataProps().initialValues).toMatchObject({ platform: nextSource, targetProviderId: expectedTarget })
+      expect(onDirtyChange).toHaveBeenCalledExactlyOnceWith(true)
+    })
+
+    it('resets a queued target edit on a cross-type source change even when rendered target was empty', () => {
+      const initialData = { ...draftFixture(), targetProviderId: '', tiers: new Map([['tier_id', { order: 1, description: 'Tier' }]]) }
+      const onDirtyChange = vi.fn()
+      render(<RecoveryAppBuilder initialData={initialData} onDirtyChange={onDirtyChange} />)
+      act(() => {
+        metadataProps().onMetadataChange?.({ targetProviderId: 'queued-target' })
+        metadataProps().onMetadataChange?.({ platform: 'power-01' })
+      })
+      expect(metadataProps().initialValues).toMatchObject({ platform: 'power-01', targetProviderId: '' })
+      expect(onDirtyChange.mock.calls).toEqual([[true], [true]])
+    })
+
+    it('composes queued scalar intents including an explicit revert without overwriting unrelated metadata', () => {
+      const onDirtyChange = vi.fn()
+      render(<RecoveryAppBuilder initialData={draftFixture()} onDirtyChange={onDirtyChange} />)
+      act(() => {
+        metadataProps().onMetadataChange?.({ name: 'Temporary', description: 'Latest description' })
+        metadataProps().onMetadataChange?.({ name: 'Finance' })
+      })
+      expect(metadataProps().initialValues).toMatchObject({ name: 'Finance', description: 'Latest description' })
+      expect(onDirtyChange.mock.calls).toEqual([[true], [true]])
+    })
+
+    it('accepting a pending source proposal under new locks preserves providers and assigned Groups', async () => {
+      const initialData = draftFixture()
+      const onDirtyChange = vi.fn()
+      const { rerender } = render(<RecoveryAppBuilder initialData={initialData} onDirtyChange={onDirtyChange} />)
+      act(() => { metadataProps().onMetadataChange?.({ platform: 'power-01', name: 'Proposed' }) })
+      rerender(<RecoveryAppBuilder initialData={initialData} onDirtyChange={onDirtyChange} lockedProviders={{ platform: 'VMWARE', sourceProviderId: 'vmware-01', targetProviderId: 'vmware-target-01' }} />)
+      await userEvent.setup().click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Change provider' }))
+      expect(metadataProps().initialValues).toMatchObject({ name: 'Proposed', platform: 'vmware-01', targetProviderId: 'vmware-target-01' })
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Recovery groups & tiers' }))
+      expect(Object.entries(canvasProps().tiers)).toEqual([...initialData.tiers])
+      expect(onDirtyChange).toHaveBeenCalledExactlyOnceWith(true)
+    })
+
     it('ignores a locked provider-only callback while still notifying dirty', async () => {
       const initialData = draftFixture()
       const onDirtyChange = vi.fn()

@@ -22,7 +22,8 @@ import { isRecoveryGroupCompatible, isRecoveryGroupEligible } from '../utils/rec
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { AppMetadataForm } from './AppMetadataForm'
 import { TierCanvas } from './TierCanvas'
-import { cloneTier } from '../utils/recoveryApplicationFormMapper'
+import { applyConfirmedSourceChange, createApplicationDraft, planApplicationMetadataChange } from '../model/recoveryApplicationDraft'
+import type { ApplicationMetadataPatch, SourceChangeProposal } from '../model/recoveryApplicationDraft'
 import { getEligiblePlatformProviders, getEligibleSourceProviders, getEligibleTargetProviders } from '../utils/eligibleProviders'
 import { isValidRecoveryApplicationFileName, isValidRecoveryApplicationName } from '../utils/recoveryApplicationFileName'
 import { storedProvidersProblem, validateRecoveryApplication } from '../utils/validateRecoveryApplication'
@@ -44,39 +45,6 @@ interface RecoveryAppBuilderProps {
   lockedProviders?: LockedProviders | null
 }
 
-const DEFAULT_TIERS: Record<string, DraftRecoveryTier> = {
-  tier_id: { order: 1, description: 'tier_description' },
-}
-
-function createInitialFormState(initialData?: RecoveryApplicationFormState): RecoveryApplicationFormState {
-  if (initialData) {
-    return {
-      ...initialData,
-      tiers: new Map(
-        Array.from(initialData.tiers, ([id, tier]): [string, DraftRecoveryTier] => [id, cloneTier(tier)]),
-      ),
-    }
-  }
-
-  return {
-    fileName: '',
-    policySetId: '',
-    pushToOrchestrator: false,
-    name: '',
-    description: '',
-    environment: 'dev',
-    platform: '',
-    orchestrationProviderId: '',
-    targetProviderId: '',
-    notificationEmail: null,
-    tiers: new Map(
-      Object.entries(DEFAULT_TIERS).map(
-        ([id, tier]): [string, DraftRecoveryTier] => [id, cloneTier(tier)],
-      ),
-    ),
-  }
-}
-
 export function RecoveryAppBuilder({
   onSave,
   onCancel,
@@ -93,7 +61,7 @@ export function RecoveryAppBuilder({
   const [step, setStep] = useState(1)
   const [formState, setFormState] = useState<RecoveryApplicationFormState>(
     () => ({
-      ...createInitialFormState(initialData),
+      ...createApplicationDraft(initialData),
       ...(lockPushToOrchestrator ? { pushToOrchestrator: true } : {}),
     }),
   )
@@ -150,7 +118,7 @@ export function RecoveryAppBuilder({
     [availableGroups],
   )
 
-  const updateFormState = useCallback((update: Partial<RecoveryApplicationFormState>) => {
+  const updateFormState = useCallback((update: Partial<Pick<RecoveryApplicationFormState, 'policySetId' | 'orchestrationProviderId' | 'pushToOrchestrator'>>) => {
     if (isFormDisabled) return
     setFormState(current => ({ ...current, ...update }))
     onDirtyChange?.(true)
@@ -158,30 +126,28 @@ export function RecoveryAppBuilder({
 
   // Assigned groups belong to the current source platform, so a source change
   // asks first and then detaches them from every tier (the tiers stay).
-  const [pendingSourceChange, setPendingSourceChange] = useState<Partial<RecoveryApplicationFormState> | null>(null)
-  const handleMetadataChange = useCallback((update: Partial<RecoveryApplicationFormState>) => {
+  const [pendingSourceChange, setPendingSourceChange] = useState<SourceChangeProposal | null>(null)
+  const handleMetadataChange = useCallback((update: ApplicationMetadataPatch) => {
     if (isFormDisabled) return
-    // Locked providers ignore any change, not only through the disabled selects.
-    const metadata = lockedProviders
-      ? Object.fromEntries(Object.entries(update).filter(([key]) => key !== 'platform' && key !== 'targetProviderId'))
-      : update
-    const changesSource = metadata.platform !== undefined && metadata.platform !== formState.platform
-    const hasAssignedGroups = Array.from(formState.tiers.values()).some(tier => Boolean(tier.recovery_group))
-    if (changesSource && hasAssignedGroups) {
-      setPendingSourceChange(metadata)
+    const decision = planApplicationMetadataChange(formState, update, {
+      providers: providersQuery.data ?? [], lockedProviders,
+    })
+    if (decision.kind === 'confirmationRequired') {
+      setPendingSourceChange(decision.proposal)
       return
     }
-    updateFormState(metadata)
-  }, [formState.platform, formState.tiers, isFormDisabled, lockedProviders, updateFormState])
+    // The planned patch preserves explicit unchanged keys and derived resets;
+    // merge it into the latest draft so queued unrelated edits survive.
+    setFormState(current => ({ ...current, ...decision.metadata }))
+    const notifyDirty = decision.kind === 'applied' ? decision.transition.notifyDirty : decision.notifyDirty
+    if (notifyDirty) onDirtyChange?.(true)
+  }, [formState, isFormDisabled, lockedProviders, onDirtyChange, providersQuery.data])
   const confirmSourceChange = () => {
     if (isFormDisabled || !pendingSourceChange) return
-    setFormState(prev => ({
-      ...prev,
-      ...pendingSourceChange,
-      tiers: new Map(Array.from(prev.tiers, ([id, tier]): [string, DraftRecoveryTier] => [id, { order: tier.order, description: tier.description }])),
-    }))
+    const result = applyConfirmedSourceChange(formState, pendingSourceChange, lockedProviders)
+    setFormState(current => applyConfirmedSourceChange(current, pendingSourceChange, lockedProviders).draft)
     setPendingSourceChange(null)
-    onDirtyChange?.(true)
+    if (result.notifyDirty) onDirtyChange?.(true)
   }
 
   const handleRecoveryGroupAdded = useCallback((tierId: string, groupId: string) => {
@@ -584,7 +550,7 @@ export function RecoveryAppBuilder({
       cancelLabel={t('buttons.cancel')}
       tone="danger"
       onConfirm={confirmSourceChange}
-      onCancel={() => { setPendingSourceChange(null) }}
+      onCancel={() => { if (!isFormDisabled) setPendingSourceChange(null) }}
     />
     </fieldset>
   )

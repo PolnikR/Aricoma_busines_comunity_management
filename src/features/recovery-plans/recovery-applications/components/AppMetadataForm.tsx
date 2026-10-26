@@ -4,10 +4,10 @@ import { Field, Input, Select, Textarea } from '@/shared/components/form/FormCon
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import { isValidRecoveryApplicationFileName, isValidRecoveryApplicationName } from '../utils/recoveryApplicationFileName'
 import { getEligibleSourceProviders, getEligibleTargetProviders } from '../utils/eligibleProviders'
-import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
+import type { ApplicationMetadataPatch } from '../model/recoveryApplicationDraft'
 
 interface AppMetadataFormProps {
-  onMetadataChange?: (metadata: Partial<RecoveryApplicationFormState>) => void
+  onMetadataChange?: (metadata: ApplicationMetadataPatch) => void
   initialValues?: {
     fileName: string
     name: string
@@ -81,12 +81,7 @@ export function AppMetadataForm({
         break
       case 'platform':
         if (lockProviders) break
-        // A target of the old provider type cannot serve the new source.
-        if (providerTypeOf(value) !== providerTypeOf(platform)) {
-          onMetadataChange?.({ platform: value, targetProviderId: '' })
-        } else {
-          onMetadataChange?.({ platform: value })
-        }
+        onMetadataChange?.({ platform: value })
         break
       case 'targetProviderId':
         if (lockProviders) break
