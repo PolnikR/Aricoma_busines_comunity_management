@@ -1,13 +1,13 @@
 # Plán: centralizácia pravidiel polí providerov
 
-Stav: návrh na schválenie, 26. 10. 2026. Implementácia sa nezačala.
+Stav: implementované 26. 10. 2026 na základe pokynu `executing-plans inline`; výsledky overenia sú na konci dokumentu.
 Úlohy: [provider-fields-centralization-todo.md](provider-fields-centralization-todo.md).
 
 ## Cieľ a hranice
 
 Zachovať jeden `ProviderCreateForm`, `ProvidersCreateModal`, create/edit workflow a `useSubmitProvider()`. Zaviesť jeden malý modelový súbor pre relevantnosť typovo špecifických polí; použiť ho pri renderovaní, validácii, zmene typu a zostavení payloadu. Žiadny formulárový framework, štyri schémy, nové API, generovanie ani prestavba modulu.
 
-Táto dodávka obsahuje iba plán a TODO. Produkčný kód, existujúce testy, OpenAPI a generované súbory sa nemenia. Implementácia čaká na schválenie používateľom. Súčasné rozpracované úlohy sa neprepisujú; commit obsahuje iba tieto dva dokumenty, bez pushu či merge.
+Pôvodná plánovacia dodávka obsahovala iba plán a TODO. Používateľ následne schválil vykonanie pokynom `executing-plans inline`. Implementácia zostáva v uvedených hraniciach; OpenAPI a generované súbory sa nemenia. Rozpracované doplnenia legacy regresií v TODO sa zachovali. Bez pushu či merge.
 
 ## Overené zdroje
 
@@ -18,7 +18,7 @@ Táto dodávka obsahuje iba plán a TODO. Produkčný kód, existujúce testy, O
 - `model/{providerTypes,providerCategory}.test.ts`, `model/providersWire.test.tsx`; existujúci návrh relationships v `docs/superpowers/specs/2026-10-02-provider-relationships-design.md`.
 - `src/features/discovery-inventory/resources/hooks/useVmwareTags.ts`, `src/shared/components/form/MultiSelect.tsx`, `src/locales/{en,sk}.json`, `package.json`.
 
-## Aktuálny stav
+## Východiskový stav pred implementáciou
 
 ### Formulár a modal
 
@@ -145,13 +145,13 @@ Konkrétne príkazy, závislosti a checkpointy sú v TODO. Testovať štyri typy
 
 Akceptačné kritériá:
 
-- [ ] Päť špecifických polí má jednu centrálnu definíciu relevantnosti; UI, validácia, prechod typu a payload ju používajú bez druhej typovej matice.
-- [ ] Jeden existujúci formulár/modal a API hook obsluhujú všetky štyri typy; žiadne nové schémy alebo zmeny generated/API.
-- [ ] Nový create payload neobsahuje aktívne hodnoty nesprávneho typu ani po prechode; compute backing správanie zostáva rovnaké.
-- [ ] Edit zachová všetky pôvodné nezmenené špecifické údaje vrátane viacerých tagov, managedSystem a skrytých legacy hodnôt; explicitný clear funguje cez null/[] podľa typu.
-- [ ] Tagy podporujú viac hodnôt a chýbajúce uložené možnosti; lookup chyby/retry, create disabled, credentials a unsaved guard fungujú ďalej.
-- [ ] Spoločné validácie, ID/type lock, backend error detail a úspešné zatvorenie zostávajú; žiadne nové podmienené required pravidlo bez podkladov.
-- [ ] Zmeny sú overené iba zasiahnutými testami, focused lintom a potrebnou typovou kontrolou, následne atomicky commitnuté bez cudzej práce.
+- [x] Päť špecifických polí má jednu centrálnu definíciu relevantnosti; UI, validácia, prechod typu a payload ju používajú bez druhej typovej matice.
+- [x] Jeden existujúci formulár/modal a API hook obsluhujú všetky štyri typy; žiadne nové schémy alebo zmeny generated/API.
+- [x] Nový create payload neobsahuje aktívne hodnoty nesprávneho typu ani po prechode; compute backing správanie zostáva rovnaké.
+- [x] Edit zachová všetky pôvodné nezmenené špecifické údaje vrátane viacerých tagov, managedSystem a skrytých legacy hodnôt; explicitný clear funguje cez null/[] podľa typu.
+- [x] Tagy podporujú viac hodnôt a chýbajúce uložené možnosti; lookup chyby/retry, create disabled, credentials a unsaved guard fungujú ďalej.
+- [x] Spoločné validácie, ID/type lock, backend error detail a úspešné zatvorenie zostávajú; žiadne nové podmienené required pravidlo bez podkladov.
+- [x] Zmeny sú overené iba zasiahnutými testami, focused lintom a potrebnou typovou kontrolou, následne atomicky commitnuté bez cudzej práce.
 
 Odporúčanie na schválenie: zahrnúť MultiSelect tagov a nepovinný managedSystem; zachovať spoločné validačné pravidlá; zachovať legacy edit údaje bez automatickej migrácie. Uvoľnenie description/IP/role, runtime HMC validácia a backendové využitie VMware filtrov zostávajú samostatnými rozhodnutiami.
 
@@ -162,10 +162,30 @@ Odporúčanie na schválenie: zahrnúť MultiSelect tagov a nepovinný managedSy
 - Oddelené neutrálne hodnoty nového payloadu od preservation starých dát; skrytie poľa neznamená jeho vymazanie v editácii.
 - Zachované compute/partner klasifikácie a prechody; pre relevantnosť nie je navrhnutý druhý zoznam kategórií.
 - TODO sleduje poradie config → ochrana edit/payload → UI → managed system → regresie; úlohy majú najviac päť súborov a konkrétne overenie.
-- Súhlas používateľa s implementáciou zatiaľ nebol udelený. Táto kontrola nepredstavuje implementáciu ani overenie budúceho správania backendu.
+- Pôvodné review prebehlo pred schválením implementácie. Následné vykonanie schválil používateľ pokynom `executing-plans inline`; mock ani browser testy nepreukazujú správanie živého backendu.
 
 ### Vykonané overenie pri plánovaní
 
 `npm.cmd exec vitest run src/features/providers-connectors/providers/components/ProviderCreateForm.test.tsx src/features/providers-connectors/providers/components/ProvidersCreateModal.test.tsx src/features/providers-connectors/providers/model/providersWire.test.tsx src/features/providers-connectors/providers/model/providerCategory.test.ts src/features/providers-connectors/providers/model/providerTypes.test.ts` — 5 súborov, 67 testov prešlo. Ide o baseline existujúceho kódu, nie testy navrhovanej implementácie. PowerShell blokoval `npm.ps1`, preto sa použil štandardný Windows launcher `npm.cmd`, bez zmeny execution policy.
 
 Kompletná test suite, produkčný build ani plný typecheck neboli pre túto dokumentačnú zmenu spustené. Dokumenty sa navyše kontrolujú obsahovými assertions, kontrolou lokálnych odkazov a `git diff --cached --check` pred commitom.
+
+## Výsledok implementácie a záverečné review
+
+- `providerFieldConfig.ts` obsahuje jeden typovo overený resolver piatich polí; backing/partner relevantnosť preberá z existujúcich kategórií. Formulár, tag query, validácia, prechody a payload používajú resolver.
+- Zachovaný jeden formulár/modal a pôvodný hook; nové create payloady sú filtrované, nezmenené a skryté špecifické edit hodnoty sa explicitne zachovávajú vrátane absent/null/[] a whitespace pôvodného stringu. Read-only polia sa neodosielajú.
+- VMware tagy používajú existujúci MultiSelect, všetky uložené možnosti, loading/error/retry a pôvodné create disabled správanie. IBM_POWER má nepovinný managedSystem vrátane inicializácie, dirty kontroly, resetu a null pri vyčistení.
+- Description/IP/role, email/interval, credentials, ID/type lock a relationships kandidáti zostávajú podľa pôvodných pravidiel. Spoločný upsert, backendové chyby a navigation guard sa nepresúvali do novej vrstvy.
+- Úlohy 5–6 sa spojili do jedného overeného funkčného commitu: nový stav aj UI vstup boli testované spolu cez skutočnú používateľskú interakciu. Tým sa predišlo testovaniu nedostupného medzistavu. Ostatné funkčné kroky majú vlastné commity.
+- Review sa vykonalo inline podľa pokynu používateľa, bez subagentov. Kontrola diffu proti plánovacej verzii neodhalila ďalší problém v rozsahu centralizácie; nižšie uvedená existujúca chyba plného typechecku zostáva mimo rozsahu.
+
+### Vykonané kontroly implementácie
+
+1. `npm.cmd exec vitest run src/features/providers-connectors/providers/model/providerFieldConfig.test.ts src/features/providers-connectors/providers/model/providerCategory.test.ts src/features/providers-connectors/providers/model/providerTypes.test.ts src/features/providers-connectors/providers/model/providersWire.test.tsx src/features/providers-connectors/providers/components/ProviderCreateForm.test.tsx src/features/providers-connectors/providers/components/ProvidersCreateModal.test.tsx` — **109 testov v 6 súboroch prešlo**. Nové scenáre pokrývajú payload matrix, návratové prechody, legacy preservation, managed system, viac tagov, credentials/tag lookup stavy a unsaved guard.
+2. `npm.cmd exec eslint -- src/features/providers-connectors/providers/model/providerFieldConfig.ts src/features/providers-connectors/providers/model/providerFieldConfig.test.ts src/features/providers-connectors/providers/model/providersWire.test.tsx src/features/providers-connectors/providers/components/ProviderCreateForm.tsx src/features/providers-connectors/providers/components/ProviderCreateForm.test.tsx src/features/providers-connectors/providers/components/ProvidersCreateModal.tsx src/features/providers-connectors/providers/components/ProvidersCreateModal.test.tsx --max-warnings 0` — prešlo; po poslednom doplnení sa opakoval focused lint oboch zmenených component testov, tiež prešiel.
+3. `npm.cmd run typecheck` — **neprešlo kvôli existujúcej nesúvisiacej chybe** `src/features/recovery-plans/policy-sets/pages/PolicySetsPage.tsx:23`, TS4111 (`styles.page` má používať indexový prístup). Súbor je identický s východiskovou verziou a nebol upravený. Typové chyby v zasiahnutých provider súboroch nezostali.
+4. `npm.cmd exec tsc -- -p .tmp-provider-fields-tsconfig.json` — **prešlo**. Dočasný config iba rozšíril `tsconfig.app.json` bez zmeny compiler options a zúžil include na 7 zmenených TS/TSX súborov, `src/**/*.d.ts` a existujúci `src/test-utils/setup.ts` kvôli ambientným jest-dom matcherom. Kompiloval aj ich importované závislosti. Po kontrole bol dočasný config odstránený; nemenili sa projektové pravidlá ani suppression nastavenia.
+5. EN/SK JSON parser + assertions prítomnosti troch nových prekladových kľúčov — prešlo. `git diff --check` a `git diff --cached --check` — prešlo; žiadny diff pod `src/generated` alebo `openapi`.
+6. Reálny headless Chrome cez lokálny Vite a dočasný CDP test `node C:/Users/polnikr/AppData/Local/Temp/provider-fields-browser.mjs` — prešlo: pridanie tretieho a zachovanie chýbajúceho tagu, Escape, IBM_POWER prefill/save/clear, dirty guard + Stay, legacy HITACHI s odmietnutím backendom a retry, create prechod IBM_POWER→VMWARE→IBM_POWER, hostname a FLASHCOPY relationship vstup. Navyše tag lookup failure/retry zachová celý výber a nezmenené Cancel neotvára discard dialóg. Zachytených 46 API/config požiadaviek, 0 runtime výnimiek, bez živého backendu. Snímka formulára bola vizuálne skontrolovaná (`C:/Users/polnikr/AppData/Local/Temp/provider-fields-browser.png`). Chrome DevTools MCP nebol dostupný, preto sa použil existujúci projektový CDP QA postup. Prvý beh opravil iba neplatný mock tags response na aktuálny kontrakt `{ count, tags: [{ id, name }] }`.
+
+Kompletná test suite ani produkčný build neboli spustené. Plný typecheck sa nepovažuje za úspešný; jeho existujúca chyba je výslovne zaznamenaná, nie potlačená.

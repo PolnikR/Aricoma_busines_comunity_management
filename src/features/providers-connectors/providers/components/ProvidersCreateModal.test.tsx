@@ -42,7 +42,7 @@ const mockProviderA: ProviderRecord = {
 
 function renderWithQueryClient(component: React.ReactElement) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(<QueryClientProvider client={queryClient}>{component}</QueryClientProvider>)
+  return render(component, { wrapper: ({ children }) => <QueryClientProvider client={queryClient}>{children}</QueryClientProvider> })
 }
 
 function fillValidForm() {
@@ -57,6 +57,36 @@ function fillValidForm() {
 describe('ProvidersCreateModal', () => {
   const flashA: ProviderRecord = { ...mockProviderA, id: 'flash-a', name: 'Array A', type: 'FLASHCOPY' }
   const flashB: ProviderRecord = { ...mockProviderA, id: 'flash-b', name: 'Array B', type: 'FLASHCOPY', role: 'target' }
+  it('restores the original managed system when the modal reopens', () => {
+    const provider: ProviderRecord = { ...mockProviderA, type: 'IBM_POWER', managedSystem: 'system-a' }
+    const props = { onClose: vi.fn(), existingProviders: [provider], provider }
+    const { rerender } = renderWithQueryClient(<ProvidersCreateModal {...props} open />)
+    fireEvent.change(screen.getByLabelText('Managed system'), { target: { value: 'unsaved' } })
+    rerender(<ProvidersCreateModal {...props} open={false} />)
+    rerender(<ProvidersCreateModal {...props} open />)
+    expect(screen.getByLabelText('Managed system')).toHaveValue('system-a')
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(props.onClose).toHaveBeenCalledOnce()
+  })
+
+  it.each(['prefix', 'tags'])('guards unsaved VMware %s changes', field => {
+    const provider = { ...mockProviderA, vmPrefix: 'prod-', vmTags: ['saved-tag'] }
+    const onClose = vi.fn()
+    renderWithQueryClient(<ProvidersCreateModal open onClose={onClose} existingProviders={[provider]} provider={provider} />)
+    if (field === 'prefix') fireEvent.change(screen.getByLabelText('VM prefix'), { target: { value: 'changed-' } })
+    else {
+      fireEvent.click(screen.getByRole('button', { name: 'VM tags' }))
+      fireEvent.click(screen.getByRole('checkbox', { name: 'saved-tag' }))
+    }
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(screen.getByRole('heading', { name: 'Discard unsaved provider changes?' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Stay' }))
+    expect(onClose).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }))
+    expect(onClose).toHaveBeenCalledOnce()
+  })
+
   it.each(['create', 'unchanged', 'replace', 'clear'])('submits the IBM Power managed system on %s', async action => {
     const provider: ProviderRecord = { ...mockProviderA, type: 'IBM_POWER', managedSystem: 'system-a' }
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ providers: [] }), { status: 200 }))

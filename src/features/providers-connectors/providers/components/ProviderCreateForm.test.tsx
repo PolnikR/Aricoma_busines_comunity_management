@@ -31,6 +31,30 @@ const credentials = [{
 }]
 
 describe('ProviderCreateForm', () => {
+  it.each(['loading', 'error', 'missing', 'create', 'submitting'])('retains saved selections during %s', state => {
+    const retryCredentials = vi.fn()
+    const retryTags = vi.fn()
+    const onTagsChange = vi.fn()
+    render(<ProviderCreateForm data={{ ...data, vmTags: ['saved-tag', 'missing-tag'] }} errors={{}}
+      isSubmitting={state === 'submitting'} credentials={[]}
+      credentialsLoading={state === 'loading'} credentialsError={state === 'error'} onRetryCredentials={retryCredentials}
+      tags={[]} tagsLoading={state === 'loading'} tagsError={state === 'error'} tagsDisabled={state === 'create'}
+      onRetryTags={retryTags} onTagsChange={onTagsChange} onBackingStorageChange={vi.fn()} onChange={vi.fn()} onSubmit={vi.fn()} />)
+    expect(screen.getByRole('combobox', { name: /^Credentials/ })).toHaveValue('vcenter-admin')
+    expect(screen.getByRole('combobox', { name: /^Credentials/ })).toHaveProperty('disabled', ['loading', 'error', 'submitting'].includes(state))
+    const tags = screen.getByRole('button', { name: 'VM tags' })
+    expect(tags).toHaveTextContent('saved-tag, missing-tag')
+    expect(tags).toHaveProperty('disabled', state === 'create' || state === 'submitting')
+    expect(onTagsChange).not.toHaveBeenCalled()
+    if (state === 'loading') expect(screen.getByRole('status')).toHaveTextContent('Loading tags')
+    if (state === 'error') {
+      for (const retry of screen.getAllByRole('button', { name: 'Retry' })) fireEvent.click(retry)
+      expect(retryCredentials).toHaveBeenCalledOnce()
+      expect(retryTags).toHaveBeenCalledOnce()
+      expect(onTagsChange).not.toHaveBeenCalled()
+    }
+  })
+
   it('reports field changes and submits on Enter', async () => {
     const user = userEvent.setup()
     const onChange = vi.fn()
