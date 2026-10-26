@@ -1,0 +1,22 @@
+.page thead {
+  background: var(--app-surface-hover);
+  border-bottom: 2px solid var(--app-border-strong);
+}
+
+.page thead th {
+  color: var(--app-text-primary);
+}
+
+.page tbody tr[aria-selected='false']:nth-child(even) {
+  background: var(--app-surface-muted);
+}
+
+.page tbody tr[aria-selected='false']:hover,
+.page tbody tr[aria-selected='false']:focus-within {
+  background: var(--app-accent-soft);
+  box-shadow: inset 3px 0 0 var(--app-accent);
+}
+
+.page tbody td {
+  border-bottom: 1px solid var(--app-border-strong);
+}
