@@ -175,7 +175,7 @@ export function ProviderCreateForm({
         </Field>
       </div>
 
-      <div>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:[&>label:last-child:nth-child(odd)]:col-span-2">
         <Field label={t('forms.ip')} htmlFor="create-ipAddress">
           <Input
             id="create-ipAddress"
@@ -190,23 +190,20 @@ export function ProviderCreateForm({
           {errors.ipAddress ? <p className="mt-1 text-xs text-red-600">{errors.ipAddress}</p> : null}
         </Field>
 
-      </div>
+        {fieldConfig.partnerProviderId ? (
+          <Field label={t('forms.partnerProvider')} htmlFor="create-partnerProviderId">
+            <Select id="create-partnerProviderId" value={data.partnerProviderId} aria-label={t('forms.partnerProvider')}
+              disabled={isSubmitting} aria-invalid={Boolean(errors.partnerProviderId)}
+              onChange={event => { onChange('partnerProviderId', event.target.value) }}>
+              <option value="">{t('forms.partnerProviderNone')}</option>
+              {partnerMissing ? <option value={data.partnerProviderId} disabled>{data.partnerProviderId} ({t('forms.partnerProviderUnavailable')})</option> : null}
+              {partnerOptions.map(provider => <option key={provider.id} value={provider.id}>{provider.name} — {provider.id}</option>)}
+            </Select>
+            <p className="mt-1 text-xs text-text-muted">{t('forms.partnerProviderHelper')}</p>
+            {errors.partnerProviderId ? <p role="alert" className="mt-1 text-xs text-red-600">{errors.partnerProviderId}</p> : null}
+          </Field>
+        ) : null}
 
-      {fieldConfig.partnerProviderId ? (
-        <Field label={t('forms.partnerProvider')} htmlFor="create-partnerProviderId">
-          <Select id="create-partnerProviderId" value={data.partnerProviderId} aria-label={t('forms.partnerProvider')}
-            disabled={isSubmitting} aria-invalid={Boolean(errors.partnerProviderId)}
-            onChange={event => { onChange('partnerProviderId', event.target.value) }}>
-            <option value="">{t('forms.partnerProviderNone')}</option>
-            {partnerMissing ? <option value={data.partnerProviderId} disabled>{data.partnerProviderId} ({t('forms.partnerProviderUnavailable')})</option> : null}
-            {partnerOptions.map(provider => <option key={provider.id} value={provider.id}>{provider.name} — {provider.id}</option>)}
-          </Select>
-          <p className="mt-1 text-xs text-text-muted">{t('forms.partnerProviderHelper')}</p>
-          {errors.partnerProviderId ? <p role="alert" className="mt-1 text-xs text-red-600">{errors.partnerProviderId}</p> : null}
-        </Field>
-      ) : null}
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {fieldConfig.backingStorageProviderIds ? (
           <Field label={t('forms.backingStorageProviders')} htmlFor="create-backingStorageProviders">
             <MultiSelect id="create-backingStorageProviders" label={t('forms.backingStorageProviders')}
@@ -232,19 +229,17 @@ export function ProviderCreateForm({
           <p className="mt-1 text-xs text-text-muted">{t('forms.cacheRefreshSecondsHelper')}</p>
           {errors.cacheRefreshSeconds ? <p className="mt-1 text-xs text-red-600">{errors.cacheRefreshSeconds}</p> : null}
         </Field>
-      </div>
 
-      {fieldConfig.managedSystem ? (
-        <Field label={t('forms.managedSystem')} htmlFor="create-managedSystem">
-          <Input id="create-managedSystem" type="text" value={data.managedSystem} aria-label={t('forms.managedSystem')}
-            onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('managedSystem', event.target.value) }}
-            onKeyDown={handleKeyDown} disabled={isSubmitting} aria-invalid={Boolean(errors.managedSystem)} />
-          <p className="mt-1 text-xs text-text-muted">{t('forms.managedSystemHelper')}</p>
-          {errors.managedSystem ? <p className="mt-1 text-xs text-red-600">{errors.managedSystem}</p> : null}
-        </Field>
-      ) : null}
+        {fieldConfig.managedSystem ? (
+          <Field label={t('forms.managedSystem')} htmlFor="create-managedSystem">
+            <Input id="create-managedSystem" type="text" value={data.managedSystem} aria-label={t('forms.managedSystem')}
+              onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('managedSystem', event.target.value) }}
+              onKeyDown={handleKeyDown} disabled={isSubmitting} aria-invalid={Boolean(errors.managedSystem)} />
+            <p className="mt-1 text-xs text-text-muted">{t('forms.managedSystemHelper')}</p>
+            {errors.managedSystem ? <p className="mt-1 text-xs text-red-600">{errors.managedSystem}</p> : null}
+          </Field>
+        ) : null}
 
-      {fieldConfig.vmPrefix || fieldConfig.vmTags ? <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {fieldConfig.vmPrefix ? <Field label={t('forms.vmPrefix')} htmlFor="create-vmPrefix">
           <Input
             id="create-vmPrefix"
@@ -275,9 +270,7 @@ export function ProviderCreateForm({
             </p>
           ) : null}
         </Field> : null}
-      </div> : null}
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Field label={t('forms.credentials')} htmlFor="create-credentials">
           <Select
             id="create-credentials"
@@ -309,9 +302,6 @@ export function ProviderCreateForm({
           ) : null}
         </Field>
 
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Field label={t('forms.url')} htmlFor="create-url">
           <Input
             id="create-url"
