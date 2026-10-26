@@ -1,5 +1,7 @@
 # Candidate 6: Recovery Application draft domain plan
 
+**Execution status (2026-10-26): implemented, verified and independently reviewed; final human acceptance pending.**
+
 ## Executive summary and decision
 
 **GO for focused extraction into two pure TypeScript modules.** Move draft transformations to `model/recoveryApplicationDraft.ts` and wizard/preliminary Save predicates to `model/recoveryApplicationDraftReadiness.ts`. Keep React state, confirmation presentation, query ownership, final validation, mapping, and Candidate 4 Save completion in their existing layers. A reducer or shared Group/Application engine would add lifecycle machinery that this draft does not need.
@@ -107,8 +109,8 @@ export interface SourceChangeProposal {
 // locked provider fields; it does NOT merely mean that source is unchanged.
 // A changed name/description/etc. with the same source returns 'applied'.
 export type SourceChangeDecision =
-  | { readonly kind: 'unchanged'; readonly notifyDirty: boolean }
-  | { readonly kind: 'applied'; readonly transition: DraftTransition }
+  | { readonly kind: 'unchanged'; readonly notifyDirty: boolean; readonly metadata: Readonly<ApplicationMetadataPatch> }
+  | { readonly kind: 'applied'; readonly transition: DraftTransition; readonly metadata: Readonly<ApplicationMetadataPatch> }
   | { readonly kind: 'confirmationRequired'; readonly proposal: SourceChangeProposal }
 
 export function createApplicationDraft(
@@ -482,3 +484,34 @@ Implementation authorized by the user invoking executing-plans and explicitly se
 F0 design review: accepted through the execution request, including the exact API, no-op dirty policy, descriptor-based confirmation, and deferred hardening. Implementation/test evidence will be appended as each phase completes.
 
 F1 compatibility finding: assignment currently constructs `{ name, order: index + 1, ...vmMetadata }`; a metadata `order` value can override the initial numeric order while the VM array remains in resource order. Characterization protects that precedence (including metadata order 8). Selection changes subsequently reindex from 1. Changing metadata order precedence is deferred hardening, not part of this behavior-preserving extraction.
+
+F1 complete: commits `912e6639`, `b0e27234`, `13f36bc4`, fixture typing correction `8769bb24`; ten-file baseline 271 passed, subsequent typecheck and Builder88 passed; independent reviews clean. F2 complete: `0a44f92f`, `71682778`, `db0142b0`, `001dee33`; 37 draft and 60 readiness Node tests, 33 tier component and 85 validator/mapper regression tests passed in focused runs; typecheck/focused ESLint/diff passed. All four model files are new; UI is not integrated yet at this checkpoint.
+
+F3 API correction (integration evidence): both non-confirmation metadata decision branches additionally return `metadata: Readonly<ApplicationMetadataPatch>`, the exact copied lock-filtered scalar patch including an implicit empty-target reset even when the rendered target was already empty. A full draft alone cannot distinguish that reset from unchanged retained target after a queued target edit. Builder merges this descriptor into latest functional state, preserving explicit unchanged-field callbacks and queued reverts without duplicating provider-type/reset/lock decisions. The full transition remains available for standalone domain consumers/tests. This narrow two-file prerequisite is verified/committed before the four-file Task 8 UI integration. No wire contract or user behavior changes.
+
+F3 complete: metadata descriptor prerequisite `831d74a8`; integration commits `946e953d`, `39a1caa2`, `62686e0d`, `67dabf1e`, `fdc17e37`. All task reviews passed. Final F3 focused run: 307 tests in eight files, typecheck, focused ESLint and diff-check passed. StrictMode integration tests protect queued Group, VM and tier composition and exact dirty call counts; metadata tests protect queued explicit reverts/implicit empty-target reset. Production mapper/validator, API/query/generated layer, tier presentation/reorder algorithm, pages and Save completion hook remain unchanged.
+
+## Final implementation acceptance evidence
+
+Accepted source/test HEAD: `ec23bc21`. All16 implementation tasks (0-15), plus the narrow metadata-descriptor prerequisite, are complete for source delivery. Per-task and fresh whole-change reviews approved with no outstanding findings. Final human acceptance remains open in the TODO.
+
+Verification: V-ALL from the TODO passed **403 tests in13 explicit files** (87.84 s). Final source/test `npm.cmd run typecheck` passed. Full `npm.cmd run lint` (ESLint and feature-layout guard) passed. `git diff --check` passed. The first final full lint saw only vendor extension directives in disposable browser profiles created by the smoke; those profiles and Vite cache were moved to OS temp, then the same lint command passed without suppression or configuration changes. No complete suite or production build was run.
+
+Actual isolated Edge CDP smoke passed14 extended scenario groups and exact original Edit method/URL/whole-body parity. Complete Create request equality uses a deterministic oracle; original-source Create browser parity was not captured. Exactly4 extended submits covered failed Create/retry, IBM Power same-HMC local Save, and deployed Push. Zero runtime exceptions, console errors/warnings, unexpected HTTP or non-cancellation transport failures. Deliberate Save/provider500 responses and unconfigured policy-detail501 fixture responses are documented separately.
+
+[Browser acceptance report](C:/Users/polnikr/AppData/Local/Temp/recovery-application-draft-evidence-20261026-wAFat4/browser-acceptance-report.md) and [fresh final source review](C:/Users/polnikr/AppData/Local/Temp/recovery-application-draft-evidence-20261026-wAFat4/final-review.md). This temporary evidence archive includes raw request/event JSON, screenshots, scratch harnesses and per-phase reports; disposable browser profiles/cache are excluded. Original reproduction commands assume restoring the evidence directory to its recorded repo-local path.
+
+### Execution decisions and limits
+
+| Decision | Reason | Cost or limit |
+| --- | --- | --- |
+| Work in the existing checkout/branch | Explicit task instruction | Concurrent work monitored and preserved; no extra isolation |
+| Verified atomic implementation commits | Repository AGENTS; planning no-commit restriction applied to the earlier planning request | Local commit history only; no push or merge |
+| Shared-file tasks grouped by phase for implementer context, reviewed individually | Avoid repeated harness reconstruction and overlapping edits | Same implementer context within a phase; independent per-task review retained |
+| Preserve initial VM metadata.order precedence | Actual characterized spread order | Existing nonsequential initial metadata orders remain until separate hardening |
+| Return exact metadata descriptor on immediate decisions | Preserve queued explicit/implicit equal-value changes without UI domain rules | Additive internal result field; no wire contract change |
+| Use actual isolated Edge CDP instead of unavailable Playwright | Existing tools, deterministic fixtures, no new dependencies | No Playwright trace, physical drag gesture or real Keycloak authentication; original browser baseline is Edit only |
+
+Additional pending-Save mutation families, credential/loading permutations and omitted-email variants are covered by the focused component/domain/mapper tests, not all by browser interaction. Browser scope is explicitly enumerated in its report. No deferred hardening was silently introduced. Final delivery keeps the current branch and checkout; no merge/push was requested.
+
+Final artifact validation passed: two planning documents,16 completed implementation tasks and only final human acceptance unchecked; both published API declaration blocks semantically typechecked against current repository types; all document/archive links resolve; source scope is exactly11 Application production/test files; worktree contains only the two task documentation updates before the final commit.
