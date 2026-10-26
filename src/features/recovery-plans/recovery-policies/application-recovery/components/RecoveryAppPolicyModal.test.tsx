@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { RecoveryAppPolicyRecord, type RecoveryAppPolicyRecordOutput } from '@/generated/query/zod'
@@ -84,6 +85,28 @@ function renderModal(props: Partial<React.ComponentProps<typeof RecoveryAppPolic
 afterEach(() => vi.unstubAllGlobals())
 
 describe('RecoveryAppPolicyModal', () => {
+  it('opens input and checkbox help with Enter without submitting or changing form state', async () => {
+    const onClose = vi.fn()
+    const fetchMock = stubSubmitResponse()
+    renderModal({ policy, onClose })
+    for (const name of ['Help for frequency', 'Help for manual zoning']) {
+      const trigger = screen.getByRole('button', { name })
+      await userEvent.click(trigger)
+      await userEvent.keyboard('{Escape}')
+      await userEvent.keyboard('{Enter}')
+      expect(trigger).toHaveAttribute('aria-expanded', 'true')
+      await userEvent.tab()
+      expect(document.activeElement).toHaveAttribute('role', 'dialog')
+      await userEvent.keyboard('{Escape}')
+      expect(trigger).toHaveFocus()
+      expect(screen.getByRole('dialog', { name: 'Edit policy' })).toBeInTheDocument()
+    }
+    expect(screen.getByRole('checkbox', { name: 'Manual zoning' })).not.toBeChecked()
+    expect(fetchMock).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(onClose).toHaveBeenCalledOnce()
+  })
+
   it('starts both intervals at one day and clears only the changed unit pair', () => {
     renderModal()
     for (const label of ['Frequency', 'Retention']) {
@@ -194,13 +217,18 @@ describe('RecoveryAppPolicyModal', () => {
   it.each(['latest', 'time_range', 'exact_time'] as const)('preserves WWPN entry in an unchanged %s edit', async mode => {
     const fetchMock = stubSubmitResponse()
     const onClose = vi.fn()
-    const storedPolicy = { ...exactTimePolicy, snapshot_selection_mode: mode, snapshot_max_age_value: 2, snapshot_max_age_unit: 'hours' as const, manual_wwpn_entry: true }
+    const storedPolicy = { ...exactTimePolicy, snapshot_selection_mode: mode, snapshot_max_age_value: 2, snapshot_max_age_unit: 'hours' as const, manual_wwpn_entry: true, source_shutdown_timeout_seconds: 123, zoning_wait_minutes: 7 }
     renderModal({ onClose, policy: storedPolicy })
     expect(screen.getByRole('checkbox', { name: 'Manual WWPN entry' })).toBeChecked()
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Manual zoning' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Manual zoning' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Manual WWPN entry' }))
+    expect(screen.getByLabelText('Source shutdown timeout (seconds)')).toHaveValue(123)
+    expect(screen.getByLabelText('Zoning wait (minutes)')).toHaveValue(7)
     expect(screen.getByLabelText('Policy ID')).toBeDisabled()
     fireEvent.click(screen.getByRole('button', { name: 'Edit policy' }))
     await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
-    expect(submittedBody(fetchMock)).toMatchObject({ manual_zoning: false, manual_wwpn_entry: true, snapshot_selection_mode: mode })
+    expect(submittedBody(fetchMock)).toMatchObject({ manual_zoning: false, manual_wwpn_entry: true, snapshot_selection_mode: mode, source_shutdown_timeout_seconds: 123, zoning_wait_minutes: 7 })
   })
 
   it('preserves WWPN entry when another edit field changes', async () => {
