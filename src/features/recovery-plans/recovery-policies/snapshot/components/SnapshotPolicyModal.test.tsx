@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -51,6 +51,32 @@ afterEach(() => {
 })
 
 describe('SnapshotPolicyModal', () => {
+  it.each([false, true])('provides six independent parameter helps in edit=%s without changing the form', async edit => {
+    const onClose = vi.fn()
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    renderModal({ onClose, ...(edit ? { policy } : {}) })
+    const dialog = screen.getByRole('dialog', { name: edit ? 'Edit policy' : 'Create policy' })
+    const helps = within(dialog).getAllByRole('button', { name: /^Help for / })
+    expect(helps).toHaveLength(6)
+    for (const trigger of helps) expect(trigger.closest('label')).toBeNull()
+    const trigger = within(dialog).getByRole('button', { name: 'Help for frequency' })
+    await userEvent.click(trigger)
+    await userEvent.keyboard('{Enter}')
+    const help = screen.getByRole('dialog', { name: 'Frequency' })
+    expect(help).toHaveTextContent('How often a snapshot is created.')
+    await userEvent.tab()
+    expect(help).toHaveFocus()
+    await userEvent.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog', { name: 'Frequency' })).not.toBeInTheDocument()
+    expect(dialog).toBeInTheDocument()
+    expect(trigger).toHaveFocus()
+    expect(screen.getByLabelText('Frequency')).toHaveValue(15)
+    expect(fetchMock).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(onClose).toHaveBeenCalledOnce()
+  })
+
   it('places frequency, maximum snapshots and retention together after level and status', () => {
     renderModal()
     const controls = ['Level', 'Enabled', 'Frequency', 'Maximum snapshots', 'Retention', 'FlashCopy copy rate'].map(name => screen.getByLabelText(name))

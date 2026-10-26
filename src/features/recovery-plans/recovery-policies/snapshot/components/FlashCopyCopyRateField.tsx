@@ -1,5 +1,6 @@
 import type { CSSProperties, KeyboardEvent } from 'react'
 import { Input } from '@/shared/components/form/FormControls'
+import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { useTranslation } from '@/hooks/useTranslation'
 import {
   snapshotPolicyFlashcopyCopyRateMin as MIN_COPY_RATE,
@@ -31,7 +32,10 @@ export function FlashCopyCopyRateField({ value, error, disabled, onChange, onKey
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <label htmlFor="snapshot-policy-copy-rate" className="text-xs font-medium text-text-secondary">{t('snapshotPolicies.form.flashcopyCopyRate')}</label>
+        <div className="flex items-center gap-1.5">
+          <label htmlFor="snapshot-policy-copy-rate" className="text-xs font-medium text-text-secondary">{t('snapshotPolicies.form.flashcopyCopyRate')}</label>
+          <KeyedHelpPopover helpKey="snapshotPolicies.fieldHelp.flashcopyCopyRate" sections={[]} />
+        </div>
         {isValid ? <span className={`rounded-md px-2 py-1 text-xs font-medium text-text-secondary ${rate === 0 ? 'bg-surface-muted' : 'bg-accent-soft'}`}>{state}</span> : null}
       </div>
       <div className="grid grid-cols-[minmax(0,1fr)_5rem] items-start gap-4">
