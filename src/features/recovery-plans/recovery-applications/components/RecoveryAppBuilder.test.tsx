@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
@@ -117,6 +117,17 @@ vi.mock('@/generated/query/clean-room-policies/clean-room-policies.gen', () => (
   useGetCleanRoomPolicies: () => ({ data: [], isLoading: false, error: null }),
 }))
 const canvasMode = vi.hoisted(() => ({ real: false }))
+const callbackHarness = vi.hoisted(() => ({
+  metadata: null as React.ComponentProps<typeof import('./AppMetadataForm').AppMetadataForm> | null,
+  canvas: null as React.ComponentProps<typeof import('./TierCanvas').TierCanvas> | null,
+}))
+vi.mock('./AppMetadataForm', async (importOriginal) => {
+  const { AppMetadataForm } = await importOriginal<typeof import('./AppMetadataForm')>()
+  return { AppMetadataForm: (props: React.ComponentProps<typeof AppMetadataForm>) => {
+    callbackHarness.metadata = props
+    return <AppMetadataForm {...props} />
+  } }
+})
 vi.mock('./TierCanvas', async (importOriginal) => {
   const { TierCanvas: ActualTierCanvas } = await importOriginal<typeof import('./TierCanvas')>()
   return {
@@ -127,7 +138,9 @@ vi.mock('./TierCanvas', async (importOriginal) => {
     onRecoveryGroupRemoved,
     onRecoveryVmSelectionChange,
     ...tierActions
-  }: React.ComponentProps<typeof ActualTierCanvas>) => canvasMode.real ? (
+  }: React.ComponentProps<typeof ActualTierCanvas>) => {
+    callbackHarness.canvas = { tiers, recoveryGroupVmOptions, onRecoveryGroupAdded, onRecoveryGroupRemoved, onRecoveryVmSelectionChange, ...tierActions }
+    return canvasMode.real ? (
     <ActualTierCanvas
       {...tierActions}
       tiers={tiers}
@@ -160,9 +173,37 @@ vi.mock('./TierCanvas', async (importOriginal) => {
         Assign all tiers
       </button>
     </div>
-  ),
+  )
+  },
   }
 })
+
+function fixtureValue<T>(value: T | undefined): T {
+  if (value === undefined) throw new Error('Expected fixture value')
+  return value
+}
+
+function draftFixture(): RecoveryApplicationFormState {
+  return {
+    fileName: 'finance_recovery', name: 'Finance', description: 'Finance recovery', environment: 'prod',
+    platform: 'vmware-01', targetProviderId: 'vmware-target-01', policySetId: 'critical-daily-latest',
+    pushToOrchestrator: false, orchestrationProviderId: '', notificationEmail: null,
+    tiers: new Map([
+      ['tier_id', { order: 3, description: 'Database tier', recovery_group: { id: 'database_group', name: 'Database Group', vms: [{ name: 'DB-01', order: 8, hostname: 'stored-host' }] } }],
+      ['web', { order: 1, description: 'Web tier', recovery_group: { id: 'database_group', name: 'Database Group', vms: [{ name: 'DB-02', order: 1 }] } }],
+    ]),
+  }
+}
+
+function metadataProps() {
+  if (!callbackHarness.metadata) throw new Error('Expected mounted metadata form')
+  return callbackHarness.metadata
+}
+
+function canvasProps() {
+  if (!callbackHarness.canvas) throw new Error('Expected mounted tier canvas')
+  return callbackHarness.canvas
+}
 
 function fillDetails(sourceId = 'vmware-01', targetId = 'vmware-target-01') {
   fireEvent.change(screen.getByLabelText('ID *'), { target: { value: 'finance_recovery' } })
@@ -189,6 +230,8 @@ afterEach(() => {
 
 describe('RecoveryAppBuilder', () => {
   beforeEach(() => {
+    callbackHarness.metadata = null
+    callbackHarness.canvas = null
     canvasMode.real = false
     recoveryGroupsQuery.current.groups = [{
       id: 'database_group',
@@ -509,6 +552,113 @@ describe('RecoveryAppBuilder', () => {
   })
 
   describe('changing the source provider of a new application', () => {
+    it('applies combined same-source metadata and identical patches without confirmation, notifying dirty for each callback', () => {
+      const initialData = draftFixture()
+      const before = structuredClone(initialData)
+      const onDirtyChange = vi.fn()
+      render(<RecoveryAppBuilder initialData={initialData} onDirtyChange={onDirtyChange} />)
+      act(() => { metadataProps().onMetadataChange?.({ platform: 'vmware-01', name: 'Updated' }) })
+      expect(metadataProps().initialValues).toMatchObject({ name: 'Updated', platform: 'vmware-01', targetProviderId: 'vmware-target-01' })
+      act(() => { metadataProps().onMetadataChange?.({ platform: 'vmware-01', name: 'Updated' }) })
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      expect(onDirtyChange.mock.calls).toEqual([[true], [true]])
+      expect(initialData).toEqual(before)
+    })
+
+    it('ignores a locked provider-only callback while still notifying dirty', async () => {
+      const initialData = draftFixture()
+      const onDirtyChange = vi.fn()
+      const onSave = vi.fn()
+      render(<RecoveryAppBuilder initialData={initialData} onSave={onSave} onDirtyChange={onDirtyChange} lockedProviders={{ platform: 'VMWARE', sourceProviderId: 'vmware-01', targetProviderId: 'vmware-target-01' }} />)
+      act(() => { metadataProps().onMetadataChange?.({ platform: 'power-01', targetProviderId: 'power-01' }) })
+      expect(metadataProps().initialValues).toMatchObject({ platform: 'vmware-01', targetProviderId: 'vmware-target-01' })
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Orchestration' }))
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Save Application' }))
+      expect(onSave).toHaveBeenCalledExactlyOnceWith(initialData)
+      expect(onDirtyChange.mock.calls).toEqual([[true]])
+    })
+
+    it.each(['vmware-target-01', 'target-gone'])('defers a second VMware source, then detaches multiple tiers preserving IDs, descriptions, orders and target %s', async targetProviderId => {
+      const previousProviders = providersQuery.current.data
+      providersQuery.current.data = [...previousProviders, { ...fixtureValue(previousProviders[0]), id: 'vmware-02', name: 'Second vCenter' }]
+      onTestFinished(() => { providersQuery.current.data = previousProviders })
+      const initialData = { ...draftFixture(), targetProviderId }
+      const before = structuredClone(initialData)
+      const onDirtyChange = vi.fn()
+      render(<RecoveryAppBuilder initialData={initialData} onDirtyChange={onDirtyChange} />)
+      await userEvent.setup().selectOptions(screen.getByLabelText('Provider ID *'), 'vmware-02')
+      expect(metadataProps().initialValues).toMatchObject({ platform: 'vmware-01', targetProviderId })
+      expect(onDirtyChange).not.toHaveBeenCalled()
+      await userEvent.setup().click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Change provider' }))
+      expect(metadataProps().initialValues).toMatchObject({ platform: 'vmware-02', targetProviderId })
+      expect(onDirtyChange.mock.calls).toEqual([[true]])
+      if (targetProviderId === 'target-gone') {
+        expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
+        act(() => { metadataProps().onMetadataChange?.({ targetProviderId: 'vmware-target-01' }) })
+      }
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Recovery groups & tiers' }))
+      expect(Object.entries(canvasProps().tiers)).toEqual([
+        ['tier_id', { order: 3, description: 'Database tier' }], ['web', { order: 1, description: 'Web tier' }],
+      ])
+      expect(initialData).toEqual(before)
+    })
+
+    it('cancels an atomic cross-type source/target proposal while retaining intervening metadata and both Groups', async () => {
+      const initialData = draftFixture()
+      const onDirtyChange = vi.fn()
+      render(<RecoveryAppBuilder initialData={initialData} onDirtyChange={onDirtyChange} />)
+      await userEvent.setup().selectOptions(screen.getByLabelText('Provider ID *'), 'power-01')
+      expect(metadataProps().initialValues).toMatchObject({ platform: 'vmware-01', targetProviderId: 'vmware-target-01' })
+      expect(onDirtyChange).not.toHaveBeenCalled()
+      act(() => { metadataProps().onMetadataChange?.({ description: 'Edited while pending' }) })
+      await userEvent.setup().click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancel' }))
+      expect(metadataProps().initialValues).toMatchObject({ platform: 'vmware-01', targetProviderId: 'vmware-target-01', description: 'Edited while pending' })
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Recovery groups & tiers' }))
+      expect(Object.entries(canvasProps().tiers)).toEqual([...initialData.tiers])
+      expect(onDirtyChange.mock.calls).toEqual([[true]])
+    })
+
+    it('accepts the proposal patch against latest metadata and tiers without recomputing reset after provider refresh', async () => {
+      const initialData = draftFixture()
+      const onDirtyChange = vi.fn()
+      const props = { initialData, onDirtyChange }
+      const { rerender } = render(<RecoveryAppBuilder {...props} />)
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Recovery groups & tiers' }))
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Application details' }))
+      act(() => { metadataProps().onMetadataChange?.({ platform: 'power-01', targetProviderId: '', name: 'Proposed' }) })
+      act(() => { metadataProps().onMetadataChange?.({ name: 'Intervening', description: 'Latest description', targetProviderId: 'vmware-target-01' }) })
+      act(() => { canvasProps().onTierAdd('late', { order: 9, description: 'Late tier', recovery_group: fixtureValue(initialData.tiers.get('web')).recovery_group }) })
+      const previousProviders = providersQuery.current.data
+      providersQuery.current.data = previousProviders.map(provider => provider.id === 'power-01' ? { ...provider, type: 'VMWARE' } : provider)
+      onTestFinished(() => { providersQuery.current.data = previousProviders })
+      rerender(<RecoveryAppBuilder {...props} />)
+      await userEvent.setup().click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Change provider' }))
+      expect(metadataProps().initialValues).toMatchObject({ name: 'Proposed', description: 'Latest description', platform: 'power-01', targetProviderId: '' })
+      expect(onDirtyChange.mock.calls).toEqual([[true], [true], [true]])
+      act(() => { metadataProps().onMetadataChange?.({ targetProviderId: 'vmware-target-01' }) })
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Recovery groups & tiers' }))
+      expect(Object.entries(canvasProps().tiers)).toEqual([
+        ['tier_id', { order: 3, description: 'Database tier' }], ['web', { order: 1, description: 'Web tier' }], ['late', { order: 9, description: 'Late tier' }],
+      ])
+      expect(onDirtyChange).toHaveBeenCalledTimes(4)
+    })
+
+    it('replaces a pending proposal and preserves target-only edits outside the replacement patch', async () => {
+      const previousProviders = providersQuery.current.data
+      providersQuery.current.data = [...previousProviders, { ...fixtureValue(previousProviders[0]), id: 'vmware-02' }]
+      onTestFinished(() => { providersQuery.current.data = previousProviders })
+      const onDirtyChange = vi.fn()
+      render(<RecoveryAppBuilder initialData={draftFixture()} onDirtyChange={onDirtyChange} />)
+      act(() => { metadataProps().onMetadataChange?.({ platform: 'power-01', targetProviderId: '', name: 'Discarded proposal' }) })
+      act(() => { metadataProps().onMetadataChange?.({ targetProviderId: 'target-gone' }) })
+      act(() => { metadataProps().onMetadataChange?.({ platform: 'vmware-02' }) })
+      expect(onDirtyChange.mock.calls).toEqual([[true]])
+      await userEvent.setup().click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Change provider' }))
+      expect(metadataProps().initialValues).toMatchObject({ name: 'Finance', platform: 'vmware-02', targetProviderId: 'target-gone' })
+      expect(onDirtyChange.mock.calls).toEqual([[true], [true]])
+    })
+
     async function assignGroupAndReturnToDetails() {
       const user = userEvent.setup()
       await openTiers()
@@ -563,13 +713,17 @@ describe('RecoveryAppBuilder', () => {
 
     it('changes the source without asking when no group is assigned', async () => {
       const user = userEvent.setup()
-      render(<RecoveryAppBuilder />)
+      const onDirtyChange = vi.fn()
+      render(<RecoveryAppBuilder onDirtyChange={onDirtyChange} />)
       fillDetails()
+      onDirtyChange.mockClear()
 
       await user.selectOptions(screen.getByLabelText('Provider ID *'), 'power-01')
 
       expect(screen.queryByRole('dialog', { name: 'Change source provider?' })).not.toBeInTheDocument()
       expect(screen.getByLabelText('Provider ID *')).toHaveValue('power-01')
+      expect(screen.getByLabelText('Target provider ID *')).toHaveValue('')
+      expect(onDirtyChange.mock.calls).toEqual([[true]])
     })
   })
 

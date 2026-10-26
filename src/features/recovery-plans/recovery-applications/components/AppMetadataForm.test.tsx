@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { LanguageProvider } from '@/contexts/LanguageProvider'
@@ -160,6 +160,18 @@ describe('AppMetadataForm', () => {
   })
 
   describe('target provider', () => {
+    it.each([
+      ['unknown to known', 'source-gone', 'vmware-source', { platform: 'vmware-source', targetProviderId: '' }],
+      ['known to unknown', 'vmware-source', '', { platform: '', targetProviderId: '' }],
+      ['both unknown', 'source-gone', '', { platform: '' }],
+      ['same type with invalid target', 'vmware-source', 'vmware-source-2', { platform: 'vmware-source-2' }],
+    ])('compares provider lookup types exactly: %s', async (_label, source, nextSource, expected) => {
+      const onMetadataChange = renderForm(source, 'target-gone')
+      fireEvent.change(await screen.findByLabelText('Provider ID *'), { target: { value: nextSource } })
+      expect(onMetadataChange).toHaveBeenCalledExactlyOnceWith(expected)
+      expect(screen.getByLabelText('Target provider ID *')).toHaveValue('targetProviderId' in expected ? '' : 'target-gone')
+    })
+
     const providers = [
       { id: 'vmware-source', name: 'VMware Source', type: 'VMWARE', role: 'source', credentialStatus: 'ok' },
       { id: 'vmware-source-2', name: 'VMware Source 2', type: 'VMWARE', role: 'source', credentialStatus: 'ok' },
