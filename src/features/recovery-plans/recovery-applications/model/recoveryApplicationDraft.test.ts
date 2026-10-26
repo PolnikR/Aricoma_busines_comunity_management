@@ -1,8 +1,9 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
+import type { RecoveryGroup } from '../../recovery-groups/model/recoveryGroupTypes'
 import type { DraftRecoveryTier, LockedProviders, RecoveryApplicationFormState } from './recoveryApplicationTypes'
-import { applyConfirmedSourceChange, createApplicationDraft, planApplicationMetadataChange } from './recoveryApplicationDraft'
+import { applyConfirmedSourceChange, assignRecoveryGroup, createApplicationDraft, planApplicationMetadataChange, removeRecoveryGroup, selectRecoveryVm } from './recoveryApplicationDraft'
 
 const providers: ProviderRecord[] = [
   { id: 'source', name: 'Source', type: 'VMWARE', role: 'source', credentialStatus: 'ok' },
@@ -53,6 +54,80 @@ describe('draft initialization', () => {
     expect(copiedTier?.recovery_group?.vms[0]).not.toBe(originalTier?.recovery_group?.vms[0])
     expect(copiedTier?.recovery_group?.volumes?.[0]).not.toBe(originalTier?.recovery_group?.volumes?.[0])
     expect(copiedTier?.vms).toBe(originalTier?.vms)
+  })
+})
+
+const vmwareGroup: RecoveryGroup = {
+  id: 'group', name: 'Live Group', description: 'Live description', providerId: 'other-provider', policySetId: 'policy', resourceCount: 2, status: 'Active',
+  sourceCategory: 'backup_system_workload', workloadType: 'vmware_virtual_machines', resourceType: 'vm',
+  resources: ['db', 'web'], relatedVolumeProviderId: null, relatedVolumes: [], pushToOrchestrator: true, airflowRunId: 'run',
+  vmMetadataByName: { db: { order: 8, hostname: 'live', ip_address: '10.0.0.1', os: 'Linux', cpu: 4, memory_gb: 16, storage_gb: 80 }, web: { hostname: 'web-live' } },
+}
+const groupContext = { ...context, groups: [vmwareGroup] }
+
+describe('Group and VM transitions', () => {
+  it('assigns resource order and all metadata with metadata order taking precedence', () => {
+    const initial = freezeDraft(draft(false))
+    const before = structuredClone(groupContext)
+    const result = assignRecoveryGroup(initial, 'db', 'group', groupContext)
+    expect(result.notifyDirty).toBe(true)
+    expect(result.draft.tiers.get('db')).toEqual({ order: 3, description: 'Database', recovery_group: { id: 'group', name: 'Live Group', description: 'Live description', vms: [{ name: 'db', order: 8, hostname: 'live', ip_address: '10.0.0.1', os: 'Linux', cpu: 4, memory_gb: 16, storage_gb: 80 }, { name: 'web', order: 2, hostname: 'web-live' }] } })
+    expect(initial.tiers.get('db')).toEqual({ order: 3, description: 'Database' })
+    expect(groupContext).toEqual(before)
+    expect(result.draft.tiers.get('db')?.recovery_group?.vms[0]).not.toBe(vmwareGroup.vmMetadataByName?.['db'])
+  })
+  it.each([
+    { id: 'missing' }, { pushToOrchestrator: false }, { airflowRunId: ' ' },
+    { workloadType: 'ibm_power_virtual_machines' as const },
+  ])('rejects unknown or ineligible Group without dirty: %j', changes => {
+    const initial = freezeDraft(draft())
+    const groups = [{ ...vmwareGroup, ...changes }]
+    expect(assignRecoveryGroup(initial, 'db', 'group', { ...context, groups })).toEqual({ draft: initial, notifyDirty: false })
+  })
+  it('uses locked platform and copies Power LPAR metadata independently of provider identity', () => {
+    const group: RecoveryGroup = { ...vmwareGroup, workloadType: 'ibm_power_virtual_machines', resources: ['LPAR01'], vmMetadataByName: { LPAR01: { os: 'AIX', order: 9 } } }
+    const result = assignRecoveryGroup(draft(false), 'db', 'group', { providers: [], groups: [group], lockedProviders: { ...locks, platform: 'IBM_POWER' } })
+    expect(result.draft.tiers.get('db')?.recovery_group?.vms).toEqual([{ name: 'LPAR01', os: 'AIX', order: 9 }])
+  })
+  it('keeps an eligible missing-tier callback dirty', () => {
+    const initial = freezeDraft(draft())
+    expect(assignRecoveryGroup(initial, 'missing', 'group', groupContext)).toEqual({ draft: initial, notifyDirty: true })
+  })
+  it('removes Group and optional top-level VMs preserving key position and numeric fields', () => {
+    const initial = freezeDraft(draft())
+    expect(removeRecoveryGroup(initial, 'db')).toEqual({ draft: { ...initial, tiers: new Map([['db', { order: 3, description: 'Database' }]]) }, notifyDirty: true })
+    expect(initial.tiers.get('db')?.recovery_group).toBeDefined()
+  })
+  it.each(['missing', 'db'])('removing absent Group/tier %s returns original and dirty', tierId => {
+    const initial = freezeDraft(draft(false))
+    const result = removeRecoveryGroup(initial, tierId)
+    expect(result.draft).toBe(initial)
+    expect(result.notifyDirty).toBe(true)
+  })
+  it('reindexes actual changes preserving stored metadata then uses live compatible unpublished metadata on re-add', () => {
+    const initial = freezeDraft(draft())
+    const unpublished = { ...groupContext, groups: [{ ...vmwareGroup, pushToOrchestrator: false }] }
+    const appended = selectRecoveryVm(initial, 'db', 'web', true, unpublished)
+    expect(appended.draft.tiers.get('db')?.recovery_group?.vms).toEqual([{ name: 'db', order: 1, hostname: 'stored' }, { name: 'web', order: 2, hostname: 'web-live' }])
+    const removed = selectRecoveryVm(appended.draft, 'db', 'db', false, unpublished)
+    expect(removed.draft.tiers.get('db')?.recovery_group?.vms).toEqual([{ name: 'web', order: 1, hostname: 'web-live' }])
+    const readded = selectRecoveryVm(removed.draft, 'db', 'db', true, unpublished)
+    expect(readded.draft.tiers.get('db')?.recovery_group?.vms).toEqual([{ name: 'web', order: 1, hostname: 'web-live' }, { name: 'db', order: 2, hostname: 'live', ip_address: '10.0.0.1', os: 'Linux', cpu: 4, memory_gb: 16, storage_gb: 80 }])
+    expect(initial.tiers.get('db')?.recovery_group?.vms).toEqual([{ name: 'db', order: 8, hostname: 'stored' }])
+  })
+  it.each([['db', 'db', true], ['db', 'absent', false], ['missing', 'web', true]])('preserves no-op identity and dirty for %s %s %s', (tierId, vmName, selected) => {
+    const initial = freezeDraft(draft())
+    const result = selectRecoveryVm(initial, tierId, vmName, selected, groupContext)
+    expect(result.draft).toBe(initial)
+    expect(result.notifyDirty).toBe(true)
+  })
+  it('does not select VMs into an unassigned tier', () => {
+    const initial = freezeDraft(draft(false))
+    expect(selectRecoveryVm(initial, 'db', 'web', true, groupContext)).toEqual({ draft: initial, notifyDirty: true })
+  })
+  it.each([{ groups: [] }, { groups: [{ ...vmwareGroup, workloadType: 'ibm_power_virtual_machines' as const }] }])('permits unknown direct VM names without incompatible metadata', ({ groups }) => {
+    const result = selectRecoveryVm(freezeDraft(draft()), 'db', 'web', true, { ...context, groups })
+    expect(result.draft.tiers.get('db')?.recovery_group?.vms).toEqual([{ name: 'db', order: 1, hostname: 'stored' }, { name: 'web', order: 2 }])
   })
 })
 
