@@ -244,16 +244,19 @@ export function RecoveryAppPoliciesTable({ policies, isLoading, error, isRetryin
             <DetailOverview>
               <DetailField label={t('details.policyId')} value={selected.id} mono copyValue={selected.id} />
               <DetailField label={t('details.description')} value={selected.description} wide />
-              <DetailField label={t('details.level')} value={selected.level} />
-              <DetailField label={t('details.frequency')} value={t('recoveryAppPolicies.every').replace('{interval}', formatInterval(selected.frequency_value, selected.frequency_unit, t))} emphasis />
-              <DetailField label={t('details.retention')} value={formatInterval(selected.retention_value, selected.retention_unit, t)} />
-              <DetailField label={t('details.snapshotSelection')} value={formatSelection(selected, t)} />
-              <DetailField label={t('details.bootVerify')} value={t(selected.boot_verify ? 'recoveryAppPolicies.yes' : 'recoveryAppPolicies.no')} />
-              <DetailField label={t('details.status')} value={t(selected.enabled ? 'recoveryAppPolicies.enabled' : 'recoveryAppPolicies.disabled')} />
-              <DetailField label={t('details.targetLparPrefix')} value={selected.target_lpar_prefix || '-'} mono />
-              <DetailField label={t('details.manualZoning')} value={t(selected.manual_zoning ? 'recoveryAppPolicies.yes' : 'recoveryAppPolicies.no')} />
-              <DetailField label={t('details.sourceShutdownTimeout')} value={formatInterval(selected.source_shutdown_timeout_seconds, 'seconds', t)} />
-              <DetailField label={t('details.zoningWait')} value={formatInterval(selected.zoning_wait_minutes, 'minutes', t)} />
+              <DetailField label={t('details.level')} labelHelp={<KeyedHelpPopover helpKey="recoveryAppPolicies.fieldHelp.level" sections={[]} />} value={selected.level} />
+              <DetailField label={t('details.frequency')} labelHelp={<KeyedHelpPopover helpKey="recoveryAppPolicies.fieldHelp.frequency" sections={[]} />} value={t('recoveryAppPolicies.every').replace('{interval}', formatInterval(selected.frequency_value, selected.frequency_unit, t))} emphasis />
+              <DetailField label={t('details.retention')} labelHelp={<KeyedHelpPopover helpKey="recoveryAppPolicies.fieldHelp.retention" sections={[]} />} value={formatInterval(selected.retention_value, selected.retention_unit, t)} />
+              <DetailField label={t('details.snapshotSelection')} labelHelp={<KeyedHelpPopover helpKey="recoveryAppPolicies.fieldHelp.snapshot_selection_mode" sections={[]} />} value={t(`recoveryAppPolicies.selection.${selected.snapshot_selection_mode}`)} />
+              {selected.snapshot_selection_mode === 'time_range' ? <DetailField label={t('recoveryAppPolicies.form.maxAge')} labelHelp={<KeyedHelpPopover helpKey="recoveryAppPolicies.fieldHelp.snapshot_max_age" sections={[]} />} value={selected.snapshot_max_age_value != null && selected.snapshot_max_age_unit ? formatInterval(selected.snapshot_max_age_value, selected.snapshot_max_age_unit, t) : undefined} /> : null}
+              {selected.snapshot_selection_mode === 'exact_time' ? <DetailField label={t('recoveryAppPolicies.form.targetTime')} labelHelp={<KeyedHelpPopover helpKey="recoveryAppPolicies.fieldHelp.snapshot_target_time" sections={[]} />} value={selected.snapshot_target_time} /> : null}
+              <DetailField label={t('details.bootVerify')} labelHelp={<KeyedHelpPopover helpKey="recoveryAppPolicies.fieldHelp.boot_verify" sections={[]} />} value={t(selected.boot_verify ? 'recoveryAppPolicies.yes' : 'recoveryAppPolicies.no')} />
+              <DetailField label={t('details.status')} labelHelp={<KeyedHelpPopover helpKey="recoveryAppPolicies.fieldHelp.enabled" sections={[]} />} value={t(selected.enabled ? 'recoveryAppPolicies.enabled' : 'recoveryAppPolicies.disabled')} />
+              <DetailField label={t('details.targetLparPrefix')} labelHelp={<KeyedHelpPopover helpKey="recoveryAppPolicies.fieldHelp.target_lpar_prefix" sections={[]} />} value={selected.target_lpar_prefix || '-'} mono />
+              <DetailField label={t('details.manualZoning')} labelHelp={<KeyedHelpPopover helpKey="recoveryAppPolicies.fieldHelp.manual_zoning" sections={[]} />} value={t(selected.manual_zoning ? 'recoveryAppPolicies.yes' : 'recoveryAppPolicies.no')} />
+              <DetailField label={t('recoveryAppPolicies.form.manualWwpnEntry')} labelHelp={<KeyedHelpPopover helpKey="recoveryAppPolicies.fieldHelp.manual_wwpn_entry" sections={[]} />} value={t(selected.manual_wwpn_entry ? 'recoveryAppPolicies.yes' : 'recoveryAppPolicies.no')} />
+              <DetailField label={t('details.sourceShutdownTimeout')} labelHelp={<KeyedHelpPopover helpKey="recoveryAppPolicies.fieldHelp.source_shutdown_timeout_seconds" sections={[]} />} value={formatInterval(selected.source_shutdown_timeout_seconds, 'seconds', t)} />
+              <DetailField label={t('details.zoningWait')} labelHelp={<KeyedHelpPopover helpKey="recoveryAppPolicies.fieldHelp.zoning_wait_minutes" sections={[]} />} value={formatInterval(selected.zoning_wait_minutes, 'minutes', t)} />
             </DetailOverview>
           </DetailViewSection>
         </DetailView>
