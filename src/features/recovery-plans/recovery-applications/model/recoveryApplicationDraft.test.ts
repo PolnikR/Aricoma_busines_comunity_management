@@ -155,12 +155,12 @@ describe('metadata transaction', () => {
     expect(decision.transition.draft.tiers).toBe(initial.tiers)
   })
   it('reports an identical-value callback as unchanged but dirty', () => {
-    expect(planApplicationMetadataChange(draft(), { platform: 'source', name: 'Application' }, context)).toEqual({ kind: 'unchanged', notifyDirty: true })
+    expect(planApplicationMetadataChange(draft(), { platform: 'source', name: 'Application' }, context)).toEqual({ kind: 'unchanged', metadata: { platform: 'source', name: 'Application' }, notifyDirty: true })
   })
   it('filters locked providers while applying other metadata', () => {
     const initial = freezeDraft(draft())
     const lockedContext = { providers, lockedProviders: locks }
-    expect(planApplicationMetadataChange(initial, { platform: 'power', targetProviderId: 'other' }, lockedContext)).toEqual({ kind: 'unchanged', notifyDirty: true })
+    expect(planApplicationMetadataChange(initial, { platform: 'power', targetProviderId: 'other' }, lockedContext)).toEqual({ kind: 'unchanged', metadata: {}, notifyDirty: true })
     const decision = planApplicationMetadataChange(initial, { platform: 'power', targetProviderId: 'other', description: 'Changed' }, lockedContext)
     if (decision.kind !== 'applied') throw new Error('Expected applied')
     expect(decision.transition.draft).toMatchObject({ platform: 'source', targetProviderId: 'invalid-retained', description: 'Changed' })
@@ -256,5 +256,29 @@ describe('tier transitions', () => {
     expect(reordered).toEqual(before)
     expect(initial.tiers.get('db')?.order).toBe(3)
     expect(result.notifyDirty).toBe(true)
+  })
+})
+
+describe('metadata patch composition', () => {
+  it('retains an implicit reset when a queued target edit precedes a cross-type source intent', () => {
+    const initial = { ...draft(false), targetProviderId: '' }
+    const target = planApplicationMetadataChange(initial, { targetProviderId: 'queued-target' }, context)
+    const source = planApplicationMetadataChange(initial, { platform: 'power' }, context)
+    if (target.kind !== 'applied' || source.kind !== 'applied') throw new Error('Expected applied')
+    expect(source.metadata).toEqual({ platform: 'power', targetProviderId: '' })
+    expect({ ...initial, ...target.metadata, ...source.metadata }).toMatchObject({ platform: 'power', targetProviderId: '' })
+  })
+
+  it('returns a copied exact patch for unchanged explicit values and filters locked providers', () => {
+    const patch = { name: 'Application', platform: 'source' }
+    const unchanged = planApplicationMetadataChange(draft(), patch, context)
+    if (unchanged.kind !== 'unchanged') throw new Error('Expected unchanged')
+    expect(unchanged.metadata).toEqual(patch)
+    expect(unchanged.metadata).not.toBe(patch)
+    patch.name = 'Later mutation'
+    expect(unchanged.metadata).toEqual({ name: 'Application', platform: 'source' })
+    const locked = planApplicationMetadataChange(draft(), { platform: 'power', targetProviderId: 'other' }, { ...context, lockedProviders: locks })
+    if (locked.kind !== 'unchanged') throw new Error('Expected unchanged')
+    expect(locked.metadata).toEqual({})
   })
 })

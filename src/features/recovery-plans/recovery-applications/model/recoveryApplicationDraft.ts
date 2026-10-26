@@ -24,8 +24,8 @@ export interface SourceChangeProposal {
 }
 
 export type SourceChangeDecision =
-  | { readonly kind: 'unchanged'; readonly notifyDirty: boolean }
-  | { readonly kind: 'applied'; readonly transition: DraftTransition }
+  | { readonly kind: 'unchanged'; readonly metadata: Readonly<ApplicationMetadataPatch>; readonly notifyDirty: boolean }
+  | { readonly kind: 'applied'; readonly metadata: Readonly<ApplicationMetadataPatch>; readonly transition: DraftTransition }
   | { readonly kind: 'confirmationRequired'; readonly proposal: SourceChangeProposal }
 
 function editableMetadata(update: ApplicationMetadataPatch, lockedProviders: LockedProviders | null): ApplicationMetadataPatch {
@@ -62,9 +62,9 @@ export function planApplicationMetadataChange(
     }
   }
   if (Object.entries(metadata).every(([key, value]) => draft[key as keyof ApplicationMetadataPatch] === value)) {
-    return { kind: 'unchanged', notifyDirty: true }
+    return { kind: 'unchanged', metadata: { ...metadata }, notifyDirty: true }
   }
-  return { kind: 'applied', transition: { draft: { ...draft, ...metadata }, notifyDirty: true } }
+  return { kind: 'applied', metadata: { ...metadata }, transition: { draft: { ...draft, ...metadata }, notifyDirty: true } }
 }
 
 export function applyConfirmedSourceChange(
