@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
+import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import { RecoveryAppBuilder } from './RecoveryAppBuilder'
 import type { RecoveryGroup } from '../../recovery-groups/model/recoveryGroupTypes'
 import type { LockedProviders, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
@@ -65,7 +66,7 @@ const providersQuery = vi.hoisted(() => ({
       ipAddress: '10.0.0.20',
       credentialId: 'vmware-cred',
       credentialStatus: 'ok',
-    }],
+    }] as ProviderRecord[] | undefined,
     isLoading: false,
     error: null as Error | null,
     refetch: vi.fn(),
@@ -472,6 +473,140 @@ describe('RecoveryAppBuilder', () => {
     })
   })
 
+  describe('readiness and final validation boundaries', () => {
+    const lockedProviders = { platform: 'VMWARE', sourceProviderId: 'vmware-01', targetProviderId: 'vmware-target-01' }
+
+    it.each([
+      ['invalid file ID', { fileName: 'bad id' }, false],
+      ['invalid application name', { name: '' }, false],
+      ['blank description', { description: '   ' }, false],
+      ['unknown source', { platform: 'gone' }, false],
+      ['incompatible target', { targetProviderId: 'power-01' }, false],
+      ['valid details', {}, true],
+    ] as const)('gates step 1 and every later header on %s', (_label, patch, ready) => {
+      render(<RecoveryAppBuilder initialData={{ ...draftFixture(), ...patch }} />)
+      for (const name of ['Next', 'Recovery groups & tiers', 'Policy set', 'Orchestration']) {
+        expect(screen.getByRole('button', { name })).toHaveProperty('disabled', !(ready))
+      }
+    })
+
+    it.each([
+      ['zero tiers', 'empty', 'critical-daily-latest', false, true],
+      ['unassigned tier', 'unassigned', 'critical-daily-latest', false, true],
+      ['blank policy', 'assigned', '   ', true, false],
+      ['policy absent from query', 'assigned', 'stale-policy', true, true],
+    ] as const)('gates steps 2-4 independently: %s', async (_label, membership, policySetId, tiersReady, policyReady) => {
+      const initialData = { ...draftFixture(), policySetId }
+      if (membership === 'empty') initialData.tiers.clear()
+      if (membership === 'unassigned') initialData.tiers.set('tier_id', { order: 3, description: 'No Group' })
+      render(<RecoveryAppBuilder initialData={initialData} />)
+      expect(screen.getByRole('button', { name: 'Policy set' })).toHaveProperty('disabled', !(tiersReady))
+      expect(screen.getByRole('button', { name: 'Orchestration' })).toHaveProperty('disabled', !(tiersReady && policyReady))
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Next' }))
+      expect(screen.getByRole('button', { name: 'Next' })).toHaveProperty('disabled', !(tiersReady))
+      if (!tiersReady) return
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Next' }))
+      expect(screen.getByRole('button', { name: 'Next' })).toHaveProperty('disabled', !(policyReady))
+      if (!policyReady) return
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Next' }))
+      expect(screen.getByRole('button', { name: 'Save Application' })).toBeEnabled()
+    })
+
+    it('disables Save for zero tiers even though final validation accepts zero tiers', async () => {
+      const onSave = vi.fn()
+      render(<RecoveryAppBuilder initialData={draftFixture()} onSave={onSave} />)
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Recovery groups & tiers' }))
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Orchestration' }))
+      act(() => { canvasProps().onTierDelete?.('tier_id') })
+      act(() => { canvasProps().onTierDelete?.('web') })
+      expect(screen.getByRole('button', { name: 'Save Application' })).toBeDisabled()
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Save Application' }))
+      expect(onSave).not.toHaveBeenCalled()
+    })
+
+    it.each([
+      ['initial loading without data', 'absent', true, false, false],
+      ['error without data', 'absent', false, true, false],
+      ['loaded empty data', 'empty', false, false, false],
+      ['cached data with error', 'cached', false, true, false],
+      ['cached data while loading', 'cached', true, false, true],
+      ['loaded cached data', 'cached', false, false, true],
+    ] as const)('projects locked provider readiness: %s', async (_label, data, isLoading, error, ready) => {
+      const previous = providersQuery.current.data
+      onTestFinished(() => { providersQuery.current.data = previous })
+      providersQuery.current.data = data === 'absent' ? undefined : data === 'empty' ? [] : previous
+      providersQuery.current.isLoading = isLoading
+      providersQuery.current.error = error ? new Error('Provider query failed') : null
+      const onSave = vi.fn()
+      const initialData = draftFixture()
+      render(<RecoveryAppBuilder initialData={initialData} lockedProviders={lockedProviders} onSave={onSave} />)
+      expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled()
+      expect(screen.queryByText('no longer exists', { exact: false }) !== null).toBe(data === 'empty' && !error)
+      if (error) expect(screen.getAllByRole('button', { name: 'Retry' }).length).toBeGreaterThan(0)
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Orchestration' }))
+      expect(screen.getByRole('button', { name: 'Save Application' })).toHaveProperty('disabled', !(ready))
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Save Application' }))
+      expect(onSave).toHaveBeenCalledTimes(ready ? 1 : 0)
+      if (ready) expect(onSave).toHaveBeenCalledWith(initialData)
+    })
+
+    it.each([false, true])('requires credentials for Create but only stored identity/type/role for locked Edit (locked=%s)', async locked => {
+      const previous = fixtureValue(providersQuery.current.data)
+      onTestFinished(() => { providersQuery.current.data = previous })
+      providersQuery.current.data = previous.map(provider => ({ ...provider, credentialStatus: 'missing' }))
+      const initialData = draftFixture()
+      const onSave = vi.fn()
+      render(<RecoveryAppBuilder initialData={initialData} onSave={onSave} lockedProviders={locked ? lockedProviders : null} />)
+      expect(screen.getByRole('button', { name: 'Next' })).toHaveProperty('disabled', !(locked))
+      if (!locked) return
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Orchestration' }))
+      expect(screen.getByRole('button', { name: 'Save Application' })).toBeEnabled()
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Save Application' }))
+      expect(onSave).toHaveBeenCalledExactlyOnceWith(initialData)
+    })
+
+    it.each([
+      ['Groups loading', true, false, false, false, false],
+      ['Groups background fetching', false, true, false, false, true],
+      ['cached Group error', false, false, true, false, true],
+      ['cached policy and orchestration errors/loading', false, false, false, true, true],
+    ] as const)('preserves cached-data Save flags: %s', async (_label, loading, fetching, groupError, auxiliaryErrors, ready) => {
+      recoveryGroupsQuery.current.isLoading = loading
+      recoveryGroupsQuery.current.isFetching = fetching
+      recoveryGroupsQuery.current.error = groupError ? new Error('Group refresh failed') : null
+      policySetsQuery.current.isLoading = auxiliaryErrors
+      policySetsQuery.current.error = auxiliaryErrors ? new Error('Policy refresh failed') : null
+      platformProvidersQuery.current.isLoading = auxiliaryErrors
+      platformProvidersQuery.current.error = auxiliaryErrors ? new Error('Airflow refresh failed') : null
+      const initialData = { ...draftFixture(), pushToOrchestrator: true, orchestrationProviderId: 'airflow-01' }
+      const onSave = vi.fn()
+      render(<RecoveryAppBuilder initialData={initialData} onSave={onSave} />)
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Orchestration' }))
+      expect(screen.getByRole('button', { name: 'Save Application' })).toHaveProperty('disabled', !(ready))
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Save Application' }))
+      expect(onSave).toHaveBeenCalledTimes(ready ? 1 : 0)
+      if (ready) expect(onSave).toHaveBeenCalledWith(initialData)
+    })
+
+    it.each(['missing', 'incompatible', 'unpublished'] as const)('preliminary Save permits an assigned %s Group but final validation rejects it', async state => {
+      recoveryGroupsQuery.current.groups = state === 'missing' ? [] : recoveryGroupsQuery.current.groups.map(group => group.id === 'database_group' ? {
+        ...group, ...(state === 'incompatible' ? { workloadType: 'ibm_power_virtual_machines' } : { pushToOrchestrator: false }),
+      } : group)
+      const initialData = draftFixture()
+      const before = structuredClone(initialData)
+      const onSave = vi.fn()
+      const alert = vi.fn()
+      vi.stubGlobal('alert', alert)
+      render(<RecoveryAppBuilder initialData={initialData} onSave={onSave} />)
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Orchestration' }))
+      expect(screen.getByRole('button', { name: 'Save Application' })).toBeEnabled()
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Save Application' }))
+      expect(onSave).not.toHaveBeenCalled()
+      expect(alert).toHaveBeenCalledExactlyOnceWith(expect.stringContaining('"Database Group" in tier "tier_id"'))
+      expect(initialData).toEqual(before)
+    })
+  })
+
   it('keeps the next step disabled until a target provider is selected', () => {
     render(<RecoveryAppBuilder />)
     fillDetails()
@@ -677,7 +812,7 @@ describe('RecoveryAppBuilder', () => {
       await user.click(screen.getByRole('button', { name: 'Orchestration' }))
       expect(screen.getByRole('button', { name: 'Save Application' })).toBeDisabled()
 
-      const original = providersQuery.current.data
+      const original = fixtureValue(providersQuery.current.data)
       onTestFinished(() => { providersQuery.current.data = original })
       providersQuery.current.data = original.map(provider => {
         if (provider.id === 'vmware-01') return { ...provider, id: ids.sourceProviderId }
@@ -758,7 +893,7 @@ describe('RecoveryAppBuilder', () => {
     })
 
     it.each(['vmware-target-01', 'target-gone'])('defers a second VMware source, then detaches multiple tiers preserving IDs, descriptions, orders and target %s', async targetProviderId => {
-      const previousProviders = providersQuery.current.data
+      const previousProviders = fixtureValue(providersQuery.current.data)
       providersQuery.current.data = [...previousProviders, { ...fixtureValue(previousProviders[0]), id: 'vmware-02', name: 'Second vCenter' }]
       onTestFinished(() => { providersQuery.current.data = previousProviders })
       const initialData = { ...draftFixture(), targetProviderId }
@@ -807,7 +942,7 @@ describe('RecoveryAppBuilder', () => {
       act(() => { metadataProps().onMetadataChange?.({ platform: 'power-01', targetProviderId: '', name: 'Proposed' }) })
       act(() => { metadataProps().onMetadataChange?.({ name: 'Intervening', description: 'Latest description', targetProviderId: 'vmware-target-01' }) })
       act(() => { canvasProps().onTierAdd?.('late', { order: 9, description: 'Late tier', recovery_group: fixtureValue(initialData.tiers.get('web')).recovery_group }) })
-      const previousProviders = providersQuery.current.data
+      const previousProviders = fixtureValue(providersQuery.current.data)
       providersQuery.current.data = previousProviders.map(provider => provider.id === 'power-01' ? { ...provider, type: 'VMWARE' } : provider)
       onTestFinished(() => { providersQuery.current.data = previousProviders })
       rerender(<RecoveryAppBuilder {...props} />)
@@ -823,7 +958,7 @@ describe('RecoveryAppBuilder', () => {
     })
 
     it('replaces a pending proposal and preserves target-only edits outside the replacement patch', async () => {
-      const previousProviders = providersQuery.current.data
+      const previousProviders = fixtureValue(providersQuery.current.data)
       providersQuery.current.data = [...previousProviders, { ...fixtureValue(previousProviders[0]), id: 'vmware-02' }]
       onTestFinished(() => { providersQuery.current.data = previousProviders })
       const onDirtyChange = vi.fn()

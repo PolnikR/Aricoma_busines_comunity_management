@@ -30,6 +30,30 @@ const formState: RecoveryApplicationFormState = {
 }
 
 describe('validateRecoveryApplication', () => {
+  it.each([false, true])('currently accepts zero tiers with explicit empty Groups (locked=%s), unlike Builder readiness', locked => {
+    const before = structuredClone(formState)
+    expect(validateRecoveryApplication(formState, providers, [], {
+      groups: [],
+      lockedProviders: locked ? { platform: 'VMWARE', sourceProviderId: 'vmware-source', targetProviderId: 'vmware-target' } : null,
+    })).toBeNull()
+    expect(formState).toEqual(before)
+    expect([...formState.tiers]).toEqual([])
+  })
+
+  it.each([
+    [{ fileName: '', name: '', description: '', policySetId: '' }, 'fileName', 'recovery.application.validation.fileNameRequired'],
+    [{ name: '', description: '', policySetId: '' }, 'name', 'alerts.pleaseEnterName'],
+    [{ description: '', policySetId: '' }, 'description', 'alerts.pleaseEnterDescription'],
+    [{ policySetId: '' }, 'policySet', 'recovery.application.validation.policySetRequired'],
+    [{}, 'platform', 'recovery.application.validation.platformProviderRequired'],
+  ] as const)('validates metadata and Push before missing tier Groups: %j', (patch, field, messageKey) => {
+    const draft: RecoveryApplicationFormState = {
+      ...formState, pushToOrchestrator: true, orchestrationProviderId: 'gone',
+      tiers: new Map([['database', { order: 1, description: 'Unassigned' }]]), ...patch,
+    }
+    expect(validateRecoveryApplication(draft, providers, [], { groups: [] })).toEqual({ field, messageKey })
+  })
+
   it('accepts a target provider of the source type', () => {
     expect(validateRecoveryApplication(formState, providers)).toBeNull()
   })
@@ -133,6 +157,15 @@ describe('validateRecoveryApplication', () => {
         }]]),
       }
     }
+
+    it('skips live Group checks only when the optional Groups dataset is omitted', () => {
+      const draft = withGroup('gone_group', ['unknown-vm'], { policySetId: 'nonempty-policy-absent-from-query' })
+      expect(validateRecoveryApplication(draft, providers)).toBeNull()
+      expect(validateRecoveryApplication(draft, providers, [], { groups: [] })).toEqual({
+        field: 'recoveryGroup', messageKey: 'recovery.application.validation.recoveryGroupMissing',
+        params: { tier: 'database', group: 'gone_group name' },
+      })
+    })
 
     describe.each(['VMWARE', 'IBM_POWER'] as const)('publication for %s', platform => {
       it.each([
