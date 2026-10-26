@@ -286,12 +286,12 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
             <DetailOverview>
               <DetailField label={t('details.policyId')} value={selected.id} mono copyValue={selected.id} />
               <DetailField label={t('details.description')} value={selected.description} wide />
-              <DetailField label={t('details.level')} value={selected.level} />
-              <DetailField label={t('details.frequency')} value={t('snapshotPolicies.every').replace('{interval}', formatInterval(selected.frequency_value, selected.frequency_unit, t))} emphasis />
-              <DetailField label={t('details.retention')} value={formatInterval(selected.retention_value, selected.retention_unit, t)} />
-              <DetailField label={t('details.maxSnapshots')} value={selected.max_snapshots == null ? t('snapshotPolicies.noLimit') : String(selected.max_snapshots)} />
-              <DetailField label={t('snapshotPolicies.form.flashcopyCopyRate')} value={String(selected.flashcopy_copy_rate)} />
-              <DetailField label={t('details.status')} value={t(selected.enabled ? 'snapshotPolicies.enabled' : 'snapshotPolicies.disabled')} />
+              <DetailField label={t('details.level')} labelHelp={<KeyedHelpPopover helpKey="snapshotPolicies.fieldHelp.level" sections={[]} />} value={selected.level} />
+              <DetailField label={t('details.frequency')} labelHelp={<KeyedHelpPopover helpKey="snapshotPolicies.fieldHelp.frequency" sections={[]} />} value={t('snapshotPolicies.every').replace('{interval}', formatInterval(selected.frequency_value, selected.frequency_unit, t))} emphasis />
+              <DetailField label={t('details.retention')} labelHelp={<KeyedHelpPopover helpKey="snapshotPolicies.fieldHelp.retention" sections={[]} />} value={formatInterval(selected.retention_value, selected.retention_unit, t)} />
+              <DetailField label={t('details.maxSnapshots')} labelHelp={<KeyedHelpPopover helpKey="snapshotPolicies.fieldHelp.maxSnapshots" sections={[]} />} value={selected.max_snapshots == null ? t('snapshotPolicies.noLimit') : String(selected.max_snapshots)} />
+              <DetailField label={t('snapshotPolicies.form.flashcopyCopyRate')} labelHelp={<KeyedHelpPopover helpKey="snapshotPolicies.fieldHelp.flashcopyCopyRate" sections={[]} />} value={String(selected.flashcopy_copy_rate)} />
+              <DetailField label={t('details.status')} labelHelp={<KeyedHelpPopover helpKey="snapshotPolicies.fieldHelp.enabled" sections={[]} />} value={t(selected.enabled ? 'snapshotPolicies.enabled' : 'snapshotPolicies.disabled')} />
             </DetailOverview>
           </DetailViewSection>
         </DetailView>

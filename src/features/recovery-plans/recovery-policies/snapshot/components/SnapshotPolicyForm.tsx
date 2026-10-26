@@ -82,9 +82,9 @@ export function SnapshotPolicyForm({ data, errors, isSubmitting, idDisabled = fa
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 border-t border-border pt-4 sm:grid-cols-3">
-        <div className="grid min-w-0 grid-cols-[4.5rem_minmax(0,1fr)] gap-2">
-          <div className="mb-1.5 flex min-h-8 items-center gap-1.5 col-span-2">
+      <div className="grid grid-cols-1 items-start gap-4 border-t border-border pt-4 sm:grid-cols-3">
+        <div className="grid min-w-0 grid-cols-[4.5rem_minmax(0,1fr)] gap-x-2">
+          <div className="col-span-2 mb-1.5 flex min-h-8 items-center gap-1.5">
             <label htmlFor="snapshot-policy-frequency" className="text-xs font-medium text-text-secondary">{t('snapshotPolicies.form.frequency')}</label>
             <KeyedHelpPopover helpKey="snapshotPolicies.fieldHelp.frequency" sections={[]} />
           </div>
@@ -104,8 +104,8 @@ export function SnapshotPolicyForm({ data, errors, isSubmitting, idDisabled = fa
           <Input id="snapshot-policy-max-snapshots" type="number" min={1} step={1} value={data.max_snapshots} placeholder={t('snapshotPolicies.form.noLimit')} disabled={isSubmitting} invalid={Boolean(errors.max_snapshots)} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('max_snapshots', event.target.value) }} />
           {errors.max_snapshots ? <p className="mt-1 text-xs text-red-600">{errors.max_snapshots}</p> : null}
         </div>
-        <div className="grid min-w-0 grid-cols-[4.5rem_minmax(0,1fr)] gap-2">
-          <div className="mb-1.5 flex min-h-8 items-center gap-1.5 col-span-2">
+        <div className="grid min-w-0 grid-cols-[4.5rem_minmax(0,1fr)] gap-x-2">
+          <div className="col-span-2 mb-1.5 flex min-h-8 items-center gap-1.5">
             <label htmlFor="snapshot-policy-retention" className="text-xs font-medium text-text-secondary">{t('snapshotPolicies.form.retention')}</label>
             <KeyedHelpPopover helpKey="snapshotPolicies.fieldHelp.retention" sections={[]} />
           </div>
