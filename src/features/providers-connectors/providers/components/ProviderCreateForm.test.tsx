@@ -173,20 +173,20 @@ describe('ProviderCreateForm', () => {
     }
   })
 
-  it('renders VM settings and reports a single selected tag', async () => {
+  it('keeps all saved tags available and reports additions and removals', async () => {
     const user = userEvent.setup()
     const onTagsChange = vi.fn()
 
     render(
       <ProviderCreateForm
-        data={data}
+        data={{ ...data, vmTags: ['saved-tag', 'missing-tag'] }}
         errors={{}}
         isSubmitting={false}
         credentials={credentials}
         credentialsLoading={false}
         credentialsError={false}
         onRetryCredentials={vi.fn()}
-        tags={['available-tag', 'replacement-tag']}
+        tags={['available-tag', 'saved-tag', 'saved-tag']}
         tagsLoading={false}
         tagsError={false}
         tagsDisabled={false}
@@ -199,12 +199,18 @@ describe('ProviderCreateForm', () => {
     )
 
     expect(screen.getByLabelText('VM prefix')).toHaveValue('prod-')
-    expect(screen.getByLabelText('VM tags')).toHaveValue('saved-tag')
+    await user.click(screen.getByRole('button', { name: 'VM tags' }))
+    expect(screen.getAllByRole('checkbox')).toHaveLength(3)
+    expect(screen.getByRole('checkbox', { name: 'saved-tag' })).toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'missing-tag' })).toBeChecked()
 
-    await user.selectOptions(screen.getByLabelText('VM tags'), 'replacement-tag')
-    expect(onTagsChange).toHaveBeenLastCalledWith(['replacement-tag'])
+    await user.click(screen.getByRole('checkbox', { name: 'available-tag' }))
+    expect(onTagsChange).toHaveBeenLastCalledWith(['saved-tag', 'missing-tag', 'available-tag'])
 
-    await user.selectOptions(screen.getByLabelText('VM tags'), '')
-    expect(onTagsChange).toHaveBeenLastCalledWith([])
+    await user.click(screen.getByRole('checkbox', { name: 'saved-tag' }))
+    expect(onTagsChange).toHaveBeenLastCalledWith(['missing-tag'])
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('checkbox', { name: 'missing-tag' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'VM tags' })).toHaveFocus()
   })
 })

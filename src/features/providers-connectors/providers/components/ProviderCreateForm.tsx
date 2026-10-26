@@ -87,10 +87,7 @@ export function ProviderCreateForm({
   const selectedCredentialIsMissing = Boolean(
     data.credentialId && !credentials.some(credential => credential.id === data.credentialId),
   )
-  const selectedVmTag = data.vmTags[0] ?? ''
-  const vmTagOptions = selectedVmTag && !tags.includes(selectedVmTag)
-    ? [selectedVmTag, ...tags]
-    : tags
+  const vmTagOptions = [...new Set([...tags, ...data.vmTags])].map(tag => ({ value: tag, label: tag }))
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Enter' && !isSubmitting) {
       event.preventDefault()
@@ -251,17 +248,10 @@ export function ProviderCreateForm({
         </Field> : null}
 
         {fieldConfig.vmTags ? <Field label={t('forms.vmTags')} htmlFor="create-vmTags">
-          <Select
-            id="create-vmTags"
-            value={selectedVmTag}
-            onChange={(event: ChangeEvent<HTMLSelectElement>) => {
-              onTagsChange(event.target.value ? [event.target.value] : [])
-            }}
+          <MultiSelect id="create-vmTags" label={t('forms.vmTags')}
+            options={vmTagOptions} value={data.vmTags} onChange={onTagsChange}
             disabled={isSubmitting || tagsDisabled}
-          >
-            <option value="">{t('forms.vmTagsSelect')}</option>
-            {vmTagOptions.map(tag => <option key={tag} value={tag}>{tag}</option>)}
-          </Select>
+            placeholder={t('forms.vmTagsSelect')} emptyText={t('forms.vmTagsEmpty')} />
           {tagsLoading ? <p className="mt-1 text-xs text-text-muted" role="status">{t('providers.tags.loading')}</p> : null}
           {tagsError ? (
             <p className="mt-1 text-xs text-red-600" role="alert">

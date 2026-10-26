@@ -961,6 +961,7 @@
   "forms.vmPrefix": "VM prefix",
   "forms.vmTags": "VM tagy",
   "forms.vmTagsSelect": "Vyberte VM tagy",
+  "forms.vmTagsEmpty": "Nie sú dostupné žiadne VM tagy.",
   "forms.ipRequired": "Zadajte IP adresu.",
   "forms.ipExample": "napr. 10.99.99.40",
   "forms.port": "Port",

@@ -347,7 +347,7 @@ describe('ProvidersCreateModal', () => {
 
     expect(useTagsMock).toHaveBeenCalledWith('vmware-vcenter-01', true)
     expect(screen.getByLabelText('VM prefix')).toHaveValue('prod-')
-    expect(screen.getByLabelText('VM tags')).toHaveValue('saved-tag')
+    expect(screen.getByRole('button', { name: 'VM tags' })).toHaveTextContent('saved-tag')
 
     fireEvent.click(screen.getByRole('button', { name: /Edit provider/i }))
 
@@ -360,7 +360,7 @@ describe('ProvidersCreateModal', () => {
     vi.unstubAllGlobals()
   })
 
-  it.each(['unchanged', 'lookup-error', 'replacement', 'clear'])('preserves all saved tags unless explicitly changed: %s', async action => {
+  it.each(['unchanged', 'lookup-error', 'add', 'remove', 'clear'])('preserves all saved tags unless explicitly changed: %s', async action => {
     const mockFetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
     vi.stubGlobal('fetch', mockFetch)
     const editedProvider: ProviderRecord = {
@@ -368,7 +368,7 @@ describe('ProvidersCreateModal', () => {
       vmTags: ['first-tag', 'second-tag'],
     }
     useTagsMock.mockReturnValue({
-      data: ['first-tag', 'second-tag'],
+      data: ['first-tag', 'third-tag'],
       isLoading: false,
       error: action === 'lookup-error' ? new Error('Tag lookup unavailable') : null,
       refetch: vi.fn(),
@@ -383,15 +383,20 @@ describe('ProvidersCreateModal', () => {
       />,
     )
 
-    expect(screen.getByRole('combobox', { name: /VM tags/ })).toHaveValue('first-tag')
+    expect(screen.getByRole('button', { name: 'VM tags' })).toHaveTextContent('first-tag, second-tag')
     fireEvent.change(screen.getByLabelText('Provider name'), { target: { value: 'Renamed' } })
-    if (action === 'replacement') fireEvent.change(screen.getByLabelText('VM tags'), { target: { value: 'second-tag' } })
-    if (action === 'clear') fireEvent.change(screen.getByLabelText('VM tags'), { target: { value: '' } })
+    if (action === 'add' || action === 'remove' || action === 'clear') {
+      fireEvent.click(screen.getByRole('button', { name: 'VM tags' }))
+      if (action === 'add') fireEvent.click(screen.getByRole('checkbox', { name: 'third-tag' }))
+      if (action === 'remove' || action === 'clear') fireEvent.click(screen.getByRole('checkbox', { name: 'first-tag' }))
+      if (action === 'clear') fireEvent.click(screen.getByRole('checkbox', { name: 'second-tag' }))
+    }
     fireEvent.click(screen.getByRole('button', { name: /Edit provider/i }))
     await waitFor(() => { expect(mockFetch).toHaveBeenCalledOnce() })
     const init = mockFetch.mock.calls[0]?.[1] as RequestInit
     expect(JSON.parse(init.body as string)).toMatchObject({
-      name: 'Renamed', vmTags: action === 'replacement' ? ['second-tag'] : action === 'clear' ? [] : ['first-tag', 'second-tag'],
+      name: 'Renamed', vmTags: action === 'add' ? ['first-tag', 'second-tag', 'third-tag']
+        : action === 'remove' ? ['second-tag'] : action === 'clear' ? [] : ['first-tag', 'second-tag'],
     })
     vi.unstubAllGlobals()
   })

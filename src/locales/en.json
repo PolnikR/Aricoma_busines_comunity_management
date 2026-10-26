@@ -990,6 +990,7 @@
   "forms.vmPrefix": "VM prefix",
   "forms.vmTags": "VM tags",
   "forms.vmTagsSelect": "Select VM tags",
+  "forms.vmTagsEmpty": "No VM tags available.",
   "forms.ipRequired": "IP address is required",
   "forms.ipExample": "e.g., 10.99.99.40",
   "forms.port": "Port",
