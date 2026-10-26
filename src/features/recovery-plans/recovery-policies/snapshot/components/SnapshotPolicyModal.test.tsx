@@ -51,6 +51,14 @@ afterEach(() => {
 })
 
 describe('SnapshotPolicyModal', () => {
+  it('places frequency, maximum snapshots and retention together after level and status', () => {
+    renderModal()
+    const controls = ['Level', 'Enabled', 'Frequency', 'Maximum snapshots', 'Retention', 'FlashCopy copy rate'].map(name => screen.getByLabelText(name))
+    for (const [index, control] of controls.entries()) {
+      const previous = controls[index - 1]
+      if (previous) expect(previous.compareDocumentPosition(control)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    }
+  })
   it('starts with a valid 15 minute frequency and clears only the frequency on a unit change', () => {
     renderModal()
     const frequency = screen.getByLabelText('Frequency')

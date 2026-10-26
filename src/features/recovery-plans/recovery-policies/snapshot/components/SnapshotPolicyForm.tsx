@@ -57,7 +57,7 @@ export function SnapshotPolicyForm({ data, errors, isSubmitting, idDisabled = fa
         {errors.description ? <p className="mt-1 text-xs text-red-600">{errors.description}</p> : null}
       </Field>
 
-      <div className="grid grid-cols-2 items-start gap-4 sm:grid-cols-[10rem_7.5rem_minmax(0,1fr)] sm:gap-6">
+      <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 sm:gap-6">
         <Field label={t('snapshotPolicies.form.level')} htmlFor="snapshot-policy-level">
           <Select id="snapshot-policy-level" value={data.level} disabled={isSubmitting} aria-invalid={Boolean(errors.level)} onChange={(event: ChangeEvent<HTMLSelectElement>) => { onChange('level', event.target.value) }}>
             <option value="">{t('snapshotPolicies.form.selectLevel')}</option>
@@ -66,11 +66,7 @@ export function SnapshotPolicyForm({ data, errors, isSubmitting, idDisabled = fa
           </Select>
           {errors.level ? <p className="mt-1 text-xs text-red-600">{errors.level}</p> : null}
         </Field>
-        <Field label={t('snapshotPolicies.form.maxSnapshots')} htmlFor="snapshot-policy-max-snapshots">
-          <Input id="snapshot-policy-max-snapshots" type="number" min={1} step={1} value={data.max_snapshots} placeholder={t('snapshotPolicies.form.noLimit')} disabled={isSubmitting} invalid={Boolean(errors.max_snapshots)} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('max_snapshots', event.target.value) }} />
-          {errors.max_snapshots ? <p className="mt-1 text-xs text-red-600">{errors.max_snapshots}</p> : null}
-        </Field>
-        <div className="col-span-2 sm:col-span-1">
+        <div>
           <span className="mb-1.5 block text-xs font-medium text-text-secondary">{t('snapshotPolicies.form.status')}</span>
           <div className="flex h-10 items-center">
             <CheckboxField id="snapshot-policy-enabled" label={t('snapshotPolicies.form.enabled')} checked={data.enabled} disabled={isSubmitting} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('enabled', event.target.checked) }} />
@@ -78,8 +74,8 @@ export function SnapshotPolicyForm({ data, errors, isSubmitting, idDisabled = fa
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 border-t border-border pt-4 sm:grid-cols-2">
-        <div className="grid max-w-52 grid-cols-[4.5rem_minmax(0,1fr)] gap-2">
+      <div className="grid grid-cols-1 gap-4 border-t border-border pt-4 sm:grid-cols-3">
+        <div className="grid min-w-0 grid-cols-[4.5rem_minmax(0,1fr)] gap-2">
           <Field label={t('snapshotPolicies.form.frequency')} htmlFor="snapshot-policy-frequency">
             <Input id="snapshot-policy-frequency" type="number" min={data.frequency_unit === 'minutes' ? 15 : 1} step={data.frequency_unit === 'minutes' ? 15 : 1} value={data.frequency_value} disabled={isSubmitting} invalid={Boolean(errors.frequency_value)} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('frequency_value', event.target.value) }} />
           </Field>
@@ -90,7 +86,11 @@ export function SnapshotPolicyForm({ data, errors, isSubmitting, idDisabled = fa
           </Field>
           {errors.frequency_value ? <p className="col-span-2 text-xs text-red-600">{errors.frequency_value}</p> : null}
         </div>
-        <div className="grid max-w-52 grid-cols-[4.5rem_minmax(0,1fr)] gap-2">
+        <Field label={t('snapshotPolicies.form.maxSnapshots')} htmlFor="snapshot-policy-max-snapshots">
+          <Input id="snapshot-policy-max-snapshots" type="number" min={1} step={1} value={data.max_snapshots} placeholder={t('snapshotPolicies.form.noLimit')} disabled={isSubmitting} invalid={Boolean(errors.max_snapshots)} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('max_snapshots', event.target.value) }} />
+          {errors.max_snapshots ? <p className="mt-1 text-xs text-red-600">{errors.max_snapshots}</p> : null}
+        </Field>
+        <div className="grid min-w-0 grid-cols-[4.5rem_minmax(0,1fr)] gap-2">
           <Field label={t('snapshotPolicies.form.retention')} htmlFor="snapshot-policy-retention">
             <Input id="snapshot-policy-retention" type="number" min={1} step={1} value={data.retention_value} disabled={isSubmitting} invalid={Boolean(errors.retention_value)} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('retention_value', event.target.value) }} />
           </Field>
