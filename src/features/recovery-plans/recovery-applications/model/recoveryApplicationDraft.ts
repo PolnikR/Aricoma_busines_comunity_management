@@ -120,3 +120,32 @@ export function selectRecoveryVm(
   tiers.set(tierId, { ...tier, recovery_group: { ...tier.recovery_group, vms: nextVms.map((vm, index) => ({ ...vm, order: index + 1 })) } })
   return { draft: { ...draft, tiers }, notifyDirty: true }
 }
+
+export function addApplicationTier(
+  draft: RecoveryApplicationFormState, tierId: string, tier: DraftRecoveryTier,
+): DraftTransition {
+  return { draft: { ...draft, tiers: new Map(draft.tiers).set(tierId, cloneTier(tier)) }, notifyDirty: true }
+}
+
+export function editApplicationTier(
+  draft: RecoveryApplicationFormState, tierId: string, newTierId: string, updates: { tierDescription: string },
+): DraftTransition {
+  const tier = draft.tiers.get(tierId)
+  if (!tier) return { draft, notifyDirty: true }
+  const tiers = new Map(draft.tiers)
+  if (newTierId !== tierId) tiers.delete(tierId)
+  tiers.set(newTierId, { ...tier, description: updates.tierDescription })
+  return { draft: { ...draft, tiers }, notifyDirty: true }
+}
+
+export function deleteApplicationTier(draft: RecoveryApplicationFormState, tierId: string): DraftTransition {
+  const tiers = new Map(draft.tiers)
+  tiers.delete(tierId)
+  return { draft: { ...draft, tiers }, notifyDirty: true }
+}
+
+export function applyApplicationTierOrder(
+  draft: RecoveryApplicationFormState, reorderedTiers: Record<string, DraftRecoveryTier>,
+): DraftTransition {
+  return { draft: { ...draft, tiers: new Map(Object.entries(reorderedTiers)) }, notifyDirty: true }
+}

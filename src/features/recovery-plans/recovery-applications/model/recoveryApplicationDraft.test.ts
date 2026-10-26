@@ -3,7 +3,8 @@ import { describe, expect, it } from 'vitest'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import type { RecoveryGroup } from '../../recovery-groups/model/recoveryGroupTypes'
 import type { DraftRecoveryTier, LockedProviders, RecoveryApplicationFormState } from './recoveryApplicationTypes'
-import { applyConfirmedSourceChange, assignRecoveryGroup, createApplicationDraft, planApplicationMetadataChange, removeRecoveryGroup, selectRecoveryVm } from './recoveryApplicationDraft'
+import { calculateTierReorder } from '../utils/calculateTierReorder'
+import { addApplicationTier, applyApplicationTierOrder, applyConfirmedSourceChange, assignRecoveryGroup, createApplicationDraft, deleteApplicationTier, editApplicationTier, planApplicationMetadataChange, removeRecoveryGroup, selectRecoveryVm } from './recoveryApplicationDraft'
 
 const providers: ProviderRecord[] = [
   { id: 'source', name: 'Source', type: 'VMWARE', role: 'source', credentialStatus: 'ok' },
@@ -194,6 +195,66 @@ describe('metadata transaction', () => {
     const result = applyConfirmedSourceChange(latest, decision.proposal, locks)
     expect(result.draft).toMatchObject({ name: 'Proposed', platform: 'source', targetProviderId: 'invalid-retained' })
     expect(result.draft.tiers).toBe(latest.tiers)
+    expect(result.notifyDirty).toBe(true)
+  })
+})
+
+describe('tier transitions', () => {
+  it('stores a copied supplied tier at its supplied order without mutating either input', () => {
+    const initial = freezeDraft(draft())
+    const supplied = structuredClone(richTier)
+    supplied.order = 10
+    const before = structuredClone(supplied)
+    const result = addApplicationTier(initial, 'new_tier', supplied)
+    expect([...result.draft.tiers.keys()]).toEqual(['db', 'new_tier'])
+    expect(result.draft.tiers.get('new_tier')).toEqual(before)
+    expect(result.draft.tiers.get('new_tier')).not.toBe(supplied)
+    expect(result.draft.tiers.get('new_tier')?.recovery_group?.vms[0]).not.toBe(supplied.recovery_group?.vms[0])
+    expect(result.draft.tiers.get('new_tier')?.recovery_group?.volumes?.[0]).not.toBe(supplied.recovery_group?.volumes?.[0])
+    expect(supplied).toEqual(before)
+    expect([...initial.tiers.keys()]).toEqual(['db'])
+    expect(result.notifyDirty).toBe(true)
+  })
+  it('preserves numeric order and nested content but moves renamed keys to Map end', () => {
+    const initial = freezeDraft({ ...draft(), tiers: new Map([['db', structuredClone(richTier)], ['later', { order: 7, description: 'Later' }]]) })
+    const before = structuredClone(initial)
+    const result = editApplicationTier(initial, 'db', 'renamed', { tierDescription: 'Edited' })
+    expect([...result.draft.tiers.keys()]).toEqual(['later', 'renamed'])
+    expect(result.draft.tiers.get('renamed')).toEqual({ ...richTier, description: 'Edited' })
+    expect(initial).toEqual(before)
+    expect(result.notifyDirty).toBe(true)
+  })
+  it('keeps key insertion position when only description changes', () => {
+    const initial = freezeDraft({ ...draft(), tiers: new Map([['db', structuredClone(richTier)], ['later', { order: 7, description: 'Later' }]]) })
+    const result = editApplicationTier(initial, 'db', 'db', { tierDescription: 'Edited' })
+    expect([...result.draft.tiers.keys()]).toEqual(['db', 'later'])
+    expect(result.draft.tiers.get('db')).toEqual({ ...richTier, description: 'Edited' })
+  })
+  it('reports missing tier edits as original draft and dirty', () => {
+    const initial = freezeDraft(draft())
+    const result = editApplicationTier(initial, 'missing', 'new', { tierDescription: 'Edited' })
+    expect(result.draft).toBe(initial)
+    expect(result.notifyDirty).toBe(true)
+  })
+  it('deletes without renumbering survivors or rejecting final-tier callback', () => {
+    const initial = freezeDraft({ ...draft(), tiers: new Map([['db', structuredClone(richTier)], ['later', { order: 7, description: 'Later' }]]) })
+    const result = deleteApplicationTier(initial, 'db')
+    expect([...result.draft.tiers]).toEqual([['later', { order: 7, description: 'Later' }]])
+    expect(deleteApplicationTier(result.draft, 'later').draft.tiers.size).toBe(0)
+    expect(deleteApplicationTier(initial, 'missing').notifyDirty).toBe(true)
+    expect(initial.tiers.size).toBe(2)
+    expect(result.notifyDirty).toBe(true)
+  })
+  it('applies existing algorithm orders and content without sorting Map entries', () => {
+    const initial = freezeDraft({ ...draft(), tiers: new Map([['db', structuredClone(richTier)], ['later', { order: 7, description: 'Later' }]]) })
+    const reordered = calculateTierReorder(Object.fromEntries(initial.tiers), Array.from(initial.tiers, ([id, tier]) => ({ id, tier })), 'later', 'db')
+    const before = structuredClone(reordered)
+    const result = applyApplicationTierOrder(initial, reordered)
+    expect([...result.draft.tiers.keys()]).toEqual(['db', 'later'])
+    expect(result.draft.tiers.get('db')).toEqual({ ...richTier, order: 2 })
+    expect(result.draft.tiers.get('later')).toEqual({ order: 1, description: 'Later' })
+    expect(reordered).toEqual(before)
+    expect(initial.tiers.get('db')?.order).toBe(3)
     expect(result.notifyDirty).toBe(true)
   })
 })
