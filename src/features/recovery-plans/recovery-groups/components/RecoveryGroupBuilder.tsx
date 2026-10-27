@@ -222,6 +222,7 @@ export function RecoveryGroupBuilder({
                 id={draft.id}
                 name={draft.name}
                 description={draft.description}
+                notificationEmail={draft.notificationEmail ?? ''}
                 existingIds={existingIds}
                 {...(initialData ? { currentId: initialData.id, disableId: true } : {})}
                 onChange={values => { send({ type: 'detailsChanged', values }) }}

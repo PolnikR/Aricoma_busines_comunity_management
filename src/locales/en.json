@@ -1,4 +1,10 @@
 {
+  "recoveryGroups.notificationEmail": "Notification email",
+  "recoveryGroups.emailInvalid": "Enter a valid email address.",
+  "recoveryGroups.emailInherited": "Use the snapshot provider setting",
+  "recoveryGroups.fieldHelp.email.trigger": "About notification email",
+  "recoveryGroups.fieldHelp.email.title": "Notification email override",
+  "recoveryGroups.fieldHelp.email.intro": "Optional group override for Airflow notifications. Leave empty to use the snapshot provider email: the source FlashSystem for Local, or the target partner FlashSystem for Metro Mirror. Clearing the value removes the override. Saving alone does not deploy a DAG or send a notification.",
   "providers.fieldHelp.role.title": "Role",
   "providers.fieldHelp.role.trigger": "Help: Role",
   "providers.fieldHelp.role.intro": "Choose the source (production) or target (recovery environment) side of a recovery.",

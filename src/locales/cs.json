@@ -1,4 +1,10 @@
 {
+  "recoveryGroups.notificationEmail": "Notifikační e-mail",
+  "recoveryGroups.emailInvalid": "Zadejte platnou e-mailovou adresu.",
+  "recoveryGroups.emailInherited": "Použít nastavení snapshot provideru",
+  "recoveryGroups.fieldHelp.email.trigger": "O notifikačním e-mailu",
+  "recoveryGroups.fieldHelp.email.title": "Přepsání notifikačního e-mailu",
+  "recoveryGroups.fieldHelp.email.intro": "Volitelná adresa skupiny pro notifikace Airflow. Prázdná hodnota použije e-mail snapshot provideru: zdrojového FlashSystemu pro Local nebo cílového partnerského FlashSystemu pro Metro Mirror. Vymazání hodnoty zruší přepsání. Samotné uložení nenasadí DAG ani neodešle notifikaci.",
   "postDeleteRefresh.title": "Smazáno, ale seznam se nepodařilo obnovit",
   "postDeleteRefresh.description": "Smazání proběhlo úspěšně. Zobrazují se předchozí údaje, které mohou stále obsahovat smazaný záznam. Zkuste znovu načíst seznam.",
   "policyCatalog.waiting": "Čeká se na údaje zásad.",

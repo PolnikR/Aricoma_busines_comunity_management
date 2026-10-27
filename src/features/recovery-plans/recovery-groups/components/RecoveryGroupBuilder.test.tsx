@@ -75,7 +75,7 @@ vi.mock('@/generated/query/providers/providers.gen', async (importOriginal) => (
         role: 'source',
         credentialStatus: 'ok',
       },
-      { id: 'ibm-flashsystem-target', name: 'Target FlashSystem', type: 'FLASHCOPY', role: 'target', credentialStatus: 'ok' },
+      { id: 'ibm-flashsystem-target', name: 'Target FlashSystem', type: 'FLASHCOPY', role: 'target', credentialStatus: 'ok', partnerProviderId: 'ibm-flashsystem-01' },
     ],
     isLoading: false,
     error: null,

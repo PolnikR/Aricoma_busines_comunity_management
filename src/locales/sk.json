@@ -1,4 +1,10 @@
 {
+  "recoveryGroups.notificationEmail": "Notifikačný e-mail",
+  "recoveryGroups.emailInvalid": "Zadajte platnú e-mailovú adresu.",
+  "recoveryGroups.emailInherited": "Použiť nastavenie snapshot providera",
+  "recoveryGroups.fieldHelp.email.trigger": "O notifikačnom e-maile",
+  "recoveryGroups.fieldHelp.email.title": "Prepísanie notifikačného e-mailu",
+  "recoveryGroups.fieldHelp.email.intro": "Voliteľná adresa skupiny pre notifikácie Airflow. Prázdna hodnota použije e-mail snapshot providera: zdrojového FlashSystemu pre Local alebo cieľového partnerského FlashSystemu pre Metro Mirror. Vymazanie hodnoty zruší prepísanie. Samotné uloženie nenasadí DAG ani neodošle notifikáciu.",
   "providers.fieldHelp.role.title": "Rola",
   "providers.fieldHelp.role.trigger": "Nápoveda: Rola",
   "providers.fieldHelp.role.intro": "Vyberte zdrojovú stranu (produkcia) alebo cieľovú stranu (prostredie obnovy).",
