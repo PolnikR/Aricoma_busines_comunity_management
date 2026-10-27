@@ -6,8 +6,10 @@
  */
 import * as zod from 'zod';
 
+export const submitRecoveryAppPolicyBodyFrequencyValueDefault = 1;
 export const submitRecoveryAppPolicyBodyFrequencyValueExclusiveMin = 0;
 
+export const submitRecoveryAppPolicyBodyFrequencyUnitDefault = `days`;
 export const submitRecoveryAppPolicyBodyRetentionValueExclusiveMin = 0;
 
 export const submitRecoveryAppPolicyBodyBootVerifyDefault = false;
@@ -31,8 +33,8 @@ export const SubmitRecoveryAppPolicyBody = zod.object({
   "name": zod.string(),
   "description": zod.union([zod.string(),zod.null()]).exactOptional(),
   "level": zod.union([zod.string(),zod.null()]).exactOptional(),
-  "frequency_value": zod.int().gt(submitRecoveryAppPolicyBodyFrequencyValueExclusiveMin),
-  "frequency_unit": zod.enum(['minutes', 'hours', 'days']),
+  "frequency_value": zod.int().gt(submitRecoveryAppPolicyBodyFrequencyValueExclusiveMin).default(submitRecoveryAppPolicyBodyFrequencyValueDefault),
+  "frequency_unit": zod.enum(['minutes', 'hours', 'days']).default(submitRecoveryAppPolicyBodyFrequencyUnitDefault),
   "retention_value": zod.int().gt(submitRecoveryAppPolicyBodyRetentionValueExclusiveMin),
   "retention_unit": zod.enum(['minutes', 'hours', 'days']),
   "boot_verify": zod.boolean().default(submitRecoveryAppPolicyBodyBootVerifyDefault),
