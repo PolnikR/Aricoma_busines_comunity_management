@@ -1,6 +1,7 @@
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
-import { Field, Select } from '@/shared/components/form/FormControls'
+import { Select } from '@/shared/components/form/FormControls'
+import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { Toggle } from '@/shared/components/toggle/Toggle'
 import { useTranslation } from '@/hooks/useTranslation'
 import type { PlatformProviderRecord } from '@/features/platform-administration/platform-providers/model/platformProviderTypes'
@@ -78,10 +79,11 @@ export function RecoveryGroupOrchestrationStep({
         </div>
       ) : (
         <div className="mt-5 max-w-4xl">
-          <Field
-            label={t('pages.recoveryGroupBuilder.orchestration.providerLabel')}
-            htmlFor="recovery-group-orchestration-provider"
-          >
+          <div className="block">
+            <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+              <label htmlFor="recovery-group-orchestration-provider" className="text-xs font-medium text-text-secondary">{t('pages.recoveryGroupBuilder.orchestration.providerLabel')}</label>
+              <KeyedHelpPopover helpKey="recoveryGroups.fieldHelp.orchestration" sections={[]} />
+            </div>
             <Select
               id="recovery-group-orchestration-provider"
               value={selectedProviderId ?? ''}
@@ -100,7 +102,7 @@ export function RecoveryGroupOrchestrationStep({
                 </option>
               ))}
             </Select>
-          </Field>
+          </div>
           <p className="mt-2 text-xs text-text-muted">
             {t('pages.recoveryGroupBuilder.orchestration.notRestorable')}
           </p>

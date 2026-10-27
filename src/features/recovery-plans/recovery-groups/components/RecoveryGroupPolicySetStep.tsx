@@ -2,6 +2,7 @@ import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { PolicySetPicker } from '@/shared/components/policy-set-picker/PolicySetPicker'
 import { useTranslation } from '@/hooks/useTranslation'
 import type { PolicySetRecord } from '@/generated/query/zod'
+import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 
 interface RecoveryGroupPolicySetStepProps {
   policySets: PolicySetRecord[]
@@ -21,7 +22,8 @@ export function RecoveryGroupPolicySetStep({
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div>
-        <h2 className="text-base font-semibold text-text-primary">{t('pages.recoveryGroupBuilder.policySet.title')}</h2>
+        <div className="flex items-center gap-1.5"><h2 className="text-base font-semibold text-text-primary">{t('pages.recoveryGroupBuilder.policySet.title')}</h2>
+          <KeyedHelpPopover helpKey="recoveryGroups.fieldHelp.policySet" sections={[]} /></div>
         <p className="mt-1 text-sm text-text-muted">{t('pages.recoveryGroupBuilder.policySet.description')}</p>
       </div>
 

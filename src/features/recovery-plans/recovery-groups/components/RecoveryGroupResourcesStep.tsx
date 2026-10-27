@@ -13,7 +13,11 @@ import type {
   RecoveryGroupWorkloadType,
 } from '../model/recoveryGroupTypes'
 
+import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
+import { recoveryGroupComputeHelpKey } from '../helpers/recoveryGroupFieldHelp'
+
 interface RecoveryGroupResourcesStepProps {
+  computeProviderType?: string | null
   workloadType: RecoveryGroupWorkloadType | null
   providerId: string | null
   /** Fixed scope of the selected provider; omitted while the provider record is unknown. */
@@ -42,6 +46,7 @@ export function RecoveryGroupResourcesStep(props: RecoveryGroupResourcesStepProp
 }
 
 function RecoveryGroupResourcesStepContent({
+  computeProviderType,
   workloadType,
   providerId,
   providerScope,
@@ -101,7 +106,8 @@ function RecoveryGroupResourcesStepContent({
       </div>
       <div className={cn('flex h-72 min-h-0 min-w-0 flex-col rounded-lg border-border bg-surface lg:h-full', compact ? 'overflow-hidden border' : 'border-2 border-dashed p-4')}>
         <div className={cn('flex shrink-0 items-center justify-between gap-2', compact && 'border-b border-border px-3 py-2')}>
-          <h2 className={cn('min-w-0 font-semibold text-text-primary', compact ? 'text-sm' : 'text-base')}>{t(key('selectedTitle'))}{compact ? <span className="ml-2 text-xs font-normal text-text-muted">{resources.length}</span> : null}</h2>
+          <div className="flex min-w-0 items-center gap-1.5"><h2 className={cn('min-w-0 font-semibold text-text-primary', compact ? 'text-sm' : 'text-base')}>{t(key('selectedTitle'))}{compact ? <span className="ml-2 text-xs font-normal text-text-muted">{resources.length}</span> : null}</h2>
+            <KeyedHelpPopover helpKey={workloadType === 'ibm_flashsystem' ? 'recoveryGroups.fieldHelp.volumes' : recoveryGroupComputeHelpKey(computeProviderType)} sections={[]} /></div>
           {onClear ? <Button variant="ghost" size="xs" className="shrink-0 whitespace-nowrap" disabled={resources.length === 0} onClick={onClear}>{t('pages.recoveryGroupBuilder.resources.clearSelection')}</Button> : null}
         </div>
         {compact && renderItemContent ? (

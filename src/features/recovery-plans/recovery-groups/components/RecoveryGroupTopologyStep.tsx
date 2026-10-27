@@ -44,7 +44,11 @@ export function RecoveryGroupTopologyStep({ draft, providers, isLoading, error, 
         <p className="mt-1 text-sm text-text-muted">{t(key('description'))}</p></div>
       {error ? <FetchErrorAlert title={t(key('loadError'))} onRetry={onRetry} retryLabel={t('buttons.retry')} /> : null}
       {isLoading ? <ListSkeleton rowCount={2} ariaLabel={t(key('loading'))} /> : null}
-      <Field label={t(key('mode'))} htmlFor="group-topology">
+      <div className="block">
+        <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+          <label htmlFor="group-topology" className="text-xs font-medium text-text-secondary">{t(key('mode'))}</label>
+          <KeyedHelpPopover helpKey="recoveryGroups.fieldHelp.topology" sections={[]} />
+        </div>
         <Select id="group-topology" value={draft.topology ?? ''} disabled={lockedManaged} onChange={event => {
           const topology = event.target.value === 'metro_mirror' ? 'metro_mirror' : 'local'
           onChange({ type: 'topologyChanged', topology })
@@ -53,7 +57,7 @@ export function RecoveryGroupTopologyStep({ draft, providers, isLoading, error, 
           <option value="local">{t(key('local'))}</option>
           <option value="metro_mirror">{t(key('metroMirror'))}</option>
         </Select>
-      </Field>
+      </div>
       <div className={`grid min-w-0 gap-4 ${remote ? 'sm:grid-cols-2' : ''}`}>
         <Field label={t(key('source'))} htmlFor="topology-source">
           <Select id="topology-source" value={draft.relatedVolumeProviderId ?? ''} disabled={isLoading || Boolean(error) || lockedManaged}

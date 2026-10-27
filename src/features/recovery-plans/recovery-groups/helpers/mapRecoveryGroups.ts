@@ -86,6 +86,7 @@ export function mapRecoveryGroupApiRecord(
   const common = {
     notificationEmail: record.notificationEmail ?? null,
     targetPool: record.metro_mirror?.target_pool ?? null,
+    targetVolumeProviderId: record.topology === 'metro_mirror' ? providers.find(provider => provider.id === volumeProviderId)?.partnerProviderId ?? null : null,
     id: record.id,
     name: record.name,
     description: record.description,

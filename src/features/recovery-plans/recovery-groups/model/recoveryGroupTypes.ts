@@ -85,6 +85,7 @@ export type RecoveryGroup = RecoveryGroupListItem & {
   rawRecord?: RecoveryGroupReadRecord | undefined
   notificationEmail?: string | null | undefined
   targetPool?: string | null | undefined
+  targetVolumeProviderId?: string | null | undefined
 }
 
 // Read record with non-null defaults for the fields the mapper relies on. VM

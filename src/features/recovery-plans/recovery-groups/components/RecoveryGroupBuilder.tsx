@@ -273,6 +273,7 @@ export function RecoveryGroupBuilder({
                 <div className="min-h-64 min-w-0 flex-1">
                   <RecoveryGroupResourcesStep
                     workloadType={draft.workloadType}
+                    computeProviderType={selectedProvider?.type ?? null}
                     providerId={draft.providerId}
                     {...(selectedProviderScope ? { providerScope: selectedProviderScope } : {})}
                     resources={draft.resources}

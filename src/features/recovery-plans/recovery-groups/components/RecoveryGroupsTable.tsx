@@ -47,6 +47,7 @@ import {
 } from '../utils/recoveryGroupTypeLabels'
 
 import type { RollbackReport } from '../model/recoveryGroupTypes'
+import { recoveryGroupComputeHelpKey } from '../helpers/recoveryGroupFieldHelp'
 
 interface RecoveryGroupsTableProps {
   groups: RecoveryGroup[]
@@ -127,6 +128,9 @@ export function RecoveryGroupsTable({
     searchFields: ['id', 'name', 'description'],
   })
   const selected = rows.find(group => group.id === selectedId) ?? null
+  const computeHelpKey = recoveryGroupComputeHelpKey(selected?.providerResolution === 'unresolved' ? null
+    : selected?.workloadType === 'vmware_virtual_machines' ? 'VMWARE'
+      : selected?.workloadType === 'ibm_power_virtual_machines' ? 'IBM_POWER' : null)
   const jsonViewed = rows.find(group => group.id === jsonViewId) ?? null
   const activeFilterCount = Number(Boolean(filters.workloadType)) + Number(Boolean(filters.resourceType))
   const errorDescription = extractBackendErrorDetail(error)
@@ -457,11 +461,27 @@ export function RecoveryGroupsTable({
           }
         >
           <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
-            {/* The fields in the order of the original detail drawer; Status is also a header badge. */}
+            {/* Persisted configuration stays available even without live inventory. */}
             <DetailOverview>
               <DetailField label={t('details.description')} value={selected.description} wide />
-              <DetailField label={t('tables.recoveryGroups.policySet')} value={policySetName(selected.policySetId)} emphasis />
-              <DetailField label={t('details.providerId')} value={selected.providerId} mono copyValue={selected.providerId ?? undefined} />
+              <DetailField label={t('recoveryGroups.notificationEmail')} value={selected.notificationEmail?.trim() ? selected.notificationEmail : t('recoveryGroups.emailInherited')}
+                labelHelp={<KeyedHelpPopover helpKey="recoveryGroups.fieldHelp.email" sections={[]} />} />
+              <DetailField label={t('tables.recoveryGroups.policySet')} value={policySetName(selected.policySetId)} emphasis
+                labelHelp={<KeyedHelpPopover helpKey="recoveryGroups.fieldHelp.policySet" sections={[]} />} />
+              <DetailField label={t('details.providerId')} value={selected.providerId} mono copyValue={selected.providerId ?? undefined}
+                labelHelp={<KeyedHelpPopover helpKey={selected.resourceType === 'vm' ? computeHelpKey : 'recoveryGroups.fieldHelp.volumes'} sections={[]} />} />
+              <DetailField label={t('pages.recoveryGroupBuilder.topology.mode')} value={t(`pages.recoveryGroupBuilder.topology.${selected.topology === 'metro_mirror' ? 'metroMirror' : 'local'}`)} />
+              <DetailField label={t('pages.recoveryGroupBuilder.topology.source')} value={selected.resourceType === 'vm' ? selected.relatedVolumeProviderId : selected.providerId}
+                labelHelp={<KeyedHelpPopover helpKey="recoveryGroups.fieldHelp.topology" sections={[]} />} />
+              {selected.topology === 'metro_mirror' ? <>
+                <DetailField label={t('pages.recoveryGroupBuilder.topology.target')} value={selected.targetVolumeProviderId} />
+                <DetailField label={t('pages.recoveryGroupBuilder.topology.metroMode')} value={t(`pages.recoveryGroupBuilder.topology.${selected.metroMirrorMode ?? 'existing'}`)}
+                  labelHelp={<KeyedHelpPopover helpKey="pages.recoveryGroupBuilder.topology.lookup.help" sections={['existing', 'managed', 'auxiliary', 'consistencyGroup']} />} />
+                <DetailField label={t('pages.recoveryGroupBuilder.topology.consistencyGroup')} value={selected.consistencyGroupId} />
+                <DetailField label={t('pages.recoveryGroupBuilder.topology.auxiliary')} value={Object.entries(selected.auxiliaryNamesByVolume ?? {}).map(([name, auxiliary]) => `${name}: ${auxiliary}`).join(', ')} wide />
+                {selected.metroMirrorMode === 'managed' ? <DetailField label={t('recoveryGroups.targetPool')} value={selected.targetPool ?? t('recoveryGroups.poolAutomatic')}
+                  labelHelp={<KeyedHelpPopover helpKey="recoveryGroups.fieldHelp.targetPool" sections={[]} />} /> : null}
+              </> : null}
               <DetailField label={t('tables.recoveryGroups.sourceCategory')} value={t(getSourceCategoryLabelKey(selected.sourceCategory))} />
               <DetailField label={t('tables.recoveryGroups.workloadType')} value={t(getWorkloadTypeLabelKey(selected.workloadType))} />
               <DetailField
@@ -478,6 +498,8 @@ export function RecoveryGroupsTable({
             icon={ExecutionIcon}
             description={t('recoveryGroups.detail.orchestrationDescription')}
           >
+            <DetailField label={t('pages.recoveryGroupBuilder.orchestration.providerLabel')} value={selected.orchestrationProviderId}
+              labelHelp={<KeyedHelpPopover helpKey="recoveryGroups.fieldHelp.orchestration" sections={[]} />} />
             {orchestration ? (
               <RecoveryGroupOrchestrationStatus
                 state={orchestration.state}
