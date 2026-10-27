@@ -223,16 +223,19 @@ describe('RecoveryGroupBuilderPage', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
-  it('shows nested backend detail when creating a recovery group fails', async () => {
+  it.each([
+    [409, 'A recovery group with this name already exists.'],
+    [403, 'missing permission: MANAGE_METRO_MIRROR'],
+  ])('shows backend detail for status %s without a local permission gate', async (status, detail) => {
     const user = userEvent.setup()
     create.mockRejectedValue(new Error('Submit recovery group request failed', {
-      cause: new OrvalApiError(409, 'Conflict', { detail: 'A recovery group with this name already exists.' }),
+      cause: new OrvalApiError(status, 'Rejected', { detail }),
     }))
     render(<RecoveryGroupBuilderPage />)
 
     await user.click(screen.getByRole('button', { name: 'Create without orchestration' }))
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('A recovery group with this name already exists.')
+    expect(await screen.findByRole('alert')).toHaveTextContent(detail)
   })
 
   it('keeps the localized domain error mapping when creating a recovery group fails validation', async () => {

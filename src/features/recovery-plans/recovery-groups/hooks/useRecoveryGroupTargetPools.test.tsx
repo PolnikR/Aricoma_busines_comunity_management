@@ -35,6 +35,31 @@ it('does not use the default array when no target exists or the flow is inactive
   expect(fetch).not.toHaveBeenCalled()
 })
 
+it('deduplicates concurrent observers and treats an empty pool map as successful inventory', async () => {
+  const { wrapper } = setup()
+  let finish!: (response: Response) => void
+  const fetch = vi.fn(() => new Promise<Response>(resolve => { finish = resolve }))
+  vi.stubGlobal('fetch', fetch)
+  const first = renderHook(() => useRecoveryGroupTargetPools('target', true), { wrapper })
+  const second = renderHook(() => useRecoveryGroupTargetPools('target', true), { wrapper })
+  await waitFor(() => { expect(fetch).toHaveBeenCalledTimes(1) })
+  act(() => { finish(Response.json({ count: 0, volumes: [], pools: {} })) })
+  await waitFor(() => { expect(first.result.current.data).toEqual([]); expect(second.result.current.isSuccess).toBe(true) })
+  expect(fetch).toHaveBeenCalledTimes(1)
+})
+
+it.each(['stale', 'invalidated'] as const)('refreshes %s cached inventory under the same target key', async state => {
+  const { client, wrapper } = setup()
+  const key = flashSystemInventoryQuery('target').queryKey
+  client.setQueryData(key, response('Old'), { updatedAt: state === 'stale' ? Date.now() - 16 * 60 * 1000 : Date.now() })
+  if (state === 'invalidated') await client.invalidateQueries({ queryKey: key })
+  const fetch = vi.fn(() => Promise.resolve(Response.json(response('Fresh'))))
+  vi.stubGlobal('fetch', fetch)
+  const { result } = renderHook(() => useRecoveryGroupTargetPools('target', true), { wrapper })
+  await waitFor(() => { expect(result.current.data?.[0]?.name).toBe('Fresh') })
+  expect(fetch).toHaveBeenCalledTimes(1)
+})
+
 it('switches target keys without showing previous pool data', async () => {
   const { client, wrapper } = setup()
   client.setQueryData(flashSystemInventoryQuery('a').queryKey, response('A'))
