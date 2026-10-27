@@ -76,6 +76,22 @@ const developmentApplication: RecoveryApplicationListItem = {
 }
 
 describe('RecoveryApplicationsTable', () => {
+  it.each([['VMWARE', 'Source vCenter'], ['IBM_POWER', 'Source HMC']])('uses stored %s help in DetailView without provider records', async (platform, title) => {
+    const user = userEvent.setup()
+    renderTable(<RecoveryApplicationsTable applications={[{ ...application, data: { application: { ...application.data.application, platform } } }]} />)
+    await user.click(screen.getByText('Finance Recovery'))
+    const detail = screen.getByRole('dialog', { name: 'Application detail' })
+    await user.click(within(detail).getByRole('button', { name: `About ${title}` }))
+    const help = screen.getByRole('dialog', { name: title })
+    expect(help).toHaveTextContent('Airflow Connection ID')
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog', { name: title })).not.toBeInTheDocument()
+    expect(detail).toBeInTheDocument()
+    expect(within(detail).getByRole('button', { name: 'About Application DAG notifications' })).toBeEnabled()
+    await user.click(within(detail).getByRole('button', { name: 'Orchestration' }))
+    expect(within(detail).getByRole('button', { name: 'About Airflow deployment provider' })).toBeEnabled()
+    expect(within(detail).getByRole('button', { name: 'About Save and deploy to Airflow' })).toBeEnabled()
+  })
   it.each(['ok', 'partial', 'failed', 'skipped'] as const)('continues to show the actual %s rollback report', async status => {
     const user = userEvent.setup()
     const onDelete = vi.fn().mockResolvedValue({ applications: [], rollback: { status } })
@@ -421,9 +437,9 @@ describe('RecoveryApplicationsTable', () => {
       expect(overviewTerms(drawer)).toEqual(['Description', 'Environment', 'Platform', 'Target provider', 'Policy set ID', 'Notification email', 'Tiers', 'Status', 'Submission'])
       expect(overview).toHaveTextContent('Finance workloads')
       expect(overview).toHaveTextContent('vmware-vcenter-01')
-      expect(within(drawer).getByText('Target provider', { selector: 'dt' }).nextElementSibling).toHaveTextContent('vmware-vcenter-02')
-      expect(within(drawer).getByText('Policy set ID', { selector: 'dt' }).nextElementSibling).toHaveTextContent('critical-daily-latest')
-      expect(within(drawer).getByText('Notification email', { selector: 'dt' }).nextElementSibling).toHaveTextContent('Not set')
+      expect(within(drawer).getByText('Target provider', { selector: 'dt > span' }).closest('dt')?.nextElementSibling).toHaveTextContent('vmware-vcenter-02')
+      expect(within(drawer).getByText('Policy set ID', { selector: 'dt > span' }).closest('dt')?.nextElementSibling).toHaveTextContent('critical-daily-latest')
+      expect(within(drawer).getByText('Notification email', { selector: 'dt > span' }).closest('dt')?.nextElementSibling).toHaveTextContent('Not set')
       expect(overview).toHaveTextContent('/tmp/finance.json')
     })
 
@@ -439,8 +455,8 @@ describe('RecoveryApplicationsTable', () => {
         ...application,
         data: { application: { ...application.data.application, target_provider_id: null, notificationEmail: 'dr-team@example.test' } },
       })
-      expect(within(drawer).getByText('Notification email', { selector: 'dt' }).nextElementSibling).toHaveTextContent('dr-team@example.test')
-      expect(within(drawer).getByText('Target provider', { selector: 'dt' }).nextElementSibling).toHaveTextContent('Not set')
+      expect(within(drawer).getByText('Notification email', { selector: 'dt > span' }).closest('dt')?.nextElementSibling).toHaveTextContent('dr-team@example.test')
+      expect(within(drawer).getByText('Target provider', { selector: 'dt > span' }).closest('dt')?.nextElementSibling).toHaveTextContent('Not set')
     })
 
     it('shows entity, status and the no-runs fact in the header, and the status again in Overview', async () => {
@@ -468,7 +484,7 @@ describe('RecoveryApplicationsTable', () => {
 
     it('shows an unset policy set as Not set', async () => {
       const { drawer } = await openDetail({ ...application, policySetId: undefined })
-      expect(within(drawer).getByText('Policy set ID', { selector: 'dt' }).nextElementSibling).toHaveTextContent('Not set')
+      expect(within(drawer).getByText('Policy set ID', { selector: 'dt > span' }).closest('dt')?.nextElementSibling).toHaveTextContent('Not set')
     })
 
     it('keeps internal identifiers out of Overview', async () => {

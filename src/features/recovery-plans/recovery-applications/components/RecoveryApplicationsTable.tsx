@@ -38,6 +38,7 @@ import {
   orchestrationMetaText,
 } from '@/features/recovery-plans/recovery-groups/helpers/recoveryGroupOrchestrationState'
 import { applicationHttpStatus, extractApplicationRollbackReport } from '../hooks/useRollbackRecoveryApplication'
+import { recoveryApplicationHelpKey } from '../helpers/recoveryApplicationFieldHelp'
 
 interface RecoveryApplicationsTableProps {
   applications: RecoveryApplicationListItem[]
@@ -462,16 +463,21 @@ export function RecoveryApplicationsTable({
             <DetailOverview>
               <DetailField label={t('details.description')} value={selected.data.application.description} wide />
               <DetailField label={t('details.environment')} value={selected.data.application.environment} />
-              <DetailField label={t('details.platform')} value={getProviderLabel(sourceProviderIdOf(selected.data.application))} emphasis />
+              <DetailField label={t('details.platform')} value={getProviderLabel(sourceProviderIdOf(selected.data.application))} emphasis
+                labelHelp={<KeyedHelpPopover key={selected.data.application.platform} helpKey={recoveryApplicationHelpKey('source', selected.data.application.platform)} sections={['effect', 'limitations']} />} />
               <DetailField
                 label={t('details.targetProvider')}
+                labelHelp={<KeyedHelpPopover key={selected.data.application.platform} helpKey={recoveryApplicationHelpKey('target', selected.data.application.platform)} sections={['effect', 'limitations']} />}
                 value={selected.data.application.target_provider_id
                   ? getProviderLabel(selected.data.application.target_provider_id, providers)
                   : null}
               />
-              <DetailField label={t('details.policySetId')} value={selected.policySetId ?? null} />
-              <DetailField label={t('details.notificationEmail')} value={selected.data.application.notificationEmail} />
-              <DetailField label={t('details.tiers')} value={String(Object.keys(selected.data.application.tiers).length)} />
+              <DetailField label={t('details.policySetId')} value={selected.policySetId ?? null}
+                labelHelp={<KeyedHelpPopover key={selected.data.application.platform} helpKey={recoveryApplicationHelpKey('policySet', selected.data.application.platform)} sections={['effect', 'limitations']} />} />
+              <DetailField label={t('details.notificationEmail')} value={selected.data.application.notificationEmail}
+                labelHelp={<KeyedHelpPopover helpKey="recoveryApplications.fieldHelp.email" sections={['effect', 'limitations']} />} />
+              <DetailField label={t('details.tiers')} value={String(Object.keys(selected.data.application.tiers).length)}
+                labelHelp={<KeyedHelpPopover key={selected.data.application.platform} helpKey={recoveryApplicationHelpKey('workloads', selected.data.application.platform)} sections={['effect', 'limitations']} />} />
               <DetailField label={t('details.status')} value={<ApplicationStatusBadge app={selected} />} />
               {selected.submission ? (
                 <DetailField
@@ -486,12 +492,15 @@ export function RecoveryApplicationsTable({
           <DetailViewSection id="orchestration" title={t('details.tabs.orchestration')} icon={ExecutionIcon}>
             <DetailOverview>
               <DetailField label={t('recovery.application.lifecycle.provider')}
+                labelHelp={<KeyedHelpPopover helpKey="recoveryApplications.fieldHelp.airflow" sections={['effect', 'limitations']} />}
                 value={selected.orchestrationProviderId ? getProviderLabel(selected.orchestrationProviderId, platformProviders) : null} />
               <DetailField label={t('recovery.application.lifecycle.pushed')}
+                labelHelp={<KeyedHelpPopover helpKey="recoveryApplications.fieldHelp.push" sections={['effect', 'limitations']} />}
                 value={<Badge color={selected.pushToOrchestrator ? 'success' : 'light'} size="sm">{t(selected.pushToOrchestrator ? 'common.yes' : 'common.no')}</Badge>} />
               <DetailField label={t(selected.pushToOrchestrator ? 'details.airflowDagId' : 'recovery.application.lifecycle.historicalRun')}
                 value={selected.airflowRunId} mono />
               <DetailField label={t(selected.pushToOrchestrator ? 'recovery.application.lifecycle.deployedVersion' : 'recovery.application.lifecycle.configuredVersion')}
+                labelHelp={<KeyedHelpPopover key={selected.data.application.platform} helpKey={recoveryApplicationHelpKey('template', selected.data.application.platform)} sections={['effect', 'limitations']} />}
                 value={selected.pushToOrchestrator
                   ? selected.deployedTemplateVersion ?? t('recovery.application.lifecycle.unknownVersion')
                   : selected.data.application.dag_template_version ?? t('recovery.application.lifecycle.defaultVersion')} />
