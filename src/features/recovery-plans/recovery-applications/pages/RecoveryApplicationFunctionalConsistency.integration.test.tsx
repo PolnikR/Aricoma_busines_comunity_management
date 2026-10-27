@@ -17,15 +17,24 @@ vi.mock('react-router', async importOriginal => ({
 const clients: QueryClient[] = []
 afterEach(() => { clients.forEach(client => { client.clear() }); clients.length = 0; vi.unstubAllGlobals() })
 
-function setup(power = false, version: string | null = null, duplicate = false, pushed = false) {
+function setup(power = false, version: string | null = null, duplicate = false, pushed = false,
+  groupCase?: { topology: 'local' | 'metro_mirror'; mode?: 'managed' | 'existing'; computeSource?: string }) {
   const source = power ? 'hmc' : 'vcenter'
   const providers = [
     { id: 'vcenter', name: 'Source vCenter', type: 'VMWARE', role: 'source', credentialStatus: 'ok' },
     { id: 'target', name: 'Target vCenter', type: 'VMWARE', role: 'target', credentialStatus: 'ok' },
     { id: 'hmc', name: 'HMC', type: 'IBM_POWER', role: 'target', credentialStatus: 'ok' },
+    { id: 'hmc-other', name: 'Another HMC', type: 'IBM_POWER', role: 'target', credentialStatus: 'ok' },
+    { id: 'flash-source', name: 'Primary FlashSystem', type: 'FLASHCOPY', role: 'source', credentialStatus: 'ok', partnerProviderId: 'flash-auxiliary' },
+    { id: 'flash-auxiliary', name: 'Auxiliary FlashSystem', type: 'FLASHCOPY', role: 'source', credentialStatus: 'ok', partnerProviderId: 'flash-source' },
   ]
-  const group = { id: 'group', name: 'Database group', provider_id_vm: source, provider_id_volume: '',
-    vms: [{ name: 'db' }], volumes: [], topology: 'local',
+  const group = { id: 'group', name: 'Database group', provider_id_vm: groupCase?.computeSource ?? source,
+    provider_id_volume: groupCase ? 'flash-source' : '',
+    vms: [{ name: 'db' }],
+    volumes: groupCase ? [{ name: 'VOL', ...(groupCase.mode === 'existing' ? { auxiliary_name: 'AUX-VOL' } : {}) }] : [],
+    topology: groupCase?.topology ?? 'local',
+    ...(groupCase?.topology === 'metro_mirror' ? { metro_mirror: { mode: groupCase.mode ?? 'existing',
+      ...(groupCase.mode === 'existing' ? { consistency_group_id: '001' } : {}) } } : {}),
     orchestration: { pushed: true, run_id: 'group-run', provider_id: 'airflow' } }
   const tier = { order: 1, description: 'Database', recovery_group: { id: 'group', name: 'Database group', vms: [{ name: 'db' }] } }
   const application: RecoveryApplicationData = { id: 'Finance', policy_set_id: 'policy', application: {
@@ -111,7 +120,7 @@ describe('real wizard to HTTP functional consistency', () => {
     fireEvent.change(screen.getByLabelText('ID *'), { target: { value: 'Finance' } })
     fireEvent.change(screen.getByLabelText('Application Name *'), { target: { value: 'Finance' } })
     fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Recovery' } })
-    await screen.findByRole('option', { name: power ? /HMC/ : /Source vCenter/ })
+    await screen.findByRole('option', { name: power ? /^HMC - IBM_POWER$/ : /Source vCenter/ })
     await user.selectOptions(screen.getByLabelText('Provider ID *'), power ? 'hmc' : 'vcenter')
     await user.selectOptions(screen.getByLabelText('Target provider ID *'), power ? 'hmc' : 'target')
     await user.type(screen.getByLabelText('Notification email'), 'Team@Example.test')
@@ -197,4 +206,48 @@ describe('real wizard to HTTP functional consistency', () => {
     expect(screen.getByRole('button', { name: 'Save Application' })).toBeDisabled()
     expect(fixture.requests.filter(req => req.method === 'POST')).toHaveLength(0)
   })
+
+  // F2 regression: compute source identity is independent of Local/Metro Mirror
+  // storage topology. Test the real GET -> mapper -> sidebar -> Save boundary.
+  it.each([
+    { power: false, topology: 'local', mode: null },
+    { power: false, topology: 'metro_mirror', mode: 'managed' },
+    { power: false, topology: 'metro_mirror', mode: 'existing' },
+    { power: true, topology: 'local', mode: null },
+    { power: true, topology: 'metro_mirror', mode: 'managed' },
+    { power: true, topology: 'metro_mirror', mode: 'existing' },
+  ] as const)('filters source correctly for $topology/$mode (Power=$power)', async ({ power, topology, mode }) => {
+    const user = userEvent.setup()
+    for (const wrongSource of [false, true]) {
+      const computeSource = wrongSource ? power ? 'hmc-other' : 'target' : undefined
+      const fixture = setup(power, null, false, false, {
+        topology, ...(mode ? { mode } : {}), ...(computeSource ? { computeSource } : {}),
+      })
+      const view = fixture.mount()
+      try {
+        await ready()
+        await waitFor(() => { expect(fixture.client.getQueryData(getGetRecoveryGroupsQueryKey())).toBeDefined() })
+        await user.click(screen.getByRole('button', { name: 'Recovery groups & tiers' }))
+        const orchestration = screen.getByRole('button', { name: 'Orchestration' })
+        if (wrongSource) {
+          expect(screen.getByText('No recovery groups are available')).toBeInTheDocument()
+          expect(orchestration).toBeDisabled()
+          expect(fixture.requests.filter(request => request.method === 'POST')).toHaveLength(0)
+        } else {
+          expect(screen.queryByText('No recovery groups are available')).not.toBeInTheDocument()
+          expect(orchestration).toBeEnabled()
+          await user.click(orchestration)
+          const before = fixture.requests.length
+          await user.click(screen.getByRole('button', { name: 'Save Application' }))
+          await waitFor(() => { expect(fixture.requests.filter(request => request.method === 'POST')).toHaveLength(1) })
+          expect(fixture.requests[before]?.path).toBe('/api/submit_recovery_dag')
+          expect(fixture.requests[before]?.body?.application.source_provider_id).toBe(power ? 'hmc' : 'vcenter')
+          expect(fixture.requests[before]?.body?.application.tiers['first']?.recovery_group.id).toBe('group')
+        }
+      } finally {
+        view.unmount()
+      }
+    }
+  })
+
 })
