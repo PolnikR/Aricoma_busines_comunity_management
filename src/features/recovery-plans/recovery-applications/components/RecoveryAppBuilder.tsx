@@ -248,7 +248,7 @@ export function RecoveryAppBuilder({
   const helpPlatform = lockedProviders ? lockedProviders.platform : providersQuery.isLoading || providersQuery.error ? undefined : platform
   const workloadsHelpKey = recoveryApplicationHelpKey('workloads', helpPlatform)
   const tierOrderHelpKey = recoveryApplicationTierOrderHelpKey(helpPlatform, formState.dagTemplateVersion, {
-    templates, verified: templateCatalog.verified && !templatesQuery.isPending,
+    templates, verified: templateCatalog.verified && !templatesQuery.isPending && !templatesQuery.isFetching,
   })
   const policyHelpKey = recoveryApplicationHelpKey('policySet', helpPlatform)
 

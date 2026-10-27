@@ -12,7 +12,7 @@ import { useGetDagTemplateVersions } from '@/generated/query/recovery-apps/recov
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
 const templatesQuery = vi.hoisted(() => ({
-  current: { data: { templates: [{ platform: 'vmware', version: 'future-3', default: true, description: 'Server default description' }] }, isPending: false, isError: false, error: null as Error | null, refetch: vi.fn() },
+  current: { data: { templates: [{ platform: 'vmware', version: 'future-3', default: true, description: 'Server default description' }] }, isPending: false, isFetching: false, isError: false, error: null as Error | null, refetch: vi.fn() },
 }))
 vi.mock('@/generated/query/recovery-apps/recovery-apps.gen', async importOriginal => ({
   ...await importOriginal<typeof import('@/generated/query/recovery-apps/recovery-apps.gen')>(),
@@ -209,6 +209,14 @@ function draftFixture(): RecoveryApplicationFormState {
 }
 
 describe('read-only and DAG templates', () => {
+  it('uses generic tier execution help while refreshing a cached default catalog', async () => {
+    templatesQuery.current.data.templates = [{ platform: 'vmware', version: 'v1', default: true, description: 'Cached default' }]
+    templatesQuery.current.isFetching = true
+    render(<RecoveryAppBuilder readOnly initialData={draftFixture()} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Recovery groups & tiers' }))
+    expect(screen.getByRole('button', { name: 'About Tier recovery order' })).toBeEnabled()
+    expect(screen.queryByRole('button', { name: 'About VMware tier execution order' })).not.toBeInTheDocument()
+  })
   it('locks every mutating control and delayed callbacks on all four steps', async () => {
     const user = userEvent.setup()
     const onSave = vi.fn()
@@ -229,14 +237,22 @@ describe('read-only and DAG templates', () => {
       for (const control of [...screen.queryAllByRole('textbox'), ...screen.queryAllByRole('combobox'), ...screen.queryAllByRole('checkbox'), ...screen.queryAllByRole('switch')]) expect(control).toBeDisabled()
       if (step === 'Recovery groups & tiers') {
         act(() => {
+          callbackHarness.canvas?.onRecoveryGroupAdded?.('tier_id', 'database_group')
           callbackHarness.canvas?.onRecoveryGroupRemoved?.('tier_id')
           callbackHarness.canvas?.onRecoveryVmSelectionChange?.('tier_id', 'DB-01', false)
+          callbackHarness.canvas?.onTierAdd?.('unexpected', { order: 4, description: 'Unexpected' })
+          callbackHarness.canvas?.onTierEdit?.('tier_id', 'changed', { tierDescription: 'Changed' })
           callbackHarness.canvas?.onTierDelete?.('tier_id')
           callbackHarness.canvas?.onTierReorder?.({})
         })
         const card = screen.getByText('Database tier')
         fireEvent.dragStart(card)
         fireEvent.drop(card, { dataTransfer: { getData: () => 'database_group' } })
+      }
+      if (step === 'Policy set') {
+        const policy = screen.getByRole('button', { name: /Critical - Daily DR Test/ })
+        expect(policy).toBeDisabled()
+        await user.click(policy)
       }
     }
     expect(screen.getByRole('button', { name: 'Save Application' })).toBeDisabled()
@@ -254,6 +270,7 @@ describe('read-only and DAG templates', () => {
   afterEach(() => {
     templatesQuery.current.error = null
     templatesQuery.current.isPending = false
+    templatesQuery.current.isFetching = false
     templatesQuery.current.data.templates = [{ platform: 'vmware', version: 'future-3', default: true, description: 'Server default description' }]
   })
   it.each([null, 'future-3'])('applies outage gating without losing configured %s and rechecks Retry data', async dagTemplateVersion => {
@@ -1515,7 +1532,7 @@ describe('functional consistency UI', () => {
       ['Recovery groups & tiers', 'About Power recovery workload selection'],
       ['Policy set', 'About Power application recovery policy'],
       ['Orchestration', 'About Save and deploy to Airflow'],
-    ]) {
+    ] as const) {
       await user.click(screen.getByRole('button', { name: step }))
       const trigger = screen.getByRole('button', { name: help })
       expect(trigger).toBeEnabled()
