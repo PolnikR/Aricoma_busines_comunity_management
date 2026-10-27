@@ -304,6 +304,35 @@ describe('AppMetadataForm', () => {
 
 
 describe('application email editing', () => {
+  it('keeps all read-only controls locked while technical help remains keyboard accessible', async () => {
+    const user = userEvent.setup()
+    const onMetadataChange = vi.fn()
+    render(<LanguageProvider><AppMetadataForm readOnly helpPlatform="IBM_POWER" onMetadataChange={onMetadataChange} /></LanguageProvider>)
+    const sourceHelp = await screen.findByRole('button', { name: 'About Source HMC' })
+    for (const control of [...screen.getAllByRole('textbox'), ...screen.getAllByRole('combobox')]) expect(control).toBeDisabled()
+    expect(sourceHelp.closest('label')).toBeNull()
+    await user.click(sourceHelp)
+    expect(await screen.findByRole('dialog', { name: 'Source HMC' })).toBeInTheDocument()
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'About Application DAG notifications' }))
+    expect(screen.getByRole('dialog')).toHaveTextContent('There is no fallback')
+    expect(onMetadataChange).not.toHaveBeenCalled()
+  })
+
+  it('replaces an open platform helper when the application context changes', async () => {
+    const user = userEvent.setup()
+    const { rerender } = render(<LanguageProvider><AppMetadataForm helpPlatform="VMWARE" /></LanguageProvider>)
+    await user.click(await screen.findByRole('button', { name: 'About Source vCenter' }))
+    expect(screen.getByRole('dialog')).toHaveTextContent('source provider ID')
+    rerender(<LanguageProvider><AppMetadataForm helpPlatform="IBM_POWER" /></LanguageProvider>)
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'About Source HMC' }))
+    expect(screen.getByRole('dialog')).toHaveTextContent('production LPAR')
+    rerender(<LanguageProvider><AppMetadataForm helpPlatform={undefined} /></LanguageProvider>)
+    expect(screen.getByRole('button', { name: 'About Source compute provider' })).toBeInTheDocument()
+  })
+
   it('keeps a controlled raw address, reports invalid input and supports clearing', async () => {
     function EmailHarness() {
       const [notificationEmail, setEmail] = useState<string | null>('stored@example.test')
