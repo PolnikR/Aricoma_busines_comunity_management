@@ -27,12 +27,24 @@ it('reuses a fresh target wire cache without another request and exposes names r
 })
 
 it('does not use the default array when no target exists or the flow is inactive', () => {
-  const { wrapper } = setup()
+  const { client, wrapper } = setup()
   const fetch = vi.fn()
   vi.stubGlobal('fetch', fetch)
-  renderHook(() => useRecoveryGroupTargetPools(undefined, true), { wrapper })
+  client.setQueryData(flashSystemInventoryQuery().queryKey, response('Wrong default array'))
+  const { result } = renderHook(() => useRecoveryGroupTargetPools(undefined, true), { wrapper })
   renderHook(() => useRecoveryGroupTargetPools('target', false), { wrapper })
   expect(fetch).not.toHaveBeenCalled()
+  expect(result.current.data).toBeUndefined()
+})
+
+it('never fetches the default array when retry is called without a target', async () => {
+  const { wrapper } = setup()
+  const fetch = vi.fn(() => Promise.resolve(Response.json(response('Wrong default array'))))
+  vi.stubGlobal('fetch', fetch)
+  const { result } = renderHook(() => useRecoveryGroupTargetPools(undefined, true), { wrapper })
+  await act(async () => { await result.current.refetch() })
+  expect(fetch).not.toHaveBeenCalled()
+  expect(result.current.data).toBeUndefined()
 })
 
 it('deduplicates concurrent observers and treats an empty pool map as successful inventory', async () => {

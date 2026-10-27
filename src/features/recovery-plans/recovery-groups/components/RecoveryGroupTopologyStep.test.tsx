@@ -44,7 +44,7 @@ describe('RecoveryGroupTopologyStep', () => {
   it('keeps topology, source and mode editable for a new Managed draft', async () => {
     const onChange = vi.fn()
     render(<RecoveryGroupTopologyStep {...props} onChange={onChange} draft={{ topology: 'metro_mirror', relatedVolumeProviderId: 'source', metroMirrorMode: 'managed' }} />)
-    expect(screen.getByText(/ABCO creates the auxiliary volumes/)).toBeInTheDocument()
+    expect(screen.getByText(/ABCO creates auxiliary volumes on the target FlashSystem/)).toHaveTextContent('consistency group on the source FlashSystem')
     expect(screen.getByLabelText('Topology mode')).toBeEnabled()
     expect(screen.getByLabelText('Source FlashSystem provider')).toBeEnabled()
     const mode = screen.getByLabelText('Metro Mirror configuration')
