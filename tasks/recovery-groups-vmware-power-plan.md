@@ -1,6 +1,6 @@
 # Recovery Groups – VMware + IBM Power: implementačný plán
 
-Dátum analýzy: 2026-10-27. Stav: používateľ schválil vykonanie plánu inline; implementácia prebieha.
+Dátum analýzy: 2026-10-27. Stav: implementácia T1–T7 a mockované browser overenie T8 dokončené inline, vlastné zmeny commitované atomicky. Výsledky a live obmedzenia: [verification report](recovery-groups-vmware-power-verification.md).
 
 Revízia podľa review: storage vo FE zostáva iba FLASHCOPY pre VMware aj IBM Power. HITACHI je zámerne skryté do budúceho rozšírenia, bez zmeny spoločných typov či BE kontraktu, bez implementácie discovery/validácie/provisioningu a bez účasti v implementačnej alebo E2E matici. Jeho podpora nie je podmienkou dokončenia tohto plánu.
 
@@ -12,7 +12,7 @@ Analyzovaný bol aktuálny lokálny kód, nie bežiaci BE ani infraštruktúra. 
 
 Plán a [TODO](recovery-groups-vmware-power-todo.md) sú podkladom schválenej implementácie. Existujúce `tasks/plan.md`, `tasks/todo.md` a iné rozpracované plány sa nemenia. Používateľ následne výslovne autorizoval atomické commity vlastných overených zmien; git push ani live provisioning nie sú autorizované. Recovery Applications, susedné refaktoringy a ručné zásahy do generated Orval súborov sú mimo rozsahu.
 
-## 1. Aktuálny stav
+## 1. Východiskový stav pred implementáciou
 
 ### FE flow, ktorý zachováme
 
@@ -42,7 +42,7 @@ Plán a [TODO](recovery-groups-vmware-power-todo.md) sú podkladom schválenej i
 | Pool provisioning | `ibm_flashsystem/metro_mirror.py::resolve_target_pool`, `provision_managed_metro_mirror` | Vyhľadáva názov, nie ID; pool nevytvára. Bez override rieši default zvlášť pre každý source volume podľa mdisk_grp_name, prípadne mdisk_name. Jeden explicitný override platí pre všetky volumes. |
 | Resource discovery | `api/routers/discovery.py`, `ibm_flashsystem/discovery.py` | Power používa HMC/LPAR VFC WWPN, VMware VMFS NAA; obe vetvy mapujú na IBM vdisks cez FLASHCOPY backing providers. Local HITACHI prijatý validátorom ešte neznamená podporované discovery. |
 
-## 2. FE/BE gap analýza a audit payloadu
+## 2. Východisková FE/BE gap analýza a audit payloadu
 
 Legenda: „áno“ znamená existujúcu cestu, nie vykonaný integračný test; „čiastočne“ vyžaduje nižšie uvedené doplnenie. TS označuje generated kontrakt / doménový model a draft. H = poľová kontextová nápoveda (globálna nápoveda sa do toho nepočíta).
 
@@ -159,7 +159,7 @@ Závislosti: T1 kontrakt → model/mapping → T2 email a T3 pools → T4/T5 hel
 | Chýbajúce VIEW_INVENTORY/RUN_DISCOVERY/MANAGE_METRO_MIRROR | stredný | zobraziť skutočnú BE chybu; mockPermissions nepoužiť na gate; nedostupné pool inventory neblokuje save/push |
 | Nápovedy sú nadbytočné alebo nesedia na platformu | stredný | technické parametre podľa Providers vzoru, spoločnú pomoc neduplikovať, ID/Name/Description bez helperov |
 
-Otvorená realizačná otázka: ktoré autorizované testovacie prostredie poskytne VMware, Power a párované FlashSystemy pre live T8? Same-ID obsolete ochranu rozhodne reprodukcia v T3.1; prípadnú opravu zdôvodniť výsledkom, nepredpisovať refaktoring vopred. Zmena BE email fallbacku a skutočná FE permission integrácia sú prípadné samostatné budúce rozhodnutia, nie závislosti dokončenia. Pre tento rozsah platí runtime fallback a BE authorization; pool inventory je poradné a bez tvrdého push gate.
+Rozhodnutia počas vykonania: používateľ poskytol BE `http://10.99.99.53:8000` iba na čítanie a zakázal jeho úpravy. OpenAPI GET potvrdil polia; GET Recovery Groups vrátil 401, preto live údaje a live zápisy/provisioning zostávajú neoverené. T3.1 reprodukcia nepotvrdila potrebu meniť spoločný factory: existujúca cancel/invalidation cesta odmietla oneskorený výsledok. Použil sa generated useGetVolumes s flashSystemInventoryQuery options podľa ADR 0002. Zmena BE email fallbacku a skutočná FE permission integrácia sú samostatné budúce rozhodnutia. Pool inventory zostáva poradné a bez tvrdého push gate.
 
 ## 8. Testovacia stratégia a akceptácia
 
