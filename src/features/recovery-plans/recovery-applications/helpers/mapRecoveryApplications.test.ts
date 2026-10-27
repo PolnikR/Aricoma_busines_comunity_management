@@ -19,6 +19,19 @@ function buildRecord(overrides: Partial<RecoveryAppRecordOutput> = {}): Recovery
 }
 
 describe('mapRecoveryApplications', () => {
+  it.each([undefined, null, 'deployed-2'])('preserves configured and deployed %s in raw and fallback JSON', deployed => {
+    const record = buildRecord({ application: { ...buildRecord().application, dag_template_version: 'configured-3' }, orchestration: deployed === undefined ? {} : { template_version: deployed } })
+    const item = mapRecoveryApplications({ applications: [record] })[0]
+    if (!item) throw new Error('Expected mapped application')
+    expect(item.deployedTemplateVersion).toBe(deployed)
+    expect(item.data.application.dag_template_version).toBe('configured-3')
+    expect(toRecoveryApplicationJson(item)).toEqual(record)
+    const fallback = { ...item }
+    delete fallback.rawRecord
+    const json = toRecoveryApplicationJson(fallback)
+    if (deployed !== undefined) expect(json).toHaveProperty('orchestration.template_version', deployed)
+    expect(json).toHaveProperty('application.dag_template_version', 'configured-3')
+  })
   function mapOne(overrides: Partial<RecoveryAppRecordOutput> = {}) {
     const payload: RecoveryAppsResponseOutput = { applications: [buildRecord(overrides)] }
     return mapRecoveryApplications(payload)[0]

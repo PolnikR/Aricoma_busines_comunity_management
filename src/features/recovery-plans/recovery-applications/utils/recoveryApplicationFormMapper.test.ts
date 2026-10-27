@@ -54,6 +54,15 @@ const application: RecoveryApplicationListItem = {
   },
 }
 
+describe('DAG template configuration round trip', () => {
+  it.each([undefined, null, 'release-2027'])('keeps configured %s separate from the deployed version', version => {
+    const item = { ...application, deployedTemplateVersion: 'deployed-old', data: { application: { ...application.data.application, dag_template_version: version } } }
+    const form = toRecoveryApplicationFormState(item)
+    expect(form.dagTemplateVersion).toBe(version ?? null)
+    expect(toRecoveryApplicationData(form, providers).application.dag_template_version).toBe(version ?? null)
+  })
+})
+
 describe('recoveryApplicationFormMapper', () => {
   it.each(['dr-team@example.test', null, undefined])('preserves the exact rich multi-tier wire payload with email %s across local/pushed Create and authoritative Edit', notificationEmail => {
     const record = {
@@ -81,6 +90,7 @@ describe('recoveryApplicationFormMapper', () => {
       application: {
         name: 'Finance', description: 'Finance recovery', environment: 'prod', platform: 'VMWARE',
         source_provider_id: 'vmware-vcenter-01', target_provider_id: 'vmware-dr-01', notificationEmail: notificationEmail ?? null,
+        dag_template_version: null,
         tiers: {
           database: {
             order: 1, description: 'Database server tier',
@@ -147,6 +157,7 @@ describe('recoveryApplicationFormMapper', () => {
       application: {
         ...application.data.application,
         notificationEmail: null,
+        dag_template_version: null,
         tiers: application.data.application.tiers,
       },
     })

@@ -58,6 +58,7 @@ export function toRecoveryApplicationFormState(
     orchestrationProviderId: application.orchestrationProviderId ?? '',
     targetProviderId: data.target_provider_id ?? '',
     notificationEmail: data.notificationEmail ?? null,
+    dagTemplateVersion: data.dag_template_version ?? null,
     tiers: new Map(
       Object.entries(data.tiers).map(([id, tier]) => [id, cloneTier(tier)]),
     ),
@@ -114,6 +115,7 @@ export function toRecoveryApplicationData(
       environment: formState.environment,
       ...toWireProviders(formState, providers, locked),
       notificationEmail: formState.notificationEmail,
+      dag_template_version: formState.dagTemplateVersion ?? null,
       tiers: Object.fromEntries(
         Array.from(formState.tiers.entries()).map(([id, tier]) => [id, toSubmittableTier(id, tier)]),
       ),

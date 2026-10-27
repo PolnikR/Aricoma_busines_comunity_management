@@ -1,5 +1,5 @@
 import type {
-  OrchestrationStateOutput,
+  AppOrchestrationStateOutput,
   RecoveryAppRecordOutput,
   RecoveryAppsResponseOutput,
   RecoveryTierOutput,
@@ -43,11 +43,15 @@ export function mapRecoveryApplications(
     ...(record.orchestration?.provider_id !== undefined
       ? { orchestrationProviderId: record.orchestration.provider_id }
       : {}),
+    ...(record.orchestration?.template_version !== undefined
+      ? { deployedTemplateVersion: record.orchestration.template_version }
+      : {}),
   }))
 }
 
-function toOrchestrationState(application: RecoveryApplicationListItem): OrchestrationStateOutput | null {
-  const orchestration: OrchestrationStateOutput = {
+function toOrchestrationState(application: RecoveryApplicationListItem): AppOrchestrationStateOutput | null {
+  const orchestration: AppOrchestrationStateOutput = {
+    ...(application.deployedTemplateVersion !== undefined ? { template_version: application.deployedTemplateVersion } : {}),
     ...(application.airflowRunId !== undefined ? { run_id: application.airflowRunId } : {}),
     ...(application.pushToOrchestrator !== undefined ? { pushed: application.pushToOrchestrator } : {}),
     ...(application.orchestrationProviderId !== undefined
