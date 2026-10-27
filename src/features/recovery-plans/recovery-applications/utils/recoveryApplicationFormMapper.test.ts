@@ -332,3 +332,12 @@ describe('recoveryApplicationFormMapper', () => {
     })
   })
 })
+
+
+describe('notification email wire normalization', () => {
+  it.each([['', null], ['   ', null], [null, null], [' Team@Example.test ', 'Team@Example.test']])('maps %s to %s', (email, expected) => {
+    const state = toRecoveryApplicationFormState(application)
+    state.notificationEmail = email
+    expect(toRecoveryApplicationData(state, providers).application.notificationEmail).toBe(expected)
+  })
+})
