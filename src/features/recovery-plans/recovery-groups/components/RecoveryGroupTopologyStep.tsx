@@ -7,20 +7,24 @@ import type { ProviderRecord } from '@/features/providers-connectors/providers/m
 import type { DraftEvent } from '../model/recoveryGroupDraftLifecycle'
 import type { RecoveryGroupDraft } from '../model/recoveryGroupTypes'
 import { getRecoveryGroupTopologyError } from '../utils/recoveryGroupTopology'
+import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
+import { useState } from 'react'
 
 interface RecoveryGroupTopologyStepProps {
-  draft: Pick<RecoveryGroupDraft, 'topology' | 'relatedVolumeProviderId' | 'metroMirrorMode' | 'consistencyGroupId'>
+  draft: Pick<RecoveryGroupDraft, 'topology' | 'relatedVolumeProviderId' | 'metroMirrorMode' | 'consistencyGroupId' | 'targetPool'>
+  targetPools?: { data?: { name: string; freeCapacity: string }[] | undefined; isLoading: boolean; isFetching: boolean; error: Error | null; refetch: () => unknown }
+  automaticMissingPools?: string[]
   providers: ProviderRecord[]
   isLoading: boolean
   error: Error | null
   onRetry: () => void
-  onChange: (event: Extract<DraftEvent, { type: 'sourceChanged' | 'topologyChanged' | 'metroModeChanged' }>) => void
+  onChange: (event: Extract<DraftEvent, { type: 'sourceChanged' | 'topologyChanged' | 'metroModeChanged' | 'targetPoolChanged' }>) => void
   allowLegacyLocal?: boolean
   // Metro Mirror mode is chosen only on create; edit keeps the persisted mode.
   isEditing?: boolean
 }
 
-export function RecoveryGroupTopologyStep({ draft, providers, isLoading, error, onRetry, onChange, allowLegacyLocal = false, isEditing = false }: RecoveryGroupTopologyStepProps) {
+export function RecoveryGroupTopologyStep({ draft, providers, isLoading, error, onRetry, onChange, allowLegacyLocal = false, isEditing = false, targetPools, automaticMissingPools = [] }: RecoveryGroupTopologyStepProps) {
   const { t } = useTranslation()
   const key = (suffix: string) => `pages.recoveryGroupBuilder.topology.${suffix}`
   const source = providers.find(provider => provider.id === draft.relatedVolumeProviderId)
@@ -30,6 +34,9 @@ export function RecoveryGroupTopologyStep({ draft, providers, isLoading, error, 
   const managed = draft.metroMirrorMode === 'managed'
   const remote = draft.topology === 'metro_mirror'
   const lockedManaged = isEditing && managed
+  const [poolReset, setPoolReset] = useState(false)
+  const poolOptions = targetPools?.data ?? []
+  const savedPoolMissing = Boolean(draft.targetPool && !poolOptions.some(pool => pool.name === draft.targetPool))
 
   return (
     <div className="min-w-0 space-y-4">
@@ -50,7 +57,10 @@ export function RecoveryGroupTopologyStep({ draft, providers, isLoading, error, 
       <div className={`grid min-w-0 gap-4 ${remote ? 'sm:grid-cols-2' : ''}`}>
         <Field label={t(key('source'))} htmlFor="topology-source">
           <Select id="topology-source" value={draft.relatedVolumeProviderId ?? ''} disabled={isLoading || Boolean(error) || lockedManaged}
-            onChange={event => { onChange({ type: 'sourceChanged', sourceId: event.target.value || null }) }}>
+            onChange={event => {
+              setPoolReset(Boolean(draft.targetPool && event.target.value !== draft.relatedVolumeProviderId))
+              onChange({ type: 'sourceChanged', sourceId: event.target.value || null })
+            }}>
             <option value="">{t(key('choose'))}</option>
             {draft.relatedVolumeProviderId && !sources.some(provider => provider.id === draft.relatedVolumeProviderId)
               ? <option value={draft.relatedVolumeProviderId} disabled>{source?.name ?? draft.relatedVolumeProviderId}</option> : null}
@@ -73,6 +83,25 @@ export function RecoveryGroupTopologyStep({ draft, providers, isLoading, error, 
         </Field>
       </div> : null}
       {remote && managed ? <p className="text-xs text-text-muted">{t(key('managedHint'))}</p> : null}
+      {remote && managed ? <div className="space-y-2">
+        <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+          <label htmlFor="target-pool" className="text-xs font-medium text-text-secondary">{t('recoveryGroups.targetPool')}</label>
+          <KeyedHelpPopover helpKey="recoveryGroups.fieldHelp.targetPool" sections={[]} />
+        </div>
+        <Select id="target-pool" value={draft.targetPool ?? ''} disabled={Boolean(problem)} onChange={event => {
+          onChange({ type: 'targetPoolChanged', value: event.target.value || null })
+        }}>
+          <option value="">{t('recoveryGroups.poolAutomatic')}</option>
+          {savedPoolMissing ? <option value={draft.targetPool ?? ''}>{draft.targetPool} — {t('recoveryGroups.poolUnverified')}</option> : null}
+          {poolOptions.map(pool => <option key={pool.name} value={pool.name}>{pool.name} ({pool.freeCapacity})</option>)}
+        </Select>
+        {poolReset ? <p role="status" className="text-xs text-text-muted">{t('recoveryGroups.poolReset')}</p> : null}
+        {targetPools?.isFetching ? <p role="status" className="text-xs text-text-muted">{t('recoveryGroups.poolLoading')}</p> : null}
+        {targetPools?.error ? <FetchErrorAlert title={t('recoveryGroups.poolUnavailable')} onRetry={() => { void targetPools.refetch() }} retryLabel={t('buttons.retry')} /> : null}
+        {!targetPools?.isFetching && !targetPools?.error && targetPools?.data && poolOptions.length === 0 ? <p className="text-xs text-text-muted">{t('recoveryGroups.poolEmpty')}</p> : null}
+        {savedPoolMissing && targetPools?.data && !targetPools.isFetching && !targetPools.error ? <p role="status" className="text-xs text-amber-600">{t('recoveryGroups.poolMissing')}</p> : null}
+        {!draft.targetPool && automaticMissingPools.length > 0 ? <p role="status" className="text-xs text-amber-600">{t('recoveryGroups.poolAutomaticMissing')}: {automaticMissingPools.join(', ')}</p> : null}
+      </div> : null}
       {problem && draft.topology && !isLoading && !error ? <Alert variant="warning" title={t(key(`errors.${problem}`))} /> : null}
     </div>
   )

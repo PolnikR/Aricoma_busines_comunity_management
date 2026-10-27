@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import { useGetVolumes } from '@/generated/query/storage-volumes/storage-volumes.gen'
 import { flashSystemInventoryQuery, powerInventoryQuery, vdisksByVmQuery, vmwareInventoryQuery } from '@/features/discovery-inventory/resources/model/inventoryQueries'
 import { resolveVmwareProviderFilter } from '@/features/discovery-inventory/resources/helpers/vmwareProviderFilter'
 import { Alert } from '@/shared/components/alert/Alert'
@@ -19,6 +20,8 @@ import { selectPlatformProviders } from '@/features/platform-administration/plat
 import { useGetPolicySets } from '@/generated/query/policy-sets/policy-sets.gen'
 import { selectPolicySets } from '@/features/recovery-plans/policy-sets/model/selectPolicySets'
 import { useRecoveryGroupRelatedVolumes } from '../hooks/useRecoveryGroupRelatedVolumes'
+import { useRecoveryGroupTargetPools } from '../hooks/useRecoveryGroupTargetPools'
+import { missingAutomaticPools } from '../helpers/recoveryGroupTargetPools'
 import type { RecoveryGroup, RecoveryGroupDraft, RecoveryGroupVmMetadata } from '../model/recoveryGroupTypes'
 import { calculateRecoveryGroupStepIndices } from '../utils/calculateRecoveryGroupStepIndices'
 import { filterByPlatformProviderCredentialStatus } from '@/features/providers-connectors/providers/utils/credentialStatusChecks'
@@ -99,6 +102,11 @@ export function RecoveryGroupBuilder({
   const resolution = resolveEffectiveDraft(lifecycle, observation)
   const { draft, selectedVolumes, metroExisting, metroManaged, prefill, allowLegacyLocal } = resolution
   const observationEvent = resolution.selectionObservation
+  const poolSource = allProviders.find(provider => provider.id === draft.relatedVolumeProviderId)
+  const targetPools = useRecoveryGroupTargetPools(poolSource?.partnerProviderId ?? undefined,
+    step === 2 && metroManaged && resolution.topologyValid && !isInitialLoading)
+  // Observe existing source inventory only; the advisory default check never fetches it.
+  const sourceInventory = useGetVolumes(poolSource ? { provider_id: poolSource.id } : undefined, { query: { enabled: false } })
   useEffect(() => {
     if (!observationEvent) return
     let cancelled = false
@@ -228,7 +236,8 @@ export function RecoveryGroupBuilder({
                 onChange={values => { send({ type: 'detailsChanged', values }) }}
               />
             ) : null}
-            {step === 2 ? <RecoveryGroupTopologyStep draft={draft} providers={allProviders}
+            {step === 2 ? <RecoveryGroupTopologyStep draft={draft} providers={allProviders} targetPools={targetPools}
+              automaticMissingPools={!targetPools.isFetching && !targetPools.error ? missingAutomaticPools(sourceInventory.data, selectedVolumes, targetPools.data) : []}
               isLoading={providerQuery.isLoading || providerQuery.isFetching} error={providerQuery.error instanceof Error ? providerQuery.error : null}
               onRetry={() => { void providerQuery.refetch() }} onChange={send} allowLegacyLocal={allowLegacyLocal} isEditing={Boolean(initialData)} /> : null}
             {step === 3 ? (

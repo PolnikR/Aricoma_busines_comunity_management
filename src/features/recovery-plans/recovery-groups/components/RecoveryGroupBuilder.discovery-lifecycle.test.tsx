@@ -35,7 +35,7 @@ beforeEach(() => {
   client.setQueryData(getGetProvidersQueryKey({ role: 'all' }), { providers: [
     { id: 'compute', name: 'Compute', type: 'VMWARE', role: 'source', credentialStatus: 'ok' },
     { id: 'source', name: 'Source', type: 'FLASHCOPY', role: 'source', credentialStatus: 'ok', partnerProviderId: 'target' },
-    { id: 'target', name: 'Target', type: 'FLASHCOPY', role: 'target', credentialStatus: 'ok' },
+    { id: 'target', name: 'Target', type: 'FLASHCOPY', role: 'target', credentialStatus: 'ok', partnerProviderId: 'source' },
   ] })
 })
 afterEach(() => { cleanup(); client.clear(); restoreLayout(); vi.unstubAllGlobals() })
