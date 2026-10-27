@@ -1,6 +1,6 @@
 # Recovery Applications: DAG lifecycle, rollback a template versions — PLAN
 
-Stav: návrh na kontrolu, implementácia neschválená. Audit 2026-10-27. TODO: [recovery-applications-dag-lifecycle-todo.md](recovery-applications-dag-lifecycle-todo.md).
+Stav: implementované inline po schválení `executing-plans inline`; výsledky verifikácie sú v TODO. Audit 2026-10-27. TODO: [recovery-applications-dag-lifecycle-todo.md](recovery-applications-dag-lifecycle-todo.md). Pôvodné plánovacie obmedzenie „iba dokumenty“ nižšie je historické; zákaz BE/generated/Group zmien, commitu a pushu zostáva platný.
 
 ## 1. Rozsah a pracovný stav
 
@@ -48,7 +48,7 @@ Referencie v BE: `api/routers/recovery_apps.py` (GET templates :94, submit :107,
 | ok/skipped | BE uloží pushed=false, odstráni template_version a zachová run_id aj konfiguráciu vrátane požadovanej verzie. Pydantic read response môže odstránené optional pole serializovať ako null; FE musí akceptovať null aj absent. |
 | partial/failed | HTTP 502 s `detail: { rollback: report }`; BE nezapisuje odomknutie, pôvodná nasadená verzia zostáva. Refetch, report a možnosť ďalšieho používateľom potvrdeného pokusu. |
 
-Rollback route nemá vlastný pushed guard; pravidlo dostupnosti pre pushed je FE UX pravidlo. Server zostáva autoritou a rieši autorizáciu. Frontend nesmie tvrdiť odomknutie iba podľa úspešného HTTP alebo chýbajúcej report sekcie.
+Rollback route nemá vlastný pushed guard; pravidlo dostupnosti pre pushed je FE UX pravidlo. Server zostáva autoritou a rieši autorizáciu. **Existujúci FE `usePermissions` momentálne číta `mockPermissions`; nesmie sa použiť ako dôkaz reálneho `ROLLBACK_RECOVERY_PLAN` oprávnenia ani ako bezpečnostná hranica.** Kým nie je dostupný skutočný permission source, UI môže ponúknuť Rollback podľa pushed/pending stavu a BE HTTP 403 musí zrozumiteľne spracovať, bez odomknutia. Frontend nesmie tvrdiť odomknutie iba podľa úspešného HTTP alebo chýbajúcej report sekcie.
 
 ## 4. Orval API mapping a kontraktové hranice
 
@@ -78,7 +78,7 @@ T1 musí odlíšiť OpenAPI problém, generátor problém a spotrebiteľské FE 
 
 Jedno pravidlo pushed===true sa uplatní v row Edit aj drawer footer, v navigačnom callbacku a priamo v Editor handleSave. Zachovať provider locks nezávisle od lifecycle lock; run_id ani Active/Draft badge nie sú zámok.
 
-Priama Edit URL: vynútiť čerstvý GET pri vstupe; kým sa nepotvrdí aktuálny stav, nepovoliť mutácie ani zo stale cache. Pri pushed zobraziť vysvetlenie a read-only konfiguráciu v existujúcom builderi, s navigáciou medzi krokmi a Back; skryť/zakázať Save a všetky editácie vrátane custom tier/drop/reorder callbackov. Nový `readOnly` stav nesmie reuse celej disabled fieldset tak, že znemožní čítať ďalšie kroky. Pri provider/template load chybe musí čítanie uloženej konfigurácie zostať dostupné.
+Priama Edit URL: vynútiť čerstvý GET pri vstupe; kým sa nepotvrdí aktuálny stav, nepovoliť mutácie ani zo stale cache. Pri pushed zobraziť vysvetlenie a read-only konfiguráciu v existujúcom builderi, s navigáciou medzi krokmi a Back; skryť/zakázať Save a všetky editácie vrátane custom tier/drop/reorder callbackov. **V read-only režime musí byť možné prejsť všetky štyri kroky nezávisle od `detailsValid`, `tiersValid`, `policySetValid` či dostupnosti providerov, Recovery Groups alebo template katalógu.** `WizardSteps` disabled flags aj Next/canContinue musia v tomto režime obísť validačné brány, nie však ochranu mutácií. Nový `readOnly` stav nesmie reuse celej disabled fieldset tak, že znemožní čítať ďalšie kroky. Pri provider/template load chybe alebo stale/zmazanej referencii musí čítanie uloženej konfigurácie zostať dostupné; otestovať direct Edit URL aj kliknutie na každý krok.
 
 Refetch draft→pushed okamžite uzamkne už otvorený editor. HTTP 409 zo Save/Push zablokuje ďalší submit, zobrazí BE vysvetlenie a vyžiada authoritative GET; iba overený draft môže znovu odomknúť. Failed refresh nesmie ponechať editovateľnú stale verziu po konflikte. Refetch nesmie bez rozhodnutia prepísať dirty draft; uložený stav riadi zámok, draft zostáva oddelený. Po rollbacku nový vstup do Edit použije čerstvé dáta, nie znovu použité initialData starého mountu.
 
@@ -103,10 +103,10 @@ Krok 4, pod Airflow Provider: verzia + description z BE. Selector dostupný aj p
 - Form pole `dagTemplateVersion: string | null`; wire `dag_template_version`. Null reprezentuje úmysel nasledovať BE default. UI ponúkne „Predvolená verzia platformy (aktuálne …)“ odvodenú z flagu default, explicitné položky zachovávajú presný string. Žiadne automatické prepísanie uloženého explicitného výberu defaultom pri refetchi.
 - Pri create bez hodnoty zostať na default/null, pri Edit zachovať explicitnú hodnotu alebo null/absent. Tým sa neprevedie legacy default na pevne pripnutú verziu bez používateľovej voľby. Default description sa odvodí z endpointu.
 - Pri potvrdenej zmene platformy reset na null a načítať jej query; pri Cancel zachovať pôvodnú verziu. Zmena source providera v rovnakej platforme zachová hodnotu. Neskorá response pre predchádzajúcu platformu nesmie zmeniť nový draft; použiť platform-specific key, bez placeholder listu starej platformy.
-- Loading/error/empty sú odlišné; Retry cez query.refetch, chyby nemenia draft. Pre tento návrh je pri neoverenom katalógu Save/Push blokovaný, kým Retry neuspeje; používateľ môže ďalej čítať/editovať draft. Známa uložená verzia sa nezahodí pri fetch chybe.
-- Ak uložená verzia nie je v úspešne načítanom katalógu, zobraziť jej hodnotu a problém; Save/Push blokovať do explicitnej voľby podporovanej verzie/defaultu. Nevykonať tichý downgrade. Chýbajúci alebo viacnásobný default je kontraktový problém, nie dôvod hardcodovať v1.
+- Loading/error/empty sú odlišné; Retry cez query.refetch, chyby nemenia draft. **Ak je katalóg nedostupný alebo neoverený a `dagTemplateVersion === null` (BE default), Save-only je povolený s jasným upozornením, že aktuálnu predvolenú verziu nemožno zobraziť/overiť; Push zostáva blokovaný do úspešného overenia.** Ak je verzia explicitne zvolená, pri neoverenom katalógu blokovať Save aj Push (bez tichého resetu alebo downgrade); uložená explicitná hodnota zostáva v drafte a Retry obnoví jej overenie. Chýbajúci alebo nejednoznačný default z odpovede je kontraktová chyba bez hardcoded v1 fallbacku; null Save-only možno zachovať ako uvedený bezpečný režim.
+- Ak **explicitná** uložená verzia nie je v úspešne načítanom katalógu, zobraziť jej hodnotu a problém; Save/Push blokovať do explicitnej voľby podporovanej verzie/defaultu. Nevykonať tichý downgrade. Chýbajúci alebo viacnásobný default je kontraktový problém, nie dôvod hardcodovať v1; pri `null` platí vyššie uvedená výnimka pre Save-only s warning.
 
-Zahrnúť typy wire/list/form, createApplicationDraft, source transition, getRecoveryApplicationDraftReadiness, submit-time validateRecoveryApplication a oba mappere. Readiness aj handleSave musia kontrolovať tú istú template dostupnosť; disabled Save sám nestačí. `dagTemplateVersion` sa prenáša cez toRecoveryApplicationData aj pri Save-only. Mapper GET musí zachovať null/absent semantics. Nasadená verzia patrí samostatne do list modelu ako napr. `deployedTemplateVersion`, nikdy do form selection ako náhrada konfigurácie.
+Zahrnúť typy wire/list/form, createApplicationDraft, source transition, getRecoveryApplicationDraftReadiness, submit-time validateRecoveryApplication a oba mappere. Readiness aj handleSave musia uplatniť **rovnaké pravidlo podľa režimu Save-only/Push a null/explicitnej verzie**; disabled Save sám nestačí. `dagTemplateVersion` sa prenáša cez toRecoveryApplicationData aj pri Save-only. Mapper GET musí zachovať null/absent semantics. Nasadená verzia patrí samostatne do list modelu ako napr. `deployedTemplateVersion`, nikdy do form selection ako náhrada konfigurácie.
 
 ## 8. Display a EN/SK/CS
 
@@ -137,7 +137,7 @@ Hook-level cache settlement musí fungovať aj keď konzument unmountne; neponec
 
 | Stav | UX / stav |
 | --- | --- |
-| 403 | Permission denied, bez odomknutia; rešpektovať existujúce permission gate patterns. BE je autorita; VIEW, CREATE a ROLLBACK sú rozdielne permissions. |
+| 403 | Permission denied, bez odomknutia. BE `ROLLBACK_RECOVERY_PLAN` je autorita; VIEW, CREATE a ROLLBACK sú rozdielne permissions. Existujúce `usePermissions`/`mockPermissions` neposkytujú skutočnú autorizáciu: nepoužiť ich na falošný gate; bezpečné UX musí vysvetliť 403 a ponechať lock. |
 | 409 submit | Aktuálny pushed stav sa zmenil: lock + fresh GET + vysvetlenie. |
 | 409 rollback | Stored provider mismatch/stale state: vysvetlenie + refresh, žiadny fallback provider. |
 | 502 rollback detail.rollback | Validovať report, zobraziť partial/failed, ponechať locked do overenia. |
@@ -183,10 +183,10 @@ Definition of Done implementácie: všetky acceptance TODO splnené, focused tes
 | Stale GET prepíše mutation response | Vysoký | Cancel starého GET, raw cache update a riadený refresh; regression race test. |
 | Push 502 už uložil record | Vysoký | Error reconciliation, zachovať ID/draft, existujúci failSave flow. |
 | Partial report sa stratí v error formatteri | Vysoký | Oddeliť validáciu detail.rollback od textovej chyby a ukázať modal. |
-| Read-only zablokuje čítanie wizardu | Stredný | Oddeliť mutácie od step navigation a testovať všetky kroky. |
+| Read-only zablokuje čítanie wizardu | Stredný | `readOnly` obíde `WizardSteps.disabled` a Next/canContinue validačné brány aj pri chýbajúcich referenciách, nie mutation guards; testovať všetky kroky. |
 | Default sa zmení alebo verzia zmizne | Stredný | Null default semantics, endpoint truth, explicit unknown state bez downgrade. |
 
-Navrhnuté rozhodnutia na potvrdenie pri review: (1) Save-only verzia je dostupná; null znamená sledovanie BE defaultu, explicitná hodnota pripnutie. (2) Nedostupný/nekonzistentný katalóg blokuje Save-only aj Push do Retry, aby sa neposielala neoverená explicitná verzia; alternatíva je povoliť null Save-only s jasným upozornením, vyžaduje samostatné rozhodnutie. (3) Priamy pushed Edit zostáva čitateľný wizard so zamknutými mutáciami. (4) Standalone rollback odosiela iba app ID; legacy record bez providerov nemá automatický fallback. (5) Skipped report môže zostať warning, odomknutie riadi pushed=false.
+Rozhodnutia po review: (1) Save-only umožňuje `dagTemplateVersion=null` a sleduje BE default; explicitná verzia je pripnutá. (2) Pri nedostupnom/nekonzistentnom katalógu **null Save-only povoliť s upozornením**, ale Push aj Save s neoverenou explicitnou verziou blokovať do Retry; BE zostáva autoritou validácie. (3) Priamy pushed Edit je čitateľný wizard: všetky kroky sú prístupné bez readiness validácie, všetky mutácie blokované. (4) Standalone rollback odosiela iba app ID; legacy record bez providerov nemá automatický fallback. (5) Skipped report môže zostať warning, odomknutie riadi pushed=false. (6) FE `mockPermissions` nie je autorizačný zdroj; Rollback HTTP 403 od BE sa musí zobraziť bez odomknutia.
 
 Pred implementáciou: potvrdiť tieto UX rozhodnutia, dostupnosť browser runtime a prípadné test environment oprávnenie. Backend kontrakt pre tieto body nie je otvorený; ide o FE UX a test podmienky. Po vytvorení PLAN/TODO sa práca zastaví na review.
 
@@ -195,3 +195,23 @@ Pred implementáciou: potvrdiť tieto UX rozhodnutia, dostupnosť browser runtim
 Overené oba nové dokumenty: vzájomné odkazy, prítomnosť T1–T8, dependencies/verification/DoD v každej úlohe, encoding, vyvážené code fences a trailing whitespace. `git diff --check -- <oba dokumenty>` a samostatné `git diff --no-index --check -- /dev/null <dokument>` pre každý untracked súbor prešli. Skontrolovaný `git status --short` a `git diff --stat` FE aj status BE. BE zostal čistý. Počas auditu iná práca zmenila aj Group target-pools hook a jeho/topology testy; tento výstup ich neupravoval. Vlastné zápisy sú výhradne tieto dva nové dokumenty.
 
 Vitest, Playwright, kompletná suite, typecheck ani production build neboli v plánovacej úlohe spustené. Žiadny commit ani push. TODO zostáva návrhom na samostatné schválenie.
+
+## 15. Vykonanie po schválení — 2026-10-27
+
+Používateľ vyžiadal executing-plans inline. Práca prebieha na existujúcej `spike/ant-design-shell`, bez worktree/branch/commitu/pushu. Pri obnovenom audite boli mimo týchto dvoch plánov všetky source súbory čisté; implementačný baseline HEAD `bea04841`. Pôvodné cudzie zmeny z plánovania už boli začlenené pred implementáciou. BE kontrakt bol znovu prečítaný bez úprav; testy nepoužívajú živé infra.
+
+Pre-flight review: T2/T4 zdieľajú Builder (readonly oddelené od save/loading, navigácia zostáva aktívna); T3/T5c zdieľajú list cache (raw API shape, cancel starého GET, hook-level settlement); T4/T5 zdieľajú nullable form a template validáciu (mapping pred UI); T2/T5c zdieľajú Editor (fresh mount nesmie prepísať neskorší dirty draft); T3/T6 zdieľajú Table/modal (standalone odlíšený od Delete); T6/T8 zdieľajú texty a browser selektory (lokalizované labely). Každá úloha T1–T8 bola porovnaná so svojimi akceptáciami; žiadny konflikt brániaci začatiu. Schválené review rozhodnutia v §13 sú implementačné pravidlá.
+
+Rulings počas vykonania:
+- Minimal shared zmena: RowActionsMenu `delete` callback je optional a nevykresľuje Delete bez callbacku. Potrebné pre samostatný Rollback nezávislý od onDelete; žiadny Group komponent sa nemení.
+- Application rollback modal má optional standalone prezentačný variant, aby existujúci Delete result zachoval názov a nový Rollback nebol označený ako deletion.
+- Katalóg/verzia je optional nullable v compatibility form type, canonical nový draft a GET mapper používajú null; wire vždy prenesie null alebo explicitnú voľbu.
+- Query seeded pri Create bez registrovanej queryFn sa iba invaliduje; mounted/unmounted queries s reálnou queryFn sa aj refetchnú. Zabráni sa Missing queryFn retry bez straty raw cache.
+- Editor checking→verified key inicializuje draft z prvého čerstvého GET. Neskoršie refetche zachovajú dirty draft a aktualizujú len zámok.
+- Starý test všeobecnej opravy po chybe používa HTTP 400; HTTP 409 má nové vlastné lock/reconciliation regresie a nesmie zostať testom voľného retry stale záznamu.
+
+Focused red/green dôkazy: pôvodné pushed Edit/menu a chýbajúci Rollback testy boli red; nové model/source/version testy a cache settlement race testy boli red pred opravou. Browser zistil chýbajúci lokalizovaný push-502 saved-locally text, následne opravený. Kompletná test suite ani production build sa podľa projektových pravidiel nespúšťajú; konkrétne finálne výsledky sa doplnia do TODO.
+
+Záverečné nezávislé review našlo tri material findings: Create po 409 bez recovery cesty, Create po neistom submit výsledku bez overenia a aktívny link na zachovaný historický DAG ID. Všetky tri opravené a opätovne skontrolované bez zostávajúcich material findings. Create registruje disabled list query a po 409/502/network chybe ponechá synchronous save lock do explicitného GET; iba overený absent/unpushed záznam ho odomkne, neúspech má Retry bez straty draftu. Table zachovaný run ID vykreslí ako text pri nepushed. Unknown stored platform sa nemapuje do template query: povolené sú iba VMWARE/IBM_POWER (case normalizované), regression red→green.
+
+Výsledok finálneho focused runu: 24 súborov, 529 testov green; samostatná nová unsupported-platform regresia green. Mockovaný Edge: 21 scenario records green, žiadne neočakávané API/console/page chyby. Typecheck a focused ESLint green; detailné príkazy a artefakty v TODO. Skutočná BE integrácia nebola vykonaná, keďže nebola autorizovaná. Žiadny commit/push, BE/generated/Group diff je prázdny.
