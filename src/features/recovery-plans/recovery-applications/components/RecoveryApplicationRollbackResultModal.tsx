@@ -8,6 +8,7 @@ interface RecoveryApplicationRollbackResultModalProps {
   onClose: () => void
   applicationName: string
   report: RollbackReport | null
+  standalone?: boolean
 }
 
 export function RecoveryApplicationRollbackResultModal({
@@ -15,6 +16,7 @@ export function RecoveryApplicationRollbackResultModal({
   onClose,
   applicationName,
   report,
+  standalone = false,
 }: RecoveryApplicationRollbackResultModalProps) {
   const { t } = useTranslation()
 
@@ -75,9 +77,9 @@ export function RecoveryApplicationRollbackResultModal({
   return (
     <ChecklistResultDialog
       open={open}
-      title={t('recovery.application.rollback.title')}
+      title={t(standalone ? 'recovery.application.lifecycle.rollbackResultTitle' : 'recovery.application.rollback.title')}
       primaryName={applicationName}
-      subtitle={t('recovery.application.rollback.subtitle')}
+      subtitle={t(standalone ? 'recovery.application.lifecycle.rollbackResultSubtitle' : 'recovery.application.rollback.subtitle')}
       statusBar={{
         title: t(isClean ? 'recovery.application.rollback.resultSuccessTitle' : 'recovery.application.rollback.resultWarningTitle'),
         status: isClean ? 'success' : 'warning',

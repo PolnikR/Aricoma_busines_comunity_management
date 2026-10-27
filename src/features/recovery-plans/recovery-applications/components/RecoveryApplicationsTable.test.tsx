@@ -179,10 +179,10 @@ describe('RecoveryApplicationsTable', () => {
     expect(screen.getByLabelText('Rows per page')).toBeInTheDocument()
   })
 
-  it('opens backend application details and dispatches Edit without Delete', async () => {
+  it('opens draft application details and dispatches Edit without Delete', async () => {
     const user = userEvent.setup()
     const onEdit = vi.fn()
-    renderTable(<RecoveryApplicationsTable applications={[application]} onEdit={onEdit} />)
+    renderTable(<RecoveryApplicationsTable applications={[{ ...application, pushToOrchestrator: false }]} onEdit={onEdit} />)
 
     await user.click(screen.getByText('Finance Recovery'))
     const drawer = screen.getByRole('dialog', { name: 'Application detail' })
@@ -197,7 +197,7 @@ describe('RecoveryApplicationsTable', () => {
     const user = userEvent.setup()
     const onEdit = vi.fn()
     renderTable(
-      <RecoveryApplicationsTable applications={[application]} onEdit={onEdit} onDelete={vi.fn()} />,
+      <RecoveryApplicationsTable applications={[{ ...application, pushToOrchestrator: false }]} onEdit={onEdit} onDelete={vi.fn()} />,
     )
 
     expect(screen.getByRole('columnheader', { name: 'Actions' })).toBeInTheDocument()

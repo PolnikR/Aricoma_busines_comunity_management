@@ -187,12 +187,11 @@ describe('Application selected orchestration HTTP contract', () => {
     expect(within(section).queryByRole('button', { name: /View recovery runs/ })).not.toBeInTheDocument()
   })
 
-  it('keeps a stored row link with Push off, but hides its detail reference and inventory', async () => {
+  it('keeps a stored historical ID with Push off without an active link, detail reference or inventory', async () => {
     const http = stubSelectedOrchestration()
     const view = setup({ pushToOrchestrator: false })
-    const link = await screen.findByRole('link', { name: /dag_run-1/ })
-    await waitFor(() => { expect(link).toHaveAttribute('href', 'https://airflow.test/dags/dag_run-1') })
-    fireEvent.click(link)
+    expect(screen.getByText('run-1')).toHaveAttribute('title', 'DAG Run ID (retained history)')
+    expect(screen.queryByRole('link', { name: /dag_run-1/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     view.open()
     expect(within(view.section('Orchestration')).queryByRole('link')).not.toBeInTheDocument()

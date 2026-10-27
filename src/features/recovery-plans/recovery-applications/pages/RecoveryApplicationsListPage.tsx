@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { resolveUserFacingErrorMessage } from '@/shared/api/apiErrorMessage'
 import { Alert } from '@/shared/components/alert/Alert'
@@ -12,6 +13,7 @@ import { useGetProviders } from '@/generated/query/providers/providers.gen'
 import { selectProviders } from '@/features/providers-connectors/providers/model/selectProviders'
 import { toRecoveryApplicationFileName } from '../utils/recoveryApplicationFileName'
 import type { RecoveryApplicationListItem } from '../model/recoveryApplicationTypes'
+import { useRollbackRecoveryApplication } from '../hooks/useRollbackRecoveryApplication'
 
 export function RecoveryApplicationsListPage() {
   const { t } = useTranslation()
@@ -20,14 +22,23 @@ export function RecoveryApplicationsListPage() {
   const { data: providers = [] } = useGetProviders({ role: 'all' }, { query: { select: selectProviders } })
   const { mutateAsync: deleteApplication, isPending: isDeleting, error: deleteError } = useDeleteRecoveryApplication()
   const deleteErrorDescription = resolveUserFacingErrorMessage(deleteError, '')
+  const rollback = useRollbackRecoveryApplication()
+  const [rollingBackId, setRollingBackId] = useState<string | null>(null)
 
   const handleEdit = (id: string): void => {
+    const app = applications?.find(item => item.id === id)
+    if (!app || app.pushToOrchestrator === true || rollingBackId !== null || isDeleting) return
     const routeId = toRecoveryApplicationFileName(id)
     void navigate(`/recovery-plans/recovery-applications/${encodeURIComponent(routeId)}/edit`)
   }
 
   const handleDelete = (app: RecoveryApplicationListItem) => {
     return deleteApplication(app)
+  }
+  const handleRollback = async (app: RecoveryApplicationListItem) => {
+    setRollingBackId(app.id)
+    try { return await rollback.mutateAsync(app) }
+    finally { setRollingBackId(null) }
   }
 
   return (
@@ -62,6 +73,8 @@ export function RecoveryApplicationsListPage() {
           onEdit={handleEdit}
           onDelete={handleDelete}
           isDeleting={isDeleting}
+          onRollback={handleRollback}
+          rollingBackId={rollingBackId}
           error={error instanceof Error ? error : null}
           isRetrying={isFetching}
           onRetry={() => { void refetch() }}
