@@ -13,7 +13,7 @@ import type { SubmitRecoveryApplicationInput } from '../model/recoveryApplicatio
 const navigate = vi.fn()
 const mutate = vi.fn<(
   input: SubmitRecoveryApplicationInput,
-  options: { onSuccess: (response: SubmitDagResponse) => void; onError: () => void },
+  options: { onSuccess: (response: SubmitDagResponse) => void; onError: (cause?: Error) => void },
 ) => void>()
 const refetch = vi.fn()
 const submitMutation = {
@@ -57,6 +57,7 @@ let recoveryQuery: {
   error: Error | null
   isFetching: boolean
   refetch: typeof refetch
+  isFetchedAfterMount: boolean
 }
 
 vi.mock('react-router', async (importOriginal) => {
@@ -104,6 +105,7 @@ vi.mock('../components/RecoveryAppBuilder', () => ({
     isInitialLoading,
     lockPushToOrchestrator,
     lockedProviders,
+    readOnly,
   }: {
     initialData?: RecoveryApplicationFormState
     onSave: (state: RecoveryApplicationFormState) => void
@@ -112,9 +114,11 @@ vi.mock('../components/RecoveryAppBuilder', () => ({
     isInitialLoading?: boolean
     lockPushToOrchestrator?: boolean
     lockedProviders?: { platform: string; sourceProviderId: string | null; targetProviderId: string | null } | null
+    readOnly?: boolean
   }) => (
     <fieldset disabled={isInitialLoading} aria-busy={isInitialLoading}>
       <span>Application details</span>
+      <span>{readOnly ? 'Read-only configuration' : 'Editable configuration'}</span>
       <span>{initialData?.name}</span>
       <span>{initialData?.fileName}</span>
       <span>{`Selected provider: ${initialData?.platform ?? ''}`}</span>
@@ -149,17 +153,63 @@ vi.mock('../components/RecoveryAppBuilder', () => ({
 
 beforeEach(() => {
   vi.clearAllMocks()
+  refetch.mockResolvedValue({ isError: false })
   submitMutation.error = null
   recoveryQuery = {
     data: [application],
     isLoading: false,
     error: null,
     isFetching: false,
+    isFetchedAfterMount: true,
     refetch,
   }
 })
 
 describe('RecoveryApplicationEditorPage', () => {
+  it('blocks direct-URL submit for pushed applications while showing configuration', async () => {
+    recoveryQuery.data = [{ ...application, pushToOrchestrator: true }]
+    render(<RecoveryApplicationEditorPage />)
+    expect(screen.getByText('Read-only configuration')).toBeInTheDocument()
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Save unchanged' }))
+    expect(mutate).not.toHaveBeenCalled()
+    expect(screen.getByText('Application details')).toBeInTheDocument()
+  })
+
+  it('locks a mounted editor immediately when refetch reports pushed', async () => {
+    const view = render(<RecoveryApplicationEditorPage />)
+    expect(screen.getByText('Editable configuration')).toBeInTheDocument()
+    recoveryQuery.data = [{ ...application, pushToOrchestrator: true }]
+    view.rerender(<RecoveryApplicationEditorPage />)
+    expect(screen.getByText('Read-only configuration')).toBeInTheDocument()
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Save unchanged' }))
+    expect(mutate).not.toHaveBeenCalled()
+  })
+
+  it('waits for a fresh mount result before allowing a cached draft to submit', async () => {
+    recoveryQuery.isFetchedAfterMount = false
+    const view = render(<RecoveryApplicationEditorPage />)
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Save unchanged' }))
+    expect(mutate).not.toHaveBeenCalled()
+    recoveryQuery.isFetchedAfterMount = true
+    view.rerender(<RecoveryApplicationEditorPage />)
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Save unchanged' }))
+    expect(mutate).toHaveBeenCalledOnce()
+  })
+
+  it.each([true, false])('reconciles a 409 conflict and keeps the editor locked if refresh failed=%s', async isError => {
+    refetch.mockResolvedValueOnce({ isError })
+    render(<RecoveryApplicationEditorPage />)
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: 'Save unchanged' }))
+    const call = mutate.mock.calls[0]
+    if (!call) throw new Error('Expected initial submission')
+    act(() => { call[1].onError(new OrvalApiError(409, 'Conflict', { detail: 'Application is pushed' })) })
+    expect(refetch).toHaveBeenCalledOnce()
+    await waitFor(() => { expect(screen.getByText(isError ? 'Read-only configuration' : 'Editable configuration')).toBeInTheDocument() })
+    await user.click(screen.getByRole('button', { name: 'Save unchanged' }))
+    expect(mutate).toHaveBeenCalledTimes(isError ? 1 : 2)
+  })
+
   it('navigates back directly when the edit draft is clean', async () => {
     render(<RecoveryApplicationEditorPage />)
     await userEvent.setup().click(screen.getByRole('button', { name: 'Back' }))
@@ -219,7 +269,7 @@ describe('RecoveryApplicationEditorPage', () => {
     expect(mutate).toHaveBeenCalledOnce()
     const call = mutate.mock.calls[0]
     if (!call) throw new Error('Expected submission')
-    act(() => { call[1].onError() })
+    act(() => { call[1].onError(new OrvalApiError(400, 'Bad Request', { detail: 'Save rejected' })) })
     expect(screen.getByRole('button', { name: 'Back' })).toBeEnabled()
     await user.click(screen.getByRole('button', { name: 'Back' }))
     expect(screen.getByRole('dialog', { name: 'Discard unsaved changes?' })).toBeInTheDocument()

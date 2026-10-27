@@ -49,7 +49,7 @@ vi.mock('../hooks/useRecoveryApplications', async importOriginal => ({
         platform: 'VMWARE', source_provider_id: 'vmware-vcenter-01', target_provider_id: 'vmware-dr-01',
         notificationEmail: 'dr-team@example.test', tiers } },
     }],
-    isLoading: false, isFetching: false, error: null, refetch: vi.fn(),
+    isLoading: false, isFetching: false, isFetchedAfterMount: true, error: null, refetch: vi.fn().mockResolvedValue({ isError: false, data: [] }),
   }),
 }))
 vi.mock('@/generated/query/platform-providers/platform-providers.gen', async importOriginal => ({
@@ -122,13 +122,13 @@ describe.each([
       application: {
         name: 'Finance', description: 'Finance recovery', environment: 'prod', platform: 'VMWARE',
         source_provider_id: 'vmware-vcenter-01', target_provider_id: 'vmware-dr-01',
-        notificationEmail: 'dr-team@example.test', tiers,
+        notificationEmail: 'dr-team@example.test', dag_template_version: null, tiers,
       },
     })
     client.clear()
   })
 
-  it('retains the edited draft and guard after an HTTP failure, then exits after a successful retry', async () => {
+  it('retains the edited draft and guard after an HTTP validation failure, then exits after a successful retry', async () => {
     const user = userEvent.setup()
     let respond!: (response: Response) => void
     const pending = new Promise<Response>(resolve => { respond = resolve })
@@ -148,7 +148,7 @@ describe.each([
     expect(navigate).not.toHaveBeenCalled()
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     await act(async () => {
-      respond(new Response(JSON.stringify({ detail: 'Save rejected' }), { status: 409 }))
+      respond(new Response(JSON.stringify({ detail: 'Save rejected' }), { status: 400 }))
       await pending
     })
     expect(await screen.findByRole('alert')).toHaveTextContent('Save rejected')

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router'
 import { resolveUserFacingErrorMessage } from '@/shared/api/apiErrorMessage'
 import { Button } from '@/shared/components/button/Button'
@@ -26,11 +26,13 @@ import { useGetPlatformProviders } from '@/generated/query/platform-providers/pl
 import { useGetProviders } from '@/generated/query/providers/providers.gen'
 import { selectProviders } from '@/features/providers-connectors/providers/model/selectProviders'
 import { selectPlatformProviders } from '@/features/platform-administration/platform-providers/model/selectPlatformProviders'
+import { applicationHttpStatus } from '../hooks/useRollbackRecoveryApplication'
 
 export function RecoveryApplicationEditorPage() {
   const { t } = useTranslation()
   const { id = '' } = useParams<{ id: string }>()
-  const { data: applications, isLoading, error, isFetching, refetch } = useRecoveryApplications()
+  const { data: applications, isLoading, error, isFetching, isFetchedAfterMount, refetch } = useRecoveryApplications({ refetchOnMount: 'always' })
+  const [conflictLocked, setConflictLocked] = useState(false)
   const submitApplication = useSubmitRecoveryApplication()
   const { data: platformProviders = [] } = useGetPlatformProviders({ type: 'all' }, { query: { select: selectPlatformProviders } })
   const completion = useRecoveryApplicationSaveCompletion({ platformProviders })
@@ -48,8 +50,17 @@ export function RecoveryApplicationEditorPage() {
     () => application ? toRecoveryApplicationFormState(application) : null,
     [application],
   )
+  const readOnly = application?.pushToOrchestrator === true || conflictLocked || !isFetchedAfterMount || Boolean(error)
+  const readOnlyRef = useRef(readOnly)
+  useLayoutEffect(() => { readOnlyRef.current = readOnly }, [readOnly])
+
+  const refreshState = async () => {
+    const result = await refetch()
+    if (!result.isError) setConflictLocked(false)
+  }
 
   const handleSave = (formState: RecoveryApplicationFormState): void => {
+    if (readOnlyRef.current) return
     const data = toRecoveryApplicationData(formState, providers, lockedProviders)
     if (!completion.beginSave()) return
     const submitted = {
@@ -65,11 +76,18 @@ export function RecoveryApplicationEditorPage() {
       onSuccess: (response) => {
         completion.completeSave({ submitted, response })
       },
-      onError: completion.failSave,
+      onError: (cause) => {
+        completion.failSave()
+        const status = applicationHttpStatus(cause)
+        if (status === 409 || status === 502 || status === null) {
+          setConflictLocked(true)
+          void refreshState()
+        }
+      },
     })
   }
 
-  if (error) {
+  if (error && !application) {
     return (
       <div className="flex min-h-full flex-col">
         <PageHeader
@@ -113,21 +131,33 @@ export function RecoveryApplicationEditorPage() {
         actions={<Button size="sm" variant="outline" disabled={completion.isSaving} onClick={completion.requestBack}>{t('buttons.back')}</Button>}
       />
       <div className="flex flex-1 flex-col lg:min-h-0">
+        {readOnly ? <Alert variant="warning" className="mx-4 mt-4"
+          title={t(application?.pushToOrchestrator === true ? 'recovery.application.lifecycle.readOnly'
+            : conflictLocked ? 'recovery.application.lifecycle.conflict' : 'recovery.application.lifecycle.checkingState')} /> : null}
+        {error || conflictLocked ? <FetchErrorAlert
+          title={t('pages.recoveryEditor.error.failed')}
+          description={loadErrorDescription}
+          retryLabel={t('buttons.retry')}
+          isRetrying={isFetching}
+          onRetry={() => { void refreshState() }}
+        /> : null}
         {submitApplication.error ? (
           <Alert
             variant="error"
             className="mx-4 mt-4"
-            title={t('pages.recovery.submitFailed')}
+            title={t(applicationHttpStatus(submitApplication.error) === 502 && submitErrorDescription.includes('saved locally')
+              ? 'recovery.application.lifecycle.pushSavedLocally' : 'pages.recovery.submitFailed')}
             {...(submitErrorDescription ? { description: submitErrorDescription } : {})}
           />
         ) : null}
         <RecoveryAppBuilder
-          key={initialData?.fileName ?? 'loading'}
+          key={`${initialData?.fileName ?? 'loading'}:${isFetchedAfterMount ? 'verified' : 'checking'}`}
           onCancel={completion.requestBack}
           {...(initialData ? { initialData } : {})}
           onSave={handleSave}
           onDirtyChange={completion.markDirty}
           isSaving={completion.isSaving}
+          readOnly={readOnly}
           disableFileName
           isInitialLoading={isLoading}
           lockPushToOrchestrator={application?.pushToOrchestrator === true}
