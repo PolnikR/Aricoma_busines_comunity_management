@@ -72,7 +72,7 @@ export function RecoveryAppPolicyForm({
       </div>
 
       <Field label={t('recoveryAppPolicies.form.description')} htmlFor="recovery-app-policy-description">
-        <Textarea id="recovery-app-policy-description" value={data.description} disabled={isSubmitting} invalid={Boolean(errors.description)} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => { onChange('description', event.target.value) }} />
+        <Textarea id="recovery-app-policy-description" className="h-10 min-h-10! resize-y" value={data.description} disabled={isSubmitting} invalid={Boolean(errors.description)} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => { onChange('description', event.target.value) }} />
         {errors.description ? <p className="mt-1 text-xs text-red-600">{errors.description}</p> : null}
       </Field>
 
