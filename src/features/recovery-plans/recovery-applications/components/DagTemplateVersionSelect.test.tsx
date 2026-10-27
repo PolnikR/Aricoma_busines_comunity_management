@@ -12,6 +12,17 @@ const templates = [
 const props = { platform: 'ibm_power', value: null, templates, isLoading: false, error: null, disabled: false, onChange: vi.fn(), onRetry: vi.fn() }
 
 describe('DagTemplateVersionSelect', () => {
+  it('explains Power versions even when selection is disabled without changing the value', async () => {
+    const onChange = vi.fn()
+    render(<DagTemplateVersionSelect {...props} disabled onChange={onChange} />)
+    const help = screen.getByRole('button', { name: 'About Power DAG template version' })
+    expect(help).toBeEnabled()
+    expect(help.closest('label')).toBeNull()
+    await userEvent.click(help)
+    expect(screen.getByRole('dialog')).toHaveTextContent('Both v1 and v2 run LPAR recovery sequentially')
+    expect(screen.getByRole('combobox')).toHaveValue('release-2027')
+    expect(onChange).not.toHaveBeenCalled()
+  })
   it('shows the BE default as the selected option exactly once, but submits null for it', async () => {
     const onChange = vi.fn()
     render(<DagTemplateVersionSelect {...props} onChange={onChange} />)

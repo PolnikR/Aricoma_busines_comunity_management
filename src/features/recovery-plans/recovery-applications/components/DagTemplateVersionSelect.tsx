@@ -1,7 +1,9 @@
 import type { DagTemplateVersion } from '@/generated/query/zod'
 import { useTranslation } from '@/hooks/useTranslation'
 import { Button } from '@/shared/components/button/Button'
-import { Field, Select } from '@/shared/components/form/FormControls'
+import { Select } from '@/shared/components/form/FormControls'
+import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
+import { recoveryApplicationHelpKey } from '../helpers/recoveryApplicationFieldHelp'
 
 interface DagTemplateVersionSelectProps {
   platform: string | undefined
@@ -16,6 +18,7 @@ interface DagTemplateVersionSelectProps {
 
 export function DagTemplateVersionSelect({ platform, value, templates, isLoading, error, disabled, onChange, onRetry }: DagTemplateVersionSelectProps) {
   const { t } = useTranslation()
+  const helpKey = recoveryApplicationHelpKey('template', platform)
   const defaults = templates.filter(template => template.default)
   const available = Boolean(platform) && !isLoading && !error && defaults.length === 1
   const defaultVersion = defaults[0]
@@ -27,7 +30,11 @@ export function DagTemplateVersionSelect({ platform, value, templates, isLoading
 
   return (
     <div className="mt-5 max-w-4xl">
-      <Field label={t('recovery.application.lifecycle.templateLabel')} htmlFor="recovery-application-template-version">
+      <div>
+        <div className="mb-1.5 flex min-w-0 items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+          <label htmlFor="recovery-application-template-version" className="text-xs font-medium text-text-secondary">{t('recovery.application.lifecycle.templateLabel')}</label>
+          <KeyedHelpPopover key={helpKey} helpKey={helpKey} sections={['effect', 'limitations']} />
+        </div>
         <Select id="recovery-application-template-version" value={displayedValue} disabled={disabled || !available}
           onChange={event => { if (!disabled && available) onChange(event.target.value === defaultVersion?.version ? null : event.target.value || null) }}>
           {available && defaultVersion
@@ -36,7 +43,7 @@ export function DagTemplateVersionSelect({ platform, value, templates, isLoading
           {unknown || (!available && value !== null && selected?.default === true) ? <option value={value}>{value}</option> : null}
           {templates.filter(template => !template.default).map(template => <option key={template.version} value={template.version}>{template.version}</option>)}
         </Select>
-      </Field>
+      </div>
       {isLoading ? <p className="mt-2 text-sm text-text-muted" role="status">{t('recovery.application.lifecycle.templateLoading')}</p>
         : problem ? <div className="mt-2 text-sm text-warning-700 dark:text-warning-400" role="alert">
           <p>{t(`recovery.application.lifecycle.${problem}`)}</p>
