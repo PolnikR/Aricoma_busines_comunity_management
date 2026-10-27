@@ -1,5 +1,6 @@
 import type { ChangeEvent } from 'react'
 import { CheckboxField, Field, Input, Select } from '@/shared/components/form/FormControls'
+import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { useTranslation } from '@/hooks/useTranslation'
 import { PLATFORM_PROVIDER_TYPES } from '../model/platformProviderTypes'
 import type { CredentialRecord } from '@/generated/query/zod'
@@ -45,7 +46,11 @@ export function PlatformProviderForm({
   }
 
   const credentialField = usesCredential ? (
-    <Field label={t('forms.credentials')} htmlFor="platform-provider-credentials">
+    <div className="block">
+      <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+        <label htmlFor="platform-provider-credentials" className="text-xs font-medium text-text-secondary">{t('forms.credentials')}</label>
+        <KeyedHelpPopover helpKey="platformProviders.fieldHelp.credentialId" sections={[]} />
+      </div>
       <Select
         id="platform-provider-credentials"
         value={data.credentialId}
@@ -76,12 +81,12 @@ export function PlatformProviderForm({
           </button>
         </p>
       ) : null}
-    </Field>
+    </div>
   ) : null
 
   return (
-    <div className="space-y-4 px-6 py-4">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+    <div className="space-y-3 px-6 py-4">
+      <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">
         <Field label={t('forms.id')} htmlFor="platform-provider-id">
           <Input
             id="platform-provider-id"
@@ -119,7 +124,7 @@ export function PlatformProviderForm({
         {errors.description ? <p className="mt-1 text-xs text-red-600">{errors.description}</p> : null}
       </Field>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">
         <Field label={t('forms.type')} htmlFor="platform-provider-type">
           <Select
             id="platform-provider-type"
@@ -134,7 +139,11 @@ export function PlatformProviderForm({
           {errors.type ? <p className="mt-1 text-xs text-red-600">{errors.type}</p> : null}
         </Field>
 
-        <Field label={t('forms.url')} htmlFor="platform-provider-url">
+        <div className="block">
+          <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+            <label htmlFor="platform-provider-url" className="text-xs font-medium text-text-secondary">{t('forms.url')}</label>
+            <KeyedHelpPopover helpKey="platformProviders.fieldHelp.url" sections={[]} />
+          </div>
           <Input
             id="platform-provider-url"
             type="url"
@@ -145,11 +154,15 @@ export function PlatformProviderForm({
             aria-invalid={Boolean(errors.url)}
           />
           {errors.url ? <p className="mt-1 text-xs text-red-600">{errors.url}</p> : null}
-        </Field>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <Field label={t('forms.notificationEmail')} htmlFor="platform-provider-notificationEmail">
+      <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">
+        <div className="block">
+          <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+            <label htmlFor="platform-provider-notificationEmail" className="text-xs font-medium text-text-secondary">{t('forms.notificationEmail')}</label>
+            <KeyedHelpPopover helpKey="platformProviders.fieldHelp.notificationEmail" sections={[]} />
+          </div>
           <Input
             id="platform-provider-notificationEmail"
             type="email"
@@ -160,8 +173,12 @@ export function PlatformProviderForm({
             aria-invalid={Boolean(errors.notificationEmail)}
           />
           {errors.notificationEmail ? <p className="mt-1 text-xs text-red-600">{errors.notificationEmail}</p> : null}
-        </Field>
-        <Field label={t('forms.cacheRefreshSeconds')} htmlFor="platform-provider-cacheRefreshSeconds">
+        </div>
+        <div className="block">
+          <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+            <label htmlFor="platform-provider-cacheRefreshSeconds" className="text-xs font-medium text-text-secondary">{t('forms.cacheRefreshSeconds')}</label>
+            <KeyedHelpPopover helpKey="platformProviders.fieldHelp.cacheRefreshSeconds" sections={[]} />
+          </div>
           <Input
             id="platform-provider-cacheRefreshSeconds"
             type="number"
@@ -174,13 +191,17 @@ export function PlatformProviderForm({
             aria-invalid={Boolean(errors.cacheRefreshSeconds)}
           />
           {errors.cacheRefreshSeconds ? <p className="mt-1 text-xs text-red-600">{errors.cacheRefreshSeconds}</p> : null}
-        </Field>
+        </div>
       </div>
 
       {data.type === 'AIRFLOW' ? (
         <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_7.5rem]">
-            <Field label={t('forms.ip')} htmlFor="platform-provider-ip">
+          <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-[minmax(0,1fr)_7.5rem]">
+            <div className="block">
+              <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+                <label htmlFor="platform-provider-ip" className="text-xs font-medium text-text-secondary">{t('forms.ip')}</label>
+                <KeyedHelpPopover helpKey="platformProviders.fieldHelp.ipAddress" sections={[]} />
+              </div>
               <Input
                 id="platform-provider-ip"
                 value={data.ipAddress}
@@ -190,8 +211,12 @@ export function PlatformProviderForm({
                 aria-invalid={Boolean(errors.ipAddress)}
               />
               {errors.ipAddress ? <p className="mt-1 text-xs text-red-600">{errors.ipAddress}</p> : null}
-            </Field>
-            <Field label={t('forms.port')} htmlFor="platform-provider-port">
+            </div>
+            <div className="block">
+              <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+                <label htmlFor="platform-provider-port" className="text-xs font-medium text-text-secondary">{t('forms.port')}</label>
+                <KeyedHelpPopover helpKey="platformProviders.fieldHelp.port" sections={[]} />
+              </div>
               <Input
                 id="platform-provider-port"
                 type="number"
@@ -205,10 +230,14 @@ export function PlatformProviderForm({
                 aria-invalid={Boolean(errors.port)}
               />
               {errors.port ? <p className="mt-1 text-xs text-red-600">{errors.port}</p> : null}
-            </Field>
+            </div>
           </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <Field label={t('forms.dagDir')} htmlFor="platform-provider-dag-dir">
+          <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">
+            <div className="block">
+              <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+                <label htmlFor="platform-provider-dag-dir" className="text-xs font-medium text-text-secondary">{t('forms.dagDir')}</label>
+                <KeyedHelpPopover helpKey="platformProviders.fieldHelp.dagDir" sections={[]} />
+              </div>
               <Input
                 id="platform-provider-dag-dir"
                 value={data.dagDir}
@@ -218,7 +247,7 @@ export function PlatformProviderForm({
                 aria-invalid={Boolean(errors.dagDir)}
               />
               {errors.dagDir ? <p className="mt-1 text-xs text-red-600">{errors.dagDir}</p> : null}
-            </Field>
+            </div>
             {credentialField}
           </div>
         </>
@@ -226,8 +255,12 @@ export function PlatformProviderForm({
 
       {data.type === 'SMTP' ? (
         <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_7.5rem]">
-            <Field label={t('forms.ip')} htmlFor="platform-provider-ip">
+          <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-[minmax(0,1fr)_7.5rem]">
+            <div className="block">
+              <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+                <label htmlFor="platform-provider-ip" className="text-xs font-medium text-text-secondary">{t('forms.ip')}</label>
+                <KeyedHelpPopover helpKey="platformProviders.fieldHelp.ipAddress" sections={[]} />
+              </div>
               <Input
                 id="platform-provider-ip"
                 value={data.ipAddress}
@@ -237,8 +270,12 @@ export function PlatformProviderForm({
                 aria-invalid={Boolean(errors.ipAddress)}
               />
               {errors.ipAddress ? <p className="mt-1 text-xs text-red-600">{errors.ipAddress}</p> : null}
-            </Field>
-            <Field label={t('forms.port')} htmlFor="platform-provider-port">
+            </div>
+            <div className="block">
+              <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+                <label htmlFor="platform-provider-port" className="text-xs font-medium text-text-secondary">{t('forms.port')}</label>
+                <KeyedHelpPopover helpKey="platformProviders.fieldHelp.port" sections={[]} />
+              </div>
               <Input
                 id="platform-provider-port"
                 type="number"
@@ -252,9 +289,13 @@ export function PlatformProviderForm({
                 aria-invalid={Boolean(errors.port)}
               />
               {errors.port ? <p className="mt-1 text-xs text-red-600">{errors.port}</p> : null}
-            </Field>
+            </div>
           </div>
-          <Field label={t('forms.fromEmail')} htmlFor="platform-provider-from-email">
+          <div className="block">
+            <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+              <label htmlFor="platform-provider-from-email" className="text-xs font-medium text-text-secondary">{t('forms.fromEmail')}</label>
+              <KeyedHelpPopover helpKey="platformProviders.fieldHelp.fromEmail" sections={[]} />
+            </div>
             <Input
               id="platform-provider-from-email"
               type="email"
@@ -265,66 +306,74 @@ export function PlatformProviderForm({
               aria-invalid={Boolean(errors.fromEmail)}
             />
             {errors.fromEmail ? <p className="mt-1 text-xs text-red-600">{errors.fromEmail}</p> : null}
-          </Field>
+          </div>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <CheckboxField
-              id="platform-provider-disable-ssl"
-              label={t('forms.disableSsl')}
-              checked={data.disableSsl === true}
-              disabled={isSubmitting}
-              variant="bordered"
-              onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('disableSsl', event.target.checked) }}
-            />
-            <CheckboxField
-              id="platform-provider-disable-tls"
-              label={t('forms.disableTls')}
-              checked={data.disableTls === true}
-              disabled={isSubmitting}
-              variant="bordered"
-              onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('disableTls', event.target.checked) }}
-            />
+            <div className="flex h-10 items-center gap-1.5 rounded-xl border border-border-strong bg-surface px-3 shadow-sm [&>span]:h-4 [&>span]:items-center">
+              <CheckboxField
+                id="platform-provider-disable-ssl"
+                label={t('forms.disableSsl')}
+                checked={data.disableSsl === true}
+                disabled={isSubmitting}
+                className="text-xs"
+                onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('disableSsl', event.target.checked) }}
+              />
+              <KeyedHelpPopover helpKey="platformProviders.fieldHelp.disableSsl" sections={[]} />
+            </div>
+            <div className="flex h-10 items-center gap-1.5 rounded-xl border border-border-strong bg-surface px-3 shadow-sm [&>span]:h-4 [&>span]:items-center">
+              <CheckboxField
+                id="platform-provider-disable-tls"
+                label={t('forms.disableTls')}
+                checked={data.disableTls === true}
+                disabled={isSubmitting}
+                className="text-xs"
+                onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('disableTls', event.target.checked) }}
+              />
+              <KeyedHelpPopover helpKey="platformProviders.fieldHelp.disableTls" sections={[]} />
+            </div>
           </div>
         </>
       ) : null}
 
       {data.type === 'BACKEND' ? (
         <>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-            <CheckboxField
-              id="platform-provider-logging-enabled"
-              label={t('forms.loggingEnabled')}
-              checked={data.loggingEnabled === true}
-              disabled={isSubmitting}
-              variant="bordered"
-              onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('loggingEnabled', event.target.checked) }}
-            />
-            <div>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <div className="flex h-10 items-center gap-1.5 rounded-xl border border-border-strong bg-surface px-3 shadow-sm [&>span]:h-4 [&>span]:items-center">
               <CheckboxField
-                id="platform-provider-jwt-enabled"
-                label={t('forms.jwtEnabled')}
-                checked={data.jwtEnabled === true}
+                id="platform-provider-logging-enabled"
+                label={t('forms.loggingEnabled')}
+                checked={data.loggingEnabled === true}
                 disabled={isSubmitting}
-                variant="bordered"
-                onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('jwtEnabled', event.target.checked) }}
+                className="text-xs"
+                onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('loggingEnabled', event.target.checked) }}
               />
+              <KeyedHelpPopover helpKey="platformProviders.fieldHelp.loggingEnabled" sections={[]} />
+            </div>
+            <div>
+              <div className="flex h-10 items-center gap-1.5 rounded-xl border border-border-strong bg-surface px-3 shadow-sm [&>span]:h-4 [&>span]:items-center">
+                <CheckboxField
+                  id="platform-provider-jwt-enabled"
+                  label={t('forms.jwtEnabled')}
+                  checked={data.jwtEnabled === true}
+                  disabled={isSubmitting}
+                  className="text-xs"
+                  onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('jwtEnabled', event.target.checked) }}
+                />
+                <KeyedHelpPopover helpKey="platformProviders.fieldHelp.jwtEnabled" sections={[]} />
+              </div>
               <p className="mt-1 text-xs text-text-muted">{t('forms.jwtEnabledHelper')}</p>
             </div>
-            <CheckboxField
-              id="platform-provider-swagger-enabled"
-              label={t('forms.swaggerEnabled')}
-              checked={data.swaggerEnabled === true}
-              disabled={isSubmitting}
-              variant="bordered"
-              onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('swaggerEnabled', event.target.checked) }}
-            />
           </div>
         </>
       ) : null}
 
       {data.type === 'KEYCLOAK' ? (
         <>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <Field label={t('forms.realm')} htmlFor="platform-provider-realm">
+          <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">
+            <div className="block">
+              <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+                <label htmlFor="platform-provider-realm" className="text-xs font-medium text-text-secondary">{t('forms.realm')}</label>
+                <KeyedHelpPopover helpKey="platformProviders.fieldHelp.realm" sections={[]} />
+              </div>
               <Input
                 id="platform-provider-realm"
                 value={data.realm}
@@ -334,8 +383,12 @@ export function PlatformProviderForm({
                 aria-invalid={Boolean(errors.realm)}
               />
               {errors.realm ? <p className="mt-1 text-xs text-red-600">{errors.realm}</p> : null}
-            </Field>
-            <Field label={t('forms.clientId')} htmlFor="platform-provider-client-id">
+            </div>
+            <div className="block">
+              <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+                <label htmlFor="platform-provider-client-id" className="text-xs font-medium text-text-secondary">{t('forms.clientId')}</label>
+                <KeyedHelpPopover helpKey="platformProviders.fieldHelp.clientId" sections={[]} />
+              </div>
               <Input
                 id="platform-provider-client-id"
                 value={data.clientId}
@@ -345,7 +398,7 @@ export function PlatformProviderForm({
                 aria-invalid={Boolean(errors.clientId)}
               />
               {errors.clientId ? <p className="mt-1 text-xs text-red-600">{errors.clientId}</p> : null}
-            </Field>
+            </div>
           </div>
           {credentialField}
         </>

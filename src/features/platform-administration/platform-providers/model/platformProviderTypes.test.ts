@@ -18,7 +18,7 @@ describe('platform provider type contract', () => {
     expect(PLATFORM_PROVIDER_FIELD_CONTRACT).toEqual({
       AIRFLOW: ['ipAddress', 'port', 'dagDir', 'credentialId'],
       SMTP: ['ipAddress', 'port', 'fromEmail', 'disableSsl', 'disableTls'],
-      BACKEND: ['loggingEnabled', 'jwtEnabled', 'swaggerEnabled'],
+      BACKEND: ['loggingEnabled', 'jwtEnabled'],
       KEYCLOAK: ['realm', 'clientId', 'credentialId'],
     })
   })

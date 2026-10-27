@@ -26,7 +26,7 @@ export const PLATFORM_PROVIDER_COMMON_FIELDS = [
 export const PLATFORM_PROVIDER_FIELD_CONTRACT = {
   AIRFLOW: ['ipAddress', 'port', 'dagDir', 'credentialId'],
   SMTP: ['ipAddress', 'port', 'fromEmail', 'disableSsl', 'disableTls'],
-  BACKEND: ['loggingEnabled', 'jwtEnabled', 'swaggerEnabled'],
+  BACKEND: ['loggingEnabled', 'jwtEnabled'],
   KEYCLOAK: ['realm', 'clientId', 'credentialId'],
 } as const satisfies Record<PlatformProviderType, readonly (keyof OrchestrationProvider)[]>
 

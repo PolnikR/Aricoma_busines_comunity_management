@@ -12,6 +12,7 @@ import { ConnectionTestHost } from '@/shared/connection-test/ConnectionTestHost'
 import type { PlatformProviderRecord } from '../model/platformProviderTypes'
 import { PlatformProvidersTable } from './PlatformProvidersTable'
 import { detailNavigationLabels, detailSectionsFields, detailSectionsLabels, openDetailSection } from '@/test-utils/detailView'
+import translations from '@/locales/en.json'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 const testRequest = vi.hoisted(() => vi.fn<(id: string) => Promise<ProviderTestResponseOutput>>())
@@ -214,7 +215,7 @@ describe('PlatformProvidersTable', () => {
     await user.click(screen.getByText('ABCo API'))
     const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
     expect(detailNavigationLabels(drawer)).toEqual(['Overview'])
-    expect(detailSectionsLabels(drawer)).toEqual(['Provider ID', 'Type', 'URL', 'Description', 'Notification email', 'Cache refresh interval (seconds)', 'Logging enabled', 'JWT enabled', 'Swagger enabled'])
+    expect(detailSectionsLabels(drawer)).toEqual(['Provider ID', 'Type', 'URL', 'Description', 'Notification email', 'Cache refresh interval (seconds)', 'Logging enabled', 'JWT enabled'])
   })
 
   it('shows only KEYCLOAK configuration fields in the detail drawer', async () => {
@@ -393,6 +394,33 @@ describe('PlatformProvidersTable', () => {
     expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument()
   })
   describe('DetailView', () => {
+    it.each([
+      [baseProvider, ['url', 'notificationEmail', 'cacheRefreshSeconds', 'ipAddress', 'port', 'dagDir', 'credentialId']],
+      [smtpProvider, ['url', 'notificationEmail', 'cacheRefreshSeconds', 'ipAddress', 'port', 'fromEmail', 'disableSsl', 'disableTls']],
+      [backendProvider, ['url', 'notificationEmail', 'cacheRefreshSeconds', 'loggingEnabled', 'jwtEnabled']],
+      [keycloakProvider, ['url', 'notificationEmail', 'cacheRefreshSeconds', 'realm', 'clientId', 'credentialId']],
+    ] as const)('opens matching field help for $0.type without adding fields or sections', async (provider, fields) => {
+      const user = userEvent.setup()
+      renderTable([provider])
+      await user.click(screen.getByText(provider.name))
+      const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
+      const overview = openDetailSection(drawer, 'Overview')
+      const text = (field: string, suffix: string) => {
+        const key = `platformProviders.fieldHelp.${field}.${suffix}`
+        return (translations as Record<string, string>)[key] ?? key
+      }
+      expect(within(overview).getAllByRole('button').filter(button => button.hasAttribute('aria-haspopup'))
+        .map(button => button.getAttribute('aria-label')).sort())
+        .toEqual(fields.map(field => text(field, 'trigger')).sort())
+      for (const field of fields) {
+        await user.click(within(overview).getByRole('button', { name: text(field, 'trigger') }))
+        expect(screen.getByRole('dialog', { name: text(field, 'title') })).toHaveTextContent(text(field, 'intro'))
+        await user.keyboard('{Escape}')
+        expect(drawer).toBeInTheDocument()
+      }
+      expect(within(drawer).getByRole('button', { name: 'Platform provider help' })).toBeInTheDocument()
+      expect(detailNavigationLabels(drawer)).toEqual(['Overview'])
+    })
     it.each([baseProvider, smtpProvider, backendProvider, keycloakProvider])('shows common detail values once for $type', async provider => {
       const user = userEvent.setup()
       renderTable([{ ...provider, notificationEmail: 'alerts@example.test', cacheRefreshSeconds: 60 }])

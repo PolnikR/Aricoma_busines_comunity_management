@@ -1,4 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import translations from '@/locales/en.json'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
 import { useGetCredentials } from '@/generated/query/credentials/credentials.gen'
@@ -94,7 +96,7 @@ function setMutate(mutate: ReturnType<typeof vi.fn>) {
 }
 
 function clickSave() {
-  fireEvent.click(screen.getByRole('button', { name: /platform provider/i }))
+  fireEvent.click(screen.getByRole('button', { name: /^(create|edit) platform provider$/i }))
 }
 
 function submittedProvider(mutate: ReturnType<typeof vi.fn>): Record<string, unknown> {
@@ -112,18 +114,67 @@ beforeEach(() => {
 
 describe('PlatformProvidersModal', () => {
   const providers = [airflowProvider, smtpProvider, backendProvider, keycloakProvider]
+  const helpFields = {
+    AIRFLOW: ['url', 'notificationEmail', 'cacheRefreshSeconds', 'ipAddress', 'port', 'credentialId', 'dagDir'],
+    SMTP: ['url', 'notificationEmail', 'cacheRefreshSeconds', 'ipAddress', 'port', 'fromEmail', 'disableSsl', 'disableTls'],
+    BACKEND: ['url', 'notificationEmail', 'cacheRefreshSeconds', 'loggingEnabled', 'jwtEnabled'],
+    KEYCLOAK: ['url', 'notificationEmail', 'cacheRefreshSeconds', 'credentialId', 'realm', 'clientId'],
+  }
+  const helpText = (field: string, suffix: string) => {
+    const key = `platformProviders.fieldHelp.${field}.${suffix}`
+    return (translations as Record<string, string>)[key] ?? key
+  }
 
-  it.each(providers)('prefills and submits common edit values for $type', provider => {
+  describe.each(['create', 'edit'] as const)('%s help', mode => {
+    it.each(providers)('keeps the exact field help set for $type and updates it on type changes', async provider => {
+      const user = userEvent.setup()
+      const mutate = vi.fn()
+      setMutate(mutate)
+      render(<PlatformProvidersModal open onClose={vi.fn()} existingProviders={[]} {...(mode === 'edit' ? { provider } : {})} />)
+      if (mode === 'create') fireEvent.change(screen.getByLabelText('Type'), { target: { value: provider.type } })
+      for (const targetType of [provider.type, 'AIRFLOW', 'SMTP', 'BACKEND', 'KEYCLOAK'] as const) {
+        fireEvent.change(screen.getByLabelText('Type'), { target: { value: targetType } })
+        const expected = helpFields[targetType].map(field => helpText(field, 'trigger')).sort()
+        expect(screen.getAllByRole('button').filter(button => button.hasAttribute('aria-haspopup'))
+          .map(button => button.getAttribute('aria-label')).sort()).toEqual(expected)
+      }
+      for (const field of helpFields.KEYCLOAK) {
+        await user.click(screen.getByRole('button', { name: helpText(field, 'trigger') }))
+        expect(screen.getByRole('dialog', { name: helpText(field, 'title') })).toHaveTextContent(helpText(field, 'intro'))
+        await user.keyboard('{Escape}')
+      }
+      expect(screen.getByLabelText('Type')).toHaveValue('KEYCLOAK')
+      expect(mutate).not.toHaveBeenCalled()
+    })
+  })
+
+  it.each(providers)('prefills and submits exact edit values after help for $type', async provider => {
+    const user = userEvent.setup()
     const mutate = vi.fn()
     setMutate(mutate)
     render(<PlatformProvidersModal open onClose={vi.fn()} existingProviders={[]} provider={{ ...provider, notificationEmail: 'alerts@example.test', cacheRefreshSeconds: 60 }} />)
     expect(screen.getByLabelText(/^Notification email/)).toHaveValue('alerts@example.test')
     expect(screen.getByLabelText(/^Cache refresh interval/)).toHaveValue(60)
+    for (const field of helpFields[provider.type]) {
+      await user.click(screen.getByRole('button', { name: helpText(field, 'trigger') }))
+      await user.keyboard('{Escape}')
+    }
+    expect(mutate).not.toHaveBeenCalled()
     clickSave()
-    expect(submittedProvider(mutate)).toMatchObject({ notificationEmail: 'alerts@example.test', cacheRefreshSeconds: 60 })
+    const expectedSettings = {
+      AIRFLOW: { ipAddress: '10.99.99.40', port: 8443, dagDir: '/opt/airflow/dags', credentialId: 'credential-1' },
+      SMTP: { ipAddress: '10.99.99.53', port: 1025, fromEmail: 'airflow@example.com', disableSsl: true, disableTls: false },
+      BACKEND: { loggingEnabled: true, jwtEnabled: false },
+      KEYCLOAK: { realm: 'aricoma', clientId: 'abco-be', credentialId: 'keycloak-admin' },
+    }
+    expect(submittedProvider(mutate)).toEqual({
+      id: provider.id, name: provider.name, description: provider.description, type: provider.type, url: provider.url,
+      notificationEmail: 'alerts@example.test', cacheRefreshSeconds: 60, ...expectedSettings[provider.type],
+    })
   })
 
-  it.each(providers)('creates $type with optional common fields empty', provider => {
+  it.each(providers)('creates $type with optional common fields empty after help', async provider => {
+    const user = userEvent.setup()
     const mutate = vi.fn()
     setMutate(mutate)
     render(<PlatformProvidersModal open onClose={vi.fn()} existingProviders={[]} />)
@@ -137,6 +188,9 @@ describe('PlatformProvidersModal', () => {
       fireEvent.change(screen.getByLabelText('Realm'), { target: { value: 'realm' } })
       fireEvent.change(screen.getByLabelText('Credentials'), { target: { value: 'keycloak-admin' } })
     }
+    await user.click(screen.getByRole('button', { name: helpText('url', 'trigger') }))
+    await user.keyboard('{Escape}')
+    expect(mutate).not.toHaveBeenCalled()
     clickSave()
     expect(submittedProvider(mutate)).toMatchObject({ notificationEmail: null, cacheRefreshSeconds: null })
   })
@@ -204,7 +258,7 @@ describe('PlatformProvidersModal', () => {
     expect(screen.getByLabelText(/^Notification email/)).toHaveValue('backend@example.test')
     expect(screen.getByRole('checkbox', { name: 'Enable logging' })).toBeChecked()
     expect(screen.getByRole('checkbox', { name: 'Enable JWT' })).not.toBeChecked()
-    expect(screen.getByRole('checkbox', { name: 'Enable Swagger' })).toBeChecked()
+    expect(screen.queryByRole('checkbox', { name: 'Enable Swagger' })).not.toBeInTheDocument()
     expect(screen.queryByLabelText('IP address')).not.toBeInTheDocument()
   })
 
@@ -227,11 +281,17 @@ describe('PlatformProvidersModal', () => {
     expect(screen.getByText('Enter a valid email address.')).toBeInTheDocument()
   })
 
-  it('submits an exact AIRFLOW payload and sends null when notification email is cleared', () => {
+  it('submits an exact AIRFLOW payload after help and sends null when notification email is cleared', async () => {
+    const user = userEvent.setup()
     const mutate = vi.fn()
     setMutate(mutate)
     render(<PlatformProvidersModal open onClose={vi.fn()} existingProviders={[]} provider={airflowProvider} />)
     fireEvent.change(screen.getByLabelText(/^Notification email/), { target: { value: '' } })
+    for (const field of helpFields.AIRFLOW) {
+      await user.click(screen.getByRole('button', { name: helpText(field, 'trigger') }))
+      await user.keyboard('{Escape}')
+    }
+    expect(mutate).not.toHaveBeenCalled()
     clickSave()
 
     expect(mutate.mock.calls[0]?.[0]).toEqual({
@@ -251,10 +311,17 @@ describe('PlatformProvidersModal', () => {
     })
   })
 
-  it('submits an exact BACKEND payload and preserves false flags', () => {
+  it('submits an exact BACKEND payload after help, preserves false flags and omits Swagger', async () => {
+    const user = userEvent.setup()
     const mutate = vi.fn()
     setMutate(mutate)
     render(<PlatformProvidersModal open onClose={vi.fn()} existingProviders={[]} provider={backendProvider} />)
+    expect(screen.queryByRole('checkbox', { name: 'Enable Swagger' })).not.toBeInTheDocument()
+    for (const field of helpFields.BACKEND) {
+      await user.click(screen.getByRole('button', { name: helpText(field, 'trigger') }))
+      await user.keyboard('{Escape}')
+    }
+    expect(mutate).not.toHaveBeenCalled()
     clickSave()
 
     expect(mutate.mock.calls[0]?.[0]).toEqual({
@@ -268,7 +335,6 @@ describe('PlatformProvidersModal', () => {
         cacheRefreshSeconds: null,
         loggingEnabled: true,
         jwtEnabled: false,
-        swaggerEnabled: true,
       },
     })
   })

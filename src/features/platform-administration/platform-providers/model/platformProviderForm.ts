@@ -17,7 +17,6 @@ export interface PlatformProviderFormData {
   disableTls: boolean | null
   loggingEnabled: boolean | null
   jwtEnabled: boolean | null
-  swaggerEnabled: boolean | null
   realm: string
   clientId: string
 }
@@ -32,7 +31,6 @@ const EMPTY_TYPE_SPECIFIC_FIELDS = {
   disableTls: null,
   loggingEnabled: null,
   jwtEnabled: null,
-  swaggerEnabled: null,
   realm: '',
   clientId: '',
 } as const
@@ -99,7 +97,6 @@ export function toPlatformProviderFormData(provider: PlatformProviderRecord): Pl
         ...common,
         loggingEnabled: provider.loggingEnabled ?? null,
         jwtEnabled: provider.jwtEnabled ?? null,
-        swaggerEnabled: provider.swaggerEnabled ?? null,
       }
     case 'KEYCLOAK':
       return {
