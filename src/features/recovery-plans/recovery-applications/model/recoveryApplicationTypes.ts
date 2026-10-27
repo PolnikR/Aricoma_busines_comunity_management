@@ -135,8 +135,7 @@ export interface RecoveryApplicationFormState {
   platform: string
   orchestrationProviderId: string
   targetProviderId: string
-  // Not editable in the builder; kept so a re-save does not clear it (the
-  // backend replaces the whole record).
+  // Optional editable address; the mapper normalizes a cleared value to null.
   notificationEmail: string | null
   dagTemplateVersion?: string | null | undefined
   tiers: Map<string, DraftRecoveryTier>

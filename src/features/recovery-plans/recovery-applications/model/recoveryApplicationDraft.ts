@@ -1,11 +1,11 @@
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import type { RecoveryGroup as AvailableRecoveryGroup } from '../../recovery-groups/model/recoveryGroupTypes'
 import { cloneTier } from '../utils/recoveryApplicationFormMapper'
-import { isRecoveryGroupCompatible, isRecoveryGroupEligible } from '../utils/recoveryGroupPlatform'
+import { isRecoveryGroupSourceEligible } from '../utils/recoveryGroupPlatform'
 import type { DraftRecoveryTier, LockedProviders, RecoveryApplicationFormState } from './recoveryApplicationTypes'
 
 export type ApplicationMetadataPatch = Partial<Pick<RecoveryApplicationFormState,
-  'fileName' | 'name' | 'description' | 'environment' | 'platform' | 'targetProviderId' | 'dagTemplateVersion'
+  'fileName' | 'name' | 'description' | 'environment' | 'platform' | 'targetProviderId' | 'dagTemplateVersion' | 'notificationEmail'
 >>
 
 export interface DraftContext {
@@ -86,7 +86,8 @@ export function assignRecoveryGroup(
 ): DraftTransition {
   const platform = context.lockedProviders?.platform ?? context.providers.find(provider => provider.id === draft.platform)?.type
   const group = context.groups.find(group => group.id === groupId)
-  if (!group || !isRecoveryGroupEligible(group, platform)) return { draft, notifyDirty: false }
+  const sourceProviderId = context.lockedProviders ? context.lockedProviders.sourceProviderId : draft.platform
+  if (!group || !isRecoveryGroupSourceEligible(group, platform, sourceProviderId)) return { draft, notifyDirty: false }
   const tier = draft.tiers.get(tierId)
   if (!tier) return { draft, notifyDirty: true }
   const tiers = new Map(draft.tiers)
@@ -116,7 +117,9 @@ export function selectRecoveryVm(
   const alreadySelected = tier.recovery_group.vms.some(vm => vm.name === vmName)
   if (alreadySelected === selected) return { draft, notifyDirty: true }
   const platform = context.lockedProviders?.platform ?? context.providers.find(provider => provider.id === draft.platform)?.type
-  const group = context.groups.find(group => group.id === tier.recovery_group?.id && isRecoveryGroupCompatible(group, platform))
+  const sourceProviderId = context.lockedProviders ? context.lockedProviders.sourceProviderId : draft.platform
+  const group = context.groups.find(group => group.id === tier.recovery_group?.id && isRecoveryGroupSourceEligible(group, platform, sourceProviderId))
+  if (selected && !group?.resources.includes(vmName)) return { draft, notifyDirty: false }
   const nextVms = selected
     ? [...tier.recovery_group.vms, { name: vmName, ...group?.vmMetadataByName?.[vmName] }]
     : tier.recovery_group.vms.filter(vm => vm.name !== vmName)

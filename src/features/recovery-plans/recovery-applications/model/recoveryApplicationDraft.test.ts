@@ -88,7 +88,7 @@ describe('draft initialization', () => {
 })
 
 const vmwareGroup: RecoveryGroup = {
-  id: 'group', name: 'Live Group', description: 'Live description', providerId: 'other-provider', policySetId: 'policy', resourceCount: 2, status: 'Active',
+  id: 'group', name: 'Live Group', description: 'Live description', providerId: 'source', policySetId: 'policy', resourceCount: 2, status: 'Active',
   sourceCategory: 'backup_system_workload', workloadType: 'vmware_virtual_machines', resourceType: 'vm',
   resources: ['db', 'web'], relatedVolumeProviderId: null, relatedVolumes: [], pushToOrchestrator: true, airflowRunId: 'run',
   vmMetadataByName: { db: { order: 8, hostname: 'live', ip_address: '10.0.0.1', os: 'Linux', cpu: 4, memory_gb: 16, storage_gb: 80 }, web: { hostname: 'web-live' } },
@@ -114,7 +114,7 @@ describe('Group and VM transitions', () => {
     const groups = [{ ...vmwareGroup, ...changes }]
     expect(assignRecoveryGroup(initial, 'db', 'group', { ...context, groups })).toEqual({ draft: initial, notifyDirty: false })
   })
-  it('uses locked platform and copies Power LPAR metadata independently of provider identity', () => {
+  it('uses locked platform and copies Power LPAR metadata using the stored source identity', () => {
     const group: RecoveryGroup = { ...vmwareGroup, workloadType: 'ibm_power_virtual_machines', resources: ['LPAR01'], vmMetadataByName: { LPAR01: { os: 'AIX', order: 9 } } }
     const result = assignRecoveryGroup(draft(false), 'db', 'group', { providers: [], groups: [group], lockedProviders: { ...locks, platform: 'IBM_POWER' } })
     expect(result.draft.tiers.get('db')?.recovery_group?.vms).toEqual([{ name: 'LPAR01', os: 'AIX', order: 9 }])
@@ -134,9 +134,9 @@ describe('Group and VM transitions', () => {
     expect(result.draft).toBe(initial)
     expect(result.notifyDirty).toBe(true)
   })
-  it('reindexes actual changes preserving stored metadata then uses live compatible unpublished metadata on re-add', () => {
+  it('reindexes actual changes preserving stored metadata then uses live eligible metadata on re-add', () => {
     const initial = freezeDraft(draft())
-    const unpublished = { ...groupContext, groups: [{ ...vmwareGroup, pushToOrchestrator: false }] }
+    const unpublished = groupContext
     const appended = selectRecoveryVm(initial, 'db', 'web', true, unpublished)
     expect(appended.draft.tiers.get('db')?.recovery_group?.vms).toEqual([{ name: 'db', order: 1, hostname: 'stored' }, { name: 'web', order: 2, hostname: 'web-live' }])
     const removed = selectRecoveryVm(appended.draft, 'db', 'db', false, unpublished)
@@ -155,9 +155,9 @@ describe('Group and VM transitions', () => {
     const initial = freezeDraft(draft(false))
     expect(selectRecoveryVm(initial, 'db', 'web', true, groupContext)).toEqual({ draft: initial, notifyDirty: true })
   })
-  it.each([{ groups: [] }, { groups: [{ ...vmwareGroup, workloadType: 'ibm_power_virtual_machines' as const }] }])('permits unknown direct VM names without incompatible metadata', ({ groups }) => {
-    const result = selectRecoveryVm(freezeDraft(draft()), 'db', 'web', true, { ...context, groups })
-    expect(result.draft.tiers.get('db')?.recovery_group?.vms).toEqual([{ name: 'db', order: 1, hostname: 'stored' }, { name: 'web', order: 2 }])
+  it.each([{ groups: [] }, { groups: [{ ...vmwareGroup, workloadType: 'ibm_power_virtual_machines' as const }] }])('rejects selection without a compatible current Group', ({ groups }) => {
+    const initial = freezeDraft(draft())
+    expect(selectRecoveryVm(initial, 'db', 'web', true, { ...context, groups })).toEqual({ draft: initial, notifyDirty: false })
   })
 })
 
@@ -309,5 +309,29 @@ describe('metadata patch composition', () => {
     const locked = planApplicationMetadataChange(draft(), { platform: 'power', targetProviderId: 'other' }, { ...context, lockedProviders: locks })
     if (locked.kind !== 'unchanged') throw new Error('Expected unchanged')
     expect(locked.metadata).toEqual({})
+  })
+})
+
+
+describe('source-scoped draft transitions', () => {
+  it.each([{ providerId: 'other' }, { providerId: null }, { pushToOrchestrator: false }])('rejects assignment and selection for %j', change => {
+    const current = draft()
+    const invalid = { ...groupContext, groups: [{ ...vmwareGroup, ...change }] }
+    expect(assignRecoveryGroup(current, 'db', 'group', invalid)).toEqual({ draft: current, notifyDirty: false })
+    expect(selectRecoveryVm(current, 'db', 'web', true, invalid)).toEqual({ draft: current, notifyDirty: false })
+    expect(selectRecoveryVm(current, 'db', 'db', false, invalid).draft.tiers.get('db')?.recovery_group?.vms).toEqual([])
+  })
+  it('rejects a name outside current group membership', () => {
+    const current = draft()
+    expect(selectRecoveryVm(current, 'db', 'ghost', true, groupContext)).toEqual({ draft: current, notifyDirty: false })
+  })
+  it('keeps email editable under provider locks without source confirmation', () => {
+    const current = draft()
+    const result = planApplicationMetadataChange(current, { notificationEmail: ' Team@Example.test ' }, { ...context, lockedProviders: locks })
+    expect(result.kind).toBe('applied')
+    if (result.kind !== 'applied') throw new Error('Expected immediate email patch')
+    expect(result.transition.draft.notificationEmail).toBe(' Team@Example.test ')
+    expect(result.transition.draft.tiers).toBe(current.tiers)
+    expect(result.transition.notifyDirty).toBe(true)
   })
 })
