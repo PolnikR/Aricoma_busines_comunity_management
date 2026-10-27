@@ -114,6 +114,8 @@ function renderPlatformProviderSections(provider: PlatformProviderRecord, t: Ret
           wide
         />
         <DetailField label={t('details.description')} value={provider.description} wide />
+        <DetailField label={t('details.notificationEmail')} value={provider.notificationEmail} />
+        <DetailField label={t('forms.cacheRefreshSeconds')} value={provider.cacheRefreshSeconds} />
         {provider.type === 'AIRFLOW' ? (
           <>
             <DetailField label={t('details.ipAddress')} value={provider.ipAddress} mono copyValue={provider.ipAddress ?? undefined} />
@@ -121,7 +123,6 @@ function renderPlatformProviderSections(provider: PlatformProviderRecord, t: Ret
             <DetailField label={t('details.dagDir')} value={provider.dagDir} mono wide copyValue={provider.dagDir ?? undefined} />
             <DetailField label={t('details.credential')} value={provider.credentialId} mono />
             {credentialStatus}
-            <DetailField label={t('details.notificationEmail')} value={provider.notificationEmail} />
           </>
         ) : null}
         {provider.type === 'SMTP' ? (
@@ -135,7 +136,6 @@ function renderPlatformProviderSections(provider: PlatformProviderRecord, t: Ret
         ) : null}
         {provider.type === 'BACKEND' ? (
           <>
-            <DetailField label={t('details.notificationEmail')} value={provider.notificationEmail} />
             <DetailField label={t('details.loggingEnabled')} value={flag(provider.loggingEnabled)} />
             <DetailField label={t('details.jwtEnabled')} value={flag(provider.jwtEnabled)} />
             <DetailField label={t('details.swaggerEnabled')} value={flag(provider.swaggerEnabled)} />

@@ -14,6 +14,8 @@ function commonPayload(form: PlatformProviderFormData) {
     description: form.description.trim(),
     type: form.type,
     url: nullable(form.url),
+    notificationEmail: nullable(form.notificationEmail),
+    cacheRefreshSeconds: form.cacheRefreshSeconds.trim() ? Number(form.cacheRefreshSeconds) : null,
   }
 }
 
@@ -31,7 +33,6 @@ export function toPlatformProviderSubmitData(
         ...(form.port.trim() ? { port: Number(form.port) } : {}),
         dagDir: nullable(form.dagDir),
         credentialId: nullable(form.credentialId),
-        notificationEmail: nullable(form.notificationEmail),
       }
     case 'SMTP':
       return {
@@ -47,7 +48,6 @@ export function toPlatformProviderSubmitData(
       return {
         ...common,
         type: form.type,
-        notificationEmail: nullable(form.notificationEmail),
         loggingEnabled: form.loggingEnabled,
         jwtEnabled: form.jwtEnabled,
         swaggerEnabled: form.swaggerEnabled,

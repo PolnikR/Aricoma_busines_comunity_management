@@ -41,6 +41,18 @@ function expectAbsent(labels: string[]) {
 }
 
 describe('PlatformProviderForm', () => {
+  it.each(['AIRFLOW', 'SMTP', 'BACKEND', 'KEYCLOAK'] as const)('renders common inputs once for %s', type => {
+    const onChange = renderForm({ ...data(type), notificationEmail: 'alerts@example.test', cacheRefreshSeconds: '60' })
+    expect(screen.getAllByLabelText('Notification email')).toHaveLength(1)
+    expect(screen.getByLabelText('Notification email')).toHaveAttribute('type', 'email')
+    const interval = screen.getByRole('spinbutton', { name: 'Cache refresh interval (seconds)' })
+    expect(interval).toHaveAttribute('min', '1')
+    expect(interval).toHaveAttribute('step', '1')
+    expect(interval).toHaveValue(60)
+    fireEvent.change(interval, { target: { value: '' } })
+    expect(onChange).toHaveBeenCalledWith('cacheRefreshSeconds', '')
+  })
+
   it('offers only the four platform-provider types', () => {
     renderForm(data(''))
     const select = screen.getByLabelText('Type')
@@ -79,7 +91,7 @@ describe('PlatformProviderForm', () => {
       expect(screen.getByLabelText(label)).toBeInTheDocument()
     }
     expect(screen.getByRole('checkbox', { name: 'Disable SSL' })).toBeChecked()
-    expectAbsent(['DAG directory', 'Credentials', 'Notification email', 'Enable logging', 'Enable JWT', 'Enable Swagger', 'Realm', 'Client ID'])
+    expectAbsent(['DAG directory', 'Credentials', 'Enable logging', 'Enable JWT', 'Enable Swagger', 'Realm', 'Client ID'])
   })
 
   it('renders only BACKEND configuration fields and reports all boolean controls', () => {
@@ -116,7 +128,7 @@ describe('PlatformProviderForm', () => {
       expect(screen.getByLabelText(label)).toBeInTheDocument()
     }
     expect(screen.getByLabelText('Credentials')).toHaveValue('missing-credential')
-    expectAbsent(['IP address', 'Port', 'DAG directory', 'Notification email', 'From email', 'Disable SSL', 'Disable TLS', 'Enable logging', 'Enable JWT', 'Enable Swagger'])
+    expectAbsent(['IP address', 'Port', 'DAG directory', 'From email', 'Disable SSL', 'Disable TLS', 'Enable logging', 'Enable JWT', 'Enable Swagger'])
   })
 
   it('keeps AIRFLOW IP and port in the compact responsive row', () => {

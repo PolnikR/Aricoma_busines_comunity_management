@@ -148,6 +148,35 @@ export function PlatformProviderForm({
         </Field>
       </div>
 
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Field label={t('forms.notificationEmail')} htmlFor="platform-provider-notificationEmail">
+          <Input
+            id="platform-provider-notificationEmail"
+            type="email"
+            value={data.notificationEmail}
+            onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('notificationEmail', event.target.value) }}
+            onKeyDown={handleKeyDown}
+            disabled={isSubmitting}
+            aria-invalid={Boolean(errors.notificationEmail)}
+          />
+          {errors.notificationEmail ? <p className="mt-1 text-xs text-red-600">{errors.notificationEmail}</p> : null}
+        </Field>
+        <Field label={t('forms.cacheRefreshSeconds')} htmlFor="platform-provider-cacheRefreshSeconds">
+          <Input
+            id="platform-provider-cacheRefreshSeconds"
+            type="number"
+            min={1}
+            step={1}
+            value={data.cacheRefreshSeconds}
+            onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('cacheRefreshSeconds', event.target.value) }}
+            onKeyDown={handleKeyDown}
+            disabled={isSubmitting}
+            aria-invalid={Boolean(errors.cacheRefreshSeconds)}
+          />
+          {errors.cacheRefreshSeconds ? <p className="mt-1 text-xs text-red-600">{errors.cacheRefreshSeconds}</p> : null}
+        </Field>
+      </div>
+
       {data.type === 'AIRFLOW' ? (
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_7.5rem]">
@@ -192,18 +221,6 @@ export function PlatformProviderForm({
             </Field>
             {credentialField}
           </div>
-          <Field label={t('forms.notificationEmail')} htmlFor="platform-provider-notificationEmail">
-            <Input
-              id="platform-provider-notificationEmail"
-              type="email"
-              value={data.notificationEmail}
-              onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('notificationEmail', event.target.value) }}
-              onKeyDown={handleKeyDown}
-              disabled={isSubmitting}
-              aria-invalid={Boolean(errors.notificationEmail)}
-            />
-            {errors.notificationEmail ? <p className="mt-1 text-xs text-red-600">{errors.notificationEmail}</p> : null}
-          </Field>
         </>
       ) : null}
 
@@ -272,18 +289,6 @@ export function PlatformProviderForm({
 
       {data.type === 'BACKEND' ? (
         <>
-          <Field label={t('forms.notificationEmail')} htmlFor="platform-provider-notificationEmail">
-            <Input
-              id="platform-provider-notificationEmail"
-              type="email"
-              value={data.notificationEmail}
-              onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('notificationEmail', event.target.value) }}
-              onKeyDown={handleKeyDown}
-              disabled={isSubmitting}
-              aria-invalid={Boolean(errors.notificationEmail)}
-            />
-            {errors.notificationEmail ? <p className="mt-1 text-xs text-red-600">{errors.notificationEmail}</p> : null}
-          </Field>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
             <CheckboxField
               id="platform-provider-logging-enabled"

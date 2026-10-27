@@ -6,11 +6,12 @@ export interface PlatformProviderFormData {
   description: string
   type: '' | PlatformProviderType
   url: string
+  notificationEmail: string
+  cacheRefreshSeconds: string
   ipAddress: string
   port: string
   dagDir: string
   credentialId: string
-  notificationEmail: string
   fromEmail: string
   disableSsl: boolean | null
   disableTls: boolean | null
@@ -26,7 +27,6 @@ const EMPTY_TYPE_SPECIFIC_FIELDS = {
   port: '22',
   dagDir: '',
   credentialId: '',
-  notificationEmail: '',
   fromEmail: '',
   disableSsl: null,
   disableTls: null,
@@ -43,6 +43,8 @@ export const EMPTY_PLATFORM_PROVIDER_FORM: PlatformProviderFormData = {
   description: '',
   type: '',
   url: '',
+  notificationEmail: '',
+  cacheRefreshSeconds: '',
   ...EMPTY_TYPE_SPECIFIC_FIELDS,
 }
 
@@ -56,6 +58,8 @@ export function changePlatformProviderFormType(
     description: current.description,
     type,
     url: current.url,
+    notificationEmail: current.notificationEmail,
+    cacheRefreshSeconds: current.cacheRefreshSeconds,
     ...EMPTY_TYPE_SPECIFIC_FIELDS,
   }
 }
@@ -67,6 +71,8 @@ export function toPlatformProviderFormData(provider: PlatformProviderRecord): Pl
     description: provider.description ?? '',
     type: provider.type,
     url: provider.url ?? '',
+    notificationEmail: provider.notificationEmail ?? '',
+    cacheRefreshSeconds: provider.cacheRefreshSeconds == null ? '' : String(provider.cacheRefreshSeconds),
     ...EMPTY_TYPE_SPECIFIC_FIELDS,
   }
 
@@ -78,7 +84,6 @@ export function toPlatformProviderFormData(provider: PlatformProviderRecord): Pl
         port: String(provider.port),
         dagDir: provider.dagDir ?? '',
         credentialId: provider.credentialId ?? '',
-        notificationEmail: provider.notificationEmail ?? '',
       }
     case 'SMTP':
       return {
@@ -92,7 +97,6 @@ export function toPlatformProviderFormData(provider: PlatformProviderRecord): Pl
     case 'BACKEND':
       return {
         ...common,
-        notificationEmail: provider.notificationEmail ?? '',
         loggingEnabled: provider.loggingEnabled ?? null,
         jwtEnabled: provider.jwtEnabled ?? null,
         swaggerEnabled: provider.swaggerEnabled ?? null,

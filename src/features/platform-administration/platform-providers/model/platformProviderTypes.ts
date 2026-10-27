@@ -19,12 +19,14 @@ export const PLATFORM_PROVIDER_COMMON_FIELDS = [
   'description',
   'type',
   'url',
+  'notificationEmail',
+  'cacheRefreshSeconds',
 ] as const satisfies readonly (keyof OrchestrationProvider)[]
 
 export const PLATFORM_PROVIDER_FIELD_CONTRACT = {
-  AIRFLOW: ['ipAddress', 'port', 'dagDir', 'credentialId', 'notificationEmail'],
+  AIRFLOW: ['ipAddress', 'port', 'dagDir', 'credentialId'],
   SMTP: ['ipAddress', 'port', 'fromEmail', 'disableSsl', 'disableTls'],
-  BACKEND: ['notificationEmail', 'loggingEnabled', 'jwtEnabled', 'swaggerEnabled'],
+  BACKEND: ['loggingEnabled', 'jwtEnabled', 'swaggerEnabled'],
   KEYCLOAK: ['realm', 'clientId', 'credentialId'],
 } as const satisfies Record<PlatformProviderType, readonly (keyof OrchestrationProvider)[]>
 

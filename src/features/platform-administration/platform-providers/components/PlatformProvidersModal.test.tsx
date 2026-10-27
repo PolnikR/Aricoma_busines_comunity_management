@@ -111,6 +111,69 @@ beforeEach(() => {
 })
 
 describe('PlatformProvidersModal', () => {
+  const providers = [airflowProvider, smtpProvider, backendProvider, keycloakProvider]
+
+  it.each(providers)('prefills and submits common edit values for $type', provider => {
+    const mutate = vi.fn()
+    setMutate(mutate)
+    render(<PlatformProvidersModal open onClose={vi.fn()} existingProviders={[]} provider={{ ...provider, notificationEmail: 'alerts@example.test', cacheRefreshSeconds: 60 }} />)
+    expect(screen.getByLabelText(/^Notification email/)).toHaveValue('alerts@example.test')
+    expect(screen.getByLabelText(/^Cache refresh interval/)).toHaveValue(60)
+    clickSave()
+    expect(submittedProvider(mutate)).toMatchObject({ notificationEmail: 'alerts@example.test', cacheRefreshSeconds: 60 })
+  })
+
+  it.each(providers)('creates $type with optional common fields empty', provider => {
+    const mutate = vi.fn()
+    setMutate(mutate)
+    render(<PlatformProvidersModal open onClose={vi.fn()} existingProviders={[]} />)
+    fireEvent.change(screen.getByLabelText('ID'), { target: { value: 'new-provider' } })
+    fireEvent.change(screen.getByLabelText('Provider name'), { target: { value: 'New provider' } })
+    fireEvent.change(screen.getByLabelText('Type'), { target: { value: provider.type } })
+    expect(screen.getByLabelText(/^Notification email/)).toHaveValue('')
+    expect(screen.getByLabelText(/^Cache refresh interval/)).toHaveValue(null)
+    if (provider.type === 'AIRFLOW') fireEvent.change(screen.getByLabelText('DAG directory'), { target: { value: '/dags' } })
+    if (provider.type === 'KEYCLOAK') {
+      fireEvent.change(screen.getByLabelText('Realm'), { target: { value: 'realm' } })
+      fireEvent.change(screen.getByLabelText('Credentials'), { target: { value: 'keycloak-admin' } })
+    }
+    clickSave()
+    expect(submittedProvider(mutate)).toMatchObject({ notificationEmail: null, cacheRefreshSeconds: null })
+  })
+
+  it.each(providers)('preserves common values through every target type from $type', provider => {
+    render(<PlatformProvidersModal open onClose={vi.fn()} existingProviders={[]} provider={{ ...provider, notificationEmail: 'alerts@example.test', cacheRefreshSeconds: 60 }} />)
+    for (const target of providers) {
+      fireEvent.change(screen.getByLabelText('Type'), { target: { value: target.type } })
+      expect(screen.getByLabelText(/^Notification email/)).toHaveValue('alerts@example.test')
+      expect(screen.getByLabelText(/^Cache refresh interval/)).toHaveValue(60)
+    }
+  })
+
+  it.each(providers)('validates and clears common fields for $type', provider => {
+    const mutate = vi.fn()
+    setMutate(mutate)
+    render(<PlatformProvidersModal open onClose={vi.fn()} existingProviders={[]} provider={{ ...provider, cacheRefreshSeconds: 60 }} />)
+    fireEvent.change(screen.getByLabelText(/^Notification email/), { target: { value: 'invalid-email' } })
+    clickSave()
+    expect(mutate).not.toHaveBeenCalled()
+    expect(screen.getByText('Enter a valid email address.')).toBeVisible()
+    fireEvent.change(screen.getByLabelText(/^Notification email/), { target: { value: '' } })
+    for (const value of ['0', '-1', '1.5']) {
+      fireEvent.change(screen.getByLabelText(/^Cache refresh interval/), { target: { value } })
+      clickSave()
+      expect(mutate).not.toHaveBeenCalled()
+      expect(screen.getByText('Enter a positive whole number.')).toBeVisible()
+    }
+    fireEvent.change(screen.getByLabelText(/^Cache refresh interval/), { target: { value: '1' } })
+    clickSave()
+    expect(submittedProvider(mutate)).toMatchObject({ notificationEmail: null, cacheRefreshSeconds: 1 })
+    mutate.mockClear()
+    fireEvent.change(screen.getByLabelText(/^Cache refresh interval/), { target: { value: '' } })
+    clickSave()
+    expect(submittedProvider(mutate)).toMatchObject({ notificationEmail: null, cacheRefreshSeconds: null })
+  })
+
   it('starts AIRFLOW with the default port after the type is selected', () => {
     render(<PlatformProvidersModal open onClose={vi.fn()} existingProviders={[]} />)
     expect(screen.queryByLabelText('Port')).not.toBeInTheDocument()
@@ -123,7 +186,7 @@ describe('PlatformProvidersModal', () => {
     expect(screen.getByLabelText('Port')).toHaveValue(8443)
     expect(screen.getByLabelText('DAG directory')).toHaveValue('/opt/airflow/dags')
     expect(screen.getByLabelText('Credentials')).toHaveValue('credential-1')
-    expect(screen.getByLabelText('Notification email')).toHaveValue('platform-alerts@example.test')
+    expect(screen.getByLabelText(/^Notification email/)).toHaveValue('platform-alerts@example.test')
     expect(screen.queryByLabelText('From email')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Enable logging')).not.toBeInTheDocument()
   })
@@ -138,7 +201,7 @@ describe('PlatformProvidersModal', () => {
 
   it('prefills BACKEND controls including Swagger', () => {
     render(<PlatformProvidersModal open onClose={vi.fn()} existingProviders={[]} provider={backendProvider} />)
-    expect(screen.getByLabelText('Notification email')).toHaveValue('backend@example.test')
+    expect(screen.getByLabelText(/^Notification email/)).toHaveValue('backend@example.test')
     expect(screen.getByRole('checkbox', { name: 'Enable logging' })).toBeChecked()
     expect(screen.getByRole('checkbox', { name: 'Enable JWT' })).not.toBeChecked()
     expect(screen.getByRole('checkbox', { name: 'Enable Swagger' })).toBeChecked()
@@ -157,7 +220,7 @@ describe('PlatformProvidersModal', () => {
     const mutate = vi.fn()
     setMutate(mutate)
     render(<PlatformProvidersModal open onClose={vi.fn()} existingProviders={[]} provider={airflowProvider} />)
-    fireEvent.change(screen.getByLabelText('Notification email'), { target: { value: 'not-an-email' } })
+    fireEvent.change(screen.getByLabelText(/^Notification email/), { target: { value: 'not-an-email' } })
     clickSave()
 
     expect(mutate).not.toHaveBeenCalled()
@@ -168,7 +231,7 @@ describe('PlatformProvidersModal', () => {
     const mutate = vi.fn()
     setMutate(mutate)
     render(<PlatformProvidersModal open onClose={vi.fn()} existingProviders={[]} provider={airflowProvider} />)
-    fireEvent.change(screen.getByLabelText('Notification email'), { target: { value: '' } })
+    fireEvent.change(screen.getByLabelText(/^Notification email/), { target: { value: '' } })
     clickSave()
 
     expect(mutate.mock.calls[0]?.[0]).toEqual({
@@ -183,6 +246,7 @@ describe('PlatformProvidersModal', () => {
         dagDir: '/opt/airflow/dags',
         credentialId: 'credential-1',
         notificationEmail: null,
+        cacheRefreshSeconds: null,
       },
     })
   })
@@ -201,6 +265,7 @@ describe('PlatformProvidersModal', () => {
         type: 'BACKEND',
         url: 'http://backend.example.test',
         notificationEmail: 'backend@example.test',
+        cacheRefreshSeconds: null,
         loggingEnabled: true,
         jwtEnabled: false,
         swaggerEnabled: true,
@@ -228,7 +293,8 @@ describe('PlatformProvidersModal', () => {
       port: 22,
       dagDir: '/new/dags',
       credentialId: null,
-      notificationEmail: null,
+      notificationEmail: 'backend@example.test',
+      cacheRefreshSeconds: null,
     })
     expect(payload).not.toHaveProperty('loggingEnabled')
     expect(payload).not.toHaveProperty('jwtEnabled')
@@ -252,6 +318,8 @@ describe('PlatformProvidersModal', () => {
       name: 'SMTP',
       description: 'Mail relay',
       type: 'KEYCLOAK',
+      notificationEmail: null,
+      cacheRefreshSeconds: null,
       url: 'http://smtp.example.test',
       realm: 'aricoma',
       clientId: 'abco-be',

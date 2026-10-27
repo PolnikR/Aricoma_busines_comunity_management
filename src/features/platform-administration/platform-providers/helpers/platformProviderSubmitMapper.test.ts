@@ -1,3 +1,5 @@
+import { OrchestrationProvider } from '@/generated/query/zod'
+import { PLATFORM_PROVIDER_TYPES } from '../model/platformProviderTypes'
 import { describe, expect, it } from 'vitest'
 import { EMPTY_PLATFORM_PROVIDER_FORM } from '../model/platformProviderForm'
 import { toPlatformProviderSubmitData } from './platformProviderSubmitMapper'
@@ -11,6 +13,18 @@ const common = {
 }
 
 describe('toPlatformProviderSubmitData', () => {
+  it.each(PLATFORM_PROVIDER_TYPES)('maps common fields for %s against the API schema', type => {
+    for (const [notificationEmail, cacheRefreshSeconds, expectedEmail, expectedInterval] of [
+      [' alerts@example.test ', '60', 'alerts@example.test', 60],
+      ['', '', null, null],
+      ['   ', '   ', null, null],
+    ] as const) {
+      const payload = toPlatformProviderSubmitData({ ...common, type, notificationEmail, cacheRefreshSeconds })
+      expect(payload).toMatchObject({ notificationEmail: expectedEmail, cacheRefreshSeconds: expectedInterval })
+      expect(OrchestrationProvider.safeParse(payload).success).toBe(true)
+    }
+  })
+
   it('builds an exact AIRFLOW payload', () => {
     const payload = toPlatformProviderSubmitData({
       ...common,
@@ -30,6 +44,7 @@ describe('toPlatformProviderSubmitData', () => {
       description: 'Description',
       type: 'AIRFLOW',
       url: 'http://provider.example.test',
+      cacheRefreshSeconds: null,
       ipAddress: '10.0.0.1',
       port: 22,
       dagDir: '/opt/airflow/dags',
@@ -55,7 +70,9 @@ describe('toPlatformProviderSubmitData', () => {
       name: 'Provider',
       description: 'Description',
       type: 'SMTP',
+      notificationEmail: null,
       url: 'http://provider.example.test',
+      cacheRefreshSeconds: null,
       ipAddress: '10.0.0.2',
       port: 1025,
       fromEmail: 'airflow@example.test',
@@ -82,6 +99,7 @@ describe('toPlatformProviderSubmitData', () => {
       description: 'Description',
       type: 'BACKEND',
       url: 'http://provider.example.test',
+      cacheRefreshSeconds: null,
       notificationEmail: null,
       loggingEnabled: true,
       jwtEnabled: false,
@@ -104,7 +122,9 @@ describe('toPlatformProviderSubmitData', () => {
       name: 'Provider',
       description: 'Description',
       type: 'KEYCLOAK',
+      notificationEmail: null,
       url: 'http://provider.example.test',
+      cacheRefreshSeconds: null,
       realm: 'aricoma',
       clientId: 'abco-be',
       credentialId: 'keycloak-admin',
@@ -127,7 +147,9 @@ describe('toPlatformProviderSubmitData', () => {
       name: 'Provider',
       description: 'Description',
       type: 'SMTP',
+      notificationEmail: null,
       url: 'http://provider.example.test',
+      cacheRefreshSeconds: null,
       ipAddress: '10.0.0.2',
       port: 1025,
       fromEmail: null,
@@ -150,7 +172,9 @@ describe('toPlatformProviderSubmitData', () => {
       name: 'Provider',
       description: 'Description',
       type: 'KEYCLOAK',
+      notificationEmail: null,
       url: 'http://provider.example.test',
+      cacheRefreshSeconds: null,
       realm: null,
       clientId: null,
       credentialId: null,

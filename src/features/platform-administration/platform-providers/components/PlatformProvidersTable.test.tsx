@@ -166,7 +166,7 @@ describe('PlatformProvidersTable', () => {
     if (!smtpUrl) throw new Error('SMTP fixture URL is required')
     // One flat Overview with the original SMTP fields only, in the original order.
     expect(detailNavigationLabels(drawer)).toEqual(['Overview'])
-    expect(detailSectionsLabels(drawer)).toEqual(['Provider ID', 'Type', 'URL', 'Description', 'IP address', 'Port', 'From email', 'Disable SSL', 'Disable TLS'])
+    expect(detailSectionsLabels(drawer)).toEqual(['Provider ID', 'Type', 'URL', 'Description', 'Notification email', 'Cache refresh interval (seconds)', 'IP address', 'Port', 'From email', 'Disable SSL', 'Disable TLS'])
 
     const overview = openDetailSection(drawer, 'Overview')
     expect(within(overview).getByRole('link', { name: smtpUrl })).toHaveAttribute('href', smtpUrl)
@@ -193,8 +193,8 @@ describe('PlatformProvidersTable', () => {
     expect(within(drawer).getAllByRole('region')).toHaveLength(1)
     expect(within(drawer).getByRole('region', { name: 'Overview' })).toBeInTheDocument()
     expect(detailSectionsLabels(drawer)).toEqual([
-      'Provider ID', 'Type', 'URL', 'Description',
-      'IP address', 'Port', 'DAG directory', 'Credential', 'Credential status', 'Notification email',
+      'Provider ID', 'Type', 'URL', 'Description', 'Notification email', 'Cache refresh interval (seconds)',
+      'IP address', 'Port', 'DAG directory', 'Credential', 'Credential status',
     ])
     expect(detailSectionsFields(drawer)).toMatchObject({ 'Provider ID': 'airflow-01', 'Credential status': 'Available' })
   })
@@ -214,7 +214,7 @@ describe('PlatformProvidersTable', () => {
     await user.click(screen.getByText('ABCo API'))
     const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
     expect(detailNavigationLabels(drawer)).toEqual(['Overview'])
-    expect(detailSectionsLabels(drawer)).toEqual(['Provider ID', 'Type', 'URL', 'Description', 'Notification email', 'Logging enabled', 'JWT enabled', 'Swagger enabled'])
+    expect(detailSectionsLabels(drawer)).toEqual(['Provider ID', 'Type', 'URL', 'Description', 'Notification email', 'Cache refresh interval (seconds)', 'Logging enabled', 'JWT enabled', 'Swagger enabled'])
   })
 
   it('shows only KEYCLOAK configuration fields in the detail drawer', async () => {
@@ -232,7 +232,7 @@ describe('PlatformProvidersTable', () => {
     await user.click(screen.getByText('Aricoma Keycloak'))
     const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
     expect(detailNavigationLabels(drawer)).toEqual(['Overview'])
-    expect(detailSectionsLabels(drawer)).toEqual(['Provider ID', 'Type', 'URL', 'Description', 'Realm', 'Client ID', 'Credential', 'Credential status'])
+    expect(detailSectionsLabels(drawer)).toEqual(['Provider ID', 'Type', 'URL', 'Description', 'Notification email', 'Cache refresh interval (seconds)', 'Realm', 'Client ID', 'Credential', 'Credential status'])
   })
 
   it('keeps search available without exposing platform-provider API errors', () => {
@@ -393,6 +393,25 @@ describe('PlatformProvidersTable', () => {
     expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument()
   })
   describe('DetailView', () => {
+    it.each([baseProvider, smtpProvider, backendProvider, keycloakProvider])('shows common detail values once for $type', async provider => {
+      const user = userEvent.setup()
+      renderTable([{ ...provider, notificationEmail: 'alerts@example.test', cacheRefreshSeconds: 60 }])
+      await user.click(screen.getByText(provider.name))
+      const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
+      const labels = detailSectionsLabels(drawer)
+      expect(labels.filter(label => label === 'Notification email')).toHaveLength(1)
+      expect(labels.filter(label => label === 'Cache refresh interval (seconds)')).toHaveLength(1)
+      expect(detailSectionsFields(drawer)).toMatchObject({ 'Notification email': 'alerts@example.test', 'Cache refresh interval (seconds)': '60' })
+    })
+
+    it.each([baseProvider, smtpProvider, backendProvider, keycloakProvider])('shows unset common detail values for $type', async provider => {
+      const user = userEvent.setup()
+      renderTable([{ ...provider, notificationEmail: null, cacheRefreshSeconds: null }])
+      await user.click(screen.getByText(provider.name))
+      const drawer = screen.getByRole('dialog', { name: 'Provider detail' })
+      expect(detailSectionsFields(drawer)).toMatchObject({ 'Notification email': 'Not set', 'Cache refresh interval (seconds)': 'Not set' })
+    })
+
     const renderTable = (providers: PlatformProviderRecord[]) => render(
       <PlatformProvidersTable providers={providers} isLoading={false} error={null} isRetrying={false} onRetry={vi.fn()} />,
     )

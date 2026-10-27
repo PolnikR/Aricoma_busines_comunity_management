@@ -14,11 +14,11 @@ describe('platform provider type contract', () => {
   })
 
   it('defines one exact field owner list per platform-provider type', () => {
-    expect(PLATFORM_PROVIDER_COMMON_FIELDS).toEqual(['id', 'name', 'description', 'type', 'url'])
+    expect(PLATFORM_PROVIDER_COMMON_FIELDS).toEqual(['id', 'name', 'description', 'type', 'url', 'notificationEmail', 'cacheRefreshSeconds'])
     expect(PLATFORM_PROVIDER_FIELD_CONTRACT).toEqual({
-      AIRFLOW: ['ipAddress', 'port', 'dagDir', 'credentialId', 'notificationEmail'],
+      AIRFLOW: ['ipAddress', 'port', 'dagDir', 'credentialId'],
       SMTP: ['ipAddress', 'port', 'fromEmail', 'disableSsl', 'disableTls'],
-      BACKEND: ['notificationEmail', 'loggingEnabled', 'jwtEnabled', 'swaggerEnabled'],
+      BACKEND: ['loggingEnabled', 'jwtEnabled', 'swaggerEnabled'],
       KEYCLOAK: ['realm', 'clientId', 'credentialId'],
     })
   })
