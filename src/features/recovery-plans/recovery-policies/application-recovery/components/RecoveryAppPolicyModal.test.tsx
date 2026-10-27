@@ -85,6 +85,18 @@ function renderModal(props: Partial<React.ComponentProps<typeof RecoveryAppPolic
 afterEach(() => vi.unstubAllGlobals())
 
 describe('RecoveryAppPolicyModal', () => {
+  it.each([false, true])('preserves hidden boot_verify=%s when editing another field', async bootVerify => {
+    const fetchMock = stubSubmitResponse()
+    const onClose = vi.fn()
+    renderModal({ policy: { ...policy, boot_verify: bootVerify }, onClose })
+    expect(screen.queryByRole('checkbox', { name: 'Boot verification' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Help for boot verification' })).not.toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Level'), { target: { value: 'high' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Edit policy' }))
+    await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+    expect(submittedBody(fetchMock)).toMatchObject({ level: 'high', boot_verify: bootVerify })
+  })
+
   it('opens input and checkbox help with Enter without submitting or changing form state', async () => {
     const onClose = vi.fn()
     const fetchMock = stubSubmitResponse()
@@ -314,7 +326,10 @@ describe('RecoveryAppPolicyModal', () => {
     expect(screen.getByLabelText('Policy ID')).toBeInTheDocument()
     expect(screen.getByText('Configure a policy for automated application recovery tests and snapshot selection.')).toBeInTheDocument()
     expect(screen.getByLabelText('Snapshot selection')).toHaveValue('latest')
-    expect(screen.getByRole('checkbox', { name: 'Boot verification' })).toBeInTheDocument()
+    expect(screen.queryByRole('checkbox', { name: 'Boot verification' })).not.toBeInTheDocument()
+    const level = screen.getByLabelText('Level')
+    expect(screen.getByLabelText('Snapshot selection').compareDocumentPosition(level) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(level.compareDocumentPosition(screen.getByRole('checkbox', { name: 'Enabled' })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(screen.getByRole('checkbox', { name: 'Enabled' })).toBeChecked()
   })
 
@@ -324,7 +339,7 @@ describe('RecoveryAppPolicyModal', () => {
       recovery_app_policies: [{
         id: 'high-weekly', name: 'High weekly', description: 'Weekly', level: 'high',
         frequency_value: 7, frequency_unit: 'days', retention_value: 1, retention_unit: 'days',
-        boot_verify: true, snapshot_selection_mode: 'time_range', snapshot_max_age_value: 2,
+        boot_verify: false, snapshot_selection_mode: 'time_range', snapshot_max_age_value: 2,
         snapshot_max_age_unit: 'hours', snapshot_target_time: null, enabled: true,
       }],
     }), { status: 200 }))
@@ -342,7 +357,6 @@ describe('RecoveryAppPolicyModal', () => {
     fireEvent.change(screen.getByLabelText('Snapshot selection'), { target: { value: 'time_range' } })
     fireEvent.change(screen.getByLabelText('Maximum snapshot age'), { target: { value: '2' } })
     fireEvent.change(screen.getByLabelText('Maximum snapshot age unit'), { target: { value: 'hours' } })
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Boot verification' }))
 
     fireEvent.click(screen.getByRole('button', { name: 'Create policy' }))
     await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
@@ -351,7 +365,7 @@ describe('RecoveryAppPolicyModal', () => {
     expect(JSON.parse(init.body as string)).toEqual({
       id: 'high-weekly', name: 'High weekly', description: 'Weekly', level: 'high',
       frequency_value: 7, frequency_unit: 'days', retention_value: 1, retention_unit: 'days',
-      boot_verify: true, snapshot_selection_mode: 'time_range', snapshot_max_age_value: 2,
+      boot_verify: false, snapshot_selection_mode: 'time_range', snapshot_max_age_value: 2,
       snapshot_max_age_unit: 'hours', enabled: true,
       target_lpar_prefix: 'dr_', manual_zoning: false, manual_wwpn_entry: false, source_shutdown_timeout_seconds: 300, zoning_wait_minutes: 240,
     })

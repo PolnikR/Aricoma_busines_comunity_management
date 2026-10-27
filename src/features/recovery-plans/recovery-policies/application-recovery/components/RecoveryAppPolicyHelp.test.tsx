@@ -34,6 +34,7 @@ describe.each(['en', 'sk'] as const)('Recovery App Policy help in %s', language 
     }
     const keys = [...commonParameters, ...(selection === 'time_range' ? ['snapshot_max_age'] : selection === 'exact_time' ? ['snapshot_target_time'] : [])]
     for (const mode of ['create', 'edit', 'display']) {
+      const visibleKeys = mode === 'display' ? keys : keys.filter(key => key !== 'boot_verify')
       const onClose = vi.fn()
       const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
       const { unmount } = render(
@@ -49,8 +50,8 @@ describe.each(['en', 'sk'] as const)('Recovery App Policy help in %s', language 
       if (mode === 'create') fireEvent.change(screen.getByLabelText(text('recoveryAppPolicies.form.snapshotSelection')), { target: { value: selection } })
       const parent = screen.getByRole('dialog')
       const triggers = within(parent).getAllByRole('button').filter(button => button.hasAttribute('aria-haspopup'))
-      expect(triggers).toHaveLength(keys.length + (mode === 'display' ? 1 : 0))
-      for (const parameter of keys) {
+      expect(triggers).toHaveLength(visibleKeys.length + (mode === 'display' ? 1 : 0))
+      for (const parameter of visibleKeys) {
         const key = `recoveryAppPolicies.fieldHelp.${parameter}`
         const trigger = within(parent).getByRole('button', { name: text(`${key}.trigger`) })
         expect(trigger.closest('label')).toBeNull()
@@ -68,7 +69,9 @@ describe.each(['en', 'sk'] as const)('Recovery App Policy help in %s', language 
         expect(within(parent).getByText(text(`recoveryAppPolicies.selection.${selection}`))).toBeInTheDocument()
       } else {
         expect(screen.getByLabelText(text('recoveryAppPolicies.form.frequency'))).toHaveValue(1)
-        for (const label of ['bootVerify', 'enabled', 'manualZoning', 'manualWwpnEntry']) {
+        expect(screen.queryByRole('checkbox', { name: text('recoveryAppPolicies.form.bootVerify') })).not.toBeInTheDocument()
+        expect(screen.queryByRole('button', { name: text('recoveryAppPolicies.fieldHelp.boot_verify.trigger') })).not.toBeInTheDocument()
+        for (const label of ['enabled', 'manualZoning', 'manualWwpnEntry']) {
           expect(screen.getByRole('checkbox', { name: text(`recoveryAppPolicies.form.${label}`) })).toHaveProperty('checked', label === 'enabled')
         }
         // An unchanged edit must close without a dirty confirmation after visiting all helps.
