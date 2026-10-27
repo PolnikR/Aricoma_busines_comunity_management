@@ -6,6 +6,7 @@ import type {
   RecoveryGroupVmMetadata,
 } from '../model/recoveryGroupTypes'
 import { RecoveryGroupsError } from './recoveryGroupsErrors'
+import { isRecoveryGroupEmailValid } from '../model/recoveryGroupEmail'
 
 // The resource combinations a group can be submitted with.
 const SUBMITTABLE_CONFIGURATIONS: readonly RecoveryGroupResourceConfiguration[] = [
@@ -23,6 +24,8 @@ function findSubmittableConfiguration(draft: RecoveryGroupDraft): RecoveryGroupR
 }
 
 export interface ValidatedRecoveryGroupDraft {
+  notificationEmail?: string | null
+  targetPool?: string | null
   id: string
   name: string
   description: string
@@ -69,6 +72,7 @@ export function validateRecoveryGroupDraft(draft: RecoveryGroupDraft): Validated
 
   if (
     !draft.id.trim()
+    || !isRecoveryGroupEmailValid(draft.notificationEmail)
     || !name
     || !description
     || !providerId
@@ -96,6 +100,8 @@ export function validateRecoveryGroupDraft(draft: RecoveryGroupDraft): Validated
   }
 
   return {
+    notificationEmail: draft.notificationEmail?.trim() ? draft.notificationEmail.trim() : null,
+    targetPool: isMetroMirror && draft.metroMirrorMode === 'managed' && draft.targetPool ? draft.targetPool : null,
     id: draft.id,
     name,
     description,

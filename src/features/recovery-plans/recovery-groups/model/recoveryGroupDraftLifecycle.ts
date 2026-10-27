@@ -25,7 +25,8 @@ export interface DraftLifecycle {
 }
 
 export type DraftEvent =
-  | { type: 'detailsChanged'; values: Partial<Pick<RecoveryGroupDraft, 'id' | 'name' | 'description'>> }
+  | { type: 'detailsChanged'; values: Partial<Pick<RecoveryGroupDraft, 'id' | 'name' | 'description' | 'notificationEmail'>> }
+  | { type: 'targetPoolChanged'; value: string | null }
   | { type: 'sourceChanged'; sourceId: string | null }
   | { type: 'topologyChanged'; topology: RecoveryGroupTopology }
   | { type: 'metroModeChanged'; mode: RecoveryGroupMetroMirrorMode }
@@ -54,6 +55,7 @@ export interface DraftObservation {
 export function initializeDraft(initialData?: RecoveryGroup): DraftLifecycle {
   const draft: RecoveryGroupDraft = initialData ? {
     id: initialData.id, name: initialData.name, description: initialData.description,
+    notificationEmail: initialData.notificationEmail ?? '', targetPool: initialData.targetPool ?? null,
     sourceCategory: initialData.sourceCategory, workloadType: initialData.workloadType, resourceType: initialData.resourceType,
     providerId: initialData.providerId, policySetId: initialData.policySetId, resources: [...initialData.resources],
     relatedVolumeProviderId: initialData.resourceType === 'volume' ? initialData.providerId : initialData.relatedVolumeProviderId ?? null,
@@ -64,6 +66,7 @@ export function initializeDraft(initialData?: RecoveryGroup): DraftLifecycle {
     consistencyGroupId: initialData.consistencyGroupId ?? '', auxiliaryNamesByVolume: { ...initialData.auxiliaryNamesByVolume },
   } : {
     id: '', name: '', description: '', sourceCategory: null, workloadType: null, resourceType: null,
+    notificationEmail: '', targetPool: null,
     providerId: null, policySetId: null, resources: [], relatedVolumeProviderId: null, relatedVolumes: [],
     orchestrationProviderId: null, pushToOrchestrator: false, topology: null, metroMirrorMode: null,
     consistencyGroupId: '', auxiliaryNamesByVolume: {},
@@ -96,24 +99,25 @@ export function transitionDraft(current: DraftLifecycle, event: DraftEvent, cont
   const withoutAuxiliary = (name: string) => Object.fromEntries(Object.entries(raw.auxiliaryNamesByVolume ?? {}).filter(([key]) => key !== name))
   switch (event.type) {
     case 'detailsChanged': patch = event.values; break
+    case 'targetPoolChanged': patch = { targetPool: event.value }; break
     case 'sourceChanged':
       patch = { relatedVolumeProviderId: event.sourceId }
       if (event.sourceId !== raw.relatedVolumeProviderId) {
         hasConsistencyOverride = false
         exclusions = { key: '', removed: [], all: false }
-        patch = { ...patch, relatedVolumes: [], auxiliaryNamesByVolume: {}, consistencyGroupId: '',
+        patch = { ...patch, targetPool: null, relatedVolumes: [], auxiliaryNamesByVolume: {}, consistencyGroupId: '',
           ...(raw.resourceType === 'volume' ? { providerId: event.sourceId, resources: [] } : {}) }
       }
       break
     case 'topologyChanged': {
       const mode = event.topology === 'metro_mirror' ? 'existing' : null
       if (event.topology !== raw.topology || mode !== raw.metroMirrorMode) hasConsistencyOverride = false
-      patch = { topology: event.topology, metroMirrorMode: mode, consistencyGroupId: '', auxiliaryNamesByVolume: {} }
+      patch = { topology: event.topology, metroMirrorMode: mode, targetPool: null, consistencyGroupId: '', auxiliaryNamesByVolume: {} }
       break
     }
     case 'metroModeChanged':
       if (event.mode !== raw.metroMirrorMode) hasConsistencyOverride = false
-      patch = { metroMirrorMode: event.mode, consistencyGroupId: '', auxiliaryNamesByVolume: {} }
+      patch = { metroMirrorMode: event.mode, targetPool: null, consistencyGroupId: '', auxiliaryNamesByVolume: {} }
       break
     case 'categoryChanged':
       patch = { sourceCategory: event.category, workloadType: null, resourceType: null, providerId: null, resources: [], vmMetadataByName: {}, auxiliaryNamesByVolume: {}, relatedVolumes: [] }

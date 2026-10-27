@@ -84,6 +84,8 @@ export function mapRecoveryGroupApiRecord(
   )
 
   const common = {
+    notificationEmail: record.notificationEmail ?? null,
+    targetPool: record.metro_mirror?.target_pool ?? null,
     id: record.id,
     name: record.name,
     description: record.description,
@@ -161,6 +163,7 @@ export function toRecoveryGroupSubmitPayload(
     id,
     name: draft.name,
     description: draft.description,
+    notificationEmail: draft.notificationEmail ?? null,
     provider_id_vm: isVmGroup ? draft.providerId : '',
     provider_id_volume: isVmGroup
       ? (draft.relatedVolumeProviderId ?? '')
@@ -169,7 +172,7 @@ export function toRecoveryGroupSubmitPayload(
     ...(topology === 'metro_mirror' ? {
       metro_mirror: isExisting
         ? { mode: 'existing' as const, consistency_group_id: draft.consistencyGroupId ?? '' }
-        : { mode: 'managed' as const },
+        : { mode: 'managed' as const, ...(draft.targetPool ? { target_pool: draft.targetPool } : {}) },
     } : {}),
     policy_set_id: draft.policySetId,
     vms: isVmGroup ? toVmsPayload(draft.resources, draft.vmMetadataByName) : [],
@@ -190,13 +193,15 @@ export function toRecoveryGroupJson(group: RecoveryGroup): RecoveryGroupReadReco
     id: group.id,
     name: group.name,
     description: group.description,
+    notificationEmail: group.notificationEmail ?? null,
     provider_id_vm: isVmGroup ? (group.providerId ?? '') : '',
     provider_id_volume: isVmGroup
       ? (group.relatedVolumeProviderId ?? '')
       : (group.providerId ?? ''),
     topology,
     ...(topology === 'metro_mirror' ? {
-      metro_mirror: { mode: group.metroMirrorMode ?? 'existing', consistency_group_id: group.consistencyGroupId ?? null },
+      metro_mirror: { mode: group.metroMirrorMode ?? 'existing', consistency_group_id: group.consistencyGroupId ?? null,
+        ...(group.metroMirrorMode === 'managed' && group.targetPool ? { target_pool: group.targetPool } : {}) },
     } : {}),
     policy_set_id: group.policySetId,
     vms: isVmGroup ? toVmsPayload(group.resources, group.vmMetadataByName) : [],
@@ -232,6 +237,8 @@ export function toRecoveryGroup(
     relatedVolumeProviderId: isVmGroup ? draft.relatedVolumeProviderId : null,
     relatedVolumes: isVmGroup ? draft.relatedVolumes : [],
     topology: draft.topology,
+    notificationEmail: draft.notificationEmail ?? null,
+    targetPool: draft.targetPool ?? null,
     metroMirrorMode: draft.metroMirrorMode,
     consistencyGroupId: draft.consistencyGroupId,
     auxiliaryNamesByVolume: draft.auxiliaryNamesByVolume,

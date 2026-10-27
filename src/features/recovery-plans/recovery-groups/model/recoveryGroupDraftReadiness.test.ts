@@ -12,7 +12,7 @@ const group: RecoveryGroup = {
 const context: DraftObservation = {
   providers: [
     { id: 'source', name: 'Source', type: 'FLASHCOPY', role: 'source', credentialStatus: 'ok', partnerProviderId: 'target' },
-    { id: 'target', name: 'Target', type: 'FLASHCOPY', role: 'target', credentialStatus: 'ok' },
+    { id: 'target', name: 'Target', type: 'FLASHCOPY', role: 'target', credentialStatus: 'ok', partnerProviderId: 'source' },
     { id: 'compute', name: 'Compute', type: 'VMWARE', role: 'source', credentialStatus: 'ok' },
   ],
   providerStatus: { isSuccess: true }, eligibleOrchestrationProviderIds: ['airflow'],
@@ -23,6 +23,10 @@ function evaluate(initialData: RecoveryGroup = group, observation: DraftObservat
   return getDraftReadiness(state, resolveEffectiveDraft(state, live), { ...live, step, existingIds: [initialData.id] })
 }
 describe('wizard draft readiness, separate from submit validation', () => {
+  it('blocks an invalid optional email at Details and submit without requiring an override', () => {
+    expect(evaluate({ ...group, notificationEmail: 'invalid' })).toMatchObject({ detailsValid: false, canCreate: false })
+    expect(evaluate({ ...group, notificationEmail: '' }).canCreate).toBe(true)
+  })
   it('returns every readiness gate without requiring push=true', () => {
     expect(evaluate()).toMatchObject({ detailsValid: true, topologyValid: true, typeValid: true, providerValid: true, resourcesValid: true, storageValid: true,
       discoveryValid: true, policySetValid: true, orchestrationValid: true, canContinue: true, canCreate: true, readyForPrefetch: true, readOnly: false })

@@ -83,6 +83,8 @@ export type RecoveryGroup = RecoveryGroupListItem & {
   // Platform provider (AIRFLOW) this group is/was orchestrated to. Read-only.
   orchestrationProviderId?: string | null | undefined
   rawRecord?: RecoveryGroupReadRecord | undefined
+  notificationEmail?: string | null | undefined
+  targetPool?: string | null | undefined
 }
 
 // Read record with non-null defaults for the fields the mapper relies on. VM
@@ -98,6 +100,8 @@ export type RecoveryGroupReadRecord = Omit<
 }
 
 export interface RecoveryGroupDraft {
+  notificationEmail?: string | null | undefined
+  targetPool?: string | null | undefined
   id: string
   name: string
   description: string

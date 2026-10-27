@@ -19,6 +19,14 @@ const vmDraft: RecoveryGroupDraft = {
 }
 
 describe('validateRecoveryGroupDraft topology', () => {
+  it.each(['bad', 'a@b', 'a b@example.com', 'a@example.com\ninvalid'])('rejects invalid email %j', notificationEmail => {
+    expect(() => validateRecoveryGroupDraft({ ...vmDraft, notificationEmail })).toThrow()
+  })
+  it('normalizes optional email but preserves an exact Managed pool name', () => {
+    expect(validateRecoveryGroupDraft({ ...vmDraft, notificationEmail: ' ops@example.com ' })).toMatchObject({ notificationEmail: 'ops@example.com', targetPool: null })
+    expect(validateRecoveryGroupDraft({ ...vmDraft, notificationEmail: '  ' })).toMatchObject({ notificationEmail: null })
+    expect(validateRecoveryGroupDraft({ ...vmDraft, topology: 'metro_mirror', metroMirrorMode: 'managed', relatedVolumeProviderId: 'source', relatedVolumes: ['VOL'], targetPool: 'Pool name' })).toMatchObject({ targetPool: 'Pool name' })
+  })
   it('treats an omitted legacy topology as Local with optional storage', () => {
     expect(validateRecoveryGroupDraft(vmDraft)).toMatchObject({
       topology: 'local',

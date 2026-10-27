@@ -8,6 +8,16 @@ const group: RecoveryGroup = {
   topology: 'metro_mirror', metroMirrorMode: 'existing', consistencyGroupId: 'MANUAL', auxiliaryNamesByVolume: { VOL: 'AUX' }, vmMetadataByName: { A: { order: 8 } },
 }
 describe('draft lifecycle transitions', () => {
+  it('restores optional fields and resets only the pool on a deliberate source or mode change', () => {
+    const state = initializeDraft({ ...group, metroMirrorMode: 'managed', consistencyGroupId: '', auxiliaryNamesByVolume: {}, notificationEmail: 'ops@example.com', targetPool: 'Saved pool' })
+    expect(state.draft).toMatchObject({ notificationEmail: 'ops@example.com', targetPool: 'Saved pool' })
+    expect(transitionDraft(state, { type: 'sourceChanged', sourceId: 'source' }).state.draft.targetPool).toBe('Saved pool')
+    expect(transitionDraft(state, { type: 'sourceChanged', sourceId: 'other' }).state.draft).toMatchObject({ targetPool: null, notificationEmail: 'ops@example.com' })
+    expect(transitionDraft(state, { type: 'metroModeChanged', mode: 'existing' }).state.draft.targetPool).toBeNull()
+    const event: DraftEvent = { type: 'targetPoolChanged', value: 'New pool' }
+    expect(transitionDraft(state, event).state.draft.targetPool).toBe('New pool')
+    expect(transitionDraft(state, event, { editAuthority: { ...group, pushToOrchestrator: true } }).state).toBe(state)
+  })
   it('initializes isolated create/edit drafts, with persisted empty CG permitting prefill', () => {
     const first = initializeDraft()
     const second = initializeDraft()

@@ -3,11 +3,14 @@ import type { ProviderRecord } from '@/features/providers-connectors/providers/m
 import { getRecoveryGroupTopologyError } from './recoveryGroupTopology'
 
 const source: ProviderRecord = { id: 'source', name: 'Source', type: 'FLASHCOPY', credentialStatus: 'ok', role: 'source', partnerProviderId: 'target' }
-const target: ProviderRecord = { ...source, id: 'target', name: 'Target', role: 'target' }
+const target: ProviderRecord = { ...source, id: 'target', name: 'Target', role: 'target', partnerProviderId: 'source' }
 const local = { topology: 'local' as const, relatedVolumeProviderId: 'source' }
 const metro = { ...local, topology: 'metro_mirror' as const, metroMirrorMode: 'existing' as const, consistencyGroupId: '001' }
 
 describe('getRecoveryGroupTopologyError', () => {
+  it('rejects a Metro Mirror partner that does not point back to the source', () => {
+    expect(getRecoveryGroupTopologyError(metro, [source, { ...target, partnerProviderId: 'other' }])).toBe('partnerInvalid')
+  })
   it('accepts Local and Existing with a valid target-role partner', () => {
     expect(getRecoveryGroupTopologyError(local, [source])).toBeNull()
     expect(getRecoveryGroupTopologyError(metro, [source, target])).toBeNull()
