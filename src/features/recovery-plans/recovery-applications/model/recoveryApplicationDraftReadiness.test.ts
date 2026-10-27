@@ -22,7 +22,7 @@ function draft(update: Partial<RecoveryApplicationFormState> = {}): RecoveryAppl
 }
 
 function context(update: Partial<DraftReadinessContext> = {}): DraftReadinessContext {
-  return { step: 1, providers, providersError: null, platformProviders: [airflow], areGroupsLoading: false, lockedProviders: null,
+  return { step: 1, providers, providersError: null, platformProviders: [airflow], areGroupsLoading: false, groupsError: null, groups: [{ id: 'stored-group', providerId: 'source', resources: [], sourceCategory: 'backup_system_workload', workloadType: 'vmware_virtual_machines', pushToOrchestrator: true, airflowRunId: 'run' }], lockedProviders: null,
     templateCatalog: { templates: [{ platform: 'vmware', version: 'future-3', default: true, description: 'Default' }], verified: true }, ...update }
 }
 
@@ -42,10 +42,10 @@ describe('getRecoveryApplicationDraftReadiness', () => {
       templateCatalog: { templates: [{ platform: 'vmware', version: 'future-3', default: true, description: 'Default' }], verified },
     })).canSave).toBe(canSave)
   })
-  it('returns the eight preliminary readiness values for a complete Create draft', () => {
+  it('returns shared section and final results for a complete Create draft', () => {
     expect(getRecoveryApplicationDraftReadiness(draft(), context())).toEqual({
       detailsValid: true, tiersValid: true, policySetValid: true, orchestrationValid: true,
-      canContinue: true, canSave: true, providersLoaded: true, lockedProvidersError: null,
+      canContinue: true, canSave: true, providersLoaded: true, lockedProvidersError: null, detailsError: null, tiersError: null, validationError: null,
     })
   })
 
@@ -79,7 +79,7 @@ describe('getRecoveryApplicationDraftReadiness', () => {
   it.each([null, { platform: 'IBM_POWER', sourceProviderId: 'hmc', targetProviderId: 'hmc' }])(
     'allows the same IBM Power HMC on both sides with locks %j', lockedProviders => {
       const hmc: ProviderRecord = { id: 'hmc', name: 'HMC', type: 'IBM_POWER', role: 'target', credentialStatus: 'ok' }
-      expect(getRecoveryApplicationDraftReadiness(draft({ platform: 'hmc', targetProviderId: 'hmc' }), context({ providers: [hmc], lockedProviders })))
+      expect(getRecoveryApplicationDraftReadiness(draft({ platform: 'hmc', targetProviderId: 'hmc' }), context({ providers: [hmc], lockedProviders, groups: [{ id: 'stored-group', providerId: 'hmc', resources: [], sourceCategory: 'backup_system_workload', workloadType: 'ibm_power_virtual_machines', pushToOrchestrator: true, airflowRunId: 'run' }] })))
         .toMatchObject({ detailsValid: true, canSave: true, lockedProvidersError: null })
     },
   )
@@ -92,11 +92,11 @@ describe('getRecoveryApplicationDraftReadiness', () => {
     expect(getRecoveryApplicationDraftReadiness(draft({ tiers }), context({ step: 2 }))).toMatchObject({ detailsValid: true, tiersValid: false, canContinue: false, canSave: false })
   })
 
-  it('keeps a present Group preliminarily ready even with an empty ID and invalid LPAR name', () => {
+  it('rejects a present but unresolved Group', () => {
     const tiers: RecoveryApplicationFormState['tiers'] = new Map([['database', {
       order: 1, description: 'Database', recovery_group: { id: '', name: 'Unavailable Group', vms: [{ name: 'invalid LPAR name!' }] },
     }]])
-    expect(getRecoveryApplicationDraftReadiness(draft({ tiers }), context())).toMatchObject({ tiersValid: true, canSave: true })
+    expect(getRecoveryApplicationDraftReadiness(draft({ tiers }), context())).toMatchObject({ tiersValid: false, canSave: false })
   })
 
   it.each([
@@ -135,10 +135,12 @@ describe('getRecoveryApplicationDraftReadiness', () => {
     },
   )
 
-  it('blocks preliminary Save while Groups load without changing individual readiness', () => {
+  it('blocks tier readiness and Save while Groups load', () => {
     expect(getRecoveryApplicationDraftReadiness(draft(), context({ areGroupsLoading: true }))).toEqual({
-      detailsValid: true, tiersValid: true, policySetValid: true, orchestrationValid: true,
-      canContinue: true, canSave: false, providersLoaded: true, lockedProvidersError: null,
+      detailsValid: true, tiersValid: false, policySetValid: true, orchestrationValid: true,
+      canContinue: true, canSave: false, providersLoaded: true, lockedProvidersError: null, detailsError: null,
+      tiersError: { field: 'recoveryGroup', messageKey: 'recovery.application.validation.referencesUnverified' },
+      validationError: { field: 'recoveryGroup', messageKey: 'recovery.application.validation.referencesUnverified' },
     })
   })
 
@@ -150,7 +152,7 @@ describe('getRecoveryApplicationDraftReadiness', () => {
   ] satisfies [string, ProviderRecord[] | undefined, unknown, boolean, string | null][])(
     'distinguishes locked provider state: %s', (_label, loadedProviders, providersError, providersLoaded, messageKey) => {
       const result = getRecoveryApplicationDraftReadiness(draft(), context({ providers: loadedProviders, providersError, lockedProviders: locks }))
-      expect(result).toMatchObject({ detailsValid: true, providersLoaded, canSave: false })
+      expect(result).toMatchObject({ detailsValid: false, providersLoaded, canSave: false })
       expect(result.lockedProvidersError).toEqual(messageKey ? { field: 'platform', messageKey, params: { id: 'source' } } : null)
     },
   )
@@ -160,9 +162,9 @@ describe('getRecoveryApplicationDraftReadiness', () => {
       .toMatchObject({ providersLoaded: true, lockedProvidersError: null, canSave: true })
   })
 
-  it.each([new Error('fetch failed'), {}, 'failed', true])('retains cached Create eligibility with truthy error %j', providersError => {
+  it.each([new Error('fetch failed'), {}, 'failed', true])('blocks cached Create data with truthy error %j', providersError => {
     expect(getRecoveryApplicationDraftReadiness(draft(), context({ providersError })))
-      .toMatchObject({ detailsValid: true, providersLoaded: false, lockedProvidersError: null, canSave: true })
+      .toMatchObject({ detailsValid: false, providersLoaded: false, lockedProvidersError: null, canSave: false })
   })
 
   it.each([
@@ -176,14 +178,14 @@ describe('getRecoveryApplicationDraftReadiness', () => {
   ] satisfies [string, LockedProviders, ProviderRecord[], string, { id: string } | undefined][])(
     'reports the stored-provider verdict for %s', (_label, lockedProviders, loadedProviders, key, params) => {
       const result = getRecoveryApplicationDraftReadiness(draft({ platform: '', targetProviderId: '' }), context({ providers: loadedProviders, lockedProviders }))
-      expect(result).toMatchObject({ detailsValid: true, canContinue: true, canSave: false, providersLoaded: true })
+      expect(result).toMatchObject({ detailsValid: false, canContinue: false, canSave: false, providersLoaded: true })
       expect(result.lockedProvidersError).toEqual({ field: 'platform', messageKey: `recovery.application.validation.${key}`, ...(params ? { params } : {}) })
     },
   )
 
   it('defers the legacy-provider verdict when providers have not loaded', () => {
     expect(getRecoveryApplicationDraftReadiness(draft(), context({ providers: undefined, lockedProviders: { ...locks, sourceProviderId: null } })))
-      .toMatchObject({ detailsValid: true, canSave: false, lockedProvidersError: null, providersLoaded: false })
+      .toMatchObject({ detailsValid: false, canSave: false, lockedProvidersError: null, providersLoaded: false })
   })
 
   it('does not mutate the draft, tiers, nested Group or query records', () => {
@@ -203,5 +205,37 @@ describe('getRecoveryApplicationDraftReadiness', () => {
     const before = structuredClone({ value, current })
     expect(getRecoveryApplicationDraftReadiness(value, current).canSave).toBe(true)
     expect({ value, current }).toEqual(before)
+  })
+})
+
+
+describe('shared functional validation readiness', () => {
+  it.each([false, true])('rejects invalid email with Push=%s', pushToOrchestrator => {
+    const result = getRecoveryApplicationDraftReadiness(draft({ notificationEmail: 'invalid', pushToOrchestrator }), context())
+    expect(result).toMatchObject({ detailsValid: false, canSave: false, validationError: { field: 'notificationEmail', messageKey: 'forms.notificationEmailInvalid' } })
+  })
+  it('blocks a failed Group query without calling a cached group deleted', () => {
+    const result = getRecoveryApplicationDraftReadiness(draft(), context({ groupsError: new Error('offline') }))
+    expect(result).toMatchObject({ canSave: false, validationError: { messageKey: 'recovery.application.validation.referencesUnverified' } })
+  })
+})
+
+
+describe('Power v2 readiness gate', () => {
+  it.each([false, true])('recomputes after version changes, selection and tier edits (Push=%s)', pushToOrchestrator => {
+    const hmc: ProviderRecord = { id: 'hmc', name: 'HMC', type: 'IBM_POWER', role: 'target', credentialStatus: 'ok' }
+    const tier = { order: 1, description: 'Database', recovery_group: { id: 'group', name: 'Database group', vms: [{ name: 'db' }] } } satisfies DraftRecoveryTier
+    const state = draft({ platform: 'hmc', targetProviderId: 'hmc', pushToOrchestrator, dagTemplateVersion: 'v2', tiers: new Map([['first', tier], ['second', structuredClone(tier)]]) })
+    const current = context({ providers: [hmc], groups: [{ id: 'group', providerId: 'hmc', resources: ['db'], sourceCategory: 'backup_system_workload', workloadType: 'ibm_power_virtual_machines', pushToOrchestrator: true, airflowRunId: 'run' }], templateCatalog: { templates: [{ platform: 'ibm_power', version: 'v1', default: true, description: 'Default' }, { platform: 'ibm_power', version: 'v2', default: false, description: 'v2' }], verified: true } })
+    expect(getRecoveryApplicationDraftReadiness(state, current)).toMatchObject({ canSave: false, tiersValid: false, validationError: { params: { name: 'db', tiers: 'first, second' } } })
+    for (const dagTemplateVersion of [null, 'v1']) expect(getRecoveryApplicationDraftReadiness({ ...state, dagTemplateVersion }, current).canSave).toBe(true)
+    const reordered = { ...state, tiers: new Map([...state.tiers].reverse()) }
+    expect(getRecoveryApplicationDraftReadiness(reordered, current)).toMatchObject({ canSave: false, validationError: { params: { tiers: 'second, first' } } })
+    state.tiers.delete('second')
+    expect(getRecoveryApplicationDraftReadiness(state, current).canSave).toBe(true)
+    state.tiers.set('renamed', { ...tier, recovery_group: { ...tier.recovery_group, vms: [] } })
+    expect(getRecoveryApplicationDraftReadiness(state, current).canSave).toBe(true)
+    state.tiers.set('renamed', tier)
+    expect(getRecoveryApplicationDraftReadiness(state, current)).toMatchObject({ canSave: false, validationError: { params: { tiers: 'first, renamed' } } })
   })
 })

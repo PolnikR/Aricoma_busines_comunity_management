@@ -90,6 +90,7 @@ const recoveryGroupsQuery = vi.hoisted(() => ({
       description: 'Database recovery group',
       sourceCategory: 'backup_system_workload',
       workloadType: 'vmware_virtual_machines',
+      providerId: 'vmware-01',
       resourceType: 'vm',
       resources: ['DB-01', 'DB-02'],
       resourceCount: 2,
@@ -329,6 +330,7 @@ describe('RecoveryAppBuilder', () => {
       description: 'Database recovery group',
       sourceCategory: 'backup_system_workload',
       workloadType: 'vmware_virtual_machines',
+      providerId: 'vmware-01',
       resourceType: 'vm',
       resources: ['DB-01', 'DB-02'],
       resourceCount: 2,
@@ -341,6 +343,7 @@ describe('RecoveryAppBuilder', () => {
       description: 'AIX recovery group',
       sourceCategory: 'backup_system_workload',
       workloadType: 'ibm_power_virtual_machines',
+      providerId: 'power-01',
       resourceType: 'vm',
       resources: ['aix2source'],
       resourceCount: 1,
@@ -474,7 +477,7 @@ describe('RecoveryAppBuilder', () => {
       act(() => { canvasProps().onRecoveryVmSelectionChange?.('tier_id', firstName, true) })
       expect(canvasProps().tiers['tier_id']?.recovery_group).toEqual(assigned)
       recoveryGroupsQuery.current.groups = recoveryGroupsQuery.current.groups.map(group => group.id === groupId ? {
-        ...group, pushToOrchestrator: false, vmMetadataByName: { [firstName]: { hostname: 'fresh-host', cpu: 16 }, [secondName]: { hostname: 'query-changed', cpu: 99 } },
+        ...group, pushToOrchestrator: true, vmMetadataByName: { [firstName]: { hostname: 'fresh-host', cpu: 16 }, [secondName]: { hostname: 'query-changed', cpu: 99 } },
       } : group)
       const refreshedQuery = structuredClone(recoveryGroupsQuery.current.groups)
       rerender(<RecoveryAppBuilder {...props} />)
@@ -512,7 +515,7 @@ describe('RecoveryAppBuilder', () => {
       expect(initialData).toEqual(before)
     })
 
-    it('allows unknown VM names and missing live Group data, retaining selection order and callback dirty no-ops', async () => {
+    it('rejects unknown VM names and missing live Groups while retaining removal/no-op behavior', async () => {
       const initialData = draftFixture()
       initialData.tiers.set('empty', { order: 7, description: 'No Group' })
       const before = structuredClone(initialData)
@@ -525,7 +528,7 @@ describe('RecoveryAppBuilder', () => {
       rerender(<RecoveryAppBuilder {...props} />)
       act(() => { canvasProps().onRecoveryVmSelectionChange?.('tier_id', 'missing-group-vm', true) })
       const expected = [
-        { name: 'DB-01', order: 1, hostname: 'stored-host' }, { name: 'unknown', order: 2 }, { name: 'missing-group-vm', order: 3 },
+        { name: 'DB-01', order: 8, hostname: 'stored-host' },
       ]
       expect(canvasProps().tiers['tier_id']?.recovery_group?.vms).toEqual(expected)
       act(() => { canvasProps().onRecoveryVmSelectionChange?.('tier_id', 'unknown', true) })
@@ -534,7 +537,7 @@ describe('RecoveryAppBuilder', () => {
       act(() => { canvasProps().onRecoveryVmSelectionChange?.('empty', 'DB-01', true) })
       expect(canvasProps().tiers['tier_id']?.recovery_group?.vms).toEqual(expected)
       expect(canvasProps().tiers['empty']).toEqual({ order: 7, description: 'No Group' })
-      expect(onDirtyChange.mock.calls).toEqual(Array.from({ length: 6 }, () => [true]))
+      expect(onDirtyChange.mock.calls).toEqual(Array.from({ length: 3 }, () => [true]))
       expect(initialData).toEqual(before)
     })
 
@@ -626,7 +629,7 @@ describe('RecoveryAppBuilder', () => {
     ] as const)('gates step 1 and every later header on %s', (_label, patch, ready) => {
       render(<RecoveryAppBuilder initialData={{ ...draftFixture(), ...patch }} />)
       for (const name of ['Next', 'Recovery groups & tiers', 'Policy set', 'Orchestration']) {
-        expect(screen.getByRole('button', { name })).toHaveProperty('disabled', !(ready))
+        expect(screen.getByRole('button', { name })).toHaveProperty('disabled', !ready)
       }
     })
 
@@ -652,7 +655,7 @@ describe('RecoveryAppBuilder', () => {
       expect(screen.getByRole('button', { name: 'Save Application' })).toBeEnabled()
     })
 
-    it('disables Save for zero tiers even though final validation accepts zero tiers', async () => {
+    it('blocks empty tiers consistently with final validation', async () => {
       const onSave = vi.fn()
       render(<RecoveryAppBuilder initialData={draftFixture()} onSave={onSave} />)
       await userEvent.setup().click(screen.getByRole('button', { name: 'Recovery groups & tiers' }))
@@ -680,14 +683,19 @@ describe('RecoveryAppBuilder', () => {
       const onSave = vi.fn()
       const initialData = draftFixture()
       render(<RecoveryAppBuilder initialData={initialData} lockedProviders={lockedProviders} onSave={onSave} />)
-      expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled()
+      expect(screen.getByRole('button', { name: 'Next' })).toHaveProperty('disabled', !ready)
       expect(screen.queryByText('no longer exists', { exact: false }) !== null).toBe(data === 'empty' && !error)
       if (error) expect(screen.getAllByRole('button', { name: 'Retry' }).length).toBeGreaterThan(0)
+      if (!ready) {
+        expect(screen.getByRole('button', { name: 'Orchestration' })).toBeDisabled()
+        expect(onSave).not.toHaveBeenCalled()
+        return
+      }
       await userEvent.setup().click(screen.getByRole('button', { name: 'Orchestration' }))
-      expect(screen.getByRole('button', { name: 'Save Application' })).toHaveProperty('disabled', !(ready))
+      expect(screen.getByRole('button', { name: 'Save Application' })).toBeEnabled()
       await userEvent.setup().click(screen.getByRole('button', { name: 'Save Application' }))
-      expect(onSave).toHaveBeenCalledTimes(ready ? 1 : 0)
-      if (ready) expect(onSave).toHaveBeenCalledWith(initialData)
+      expect(onSave).toHaveBeenCalledOnce()
+      expect(onSave).toHaveBeenCalledWith(initialData)
     })
 
     it.each([false, true])('requires credentials for Create but only stored identity/type/role for locked Edit (locked=%s)', async locked => {
@@ -708,7 +716,7 @@ describe('RecoveryAppBuilder', () => {
     it.each([
       ['Groups loading', true, false, false, false, false],
       ['Groups background fetching', false, true, false, false, true],
-      ['cached Group error', false, false, true, false, true],
+      ['cached Group error', false, false, true, false, false],
       ['cached policy and orchestration errors/loading', false, false, false, true, true],
     ] as const)('preserves cached-data Save flags: %s', async (_label, loading, fetching, groupError, auxiliaryErrors, ready) => {
       recoveryGroupsQuery.current.isLoading = loading
@@ -721,14 +729,19 @@ describe('RecoveryAppBuilder', () => {
       const initialData = { ...draftFixture(), pushToOrchestrator: true, orchestrationProviderId: 'airflow-01' }
       const onSave = vi.fn()
       render(<RecoveryAppBuilder initialData={initialData} onSave={onSave} />)
+      if (!ready) {
+        expect(screen.getByRole('button', { name: 'Orchestration' })).toBeDisabled()
+        expect(onSave).not.toHaveBeenCalled()
+        return
+      }
       await userEvent.setup().click(screen.getByRole('button', { name: 'Orchestration' }))
-      expect(screen.getByRole('button', { name: 'Save Application' })).toHaveProperty('disabled', !(ready))
+      expect(screen.getByRole('button', { name: 'Save Application' })).toBeEnabled()
       await userEvent.setup().click(screen.getByRole('button', { name: 'Save Application' }))
-      expect(onSave).toHaveBeenCalledTimes(ready ? 1 : 0)
-      if (ready) expect(onSave).toHaveBeenCalledWith(initialData)
+      expect(onSave).toHaveBeenCalledOnce()
+      expect(onSave).toHaveBeenCalledWith(initialData)
     })
 
-    it.each(['missing', 'incompatible', 'unpublished'] as const)('preliminary Save permits an assigned %s Group but final validation rejects it', async state => {
+    it.each(['missing', 'incompatible', 'unpublished'] as const)('readiness blocks an assigned %s Group with an inline reason', async state => {
       recoveryGroupsQuery.current.groups = state === 'missing' ? [] : recoveryGroupsQuery.current.groups.map(group => group.id === 'database_group' && group.sourceCategory === 'backup_system_workload' ? {
         ...group, ...(state === 'incompatible' ? { workloadType: 'ibm_power_virtual_machines' } : { pushToOrchestrator: false }),
       } : group)
@@ -738,11 +751,11 @@ describe('RecoveryAppBuilder', () => {
       const alert = vi.fn()
       vi.stubGlobal('alert', alert)
       render(<RecoveryAppBuilder initialData={initialData} onSave={onSave} />)
-      await userEvent.setup().click(screen.getByRole('button', { name: 'Orchestration' }))
-      expect(screen.getByRole('button', { name: 'Save Application' })).toBeEnabled()
-      await userEvent.setup().click(screen.getByRole('button', { name: 'Save Application' }))
+      expect(screen.getByRole('button', { name: 'Orchestration' })).toBeDisabled()
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Recovery groups & tiers' }))
       expect(onSave).not.toHaveBeenCalled()
-      expect(alert).toHaveBeenCalledExactlyOnceWith(expect.stringContaining('"Database Group" in tier "tier_id"'))
+      expect(alert).not.toHaveBeenCalled()
+      expect(screen.getByRole('alert')).toHaveTextContent('"Database Group" in tier "tier_id"')
       expect(initialData).toEqual(before)
     })
   })
@@ -777,17 +790,16 @@ describe('RecoveryAppBuilder', () => {
     expect(screen.getByText('Group options: lpar_group')).toBeInTheDocument()
   })
 
-  it('keeps locked providers of a saved application and offers groups of its stored platform', async () => {
-    const user = userEvent.setup()
-    render(<RecoveryAppBuilder lockedProviders={{ platform: 'ibm_power', sourceProviderId: 'power-gone', targetProviderId: 'power-gone' }} />)
+  it('keeps missing stored providers locked and blocks editing later steps', () => {
+        render(<RecoveryAppBuilder lockedProviders={{ platform: 'ibm_power', sourceProviderId: 'power-gone', targetProviderId: 'power-gone' }} />)
     fireEvent.change(screen.getByLabelText('ID *'), { target: { value: 'finance_recovery' } })
     fireEvent.change(screen.getByLabelText('Application Name *'), { target: { value: 'Finance' } })
     fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Finance recovery' } })
 
     expect(screen.getByLabelText('Provider ID *')).toBeDisabled()
     expect(screen.getByLabelText('Target provider ID *')).toBeDisabled()
-    await user.click(screen.getByRole('button', { name: 'Next' }))
-    expect(screen.getByText('Group options: lpar_group')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Recovery groups & tiers' })).toBeDisabled()
   })
 
   describe('validating stored recovery groups before saving', () => {
@@ -817,8 +829,13 @@ describe('RecoveryAppBuilder', () => {
       const alert = vi.fn()
       vi.stubGlobal('alert', alert)
       render(<RecoveryAppBuilder initialData={initialData} onSave={onSave} lockedProviders={lockedProviders ?? null} />)
-      await user.click(screen.getByRole('button', { name: 'Orchestration' }))
-      await user.click(screen.getByRole('button', { name: 'Save Application' }))
+      const orchestration = screen.getByRole('button', { name: 'Orchestration' })
+      if (orchestration.hasAttribute('disabled')) {
+        await user.click(screen.getByRole('button', { name: 'Recovery groups & tiers' }))
+      } else {
+        await user.click(orchestration)
+        await user.click(screen.getByRole('button', { name: 'Save Application' }))
+      }
       return { onSave, alert }
     }
 
@@ -887,13 +904,14 @@ describe('RecoveryAppBuilder', () => {
       rerender(<RecoveryAppBuilder {...props} />)
       expect(screen.getByText(vmName)).toBeInTheDocument()
       expect(screen.getByText('Recovery group: ' + groupName)).toBeInTheDocument()
-      await user.click(screen.getByRole('button', { name: 'Orchestration' }))
-      await user.click(screen.getByRole('button', { name: 'Save Application' }))
+      expect(screen.getByRole('button', { name: 'Orchestration' })).toBeDisabled()
       expect(onSave).not.toHaveBeenCalled()
-      expect(alert).toHaveBeenCalledWith(expect.stringContaining('"' + groupName + '" in tier "tier_id"'))
+      expect(alert).not.toHaveBeenCalled()
+      expect(screen.getByRole('alert')).toHaveTextContent('"' + groupName + '" in tier "tier_id"')
       expect(initialData).toEqual(before)
       recoveryGroupsQuery.current.groups = recoveryGroupsQuery.current.groups.map(group => ({ ...group, pushToOrchestrator: true }))
       rerender(<RecoveryAppBuilder {...props} />)
+      await user.click(screen.getByRole('button', { name: 'Orchestration' }))
       await user.click(screen.getByRole('button', { name: 'Save Application' }))
       expect(onSave).toHaveBeenCalledWith(before)
     })
@@ -901,13 +919,16 @@ describe('RecoveryAppBuilder', () => {
     it('blocks saving a VMware application with an IBM Power recovery group', async () => {
       const { onSave, alert } = await trySave(savedApplication('vmware-01', 'vmware-target-01', 'lpar_group', 'LPAR Group', ['aix2source']))
       expect(onSave).not.toHaveBeenCalled()
-      expect(alert).toHaveBeenCalledWith('Recovery group "LPAR Group" in tier "tier_id" does not match the application platform. Remove it from the tier.')
+      expect(alert).not.toHaveBeenCalled()
+      expect(screen.getByRole('alert')).toHaveTextContent('Recovery group "LPAR Group" in tier "tier_id" does not match the application platform. Remove it from the tier.')
     })
 
     it('blocks saving an IBM Power application with an invalid LPAR name', async () => {
+      recoveryGroupsQuery.current.groups = recoveryGroupsQuery.current.groups.map(group => group.id === 'lpar_group' ? { ...group, resources: ['bad name'] } : group)
       const { onSave, alert } = await trySave(savedApplication('power-01', 'power-01', 'lpar_group', 'LPAR Group', ['bad name']))
       expect(onSave).not.toHaveBeenCalled()
-      expect(alert).toHaveBeenCalledWith(expect.stringContaining('LPAR name "bad name" in tier "tier_id" is invalid'))
+      expect(alert).not.toHaveBeenCalled()
+      expect(screen.getByRole('alert')).toHaveTextContent('LPAR name "bad name" in tier "tier_id" is invalid')
     })
 
     it('saves an IBM Power application using one provider as source and target', async () => {
@@ -927,16 +948,15 @@ describe('RecoveryAppBuilder', () => {
       ['source', { sourceProviderId: null, targetProviderId: 'vmware-target-01' }],
       ['target', { sourceProviderId: 'vmware-01', targetProviderId: null }],
       ['source and target', { sourceProviderId: null, targetProviderId: null }],
-    ])('locks a legacy application without a stored %s provider id and blocks saving', async (_label, ids) => {
-      const user = userEvent.setup()
-      const legacy = savedApplication(ids.sourceProviderId ?? '', ids.targetProviderId ?? '', 'database_group', 'Database Group', ['DB-01'])
+    ])('locks a legacy application without a stored %s provider id and blocks saving', (_label, ids) => {
+            const legacy = savedApplication(ids.sourceProviderId ?? '', ids.targetProviderId ?? '', 'database_group', 'Database Group', ['DB-01'])
       render(<RecoveryAppBuilder initialData={legacy} lockedProviders={{ platform: 'VMWARE', ...ids }} />)
 
       expect(screen.getByLabelText('Provider ID *')).toBeDisabled()
       expect(screen.getByLabelText('Target provider ID *')).toBeDisabled()
       expect(screen.getByText(/uses the old recovery application contract/)).toBeInTheDocument()
-      await user.click(screen.getByRole('button', { name: 'Orchestration' }))
-      expect(screen.getByRole('button', { name: 'Save Application' })).toBeDisabled()
+      expect(screen.getByRole('button', { name: 'Orchestration' })).toBeDisabled()
+      expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
     })
 
     it.each([
@@ -949,8 +969,8 @@ describe('RecoveryAppBuilder', () => {
 
       expect(screen.getByLabelText('Provider ID *')).toBeDisabled()
       expect(screen.getByText(message, { exact: false })).toBeInTheDocument()
-      await user.click(screen.getByRole('button', { name: 'Orchestration' }))
-      expect(screen.getByRole('button', { name: 'Save Application' })).toBeDisabled()
+      expect(screen.getByRole('button', { name: 'Orchestration' })).toBeDisabled()
+      expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
 
       const original = fixtureValue(providersQuery.current.data)
       onTestFinished(() => { providersQuery.current.data = original })
@@ -959,18 +979,19 @@ describe('RecoveryAppBuilder', () => {
         if (provider.id === 'vmware-target-01') return { ...provider, id: ids.targetProviderId }
         return provider
       })
+      recoveryGroupsQuery.current.groups = recoveryGroupsQuery.current.groups.map(group => group.id === 'database_group' ? { ...group, providerId: ids.sourceProviderId } : group)
       rerender(<RecoveryAppBuilder initialData={saved} lockedProviders={{ platform: 'VMWARE', ...ids }} />)
+      await user.click(screen.getByRole('button', { name: 'Orchestration' }))
       expect(screen.getByRole('button', { name: 'Save Application' })).toBeEnabled()
     })
 
-    it('blocks saving a stored VMware target that is no longer role=target', async () => {
-      const user = userEvent.setup()
-      const saved = savedApplication('vmware-01', 'vmware-01', 'database_group', 'Database Group', ['DB-01'])
+    it('blocks saving a stored VMware target that is no longer role=target', () => {
+            const saved = savedApplication('vmware-01', 'vmware-01', 'database_group', 'Database Group', ['DB-01'])
       render(<RecoveryAppBuilder initialData={saved} lockedProviders={{ platform: 'VMWARE', sourceProviderId: 'vmware-01', targetProviderId: 'vmware-01' }} />)
 
       expect(screen.getByText('Target provider "vmware-01" no longer fits', { exact: false })).toBeInTheDocument()
-      await user.click(screen.getByRole('button', { name: 'Orchestration' }))
-      expect(screen.getByRole('button', { name: 'Save Application' })).toBeDisabled()
+      expect(screen.getByRole('button', { name: 'Orchestration' })).toBeDisabled()
+      expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
     })
 
     it('offers a retry instead of a verdict when the providers fail to load', async () => {
@@ -984,8 +1005,8 @@ describe('RecoveryAppBuilder', () => {
       if (!retry) throw new Error('Expected a retry button')
       await user.click(retry)
       expect(providersQuery.current.refetch).toHaveBeenCalled()
-      await user.click(screen.getByRole('button', { name: 'Orchestration' }))
-      expect(screen.getByRole('button', { name: 'Save Application' })).toBeDisabled()
+      expect(screen.getByRole('button', { name: 'Orchestration' })).toBeDisabled()
+      expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
     })
 
     it('saves an application whose stored providers still exist', async () => {
@@ -995,12 +1016,11 @@ describe('RecoveryAppBuilder', () => {
       expect(onSave).toHaveBeenCalledOnce()
     })
 
-    it('waits for the recovery groups before saving', async () => {
+    it('waits for the recovery groups before saving', () => {
       recoveryGroupsQuery.current.isLoading = true
-      const user = userEvent.setup()
-      render(<RecoveryAppBuilder initialData={savedApplication('vmware-01', 'vmware-target-01', 'database_group', 'Database Group', ['DB-01'])} />)
-      await user.click(screen.getByRole('button', { name: 'Orchestration' }))
-      expect(screen.getByRole('button', { name: 'Save Application' })).toBeDisabled()
+            render(<RecoveryAppBuilder initialData={savedApplication('vmware-01', 'vmware-target-01', 'database_group', 'Database Group', ['DB-01'])} />)
+      expect(screen.getByRole('button', { name: 'Orchestration' })).toBeDisabled()
+      expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled()
     })
   })
 
@@ -1444,5 +1464,26 @@ describe('RecoveryAppBuilder', () => {
     await user.click(screen.getByRole('button', { name: 'Add test group' }))
     expect(screen.getByText('Group id: database_group')).toBeInTheDocument()
     expect(screen.getByText('Group name: Database Group')).toBeInTheDocument()
+  })
+})
+
+
+describe('functional consistency UI', () => {
+  beforeEach(() => { providersQuery.current.error = null; recoveryGroupsQuery.current.error = null; recoveryGroupsQuery.current.isLoading = false })
+  it('renders and preserves email through wizard navigation', async () => {
+    const user = userEvent.setup()
+    render(<RecoveryAppBuilder initialData={{ ...draftFixture(), notificationEmail: 'stored@example.test' }} />)
+    const email = screen.getByLabelText('Notification email')
+    expect(email).toHaveValue('stored@example.test')
+    await user.clear(email)
+    await user.type(email, 'changed@example.test')
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+    await user.click(screen.getByRole('button', { name: 'Back' }))
+    expect(screen.getByLabelText('Notification email')).toHaveValue('changed@example.test')
+  })
+  it('blocks invalid email and displays the reason without browser alert', () => {
+    render(<RecoveryAppBuilder initialData={{ ...draftFixture(), notificationEmail: 'invalid' }} />)
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
+    expect(screen.getAllByText('Enter a valid email address.').length).toBeGreaterThan(0)
   })
 })

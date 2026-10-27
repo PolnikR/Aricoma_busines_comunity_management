@@ -4,6 +4,7 @@ import { Field, Input, Select, Textarea } from '@/shared/components/form/FormCon
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import { isValidRecoveryApplicationFileName, isValidRecoveryApplicationName } from '../utils/recoveryApplicationFileName'
 import { getEligibleSourceProviders, getEligibleTargetProviders } from '../utils/eligibleProviders'
+import { isValidRecoveryApplicationEmail } from '../utils/recoveryApplicationEmail'
 import type { ApplicationMetadataPatch } from '../model/recoveryApplicationDraft'
 
 interface AppMetadataFormProps {
@@ -15,6 +16,7 @@ interface AppMetadataFormProps {
     environment: string
     platform: string
     targetProviderId?: string
+    notificationEmail?: string | null
   }
   providers?: ProviderRecord[]
   providersLoading?: boolean
@@ -45,6 +47,8 @@ export function AppMetadataForm({
   )
   // Source and target follow the parent: it may decline a source change (the
   // builder asks first when recovery groups are assigned).
+  const notificationEmail = initialValues?.notificationEmail ?? ''
+  const emailInvalid = !isValidRecoveryApplicationEmail(notificationEmail)
   const platform = initialValues?.platform ?? ''
   const eligibleProviders = lockProviders
     ? providers.filter(provider => provider.id === platform)
@@ -130,6 +134,13 @@ export function AppMetadataForm({
             {t('recovery.application.validation.nameInvalid')}
           </p>
         ) : null}
+      </Field>
+
+      <Field label={t('forms.notificationEmail')} htmlFor="application-notification-email">
+        <Input id="application-notification-email" type="email" autoComplete="email"
+          value={notificationEmail} onChange={event => { onMetadataChange?.({ notificationEmail: event.target.value }) }}
+          invalid={emailInvalid} aria-describedby={emailInvalid ? 'application-notification-email-error' : undefined} />
+        {emailInvalid ? <p id="application-notification-email-error" className="mt-1 text-xs text-red-600" role="alert">{t('forms.notificationEmailInvalid')}</p> : null}
       </Field>
 
       <Field label={t('forms.environment')} htmlFor="application-environment">

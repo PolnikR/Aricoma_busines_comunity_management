@@ -18,7 +18,7 @@ import { selectProviders } from '@/features/providers-connectors/providers/model
 import { useGetPolicySets } from '@/generated/query/policy-sets/policy-sets.gen'
 import { selectPolicySets } from '@/features/recovery-plans/policy-sets/model/selectPolicySets'
 import { useRecoveryGroups } from '../../recovery-groups/hooks/useRecoveryGroups'
-import { isRecoveryGroupCompatible, isRecoveryGroupEligible } from '../utils/recoveryGroupPlatform'
+import { isRecoveryGroupSourceCompatible, isRecoveryGroupSourceEligible } from '../utils/recoveryGroupPlatform'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { AppMetadataForm } from './AppMetadataForm'
 import { TierCanvas } from './TierCanvas'
@@ -28,7 +28,6 @@ import { addApplicationTier, applyApplicationTierOrder, applyConfirmedSourceChan
 import type { ApplicationMetadataPatch, SourceChangeProposal } from '../model/recoveryApplicationDraft'
 import { getEligiblePlatformProviders } from '../utils/eligibleProviders'
 import { getRecoveryApplicationDraftReadiness } from '../model/recoveryApplicationDraftReadiness'
-import { validateRecoveryApplication } from '../utils/validateRecoveryApplication'
 import type { DraftRecoveryTier, LockedProviders, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
 interface RecoveryAppBuilderProps {
@@ -89,6 +88,7 @@ export function RecoveryAppBuilder({
   // saved application, whose provider may be gone); without one no group fits.
   const platform = lockedProviders?.platform
     ?? providersQuery.data?.find(provider => provider.id === formState.platform)?.type
+  const sourceProviderId = lockedProviders ? lockedProviders.sourceProviderId : formState.platform
   const normalizedPlatform = platform?.toUpperCase()
   const templatePlatform = normalizedPlatform === 'VMWARE' ? 'vmware' : normalizedPlatform === 'IBM_POWER' ? 'ibm_power' : undefined
   const templatesQuery = useGetDagTemplateVersions(
@@ -98,20 +98,20 @@ export function RecoveryAppBuilder({
   const templates = (templatesQuery.data?.templates ?? []).filter(template => template.platform.toLowerCase() === templatePlatform)
   const templateCatalog = { templates, verified: Boolean(templatePlatform && templatesQuery.data && !templatesQuery.error) }
   const compatibleGroups = useMemo(
-    () => groups.filter(group => isRecoveryGroupCompatible(group, platform)),
-    [groups, platform],
+    () => groups.filter(group => isRecoveryGroupSourceCompatible(group, platform, sourceProviderId)),
+    [groups, platform, sourceProviderId],
   )
   const availableGroups = useMemo(
-    () => compatibleGroups.filter(group => isRecoveryGroupEligible(group, platform)),
-    [compatibleGroups, platform],
+    () => compatibleGroups.filter(group => isRecoveryGroupSourceEligible(group, platform, sourceProviderId)),
+    [compatibleGroups, platform, sourceProviderId],
   )
   const groupLabels = useMemo(
     () => Object.fromEntries(availableGroups.map(group => [group.id, group.name])),
     [availableGroups],
   )
   const recoveryGroupVmOptions = useMemo(
-    () => Object.fromEntries(compatibleGroups.map(group => [group.id, group.resources])),
-    [compatibleGroups],
+    () => Object.fromEntries(availableGroups.map(group => [group.id, group.resources])),
+    [availableGroups],
   )
   const groupsErrorDescription = resolveUserFacingErrorMessage(groupsError, '')
   const displayedGroupsError = groupsError ? new Error(groupsErrorDescription) : null
@@ -210,16 +210,19 @@ export function RecoveryAppBuilder({
     if (result.notifyDirty) onDirtyChange?.(true)
   }, [formState, isFormDisabled, onDirtyChange])
 
-  const { detailsValid, tiersValid, policySetValid, canContinue, canSave, lockedProvidersError } = getRecoveryApplicationDraftReadiness(formState, {
+  const { detailsValid, tiersValid, policySetValid, canContinue, canSave, lockedProvidersError, tiersError, validationError } = getRecoveryApplicationDraftReadiness(formState, {
     step: step === 1 || step === 2 || step === 3 ? step : 4,
     providers: providersQuery.data,
     providersError: providersQuery.error,
     platformProviders: platformProvidersQuery.data ?? [],
     areGroupsLoading,
+    groups,
+    groupsError,
     lockedProviders,
     templateCatalog,
   })
 
+  const hasDuplicateWorkloads = tiersError?.messageKey.startsWith('recovery.application.validation.duplicateWorkload') ?? false
   const steps = [
     { id: 'details', label: t('pages.recoveryBuilder.steps.details') },
     {
@@ -235,22 +238,13 @@ export function RecoveryAppBuilder({
     {
       id: 'orchestration',
       label: t('pages.recoveryBuilder.steps.orchestration'),
-      disabled: !readOnly && (!detailsValid || !tiersValid || !policySetValid),
+      // A v2 duplicate can be repaired by selecting v1/null in Orchestration.
+      disabled: !readOnly && (!detailsValid || (!hasDuplicateWorkloads && (!tiersValid || !policySetValid))),
     },
   ]
 
   const handleSave = () => {
-    if (isFormDisabled) return
-    const validationError = validateRecoveryApplication(
-      formState,
-      providersQuery.data ?? [],
-      eligiblePlatformProviders,
-      { lockedProviders, groups, templateCatalog },
-    )
-    if (validationError) {
-      alert(t(validationError.messageKey, validationError.params))
-      return
-    }
+    if (isFormDisabled || !canSave) return
     onSave?.(formState)
   }
 
@@ -298,6 +292,7 @@ export function RecoveryAppBuilder({
                     environment: formState.environment,
                     platform: formState.platform,
                     targetProviderId: formState.targetProviderId,
+                    notificationEmail: formState.notificationEmail,
                   }}
                   providers={providersQuery.data ?? []}
                   lockProviders={lockedProviders !== null}
@@ -314,6 +309,7 @@ export function RecoveryAppBuilder({
                   <h2 className="text-base font-semibold text-text-primary">{t('pages.recoveryBuilder.tiers.title')}</h2>
                   <p className="mt-1 text-sm text-text-muted">{t('pages.recoveryBuilder.tiers.description')}</p>
                 </div>
+                {tiersError && !groupsError ? <Alert variant="warning" title={t(tiersError.messageKey, tiersError.params)} /> : null}
                 <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden rounded-lg border border-border lg:grid-cols-[280px_minmax(0,1fr)]">
                   {/* Bounded on small screens too, so the virtualized group list keeps its own scroll. */}
                   <div className="custom-scrollbar h-72 min-h-0 overflow-y-auto border-b border-border lg:h-auto lg:border-b-0 lg:border-r">
@@ -472,6 +468,7 @@ export function RecoveryAppBuilder({
             ) : null}
             </fieldset>
           </div>
+          {validationError && !(formState.pushToOrchestrator && platformProvidersQuery.error) && (step === 4 || (step === 1 && validationError.field === 'notificationEmail')) ? <Alert className="mx-4 mb-3" variant="warning" title={t(validationError.messageKey, validationError.params)} /> : null}
           <div className="flex flex-col-reverse gap-3 border-t border-border bg-surface-subtle p-4 sm:flex-row sm:items-center sm:justify-between">
             <Button variant="ghost" onClick={onCancel}>{t('buttons.cancel')}</Button>
             <div className="flex gap-3">

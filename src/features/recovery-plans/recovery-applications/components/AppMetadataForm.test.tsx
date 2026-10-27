@@ -301,3 +301,26 @@ describe('AppMetadataForm', () => {
     })
   })
 })
+
+
+describe('application email editing', () => {
+  it('keeps a controlled raw address, reports invalid input and supports clearing', async () => {
+    function EmailHarness() {
+      const [notificationEmail, setEmail] = useState<string | null>('stored@example.test')
+      return <LanguageProvider><AppMetadataForm initialValues={{ fileName: 'app', name: 'App', description: 'Description', environment: 'dev', platform: '', notificationEmail }} onMetadataChange={patch => { if (patch.notificationEmail !== undefined) setEmail(patch.notificationEmail) }} /></LanguageProvider>
+    }
+    const user = userEvent.setup()
+    render(<EmailHarness />)
+    const input = await screen.findByLabelText('Notification email')
+    expect(input).toHaveValue('stored@example.test')
+    expect(input).toHaveAttribute('type', 'email')
+    expect(input).toHaveAttribute('autocomplete', 'email')
+    await user.clear(input)
+    await user.type(input, 'invalid')
+    expect(input).toHaveAttribute('aria-invalid', 'true')
+    expect(input).toHaveAccessibleDescription('Enter a valid email address.')
+    await user.clear(input)
+    expect(input).not.toHaveAttribute('aria-invalid', 'true')
+    expect(input).not.toBeRequired()
+  })
+})

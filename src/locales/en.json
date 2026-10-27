@@ -3026,5 +3026,12 @@
   "recovery.application.lifecycle.templateInvalidDefault": "The template catalog does not define a unique platform default.",
   "recovery.application.lifecycle.templateUnknown": "DAG template version {{version}} is not supported. Select an available version or the platform default.",
   "recovery.application.lifecycle.templateUnverified": "The current template version cannot be verified. You can save with the backend default; pushing requires a verified catalog.",
-  "recovery.application.lifecycle.templateSelectPlatform": "Select a source compute provider to load DAG template versions."
+  "recovery.application.lifecycle.templateSelectPlatform": "Select a source compute provider to load DAG template versions.",
+  "recovery.application.validation.recoveryGroupSourceMismatch": "Recovery group \"{{group}}\" in tier \"{{tier}}\" uses source \"{{actual}}\", but the application uses \"{{expected}}\". Replace the group.",
+  "recovery.application.validation.recoveryGroupSourceMissing": "Recovery group \"{{group}}\" in tier \"{{tier}}\" has no source compute provider. Replace the group.",
+  "recovery.application.validation.workloadMissing": "Workload \"{{name}}\" in tier \"{{tier}}\" no longer belongs to recovery group \"{{group}}\". Remove it or reselect the group.",
+  "recovery.application.validation.duplicateWorkloadAcrossTiers": "IBM Power v2: LPAR \"{{name}}\" is selected in tiers {{tiers}}. Select it in only one tier.",
+  "recovery.application.validation.duplicateWorkloadWithinTier": "IBM Power v2: LPAR \"{{name}}\" is repeated in tier \"{{tier}}\". Clear and reselect the group.",
+  "recovery.application.validation.tiersRequired": "Add at least one tier before saving.",
+  "recovery.application.validation.referencesUnverified": "Providers or recovery groups could not be verified. Retry loading them before saving."
 }

@@ -2992,5 +2992,12 @@
   "recovery.application.lifecycle.templateInvalidDefault": "Katalog šablon neurčuje jednoznačnou výchozí verzi.",
   "recovery.application.lifecycle.templateUnknown": "Verze DAG šablony {{version}} není podporována. Vyberte dostupnou nebo výchozí verzi.",
   "recovery.application.lifecycle.templateUnverified": "Aktuální verzi šablony nelze ověřit. Můžete uložit konfiguraci s výchozí verzí z BE; nasazení vyžaduje ověřený katalog.",
-  "recovery.application.lifecycle.templateSelectPlatform": "Vyberte zdrojového compute providera pro načtení verzí DAG šablon."
+  "recovery.application.lifecycle.templateSelectPlatform": "Vyberte zdrojového compute providera pro načtení verzí DAG šablon.",
+  "recovery.application.validation.recoveryGroupSourceMismatch": "Skupina obnovy „{{group}}“ v tieru „{{tier}}“ používá zdroj „{{actual}}“, ale aplikace používá „{{expected}}“. Nahraďte skupinu.",
+  "recovery.application.validation.recoveryGroupSourceMissing": "Skupina obnovy „{{group}}“ v tieru „{{tier}}“ nemá zdrojového compute providera. Nahraďte skupinu.",
+  "recovery.application.validation.workloadMissing": "Workload „{{name}}“ v tieru „{{tier}}“ již nepatří do skupiny obnovy „{{group}}“. Odeberte ho nebo znovu vyberte skupinu.",
+  "recovery.application.validation.duplicateWorkloadAcrossTiers": "IBM Power v2: LPAR „{{name}}“ je vybrán v tierech {{tiers}}. Vyberte ho pouze v jednom tieru.",
+  "recovery.application.validation.duplicateWorkloadWithinTier": "IBM Power v2: LPAR „{{name}}“ se opakuje v tieru „{{tier}}“. Odeberte a znovu vyberte skupinu.",
+  "recovery.application.validation.tiersRequired": "Před uložením přidejte alespoň jeden tier.",
+  "recovery.application.validation.referencesUnverified": "Providery nebo skupiny obnovy se nepodařilo ověřit. Před uložením opakujte jejich načtení."
 }
