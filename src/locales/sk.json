@@ -665,7 +665,7 @@
   "pages.recoveryGroupBuilder.topology.errors.sourceInvalid": "Zdrojový poskytovateľ FlashSystem je nedostupný alebo má neplatné prihlasovacie údaje.",
   "pages.recoveryGroupBuilder.topology.errors.partnerMissing": "Zdrojový poskytovateľ nemá dostupného partnerského poskytovateľa.",
   "pages.recoveryGroupBuilder.topology.errors.partnerSame": "Zdrojový a cieľový poskytovateľ musia byť odlišní.",
-  "pages.recoveryGroupBuilder.topology.errors.partnerInvalid": "Cieľový poskytovateľ FlashSystem je nedostupný alebo má neplatné prihlasovacie údaje.",
+  "pages.recoveryGroupBuilder.topology.errors.partnerInvalid": "Cieľový poskytovateľ FlashSystem je nedostupný, má neplatné prihlasovacie údaje alebo neodkazuje späť na zdroj ako na svojho partnera.",
   "pages.recoveryGroupBuilder.topology.errors.modeRequired": "Vyberte konfiguráciu Metro Mirror.",
   "pages.recoveryGroupBuilder.relatedStorage.title": "Súvisiace FlashSystem úložisko",
   "pages.recoveryGroupBuilder.relatedStorage.description": "Volumes súvisiace s vybranými virtuálnymi strojmi sa zisťujú automaticky. Odstráňte akýkoľvek volume, ktorý nemá byť zahrnutý.",

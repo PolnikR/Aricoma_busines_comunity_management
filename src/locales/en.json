@@ -686,7 +686,7 @@
   "pages.recoveryGroupBuilder.topology.errors.sourceInvalid": "The source FlashSystem provider is unavailable or has invalid credentials.",
   "pages.recoveryGroupBuilder.topology.errors.partnerMissing": "The source provider has no available partner provider.",
   "pages.recoveryGroupBuilder.topology.errors.partnerSame": "The source and target providers must be different.",
-  "pages.recoveryGroupBuilder.topology.errors.partnerInvalid": "The target FlashSystem provider is unavailable or has invalid credentials.",
+  "pages.recoveryGroupBuilder.topology.errors.partnerInvalid": "The target FlashSystem provider is unavailable, has invalid credentials, or does not point back to the source as its partner.",
   "pages.recoveryGroupBuilder.topology.errors.modeRequired": "Select a Metro Mirror configuration.",
   "pages.recoveryGroupBuilder.relatedStorage.title": "Related FlashSystem storage",
   "pages.recoveryGroupBuilder.relatedStorage.description": "Volumes backing the selected virtual machines are discovered automatically. Remove any volume that should not be included.",
