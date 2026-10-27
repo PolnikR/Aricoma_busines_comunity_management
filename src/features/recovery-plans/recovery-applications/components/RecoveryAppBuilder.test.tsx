@@ -209,6 +209,41 @@ function draftFixture(): RecoveryApplicationFormState {
 }
 
 describe('read-only and DAG templates', () => {
+  it('locks every mutating control and delayed callbacks on all four steps', async () => {
+    const user = userEvent.setup()
+    const onSave = vi.fn()
+    const onDirtyChange = vi.fn()
+    canvasMode.real = true
+    onTestFinished(() => { canvasMode.real = false })
+    const initialData = { ...draftFixture(), pushToOrchestrator: true, orchestrationProviderId: 'airflow-01' }
+    const { rerender } = render(<RecoveryAppBuilder initialData={initialData} onSave={onSave} onDirtyChange={onDirtyChange} />)
+    const nameBeforeLock = screen.getByLabelText('Application Name *')
+    rerender(<RecoveryAppBuilder readOnly initialData={initialData} onSave={onSave} onDirtyChange={onDirtyChange} />)
+    await user.type(nameBeforeLock, 'Unexpected')
+    act(() => { callbackHarness.metadata?.onMetadataChange?.({ name: 'Unexpected' }); callbackHarness.metadata?.onMetadataChange?.({ notificationEmail: 'changed@example.test' }) })
+    for (const control of [...screen.getAllByRole('textbox'), ...screen.getAllByRole('combobox')]) expect(control).toBeDisabled()
+    expect(screen.getByLabelText('Application Name *')).toHaveValue('Finance')
+    expect(screen.getByRole('button', { name: 'About Source vCenter' })).toBeEnabled()
+    for (const step of ['Recovery groups & tiers', 'Policy set', 'Orchestration']) {
+      await user.click(screen.getByRole('button', { name: step }))
+      for (const control of [...screen.queryAllByRole('textbox'), ...screen.queryAllByRole('combobox'), ...screen.queryAllByRole('checkbox'), ...screen.queryAllByRole('switch')]) expect(control).toBeDisabled()
+      if (step === 'Recovery groups & tiers') {
+        act(() => {
+          callbackHarness.canvas?.onRecoveryGroupRemoved?.('tier_id')
+          callbackHarness.canvas?.onRecoveryVmSelectionChange?.('tier_id', 'DB-01', false)
+          callbackHarness.canvas?.onTierDelete?.('tier_id')
+          callbackHarness.canvas?.onTierReorder?.({})
+        })
+        const card = screen.getByText('Database tier')
+        fireEvent.dragStart(card)
+        fireEvent.drop(card, { dataTransfer: { getData: () => 'database_group' } })
+      }
+    }
+    expect(screen.getByRole('button', { name: 'Save Application' })).toBeDisabled()
+    await user.click(screen.getByRole('button', { name: 'Save Application' }))
+    expect(onDirtyChange).not.toHaveBeenCalled()
+    expect(onSave).not.toHaveBeenCalled()
+  })
   it('does not query DAG templates for an unsupported stored platform', () => {
     render(<RecoveryAppBuilder readOnly initialData={draftFixture()} lockedProviders={{ platform: 'UNSUPPORTED', sourceProviderId: 'vmware-01', targetProviderId: 'vmware-target-01' }} />)
     const call = vi.mocked(useGetDagTemplateVersions).mock.lastCall
@@ -1469,6 +1504,43 @@ describe('RecoveryAppBuilder', () => {
 
 
 describe('functional consistency UI', () => {
+  it('keeps technical help available on every read-only step without dirty or save events', async () => {
+    const user = userEvent.setup()
+    const onSave = vi.fn()
+    const onDirtyChange = vi.fn()
+    render(<RecoveryAppBuilder readOnly initialData={{ ...draftFixture(), pushToOrchestrator: true }}
+      lockedProviders={{ platform: 'IBM_POWER', sourceProviderId: 'missing', targetProviderId: 'missing' }} onSave={onSave} onDirtyChange={onDirtyChange} />)
+    for (const [step, help] of [
+      ['Application details', 'About Source HMC'],
+      ['Recovery groups & tiers', 'About Power recovery workload selection'],
+      ['Policy set', 'About Power application recovery policy'],
+      ['Orchestration', 'About Save and deploy to Airflow'],
+    ]) {
+      await user.click(screen.getByRole('button', { name: step }))
+      const trigger = screen.getByRole('button', { name: help })
+      expect(trigger).toBeEnabled()
+      await user.click(trigger)
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
+      await user.keyboard('{Escape}')
+    }
+    await user.click(screen.getByRole('button', { name: 'About Airflow deployment provider' }))
+    expect(screen.getByRole('dialog')).toHaveTextContent('orchestration.provider_id')
+    expect(onSave).not.toHaveBeenCalled()
+    expect(onDirtyChange).not.toHaveBeenCalled()
+  })
+
+  it.each(['loading', 'error', 'empty', 'ready'])('shows one Airflow helper in the %s provider state', async state => {
+    const previous = { ...platformProvidersQuery.current }
+    onTestFinished(() => { Object.assign(platformProvidersQuery.current, previous) })
+    platformProvidersQuery.current.isLoading = state === 'loading'
+    platformProvidersQuery.current.error = state === 'error' ? new Error('offline') : null
+    if (state === 'empty') platformProvidersQuery.current.data = []
+    render(<RecoveryAppBuilder readOnly initialData={{ ...draftFixture(), pushToOrchestrator: true }} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Orchestration' }))
+    expect(screen.getAllByRole('button', { name: 'About Airflow deployment provider' })).toHaveLength(1)
+    expect(screen.getByRole('button', { name: 'About Airflow deployment provider' })).toBeEnabled()
+  })
+
   beforeEach(() => { providersQuery.current.error = null; recoveryGroupsQuery.current.error = null; recoveryGroupsQuery.current.isLoading = false })
   it('renders and preserves email through wizard navigation', async () => {
     const user = userEvent.setup()

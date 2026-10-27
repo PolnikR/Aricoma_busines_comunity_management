@@ -5,7 +5,7 @@ import { Button } from '@/shared/components/button/Button'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { Alert } from '@/shared/components/alert/Alert'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
-import { Field, Select } from '@/shared/components/form/FormControls'
+import { Select } from '@/shared/components/form/FormControls'
 import { PolicySetPicker } from '@/shared/components/policy-set-picker/PolicySetPicker'
 import { ResourceSidebar } from '@/shared/components/resource-sidebar/ResourceSidebar'
 import { Spinner } from '@/shared/components/spinner/Spinner'
@@ -29,6 +29,8 @@ import type { ApplicationMetadataPatch, SourceChangeProposal } from '../model/re
 import { getEligiblePlatformProviders } from '../utils/eligibleProviders'
 import { getRecoveryApplicationDraftReadiness } from '../model/recoveryApplicationDraftReadiness'
 import type { DraftRecoveryTier, LockedProviders, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
+import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
+import { recoveryApplicationHelpKey, recoveryApplicationTierOrderHelpKey } from '../helpers/recoveryApplicationFieldHelp'
 
 interface RecoveryAppBuilderProps {
   onSave?: (appState: RecoveryApplicationFormState) => void
@@ -243,6 +245,13 @@ export function RecoveryAppBuilder({
     },
   ]
 
+  const helpPlatform = lockedProviders ? lockedProviders.platform : providersQuery.isLoading || providersQuery.error ? undefined : platform
+  const workloadsHelpKey = recoveryApplicationHelpKey('workloads', helpPlatform)
+  const tierOrderHelpKey = recoveryApplicationTierOrderHelpKey(helpPlatform, formState.dagTemplateVersion, {
+    templates, verified: templateCatalog.verified && !templatesQuery.isPending,
+  })
+  const policyHelpKey = recoveryApplicationHelpKey('policySet', helpPlatform)
+
   const handleSave = () => {
     if (isFormDisabled || !canSave) return
     onSave?.(formState)
@@ -262,7 +271,7 @@ export function RecoveryAppBuilder({
         </aside>
         <div className="flex min-h-0 flex-col">
           <div className={`custom-scrollbar min-h-0 flex-1 p-5 sm:p-6 ${step === 2 || step === 3 ? 'overflow-hidden' : 'overflow-y-auto'}`}>
-            <fieldset role="presentation" className="contents" disabled={readOnly}
+            <div className="contents"
               onDragStartCapture={event => { if (isFormDisabled) { event.preventDefault(); event.stopPropagation() } }}
               onDropCapture={event => { if (isFormDisabled) { event.preventDefault(); event.stopPropagation() } }}>
             {lockedProviders && providersQuery.error ? (
@@ -283,6 +292,8 @@ export function RecoveryAppBuilder({
                   <p className="mt-1 text-sm text-text-muted">{t('pages.recoveryBuilder.details.description')}</p>
                 </div>
                 <AppMetadataForm
+                  readOnly={readOnly}
+                  helpPlatform={helpPlatform}
                   onMetadataChange={handleMetadataChange}
                   disableFileName={disableFileName}
                   initialValues={{
@@ -306,10 +317,18 @@ export function RecoveryAppBuilder({
             {step === 2 ? (
               <div className="flex h-full min-h-[480px] flex-col gap-4">
                 <div>
-                  <h2 className="text-base font-semibold text-text-primary">{t('pages.recoveryBuilder.tiers.title')}</h2>
+                  <div className="flex min-w-0 items-center gap-1.5">
+                    <h2 className="text-base font-semibold text-text-primary">{t('pages.recoveryBuilder.tiers.title')}</h2>
+                    <KeyedHelpPopover key={tierOrderHelpKey} helpKey={tierOrderHelpKey} sections={['effect', 'limitations']} />
+                  </div>
                   <p className="mt-1 text-sm text-text-muted">{t('pages.recoveryBuilder.tiers.description')}</p>
                 </div>
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <h3 className="text-sm font-semibold text-text-primary">{t('pages.recoveryBuilder.tiers.workloadSelection')}</h3>
+                  <KeyedHelpPopover key={workloadsHelpKey} helpKey={workloadsHelpKey} sections={['effect', 'limitations']} />
+                </div>
                 {tiersError && !groupsError ? <Alert variant="warning" title={t(tiersError.messageKey, tiersError.params)} /> : null}
+                <fieldset className="contents" disabled={readOnly}>
                 <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden rounded-lg border border-border lg:grid-cols-[280px_minmax(0,1fr)]">
                   {/* Bounded on small screens too, so the virtualized group list keeps its own scroll. */}
                   <div className="custom-scrollbar h-72 min-h-0 overflow-y-auto border-b border-border lg:h-auto lg:border-b-0 lg:border-r">
@@ -346,12 +365,16 @@ export function RecoveryAppBuilder({
                     />
                   </div>
                 </div>
+                </fieldset>
               </div>
             ) : null}
 
             {step === 3 ? (
               <div className="flex h-full min-h-0 flex-col">
-                <h2 className="text-base font-semibold text-text-primary">{t('pages.recoveryBuilder.policySet.title')}</h2>
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <h2 className="text-base font-semibold text-text-primary">{t('pages.recoveryBuilder.policySet.title')}</h2>
+                  <KeyedHelpPopover key={policyHelpKey} helpKey={policyHelpKey} sections={['effect', 'limitations']} />
+                </div>
                 <p className="mt-1 text-sm text-text-muted">{t('pages.recoveryBuilder.policySet.description')}</p>
                 {readOnly && formState.policySetId ? <p className="mt-2 text-sm text-text-secondary">{formState.policySetId}</p> : null}
                 {policySetsQuery.isLoading ? (
@@ -373,13 +396,13 @@ export function RecoveryAppBuilder({
                         {t('pages.recoveryBuilder.policySet.unavailable')}
                       </p>
                     ) : null}
-                    <div className="mt-5 min-h-0 flex-1">
+                    <fieldset className="mt-5 min-h-0 flex-1" disabled={readOnly}>
                       <PolicySetPicker
                         policySets={policySetsQuery.data}
                         selectedPolicySetId={formState.policySetId}
                         onSelect={(policySetId) => { updateFormState({ policySetId }) }}
                       />
-                    </div>
+                    </fieldset>
                   </>
                 ) : (
                   <div className="mt-5 max-w-4xl">
@@ -411,10 +434,13 @@ export function RecoveryAppBuilder({
                     checked={formState.pushToOrchestrator}
                     onChange={checked => { updateFormState({ pushToOrchestrator: checked }) }}
                     label={t('recovery.application.orchestration.toggleLabel')}
-                    disabled={lockPushToOrchestrator}
+                    disabled={readOnly || lockPushToOrchestrator}
                   />
                   <div>
-                    <p className="text-sm font-semibold text-text-primary">{t('recovery.application.orchestration.toggleLabel')}</p>
+                    <div className="flex min-w-0 items-center gap-1.5">
+                      <p className="text-sm font-semibold text-text-primary">{t('recovery.application.orchestration.toggleLabel')}</p>
+                      <KeyedHelpPopover helpKey="recoveryApplications.fieldHelp.push" sections={['effect', 'limitations']} />
+                    </div>
                     <p className="mt-1 text-xs text-text-muted">
                       {t(formState.pushToOrchestrator
                         ? 'recovery.application.orchestration.enabled'
@@ -425,6 +451,14 @@ export function RecoveryAppBuilder({
                     ) : null}
                   </div>
                 </div>
+                {formState.pushToOrchestrator ? (
+                  <div className="mt-5 flex min-w-0 items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+                    {platformProvidersQuery.error || (!platformProvidersQuery.isLoading && eligiblePlatformProviders.length === 0)
+                      ? <span className="text-xs font-medium text-text-secondary">{t('pages.recoveryBuilder.orchestration.providerLabel')}</span>
+                      : <label htmlFor="recovery-application-orchestration-provider" className="text-xs font-medium text-text-secondary">{t('pages.recoveryBuilder.orchestration.providerLabel')}</label>}
+                    <KeyedHelpPopover helpKey="recoveryApplications.fieldHelp.airflow" sections={['effect', 'limitations']} />
+                  </div>
+                ) : null}
                 {formState.pushToOrchestrator && platformProvidersQuery.error ? (
                   <div className="mt-5 max-w-4xl">
                     <FetchErrorAlert
@@ -444,12 +478,11 @@ export function RecoveryAppBuilder({
                   </div>
                 ) : formState.pushToOrchestrator ? (
                   <div className="mt-5 max-w-4xl">
-                    <Field label={t('pages.recoveryBuilder.orchestration.providerLabel')} htmlFor="recovery-application-orchestration-provider">
                       <Select
                         id="recovery-application-orchestration-provider"
                         value={formState.orchestrationProviderId}
                         onChange={event => { updateFormState({ orchestrationProviderId: event.target.value }) }}
-                        disabled={platformProvidersQuery.isLoading}
+                        disabled={readOnly || platformProvidersQuery.isLoading}
                         required={formState.pushToOrchestrator}
                       >
                         <option value="">
@@ -461,12 +494,11 @@ export function RecoveryAppBuilder({
                           <option key={provider.id} value={provider.id}>{provider.name} - {provider.type}</option>
                         ))}
                       </Select>
-                    </Field>
                   </div>
                 ) : null}
               </div>
             ) : null}
-            </fieldset>
+            </div>
           </div>
           {validationError && !(formState.pushToOrchestrator && platformProvidersQuery.error) && (step === 4 || (step === 1 && validationError.field === 'notificationEmail')) ? <Alert className="mx-4 mb-3" variant="warning" title={t(validationError.messageKey, validationError.params)} /> : null}
           <div className="flex flex-col-reverse gap-3 border-t border-border bg-surface-subtle p-4 sm:flex-row sm:items-center sm:justify-between">
