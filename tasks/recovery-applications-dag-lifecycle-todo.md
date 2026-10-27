@@ -254,3 +254,31 @@ Pokrytá matica: create/default/explicit Save-only, VMware a Power lifecycle, Po
 Nezávislé review: tri material findings opravené (Create permanent409 lock, Create uncertain-result retry bez GET, retained ID aktívny link), scoped re-review bez zostávajúcich material findings. Prvý stale-cache Editor draft problém zachytený samostatným review a pokrytý `RecoveryApplicationEditorPage.cache.test.tsx`.
 
 Limity: reálna BE integrácia ani živé provisioning/rollback akcie neboli spustené; mocked browser nie je live integration dôkaz. Celá test suite ani production build neboli spustené podľa focused-verification pravidiel. BE, generated Orval, OpenAPI a Recovery Groups zostali bez zmien. HEAD nezmenený `bea04841`, žiadny commit ani push.
+
+## Oprava siedmich hlásených zlyhaní po úprave UX
+
+Priložený full-suite výpis hlásil 7 zlyhaní v 4 súboroch. Rozpracované zmeny boli zosúladené bez návratu starého UX: default template je jedna položka `version (default)`, jej wire hodnota ostáva null; explicitný Save-only test vyberá nondefault v2. Pushed menu/drawer Edit otvára readonly wizard, pričom Editor naďalej blokuje mutácie. Preklady EN/SK/CS a browser QA očakávania zodpovedajú týmto pravidlám. Nesúvisiaci routing snapshot nie je súčasťou opravy.
+
+Pri kontrole navyše reprodukované zlyhanie uloženej explicitnej default verzie pri failed refresh cached katalógu: default option sa odfiltrovala a select ukazoval prázdnu hodnotu. Nový regression test bol najprv red; selector teraz zachová takúto uloženú hodnotu ako disabled option bez duplicity.
+
+Overenie: štyri pôvodne zlyhávajúce súbory 127/127 green; súvisiace Editor/cache/Table/orchestration/locale regresie 81/81 green pred pridaním novej regresie. Finálny spoločný focused run: **9 súborov, 209/209 testov passed**, 103.56 s. Focused ESLint dotknutých TS/TSX/QA súborov, `node --check scripts/qa/verify-recovery-applications-dag-lifecycle.mjs` a `git diff --check` prešli. Full suite, production build ani live infra akcie sa v tejto oprave neopakovali; rozsah zlyhaní je presne známy.
+
+Finálny testovací príkaz používal explicitne tieto cesty:
+
+```powershell
+$app = 'src/features/recovery-plans/recovery-applications'
+$failedTestRegression = @(
+  "$app/components/DagTemplateVersionSelect.test.tsx"
+  "$app/components/RecoveryAppBuilder.test.tsx"
+  "$app/components/RecoveryApplicationsTable.lifecycle.test.tsx"
+  "$app/pages/RecoveryApplicationsListPage.test.tsx"
+  "$app/pages/RecoveryApplicationEditorPage.test.tsx"
+  "$app/pages/RecoveryApplicationEditorPage.cache.test.tsx"
+  "$app/components/RecoveryApplicationsTable.test.tsx"
+  "$app/components/RecoveryApplicationsTable.orchestration.test.tsx"
+  'src/locales/recoveryApplicationLifecycleTranslations.test.ts'
+)
+npm.cmd exec -- vitest run @failedTestRegression --maxWorkers=2
+```
+
+Počas overovania pribudol súbežný commit `c57c1dc2` zahŕňajúci hlavné opravy aj novú cached-default regresiu. Následná oprava ponecháva iba lintom potvrdené odstránenie redundantného null fallbacku v selecte a tento verifikačný záznam; routing snapshot sa nestaguje.

@@ -33,7 +33,7 @@ export function DagTemplateVersionSelect({ platform, value, templates, isLoading
           {available && defaultVersion
             ? <option value={defaultVersion.version}>{t('recovery.application.lifecycle.templateDefault', { version: defaultVersion.version })}</option>
             : <option value="">{t('recovery.application.lifecycle.templateDefaultUnavailable')}</option>}
-          {unknown || (!available && value !== null && selected?.default === true) ? <option value={value ?? ''}>{value}</option> : null}
+          {unknown || (!available && value !== null && selected?.default === true) ? <option value={value}>{value}</option> : null}
           {templates.filter(template => !template.default).map(template => <option key={template.version} value={template.version}>{template.version}</option>)}
         </Select>
       </Field>
