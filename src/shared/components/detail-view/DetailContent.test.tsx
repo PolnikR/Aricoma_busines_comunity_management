@@ -11,6 +11,18 @@ vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'
 const clipboardText = () => navigator.clipboard.readText()
 
 describe('DetailField', () => {
+  it.each(['grid', 'overview', 'technical'])('keeps optional label help next to the term in %s layout', layout => {
+    const field = <DetailField label="URL" value="https://provider.test" copyValue="https://provider.test"
+      labelHelp={<button type="button" aria-label="Help: URL">?</button>} />
+    render(layout === 'overview'
+      ? <DetailOverview>{field}</DetailOverview>
+      : layout === 'technical' ? <DetailTechnicalGroup>{field}</DetailTechnicalGroup> : <dl>{field}</dl>)
+    const term = screen.getByRole('term')
+    expect(term).toContainElement(screen.getByRole('button', { name: 'Help: URL' }))
+    expect(screen.getByRole('definition')).toHaveTextContent('https://provider.test')
+    expect(screen.getByRole('button', { name: 'Copy URL' })).toBeInTheDocument()
+  })
+
   it('pairs the label and value as dt + dd and shows the secondary line', () => {
     render(<dl><DetailField label="Policy set" value="test_1_hour_ps" secondary="Snapshot every 1 h" emphasis /></dl>)
     const term = screen.getByRole('term')

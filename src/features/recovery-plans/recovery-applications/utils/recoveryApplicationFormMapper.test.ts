@@ -55,6 +55,59 @@ const application: RecoveryApplicationListItem = {
 }
 
 describe('recoveryApplicationFormMapper', () => {
+  it.each(['dr-team@example.test', null, undefined])('preserves the exact rich multi-tier wire payload with email %s across local/pushed Create and authoritative Edit', notificationEmail => {
+    const record = {
+      ...application,
+      data: { application: { ...application.data.application, notificationEmail } },
+    }
+    const state = toRecoveryApplicationFormState(record)
+    state.tiers = new Map([
+      ['database', {
+        order: 1, description: 'Database server tier',
+        recovery_group: {
+          id: 'database_group', name: 'Database Group', description: 'Database recovery group',
+          vms: [{ name: 'db-01', order: 1, hostname: 'db-01.example.test', ip_address: '192.0.2.10', os: 'Linux', cpu: 8, memory_gb: 32, storage_gb: 200 }],
+        },
+      }],
+      ['web', {
+        order: 2, description: 'Web server tier',
+        recovery_group: { id: 'web_group', name: 'Web Group', description: 'Web recovery group', vms: [{ name: 'web-01', order: 1 }] },
+      }],
+    ])
+    const before = structuredClone(state)
+    const recordBefore = structuredClone(record)
+    const expected = {
+      id: 'Finance', policy_set_id: 'test_1_hour_ps',
+      application: {
+        name: 'Finance', description: 'Finance recovery', environment: 'prod', platform: 'VMWARE',
+        source_provider_id: 'vmware-vcenter-01', target_provider_id: 'vmware-dr-01', notificationEmail: notificationEmail ?? null,
+        tiers: {
+          database: {
+            order: 1, description: 'Database server tier',
+            recovery_group: {
+              id: 'database_group', name: 'Database Group', description: 'Database recovery group',
+              vms: [{ name: 'db-01', order: 1, hostname: 'db-01.example.test', ip_address: '192.0.2.10', os: 'Linux', cpu: 8, memory_gb: 32, storage_gb: 200 }],
+            },
+          },
+          web: {
+            order: 2, description: 'Web server tier',
+            recovery_group: { id: 'web_group', name: 'Web Group', description: 'Web recovery group', vms: [{ name: 'web-01', order: 1 }] },
+          },
+        },
+      },
+    }
+    for (const pushToOrchestrator of [false, true]) {
+      const draft = { ...state, pushToOrchestrator, orchestrationProviderId: 'airflow-01' }
+      expect(toRecoveryApplicationData(draft, providers)).toEqual(expected)
+      expect(toRecoveryApplicationData({ ...draft, platform: 'draft-source', targetProviderId: 'draft-target' }, [], {
+        platform: 'VMWARE', sourceProviderId: 'vmware-vcenter-01', targetProviderId: 'vmware-dr-01',
+      })).toEqual(expected)
+    }
+    expect(state).toEqual(before)
+    expect([...state.tiers]).toEqual([...before.tiers])
+    expect(record).toEqual(recordBefore)
+  })
+
   it('maps backend data to detached builder state', () => {
     const formState = toRecoveryApplicationFormState(application)
 

@@ -1,9 +1,10 @@
 import type { ChangeEvent } from 'react'
 import { Field, Input, Select } from '@/shared/components/form/FormControls'
+import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { MultiSelect } from '@/shared/components/form/MultiSelect'
 import { useTranslation } from '@/hooks/useTranslation'
 import { PROVIDER_ROLES, PROVIDER_TYPES } from '../model/providerTypes'
-import { isComputeProviderType, isPartnerProviderType } from '../model/providerCategory'
+import { getProviderFieldConfig } from '../model/providerFieldConfig'
 import type { CredentialRecord } from '@/generated/query/zod'
 
 export interface ProviderCreateFormData {
@@ -19,6 +20,7 @@ export interface ProviderCreateFormData {
   vmTags: string[]
   backingStorageProviderIds: string[]
   partnerProviderId: string
+  managedSystem: string
   notificationEmail: string
   cacheRefreshSeconds: string
 }
@@ -76,6 +78,8 @@ export function ProviderCreateForm({
   onSubmit,
 }: ProviderCreateFormProps) {
   const { t } = useTranslation()
+  const showCommonHelp = PROVIDER_TYPES.some(type => type === data.type)
+  const fieldConfig = getProviderFieldConfig(data.type)
   const partnerOptions = partnerProviders.filter(provider => provider.id !== data.id)
   const partnerMissing = data.partnerProviderId && !partnerOptions.some(provider => provider.id === data.partnerProviderId)
   const storageOptions = [
@@ -86,10 +90,7 @@ export function ProviderCreateForm({
   const selectedCredentialIsMissing = Boolean(
     data.credentialId && !credentials.some(credential => credential.id === data.credentialId),
   )
-  const selectedVmTag = data.vmTags[0] ?? ''
-  const vmTagOptions = selectedVmTag && !tags.includes(selectedVmTag)
-    ? [selectedVmTag, ...tags]
-    : tags
+  const vmTagOptions = [...new Set([...tags, ...data.vmTags])].map(tag => ({ value: tag, label: tag }))
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Enter' && !isSubmitting) {
       event.preventDefault()
@@ -98,8 +99,8 @@ export function ProviderCreateForm({
   }
 
   return (
-    <div className="space-y-4 px-6 py-4">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+    <div className="space-y-3 px-6 py-4">
+      <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">
         <Field label={t('forms.id')} htmlFor="create-id">
           <Input
             id="create-id"
@@ -144,7 +145,7 @@ export function ProviderCreateForm({
         {errors.description ? <p className="mt-1 text-xs text-red-600">{errors.description}</p> : null}
       </Field>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">
         <Field label={t('forms.type')} htmlFor="create-type">
           <Select
             id="create-type"
@@ -159,7 +160,11 @@ export function ProviderCreateForm({
           {errors.type ? <p className="mt-1 text-xs text-red-600">{errors.type}</p> : null}
         </Field>
 
-        <Field label={t('forms.role')} htmlFor="create-role">
+        <div className="block">
+          <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+            <label htmlFor="create-role" className="text-xs font-medium text-text-secondary">{t('forms.role')}</label>
+            {showCommonHelp ? <KeyedHelpPopover helpKey="providers.fieldHelp.role" sections={[]} /> : null}
+          </div>
           <Select
             id="create-role"
             value={data.role}
@@ -173,10 +178,10 @@ export function ProviderCreateForm({
             ))}
           </Select>
           {errors.role ? <p className="mt-1 text-xs text-red-600">{errors.role}</p> : null}
-        </Field>
+        </div>
       </div>
 
-      <div>
+      <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2 md:[&>:last-child:nth-child(odd)]:col-span-2">
         <Field label={t('forms.ip')} htmlFor="create-ipAddress">
           <Input
             id="create-ipAddress"
@@ -191,34 +196,41 @@ export function ProviderCreateForm({
           {errors.ipAddress ? <p className="mt-1 text-xs text-red-600">{errors.ipAddress}</p> : null}
         </Field>
 
-      </div>
+        {fieldConfig.partnerProviderId ? (
+          <div className="block">
+            <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+              <label htmlFor="create-partnerProviderId" className="text-xs font-medium text-text-secondary">{t('forms.partnerProvider')}</label>
+              <KeyedHelpPopover helpKey="providers.fieldHelp.partnerProviderId" sections={[]} />
+            </div>
+            <Select id="create-partnerProviderId" value={data.partnerProviderId} aria-label={t('forms.partnerProvider')}
+              disabled={isSubmitting} aria-invalid={Boolean(errors.partnerProviderId)}
+              onChange={event => { onChange('partnerProviderId', event.target.value) }}>
+              <option value="">{t('forms.partnerProviderNone')}</option>
+              {partnerMissing ? <option value={data.partnerProviderId} disabled>{data.partnerProviderId} ({t('forms.partnerProviderUnavailable')})</option> : null}
+              {partnerOptions.map(provider => <option key={provider.id} value={provider.id}>{provider.name} — {provider.id}</option>)}
+            </Select>
+            {errors.partnerProviderId ? <p role="alert" className="mt-1 text-xs text-red-600">{errors.partnerProviderId}</p> : null}
+          </div>
+        ) : null}
 
-      {isPartnerProviderType(data.type) ? (
-        <Field label={t('forms.partnerProvider')} htmlFor="create-partnerProviderId">
-          <Select id="create-partnerProviderId" value={data.partnerProviderId} aria-label={t('forms.partnerProvider')}
-            disabled={isSubmitting} aria-invalid={Boolean(errors.partnerProviderId)}
-            onChange={event => { onChange('partnerProviderId', event.target.value) }}>
-            <option value="">{t('forms.partnerProviderNone')}</option>
-            {partnerMissing ? <option value={data.partnerProviderId} disabled>{data.partnerProviderId} ({t('forms.partnerProviderUnavailable')})</option> : null}
-            {partnerOptions.map(provider => <option key={provider.id} value={provider.id}>{provider.name} — {provider.id}</option>)}
-          </Select>
-          <p className="mt-1 text-xs text-text-muted">{t('forms.partnerProviderHelper')}</p>
-          {errors.partnerProviderId ? <p role="alert" className="mt-1 text-xs text-red-600">{errors.partnerProviderId}</p> : null}
-        </Field>
-      ) : null}
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {isComputeProviderType(data.type) ? (
-          <Field label={t('forms.backingStorageProviders')} htmlFor="create-backingStorageProviders">
+        {fieldConfig.backingStorageProviderIds ? (
+          <div className="block [&>div>button]:h-10 [&>div>button]:justify-between [&>div>button]:px-3 [&>div>button]:py-0">
+            <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+              <label htmlFor="create-backingStorageProviders" className="text-xs font-medium text-text-secondary">{t('forms.backingStorageProviders')}</label>
+              <KeyedHelpPopover helpKey="providers.fieldHelp.backingStorageProviderIds" sections={[]} />
+            </div>
             <MultiSelect id="create-backingStorageProviders" label={t('forms.backingStorageProviders')}
               options={storageOptions} value={data.backingStorageProviderIds}
               onChange={onBackingStorageChange} disabled={isSubmitting}
               placeholder={t('forms.backingStorageProvidersSelect')} emptyText={t('forms.backingStorageProvidersEmpty')} />
-            <p className="mt-1 text-xs text-text-muted">{t('forms.backingStorageProvidersHelper')}</p>
-          </Field>
+          </div>
         ) : null}
 
-        <Field label={t('forms.cacheRefreshSeconds')} htmlFor="create-cacheRefreshSeconds">
+        <div className="block">
+          <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+            <label htmlFor="create-cacheRefreshSeconds" className="text-xs font-medium text-text-secondary">{t('forms.cacheRefreshSeconds')}</label>
+            {showCommonHelp ? <KeyedHelpPopover helpKey="providers.fieldHelp.cacheRefreshSeconds" sections={[]} /> : null}
+          </div>
           <Input
             id="create-cacheRefreshSeconds"
             type="number"
@@ -230,13 +242,27 @@ export function ProviderCreateForm({
             disabled={isSubmitting}
             aria-invalid={Boolean(errors.cacheRefreshSeconds)}
           />
-          <p className="mt-1 text-xs text-text-muted">{t('forms.cacheRefreshSecondsHelper')}</p>
           {errors.cacheRefreshSeconds ? <p className="mt-1 text-xs text-red-600">{errors.cacheRefreshSeconds}</p> : null}
-        </Field>
-      </div>
+        </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <Field label={t('forms.vmPrefix')} htmlFor="create-vmPrefix">
+        {fieldConfig.managedSystem ? (
+          <div className="block">
+            <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+              <label htmlFor="create-managedSystem" className="text-xs font-medium text-text-secondary">{t('forms.managedSystem')}</label>
+              <KeyedHelpPopover helpKey="providers.fieldHelp.managedSystem" sections={[]} />
+            </div>
+            <Input id="create-managedSystem" type="text" value={data.managedSystem} aria-label={t('forms.managedSystem')}
+              onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('managedSystem', event.target.value) }}
+              onKeyDown={handleKeyDown} disabled={isSubmitting} aria-invalid={Boolean(errors.managedSystem)} />
+            {errors.managedSystem ? <p className="mt-1 text-xs text-red-600">{errors.managedSystem}</p> : null}
+          </div>
+        ) : null}
+
+        {fieldConfig.vmPrefix ? <div className="block">
+          <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+            <label htmlFor="create-vmPrefix" className="text-xs font-medium text-text-secondary">{t('forms.vmPrefix')}</label>
+            <KeyedHelpPopover helpKey="providers.fieldHelp.vmPrefix" sections={[]} />
+          </div>
           <Input
             id="create-vmPrefix"
             type="text"
@@ -247,20 +273,17 @@ export function ProviderCreateForm({
             aria-invalid={Boolean(errors.vmPrefix)}
           />
           {errors.vmPrefix ? <p className="mt-1 text-xs text-red-600">{errors.vmPrefix}</p> : null}
-        </Field>
+        </div> : null}
 
-        <Field label={t('forms.vmTags')} htmlFor="create-vmTags">
-          <Select
-            id="create-vmTags"
-            value={selectedVmTag}
-            onChange={(event: ChangeEvent<HTMLSelectElement>) => {
-              onTagsChange(event.target.value ? [event.target.value] : [])
-            }}
+        {fieldConfig.vmTags ? <div className="block [&>div>button]:h-10 [&>div>button]:justify-between [&>div>button]:px-3 [&>div>button]:py-0">
+          <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+            <label htmlFor="create-vmTags" className="text-xs font-medium text-text-secondary">{t('forms.vmTags')}</label>
+            <KeyedHelpPopover helpKey="providers.fieldHelp.vmTags" sections={[]} />
+          </div>
+          <MultiSelect id="create-vmTags" label={t('forms.vmTags')}
+            options={vmTagOptions} value={data.vmTags} onChange={onTagsChange}
             disabled={isSubmitting || tagsDisabled}
-          >
-            <option value="">{t('forms.vmTagsSelect')}</option>
-            {vmTagOptions.map(tag => <option key={tag} value={tag}>{tag}</option>)}
-          </Select>
+            placeholder={t('forms.vmTagsSelect')} emptyText={t('forms.vmTagsEmpty')} />
           {tagsLoading ? <p className="mt-1 text-xs text-text-muted" role="status">{t('providers.tags.loading')}</p> : null}
           {tagsError ? (
             <p className="mt-1 text-xs text-red-600" role="alert">
@@ -272,11 +295,13 @@ export function ProviderCreateForm({
               ) : null}
             </p>
           ) : null}
-        </Field>
-      </div>
+        </div> : null}
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <Field label={t('forms.credentials')} htmlFor="create-credentials">
+        <div className="block">
+          <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+            <label htmlFor="create-credentials" className="text-xs font-medium text-text-secondary">{t('forms.credentials')}</label>
+            {showCommonHelp ? <KeyedHelpPopover helpKey="providers.fieldHelp.credentialId" sections={[]} /> : null}
+          </div>
           <Select
             id="create-credentials"
             value={data.credentialId}
@@ -305,12 +330,13 @@ export function ProviderCreateForm({
               </button>
             </p>
           ) : null}
-        </Field>
+        </div>
 
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <Field label={t('forms.url')} htmlFor="create-url">
+        <div className="block">
+          <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+            <label htmlFor="create-url" className="text-xs font-medium text-text-secondary">{t('forms.url')}</label>
+            {showCommonHelp ? <KeyedHelpPopover helpKey="providers.fieldHelp.url" sections={[]} /> : null}
+          </div>
           <Input
             id="create-url"
             type="url"
@@ -321,9 +347,13 @@ export function ProviderCreateForm({
             aria-invalid={Boolean(errors.url)}
           />
           {errors.url ? <p className="mt-1 text-xs text-red-600">{errors.url}</p> : null}
-        </Field>
+        </div>
 
-        <Field label={t('forms.notificationEmail')} htmlFor="create-notificationEmail">
+        <div className="block">
+          <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+            <label htmlFor="create-notificationEmail" className="text-xs font-medium text-text-secondary">{t('forms.notificationEmail')}</label>
+            {showCommonHelp ? <KeyedHelpPopover helpKey="providers.fieldHelp.notificationEmail" sections={[]} /> : null}
+          </div>
           <Input
             id="create-notificationEmail"
             type="email"
@@ -334,7 +364,7 @@ export function ProviderCreateForm({
             aria-invalid={Boolean(errors.notificationEmail)}
           />
           {errors.notificationEmail ? <p className="mt-1 text-xs text-red-600">{errors.notificationEmail}</p> : null}
-        </Field>
+        </div>
 
       </div>
 

@@ -30,6 +30,15 @@ const latestPolicy: RecoveryAppPolicyRecordOutput = {
 }
 
 describe('RecoveryAppPoliciesTable', () => {
+  it('shows a missing time range age as not set without inventing a zero interval', async () => {
+    render(<RecoveryAppPoliciesTable policies={[{ ...policy, snapshot_selection_mode: 'time_range', snapshot_max_age_value: null, snapshot_max_age_unit: null, manual_wwpn_entry: true }]} isLoading={false} error={null} isRetrying={false} onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No request in this test. */ }} />)
+    await userEvent.click(screen.getByText('Medium monthly'))
+    const fields = detailSectionsFields(screen.getByRole('dialog', { name: 'Recovery app policy detail' }))
+    expect(fields['Maximum snapshot age']).toBe('Not set')
+    expect(fields['Manual WWPN entry']).toBe('Yes')
+    expect(fields).not.toHaveProperty('Target time')
+  })
+
   it('renders an empty-string description as a dash', () => {
     render(
       <RecoveryAppPoliciesTable
@@ -82,12 +91,15 @@ describe('RecoveryAppPoliciesTable', () => {
     const overview = within(modelCDrawer).getByRole('region', { name: 'Overview' })
     expect(overview.querySelectorAll('dl')).toHaveLength(1)
     expect(detailSectionsLabels(modelCDrawer)).toEqual([
-      'Policy ID', 'Description', 'Level', 'Frequency', 'Retention', 'Snapshot selection', 'Boot verification', 'Status',
-      'Target LPAR prefix', 'Manual zoning', 'Source shutdown timeout', 'Zoning wait',
+      'Policy ID', 'Description', 'Level', 'Frequency', 'Retention', 'Snapshot selection', 'Target time', 'Boot verification', 'Status',
+      'Target LPAR prefix', 'Manual zoning', 'Manual WWPN entry', 'Source shutdown timeout', 'Zoning wait',
     ])
     expect(detailSectionsFields(modelCDrawer)).toMatchObject({
       'Target LPAR prefix': 'dr_',
       'Manual zoning': 'No',
+      'Manual WWPN entry': 'No',
+      'Snapshot selection': 'Snapshot closest to exact time',
+      'Target time': '02:00',
       'Source shutdown timeout': '300 seconds',
       'Zoning wait': '240 minutes',
     })

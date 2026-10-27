@@ -5,8 +5,13 @@ import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type { PolicySetRecordOutput } from '@/generated/query/zod'
 import { PolicySetsTable } from './PolicySetsTable'
 import { detailNavigationLabels, detailSectionsLabels } from '@/test-utils/detailView'
+import en from '@/locales/en.json'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+vi.mock('react-router', async (importOriginal) => ({
+  ...await importOriginal<typeof import('react-router')>(),
+  useBlocker: () => ({ state: 'unblocked' as const }),
+}))
 const { deleteMutation, snapshotState } = vi.hoisted(() => ({
   snapshotState: { error: null as Error | null, refetch: vi.fn() },
   deleteMutation: { mutate: vi.fn(), isPending: false, error: null as Error | null },
@@ -51,6 +56,44 @@ const partialPolicySet: PolicySetRecordOutput = {
 }
 
 describe('PolicySetsTable', () => {
+  it.each(['resolved', 'missing', 'unknown', 'notConfigured'] as const)('preserves %s references while opening field help', async status => {
+    const record: PolicySetRecordOutput = status === 'notConfigured'
+      ? { id: policySet.id, name: policySet.name, description: policySet.description ?? '', snapshot_policy_id: null, clean_room_policy_id: '' }
+      : status === 'resolved' ? policySet : { ...policySet, snapshot_policy_id: 'historic-snapshot' }
+    snapshotState.error = status === 'unknown' ? new Error('unavailable') : null
+    try {
+      render(<PolicySetsTable policySets={[record]} isLoading={false} error={null} isRetrying={false} onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No list request in this test. */ }} />)
+      const user = userEvent.setup()
+      await user.click(screen.getByText(record.name))
+      const detail = screen.getByRole('dialog', { name: 'Policy set detail' })
+      const overview = within(detail).getByRole('region', { name: 'Overview' })
+      const before = overview.textContent
+      for (const field of ['snapshot_policy_id', 'recovery_app_policy_id', 'clean_room_policy_id'] as const) {
+        const trigger = within(detail).getByRole('button', { name: en[`policySets.fieldHelp.${field}.trigger`] })
+        expect(trigger.closest('dt')).not.toBeNull()
+        await user.click(trigger)
+        expect(screen.getByRole('dialog', { name: en[`policySets.fieldHelp.${field}.title`] })).toHaveTextContent(en[`policySets.fieldHelp.${field}.intro`])
+        await user.keyboard('{Escape}')
+        expect(detail).toBeInTheDocument()
+        expect(trigger).toHaveFocus()
+        expect(overview.textContent).toBe(before)
+      }
+      if (status === 'notConfigured') expect(within(overview).getAllByText('Not set')).toHaveLength(3)
+      else if (status === 'resolved') {
+        expect(within(overview).getByText('Medium — 6h')).toBeInTheDocument()
+        await user.click(within(detail).getByRole('button', { name: 'Edit' }))
+        expect(screen.getByLabelText('Policy set ID')).toBeDisabled()
+        expect(screen.getByLabelText('Policy set ID')).toHaveValue(policySet.id)
+        for (const name of ['Medium — 6h (medium-6h)', 'Critical — Daily DR Test (critical-daily-latest)', 'Enforce Clean Target (enforce-clean-target)']) {
+          expect(screen.getByRole('radio', { name })).toBeChecked()
+        }
+      }
+      else expect(within(overview).getByText('historic-snapshot')).toBeInTheDocument()
+    } finally {
+      snapshotState.error = null
+    }
+  })
+
   it('distinguishes a missing reference from an unverified catalog without changing the policy count', async () => {
     const record = { ...policySet, snapshot_policy_id: 'historic-snapshot' }
     const props = { postDeletePhase: 'idle' as const, onDeleted: async () => { /* No list request in this component test. */ }, policySets: [record], isLoading: false, error: null, isRetrying: false, onRetry: vi.fn() }

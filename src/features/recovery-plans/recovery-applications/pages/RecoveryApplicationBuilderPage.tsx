@@ -1,5 +1,3 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router'
 import { resolveUserFacingErrorMessage } from '@/shared/api/apiErrorMessage'
 import { Button } from '@/shared/components/button/Button'
 import { Alert } from '@/shared/components/alert/Alert'
@@ -9,56 +7,40 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { RecoveryAppBuilder } from '../components/RecoveryAppBuilder'
 import { OrchestratorPushResultDialog } from '@/shared/components/modal/OrchestratorPushResultDialog'
 import { useSubmitRecoveryApplication } from '../hooks/useRecoveryApplications'
+import { useRecoveryApplicationSaveCompletion } from '../hooks/useRecoveryApplicationSaveCompletion'
 import { toRecoveryApplicationData } from '../utils/recoveryApplicationFormMapper'
-import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard'
 import { useGetPlatformProviders } from '@/generated/query/platform-providers/platform-providers.gen'
 import { useGetProviders } from '@/generated/query/providers/providers.gen'
 import { selectProviders } from '@/features/providers-connectors/providers/model/selectProviders'
 import { selectPlatformProviders } from '@/features/platform-administration/platform-providers/model/selectPlatformProviders'
-import type { OrchestratorPush, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
+import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
 
 export function RecoveryApplicationBuilderPage() {
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const submitApplication = useSubmitRecoveryApplication()
-  const [isDirty, setIsDirty] = useState(false)
-  const [orchestratorPush, setOrchestratorPush] = useState<OrchestratorPush | null | undefined>(undefined)
-  const [orchestratedApplicationName, setOrchestratedApplicationName] = useState('')
-  const [orchestratorProviderUrl, setOrchestratorProviderUrl] = useState<string | undefined>(undefined)
-  const navigationGuard = useUnsavedChangesGuard(isDirty)
   const { data: platformProviders = [] } = useGetPlatformProviders({ type: 'all' }, { query: { select: selectPlatformProviders } })
+  const completion = useRecoveryApplicationSaveCompletion({ platformProviders })
   const { data: providers = [] } = useGetProviders({ role: 'all' }, { query: { select: selectProviders } })
   const submitErrorDescription = resolveUserFacingErrorMessage(submitApplication.error, '')
 
   const handleSave = (appState: RecoveryApplicationFormState): void => {
+    const data = toRecoveryApplicationData(appState, providers)
+    if (!completion.beginSave()) return
+    const submitted = {
+      name: appState.name,
+      pushToOrchestrator: appState.pushToOrchestrator,
+      orchestrationProviderId: appState.orchestrationProviderId,
+    }
     submitApplication.mutate({
       providerId: appState.orchestrationProviderId,
-      data: toRecoveryApplicationData(appState, providers),
+      data,
       pushToOrchestrator: appState.pushToOrchestrator,
     }, {
       onSuccess: (response) => {
-        setIsDirty(false)
-        if (appState.pushToOrchestrator && 'orchestrator_push' in response) {
-          setOrchestratedApplicationName(appState.name)
-          setOrchestratorProviderUrl(platformProviders.find(
-            provider => provider.id === appState.orchestrationProviderId,
-          )?.url ?? undefined)
-          setOrchestratorPush(response.orchestrator_push)
-          return
-        }
-        navigationGuard.runWithoutBlocking(() => {
-          void navigate('/recovery-plans/recovery-applications')
-        })
+        completion.completeSave({ submitted, response })
       },
+      onError: completion.failSave,
     })
-  }
-
-  const navigateToApplications = (): void => {
-    void navigate('/recovery-plans/recovery-applications')
-  }
-
-  const handleBackClick = (): void => {
-    navigationGuard.requestNavigation(navigateToApplications)
   }
 
   return (
@@ -66,7 +48,7 @@ export function RecoveryApplicationBuilderPage() {
       <PageHeader
         title={t('pages.recoveryBuilder.title')}
         description={t('pages.recoveryBuilder.description')}
-        actions={<Button size="sm" variant="outline" onClick={handleBackClick}>{t('buttons.back')}</Button>}
+        actions={<Button size="sm" variant="outline" disabled={completion.isSaving} onClick={completion.requestBack}>{t('buttons.back')}</Button>}
       />
       <div className="flex flex-1 flex-col lg:min-h-0">
         {submitApplication.error ? (
@@ -78,36 +60,30 @@ export function RecoveryApplicationBuilderPage() {
           />
         ) : null}
         <RecoveryAppBuilder
-          onCancel={handleBackClick}
+          onCancel={completion.requestBack}
           onSave={handleSave}
-          onDirtyChange={setIsDirty}
-          isSaving={submitApplication.isPending}
+          onDirtyChange={completion.markDirty}
+          isSaving={completion.isSaving}
         />
       </div>
       <ConfirmDialog
-        open={navigationGuard.isNavigationBlocked}
+        open={completion.discardDialog.open}
         title={t('recovery.builder.discardDialog.title')}
         message={t('recovery.builder.discardDialog.message')}
         cancelLabel={t('recovery.builder.discardDialog.cancel')}
         confirmLabel={t('recovery.builder.discardDialog.confirm')}
         tone="danger"
-        onCancel={navigationGuard.cancelNavigation}
-        onConfirm={navigationGuard.confirmNavigation}
+        onCancel={completion.discardDialog.cancel}
+        onConfirm={completion.discardDialog.confirm}
       />
-      {orchestratorPush !== undefined ? (
+      {completion.pushDialog !== null ? (
         <OrchestratorPushResultDialog
           entityType="application"
           open
-          onClose={() => {
-            setOrchestratorPush(undefined)
-            setOrchestratedApplicationName('')
-            navigationGuard.runWithoutBlocking(() => {
-              void navigate('/recovery-plans/recovery-applications')
-            })
-          }}
-          entityName={orchestratedApplicationName}
-          result={orchestratorPush}
-          providerUrl={orchestratorProviderUrl}
+          onClose={completion.dismissPushDialog}
+          entityName={completion.pushDialog.entityName}
+          result={completion.pushDialog.result}
+          providerUrl={completion.pushDialog.providerUrl}
         />
       ) : null}
     </div>

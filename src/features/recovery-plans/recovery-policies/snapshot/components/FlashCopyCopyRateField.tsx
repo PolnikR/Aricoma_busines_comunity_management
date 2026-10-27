@@ -1,5 +1,6 @@
 import type { CSSProperties, KeyboardEvent } from 'react'
 import { Input } from '@/shared/components/form/FormControls'
+import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { useTranslation } from '@/hooks/useTranslation'
 import {
   snapshotPolicyFlashcopyCopyRateMin as MIN_COPY_RATE,
@@ -30,11 +31,14 @@ export function FlashCopyCopyRateField({ value, error, disabled, onChange, onKey
 
   return (
     <div>
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <label htmlFor="snapshot-policy-copy-rate" className="text-xs font-medium text-text-secondary">{t('snapshotPolicies.form.flashcopyCopyRate')}</label>
+      <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+          <label htmlFor="snapshot-policy-copy-rate" className="text-xs font-medium text-text-secondary">{t('snapshotPolicies.form.flashcopyCopyRate')}</label>
+          <KeyedHelpPopover helpKey="snapshotPolicies.fieldHelp.flashcopyCopyRate" sections={[]} />
+        </div>
         {isValid ? <span className={`rounded-md px-2 py-1 text-xs font-medium text-text-secondary ${rate === 0 ? 'bg-surface-muted' : 'bg-accent-soft'}`}>{state}</span> : null}
       </div>
-      <div className="grid grid-cols-[minmax(0,1fr)_5rem] items-start gap-4">
+      <div className="grid grid-cols-[minmax(0,1fr)_5rem] items-start gap-3">
         <div className="min-w-0">
           <input
             id="snapshot-policy-copy-rate-slider"
@@ -62,9 +66,9 @@ export function FlashCopyCopyRateField({ value, error, disabled, onChange, onKey
           <span className="mt-1 block text-center text-xs text-text-muted">{t('snapshotPolicies.form.flashcopyCopyRateValue')}</span>
         </div>
       </div>
-      <p id="snapshot-policy-copy-rate-help" className="mt-3 text-xs text-text-muted">{t('snapshotPolicies.form.flashcopyCopyRateHelp')}</p>
+      <p id="snapshot-policy-copy-rate-help" className="mt-2 text-xs text-text-muted">{t('snapshotPolicies.form.flashcopyCopyRateHelp')}</p>
       {error ? <p id="snapshot-policy-copy-rate-error" className="mt-1 text-xs text-red-600">{error}</p> : null}
-      <div role="group" aria-labelledby="snapshot-policy-copy-rate-presets" className="mt-3 flex flex-wrap items-center gap-2">
+      <div role="group" aria-labelledby="snapshot-policy-copy-rate-presets" className="mt-2 flex flex-wrap items-center gap-2">
         <span id="snapshot-policy-copy-rate-presets" className="mr-1 w-full text-xs text-text-muted sm:w-auto">{t('snapshotPolicies.form.flashcopyCopyRatePresets')}</span>
         {PRESETS.map(preset => (
           <button key={preset} type="button" disabled={disabled} aria-pressed={isValid && rate === preset} onClick={() => { onChange(String(preset)) }} className={`min-h-8 rounded-md border px-3 text-xs font-medium text-text-secondary transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15 disabled:cursor-not-allowed disabled:opacity-50 ${isValid && rate === preset ? 'border-accent bg-accent-soft' : 'border-border bg-surface hover:border-accent'}`}>

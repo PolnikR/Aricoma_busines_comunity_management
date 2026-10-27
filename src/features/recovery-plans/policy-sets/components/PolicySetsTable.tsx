@@ -214,9 +214,9 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
             <DetailOverview>
               <DetailField label={t('details.policySetId')} value={selected.id} mono copyValue={selected.id} />
               <DetailField label={t('details.description')} value={selected.description} wide />
-              <DetailField label={t('details.snapshotPolicies')} {...referenceField('snapshot', selected.snapshot_policy_id, t('policySets.form.snapshotPolicy'))} emphasis />
-              <DetailField label={t('details.recoveryAppPolicy')} {...referenceField('recoveryApp', selected.recovery_app_policy_id, t('policySets.form.recoveryAppPolicy'))} />
-              <DetailField label={t('details.cleanRoomPolicy')} {...referenceField('cleanRoom', selected.clean_room_policy_id, t('policySets.form.cleanRoomPolicy'))} />
+              <DetailField label={t('details.snapshotPolicies')} labelHelp={<KeyedHelpPopover helpKey="policySets.fieldHelp.snapshot_policy_id" sections={[]} />} {...referenceField('snapshot', selected.snapshot_policy_id, t('policySets.form.snapshotPolicy'))} emphasis />
+              <DetailField label={t('details.recoveryAppPolicy')} labelHelp={<KeyedHelpPopover helpKey="policySets.fieldHelp.recovery_app_policy_id" sections={[]} />} {...referenceField('recoveryApp', selected.recovery_app_policy_id, t('policySets.form.recoveryAppPolicy'))} />
+              <DetailField label={t('details.cleanRoomPolicy')} labelHelp={<KeyedHelpPopover helpKey="policySets.fieldHelp.clean_room_policy_id" sections={[]} />} {...referenceField('cleanRoom', selected.clean_room_policy_id, t('policySets.form.cleanRoomPolicy'))} />
             </DetailOverview>
           </DetailViewSection>
         </DetailView>

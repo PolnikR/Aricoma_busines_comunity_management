@@ -6126,7 +6126,8 @@
           "frequency_value": {
             "type": "integer",
             "exclusiveMinimum": 0,
-            "title": "Frequency Value"
+            "title": "Frequency Value",
+            "default": 1
           },
           "frequency_unit": {
             "type": "string",
@@ -6135,7 +6136,8 @@
               "hours",
               "days"
             ],
-            "title": "Frequency Unit"
+            "title": "Frequency Unit",
+            "default": "days"
           },
           "retention_value": {
             "type": "integer",
@@ -6243,8 +6245,6 @@
         "required": [
           "id",
           "name",
-          "frequency_value",
-          "frequency_unit",
           "retention_value",
           "retention_unit"
         ],
@@ -6285,7 +6285,8 @@
           "frequency_value": {
             "type": "integer",
             "exclusiveMinimum": 0,
-            "title": "Frequency Value"
+            "title": "Frequency Value",
+            "default": 1
           },
           "frequency_unit": {
             "type": "string",
@@ -6294,7 +6295,8 @@
               "hours",
               "days"
             ],
-            "title": "Frequency Unit"
+            "title": "Frequency Unit",
+            "default": "days"
           },
           "retention_value": {
             "type": "integer",
@@ -6403,8 +6405,6 @@
         "required": [
           "id",
           "name",
-          "frequency_value",
-          "frequency_unit",
           "retention_value",
           "retention_unit"
         ],

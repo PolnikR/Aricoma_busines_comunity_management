@@ -187,6 +187,16 @@ describe('recovery applications wire contract', () => {
     expect(returned).toEqual({ applications: [], orchestrator_push: push ?? null })
   })
 
+  it('drops wire push details for a local-only save', async () => {
+    stubFetch({ applications: [], orchestrator_push: { status: 'pushed', dag_id: 'unexpected' } })
+    const { result } = renderHook(() => useSubmitRecoveryApplication(), { wrapper })
+    let returned: unknown
+    await act(async () => {
+      returned = await result.current.mutateAsync({ providerId: '', data, pushToOrchestrator: false })
+    })
+    expect(returned).toEqual({ applications: [] })
+  })
+
   it('returns the orchestrator push when the DAG details are present', async () => {
     const push = { status: 'pushed', dag: 'dag source', json: '{}', dag_id: 'dag_finance' }
     const mock = stubFetch({ applications: [], orchestrator_push: push })

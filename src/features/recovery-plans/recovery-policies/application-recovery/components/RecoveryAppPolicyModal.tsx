@@ -30,7 +30,7 @@ interface RecoveryAppPolicyModalProps {
 }
 
 const EMPTY_FORM: RecoveryAppPolicyFormData = {
-  id: '', name: '', description: '', level: '', frequency_value: '1', frequency_unit: 'minutes',
+  id: '', name: '', description: '', level: '', frequency_value: '1', frequency_unit: 'days',
   retention_value: '1', retention_unit: 'days', boot_verify: false, snapshot_selection_mode: 'latest',
   snapshot_max_age_value: '', snapshot_max_age_unit: '', snapshot_target_time: '', enabled: true,
   target_lpar_prefix: submitRecoveryAppPolicyBodyTargetLparPrefixDefault,
@@ -109,17 +109,20 @@ export function RecoveryAppPolicyModal({ open, onClose, existingPolicies, policy
 
   const handleChange = <K extends keyof RecoveryAppPolicyFormData>(field: K, value: RecoveryAppPolicyFormData[K]) => {
     const isManualMode = field === 'manual_zoning' || field === 'manual_wwpn_entry'
+    const intervalValueField = field === 'frequency_unit' ? 'frequency_value' : field === 'retention_unit' ? 'retention_value' : undefined
     setFormData(previous => ({
       ...previous,
       [field]: value,
+      ...(intervalValueField && value !== previous[field] ? { [intervalValueField]: '' } : {}),
       ...(field === 'manual_zoning' && value === true ? { manual_wwpn_entry: false } : {}),
       ...(field === 'manual_wwpn_entry' && value === true ? { manual_zoning: false } : {}),
     }))
-    if (errors[field] || isManualMode && errors.manual_zoning) {
+    if (errors[field] || intervalValueField && errors[intervalValueField] || isManualMode && errors.manual_zoning) {
       setErrors(previous => {
         const next = { ...previous }
         // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
         delete next[field]
+        if (intervalValueField) Reflect.deleteProperty(next, intervalValueField)
         if (isManualMode) delete next.manual_zoning
         return next
       })
@@ -129,8 +132,6 @@ export function RecoveryAppPolicyModal({ open, onClose, existingPolicies, policy
 
   const validate = () => {
     const next: Partial<Record<keyof RecoveryAppPolicyFormData, string>> = {}
-    const frequency = Number(formData.frequency_value)
-    const retention = Number(formData.retention_value)
     const maxAge = formData.snapshot_max_age_value === '' ? null : Number(formData.snapshot_max_age_value)
     const shutdownTimeout = formData.source_shutdown_timeout_seconds === '' ? null : Number(formData.source_shutdown_timeout_seconds)
     const zoningWait = formData.zoning_wait_minutes === '' ? null : Number(formData.zoning_wait_minutes)
@@ -141,8 +142,14 @@ export function RecoveryAppPolicyModal({ open, onClose, existingPolicies, policy
     if (!formData.name.trim()) next.name = t('recoveryAppPolicies.validation.nameRequired')
     if (!formData.description.trim()) next.description = t('recoveryAppPolicies.validation.descriptionRequired')
     if (!formData.level.trim()) next.level = t('recoveryAppPolicies.validation.levelRequired')
-    if (!Number.isInteger(frequency) || frequency < 1) next.frequency_value = t('recoveryAppPolicies.validation.positiveInteger')
-    if (!Number.isInteger(retention) || retention < 1) next.retention_value = t('recoveryAppPolicies.validation.positiveInteger')
+    for (const [valueField, unitField] of [['frequency_value', 'frequency_unit'], ['retention_value', 'retention_unit']] as const) {
+      const interval = Number(formData[valueField])
+      const minutes = formData[unitField] === 'minutes'
+      if (!formData[valueField].trim() || !Number.isInteger(interval) || interval < (minutes ? 15 : 1) || minutes && interval % 15 !== 0) {
+        next[valueField] = t(minutes ? 'recoveryAppPolicies.validation.intervalMinutes' : 'recoveryAppPolicies.validation.positiveInteger')
+      }
+      if (!isTimeUnit(formData[unitField])) next[unitField] = t('recoveryAppPolicies.validation.unitRequired')
+    }
     if (!isSelectionMode(mode)) next.snapshot_selection_mode = t('recoveryAppPolicies.validation.selectionRequired')
     if (mode === 'time_range') {
       if (maxAge === null || !Number.isInteger(maxAge) || maxAge < 1) next.snapshot_max_age_value = t('recoveryAppPolicies.validation.positiveInteger')

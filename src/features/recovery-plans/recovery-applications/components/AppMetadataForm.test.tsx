@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { LanguageProvider } from '@/contexts/LanguageProvider'
@@ -160,6 +160,18 @@ describe('AppMetadataForm', () => {
   })
 
   describe('target provider', () => {
+    it.each([
+      ['unknown to known', 'source-gone', 'vmware-source', { platform: 'vmware-source' }],
+      ['known to unknown', 'vmware-source', '', { platform: '' }],
+      ['both unknown', 'source-gone', '', { platform: '' }],
+      ['same type with invalid target', 'vmware-source', 'vmware-source-2', { platform: 'vmware-source-2' }],
+    ])('emits raw source intent without changing the controlled target: %s', async (_label, source, nextSource, expected) => {
+      const onMetadataChange = renderForm(source, 'target-gone')
+      fireEvent.change(await screen.findByLabelText('Provider ID *'), { target: { value: nextSource } })
+      expect(onMetadataChange).toHaveBeenCalledExactlyOnceWith(expected)
+      expect(screen.getByLabelText('Target provider ID *')).toHaveValue('target-gone')
+    })
+
     const providers = [
       { id: 'vmware-source', name: 'VMware Source', type: 'VMWARE', role: 'source', credentialStatus: 'ok' },
       { id: 'vmware-source-2', name: 'VMware Source 2', type: 'VMWARE', role: 'source', credentialStatus: 'ok' },
@@ -241,7 +253,7 @@ describe('AppMetadataForm', () => {
 
       await user.selectOptions(await screen.findByLabelText('Provider ID *'), 'power-source')
 
-      expect(onMetadataChange).toHaveBeenLastCalledWith({ platform: 'power-source', targetProviderId: '' })
+      expect(onMetadataChange).toHaveBeenLastCalledWith({ platform: 'power-source' })
       expect(screen.getByLabelText('Provider ID *')).toHaveValue('vmware-source')
       expect(screen.getByLabelText('Target provider ID *')).toHaveValue('vmware-target')
     })
@@ -268,14 +280,14 @@ describe('AppMetadataForm', () => {
       expect([...target.querySelectorAll('option')].map(option => option.value)).toEqual(['', 'power-source', 'power-target'])
     })
 
-    it('clears the target when the source changes to another provider type', async () => {
+    it('reports another source type without deriving a target reset', async () => {
       const user = userEvent.setup()
       const onMetadataChange = renderForm('vmware-source', 'vmware-target')
 
       await user.selectOptions(await screen.findByLabelText('Provider ID *'), 'power-source')
 
-      expect(onMetadataChange).toHaveBeenLastCalledWith({ platform: 'power-source', targetProviderId: '' })
-      expect(screen.getByLabelText('Target provider ID *')).toHaveValue('')
+      expect(onMetadataChange).toHaveBeenLastCalledWith({ platform: 'power-source' })
+      expect(screen.getByLabelText('Target provider ID *')).toHaveValue('vmware-target')
     })
 
     it('keeps the target when the source changes within the same provider type', async () => {

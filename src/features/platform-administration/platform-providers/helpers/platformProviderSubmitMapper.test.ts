@@ -1,5 +1,7 @@
+import { OrchestrationProvider } from '@/generated/query/zod'
+import { PLATFORM_PROVIDER_TYPES } from '../model/platformProviderTypes'
 import { describe, expect, it } from 'vitest'
-import { EMPTY_PLATFORM_PROVIDER_FORM } from '../model/platformProviderForm'
+import { EMPTY_PLATFORM_PROVIDER_FORM, toPlatformProviderFormData } from '../model/platformProviderForm'
 import { toPlatformProviderSubmitData } from './platformProviderSubmitMapper'
 
 const common = {
@@ -11,6 +13,18 @@ const common = {
 }
 
 describe('toPlatformProviderSubmitData', () => {
+  it.each(PLATFORM_PROVIDER_TYPES)('maps common fields for %s against the API schema', type => {
+    for (const [notificationEmail, cacheRefreshSeconds, expectedEmail, expectedInterval] of [
+      [' alerts@example.test ', '60', 'alerts@example.test', 60],
+      ['', '', null, null],
+      ['   ', '   ', null, null],
+    ] as const) {
+      const payload = toPlatformProviderSubmitData({ ...common, type, notificationEmail, cacheRefreshSeconds })
+      expect(payload).toMatchObject({ notificationEmail: expectedEmail, cacheRefreshSeconds: expectedInterval })
+      expect(OrchestrationProvider.safeParse(payload).success).toBe(true)
+    }
+  })
+
   it('builds an exact AIRFLOW payload', () => {
     const payload = toPlatformProviderSubmitData({
       ...common,
@@ -30,6 +44,7 @@ describe('toPlatformProviderSubmitData', () => {
       description: 'Description',
       type: 'AIRFLOW',
       url: 'http://provider.example.test',
+      cacheRefreshSeconds: null,
       ipAddress: '10.0.0.1',
       port: 22,
       dagDir: '/opt/airflow/dags',
@@ -55,7 +70,9 @@ describe('toPlatformProviderSubmitData', () => {
       name: 'Provider',
       description: 'Description',
       type: 'SMTP',
+      notificationEmail: null,
       url: 'http://provider.example.test',
+      cacheRefreshSeconds: null,
       ipAddress: '10.0.0.2',
       port: 1025,
       fromEmail: 'airflow@example.test',
@@ -72,7 +89,6 @@ describe('toPlatformProviderSubmitData', () => {
       notificationEmail: '',
       loggingEnabled: true,
       jwtEnabled: false,
-      swaggerEnabled: false,
       ipAddress: 'must-not-leak',
     })
 
@@ -82,10 +98,37 @@ describe('toPlatformProviderSubmitData', () => {
       description: 'Description',
       type: 'BACKEND',
       url: 'http://provider.example.test',
+      cacheRefreshSeconds: null,
       notificationEmail: null,
       loggingEnabled: true,
       jwtEnabled: false,
-      swaggerEnabled: false,
+    })
+  })
+
+  it('discards a stored Swagger flag when editing a BACKEND provider', () => {
+    const form = toPlatformProviderFormData({
+      id: 'backend',
+      name: 'Backend',
+      type: 'BACKEND',
+      role: 'source',
+      port: 22,
+      credentialStatus: 'none',
+      loggingEnabled: true,
+      jwtEnabled: false,
+      swaggerEnabled: true,
+    })
+
+    expect(form).not.toHaveProperty('swaggerEnabled')
+    expect(toPlatformProviderSubmitData(form)).toEqual({
+      id: 'backend',
+      name: 'Backend',
+      description: '',
+      type: 'BACKEND',
+      url: null,
+      notificationEmail: null,
+      cacheRefreshSeconds: null,
+      loggingEnabled: true,
+      jwtEnabled: false,
     })
   })
 
@@ -104,7 +147,9 @@ describe('toPlatformProviderSubmitData', () => {
       name: 'Provider',
       description: 'Description',
       type: 'KEYCLOAK',
+      notificationEmail: null,
       url: 'http://provider.example.test',
+      cacheRefreshSeconds: null,
       realm: 'aricoma',
       clientId: 'abco-be',
       credentialId: 'keycloak-admin',
@@ -127,7 +172,9 @@ describe('toPlatformProviderSubmitData', () => {
       name: 'Provider',
       description: 'Description',
       type: 'SMTP',
+      notificationEmail: null,
       url: 'http://provider.example.test',
+      cacheRefreshSeconds: null,
       ipAddress: '10.0.0.2',
       port: 1025,
       fromEmail: null,
@@ -150,7 +197,9 @@ describe('toPlatformProviderSubmitData', () => {
       name: 'Provider',
       description: 'Description',
       type: 'KEYCLOAK',
+      notificationEmail: null,
       url: 'http://provider.example.test',
+      cacheRefreshSeconds: null,
       realm: null,
       clientId: null,
       credentialId: null,

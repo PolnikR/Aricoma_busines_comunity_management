@@ -66,6 +66,13 @@ const validatedVmDraft: ValidatedRecoveryGroupDraft = {
 }
 
 describe('toRecoveryGroupSubmitPayload', () => {
+  it('serializes only selected VM metadata and retains persisted order precedence', () => {
+    const payload = toRecoveryGroupSubmitPayload({ ...validatedVmDraft, resources: ['B', 'A'], vmMetadataByName: {
+      A: { order: 9, hostname: 'saved-a' }, B: { order: 4 }, REMOVED: { hostname: 'unused' },
+    } }, 'group')
+    expect(payload.vms).toEqual([{ name: 'B', order: 4 }, { name: 'A', order: 9, hostname: 'saved-a' }])
+  })
+
   it('round-trips manually corrected Metro values without UI provenance', () => {
     const corrected = { ...validatedVmDraft, topology: 'metro_mirror' as const, metroMirrorMode: 'existing' as const,
       consistencyGroupId: '009', auxiliaryNamesByVolume: { 'VOL-01': 'MANUAL-AUX' },

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="sk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Policy sets — tri návrhy</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="preview.js" defer></script>
+</head>
+<body data-design="precision">
+  <header class="study">
+    <div><strong>Policy sets / Design study</strong><span>Tri návrhy · ukážkové dáta</span></div>
+    <nav aria-label="Výber návrhu">
+      <a href="?design=precision" data-design="precision">01 Precision</a>
+      <a href="?design=enterprise" data-design="enterprise">02 Enterprise</a>
+      <a href="?design=operations" data-design="operations">03 Operations</a>
+    </nav>
+  </header>
+  <div class="rationale"><strong id="design-title"></strong><p id="design-description"></p></div>
+  <div class="app" lang="en">
+    <header class="app-header"><div class="brand"><span class="brand-mark" aria-hidden="true">A</span> ARICOMA <span>Recovery console</span></div><span class="environment">DESIGN PREVIEW</span></header>
+    <main>
+      <div class="breadcrumb">Recovery plans <span aria-hidden="true">/</span> <strong>Policy sets</strong></div>
+      <header class="page-heading"><div><span class="eyebrow">PROTECTION CONFIGURATION</span><h1>Policy sets</h1><p>Reusable snapshot, recovery and clean room policies for recovery groups.</p></div><button class="primary" id="add">Add policy set <span aria-hidden="true">＋</span></button></header>
+      <div class="workspace">
+        <section class="inventory" aria-labelledby="table-title">
+          <header class="inventory-heading"><div><h2 id="table-title">Policy set records <span class="total">04</span></h2><p>Browse and inspect your recovery configuration.</p></div><span class="record-label">POLICY CATALOG</span></header>
+          <div class="toolbar"><label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" aria-label="Search policy sets" placeholder="Search name, ID or description"></label><div class="toolbar-actions"><div class="density" role="group" aria-label="Row density"><button data-density="comfortable" aria-pressed="false">Comfortable</button><button data-density="compact" aria-pressed="true">Compact</button></div><button id="refresh" aria-label="Refresh preview data">↻ <span>Refresh</span></button></div></div>
+          <div class="table-scroll" tabindex="0" role="region" aria-label="Policy sets table, scroll horizontally on small screens">
+            <table><caption class="sr-only">Policy sets and number of configured policies</caption><thead><tr><th scope="col">Name / identifier</th><th scope="col">Description</th><th scope="col" class="numeric">Policies</th><th scope="col" class="json-heading">JSON</th></tr></thead><tbody id="rows"></tbody></table>
+          </div>
+          <footer class="table-footer"><span id="results" role="status" aria-live="polite"></span><span>4 records total <span class="divider">|</span> Page 1 of 1</span></footer>
+        </section>
+        <aside class="inspector" aria-labelledby="inspector-title"><div class="inspector-label">RECORD INSPECTOR <span aria-hidden="true">↗</span></div><div id="inspection"></div></aside>
+      </div>
+      <p class="preview-note" id="notice" role="status">Interactive preview · Search, change density or open a record. No backend connection.</p>
+    </main>
+  </div>
+  <footer class="sources"><strong>Inšpirácia</strong><a href="https://www.carbondesignsystem.com/building-blocks/core/components/data-table/guidelines">IBM Carbon / Data table</a><a href="https://www.hitachivantara.com/en-us/home">Hitachi Vantara</a><a href="https://lumada-design.github.io/uikit-docs/master/docs/get-started">Hitachi NEXT / UI Kit</a><span>Vlastné štúdie, nie oficiálne šablóny týchto značiek.</span></footer>
+  <dialog id="record-dialog" aria-labelledby="dialog-title"><header><h2 id="dialog-title">Policy set</h2><button id="close-dialog" aria-label="Close dialog">✕</button></header><div id="dialog-content"></div></dialog>
+</body>
+</html>

@@ -53,6 +53,24 @@ const calls = (mock: ReturnType<typeof stubFetch>) => mock.mock.calls.map(([url,
 describe('providers wire contract', () => {
   afterEach(() => { vi.unstubAllGlobals() })
 
+  it.each([
+    { id: 'power-a', name: 'Power', type: 'IBM_POWER' as const, managedSystem: 'System A', backingStorageProviderIds: ['flash-a'] },
+    { id: 'vmware-a', name: 'VMware', type: 'VMWARE' as const, vmTags: ['first', 'second'] },
+  ])('retains specific API fields when reading and submitting $type', async provider => {
+    const mock = vi.fn<(url: string, init?: RequestInit) => Promise<Response>>(() => json({ providers: [provider] }))
+    vi.stubGlobal('fetch', mock)
+    const { result } = renderHook(() => ({
+      list: useGetProviders({ role: 'all' }, { query: { select: selectProviders } }),
+      submit: useSubmitProvider(),
+    }), { wrapper })
+    await waitFor(() => { expect(result.current.list.isSuccess).toBe(true) })
+    expect(result.current.list.data?.[0]).toMatchObject(provider)
+    await act(async () => { await result.current.submit.mutateAsync({ data: provider }) })
+    const request = mock.mock.calls.find(([url]) => url === '/api/submit_provider')
+    expect(JSON.parse(request?.[1]?.body as string)).toEqual(provider)
+    await waitFor(() => { expect(mock.mock.calls.filter(([url]) => url.startsWith('/api/get_providers'))).toHaveLength(2) })
+  })
+
   it('lists providers for the requested role and skips non-infrastructure types', async () => {
     const mock = stubFetch()
     const { result } = renderHook(

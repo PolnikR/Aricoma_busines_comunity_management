@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { RecoveryGroupBuilderPage } from './RecoveryGroupBuilderPage'
@@ -61,12 +61,18 @@ function buildDraft(pushToOrchestrator: boolean): RecoveryGroupDraft {
 vi.mock('../components/RecoveryGroupBuilder', () => ({
   RecoveryGroupBuilder: ({
     onCreate,
+    onDirtyChange,
+    onCancel,
     isInitialLoading,
   }: {
     onCreate: (draft: RecoveryGroupDraft) => void
     isInitialLoading?: boolean
+    onDirtyChange?: (dirty: boolean) => void
+    onCancel: () => void
   }) => (
     <fieldset disabled={isInitialLoading} aria-busy={isInitialLoading}>
+      <button type="button" onClick={() => { onDirtyChange?.(true) }}>Edit draft</button>
+      <button type="button" onClick={onCancel}>Cancel builder</button>
       <span>Group type</span>
       <button type="button" onClick={() => { onCreate(buildDraft(true)) }}>
         Create with orchestration
@@ -96,6 +102,32 @@ beforeEach(() => {
 })
 
 describe('RecoveryGroupBuilderPage', () => {
+  it('keeps the dirty guard after failed save and clears it after successful save', async () => {
+    const user = userEvent.setup()
+    create.mockRejectedValue(new Error('Save failed'))
+    render(<RecoveryGroupBuilderPage />)
+    await user.click(screen.getByRole('button', { name: 'Edit draft' }))
+    const beforeSave = new Event('beforeunload', { cancelable: true })
+    window.dispatchEvent(beforeSave)
+    expect(beforeSave.defaultPrevented).toBe(true)
+    await user.click(screen.getByRole('button', { name: 'Cancel builder' }))
+    const dialog = screen.getByRole('dialog', { name: 'Discard unsaved changes?' })
+    expect(navigate).not.toHaveBeenCalled()
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }))
+    await user.click(screen.getByRole('button', { name: 'Create without orchestration' }))
+    await screen.findByRole('alert')
+    const afterFailure = new Event('beforeunload', { cancelable: true })
+    window.dispatchEvent(afterFailure)
+    expect(afterFailure.defaultPrevented).toBe(true)
+    expect(navigate).not.toHaveBeenCalled()
+    create.mockResolvedValue({ orchestratorPush: null })
+    await user.click(screen.getByRole('button', { name: 'Create without orchestration' }))
+    await waitFor(() => { expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-groups') })
+    const afterSave = new Event('beforeunload', { cancelable: true })
+    window.dispatchEvent(afterSave)
+    expect(afterSave.defaultPrevented).toBe(false)
+  })
+
   it.each([null, { status: 'skipped', reason: 'Provider disabled', dag: null, dag_id: null, json: null }])('shows a nullable or skipped push result without inventing a DAG (%j)', async push => {
     const user = userEvent.setup()
     create.mockResolvedValue({ airflowRunId: 'legacy_wrong_id', orchestratorPush: push })
