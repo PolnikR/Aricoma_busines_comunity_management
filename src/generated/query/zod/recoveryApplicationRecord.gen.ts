@@ -32,7 +32,8 @@ export const RecoveryApplicationRecord = zod.object({
 })).default(recoveryApplicationRecordTiersRecoveryGroupVmsDefault)
 })
 })),
-  "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional()
+  "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "dag_template_version": zod.union([zod.string(),zod.null()]).exactOptional()
 }).describe('Read shape: tolerates a record not yet migrated by scripts/migrate_recovery_apps_to_provider_ids.py\n(old source_connection/target_connection keys, no provider ids) so one legacy record cannot 500 the\nlist/submit/delete responses. The submit body keeps the strict RecoveryApplication.')
 
 export type RecoveryApplicationRecord = zod.input<typeof RecoveryApplicationRecord>;

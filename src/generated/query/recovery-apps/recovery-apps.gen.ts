@@ -24,13 +24,16 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  DagTemplateVersionsResponse,
   DeleteRecoveryAppParams,
+  GetDagTemplateVersionsParams,
   GetRecoveryAppInventoryParams,
   HTTPValidationError,
   RecoveryAppInventoryResponse,
   RecoveryAppSubmission,
   RecoveryAppSubmitResponse,
   RecoveryAppsResponse,
+  RollbackAppFromOrchestratorParams,
   SubmitRecoveryDagParams
 } from '../zod';
 
@@ -146,6 +149,113 @@ export function useGetRecoveryApps<TData = Awaited<ReturnType<typeof getRecovery
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetRecoveryAppsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export const getGetDagTemplateVersionsUrl = (params?: GetDagTemplateVersionsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/get_dag_template_versions?${stringifiedParams}` : `/get_dag_template_versions`
+}
+
+/**
+ * @summary Get Dag Template Versions
+ */
+export const getDagTemplateVersions = async (params?: GetDagTemplateVersionsParams, options?: Parameters<typeof validatingMutator>[1]): Promise<DagTemplateVersionsResponse> => {
+
+  return validatingMutator<DagTemplateVersionsResponse>(getGetDagTemplateVersionsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetDagTemplateVersionsQueryKey = (params?: GetDagTemplateVersionsParams,) => {
+    return [
+    `/get_dag_template_versions`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetDagTemplateVersionsQueryOptions = <TData = Awaited<ReturnType<typeof getDagTemplateVersions>>, TError = ErrorType<HTTPValidationError>>(params?: GetDagTemplateVersionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDagTemplateVersions>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDagTemplateVersionsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDagTemplateVersions>>> = ({ signal }) => getDagTemplateVersions(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDagTemplateVersions>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetDagTemplateVersionsQueryResult = NonNullable<Awaited<ReturnType<typeof getDagTemplateVersions>>>
+export type GetDagTemplateVersionsQueryError = ErrorType<HTTPValidationError>
+
+
+export function useGetDagTemplateVersions<TData = Awaited<ReturnType<typeof getDagTemplateVersions>>, TError = ErrorType<HTTPValidationError>>(
+ params: undefined |  GetDagTemplateVersionsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDagTemplateVersions>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDagTemplateVersions>>,
+          TError,
+          Awaited<ReturnType<typeof getDagTemplateVersions>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof validatingMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetDagTemplateVersions<TData = Awaited<ReturnType<typeof getDagTemplateVersions>>, TError = ErrorType<HTTPValidationError>>(
+ params?: GetDagTemplateVersionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDagTemplateVersions>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDagTemplateVersions>>,
+          TError,
+          Awaited<ReturnType<typeof getDagTemplateVersions>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof validatingMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetDagTemplateVersions<TData = Awaited<ReturnType<typeof getDagTemplateVersions>>, TError = ErrorType<HTTPValidationError>>(
+ params?: GetDagTemplateVersionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDagTemplateVersions>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Dag Template Versions
+ */
+
+export function useGetDagTemplateVersions<TData = Awaited<ReturnType<typeof getDagTemplateVersions>>, TError = ErrorType<HTTPValidationError>>(
+ params?: GetDagTemplateVersionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDagTemplateVersions>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetDagTemplateVersionsQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -364,7 +474,90 @@ export function useGetRecoveryAppInventory<TData = Awaited<ReturnType<typeof get
 
 
 
-export const getDeleteRecoveryAppUrl = (params: DeleteRecoveryAppParams,) => {
+export const getRollbackAppFromOrchestratorUrl = (params: RollbackAppFromOrchestratorParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/rollback_app_from_orchestrator?${stringifiedParams}` : `/rollback_app_from_orchestrator`
+}
+
+/**
+ * Tear down the app's Airflow DAG and recovered resources like /delete_recovery_app with
+ * rollback_from_orchestrator=true, but keep the record: on ok/skipped it is unlocked (pushed=false) so it
+ * can be edited and pushed again; on partial/failed it stays locked (retry the rollback).
+ * @summary Rollback App From Orchestrator
+ */
+export const rollbackAppFromOrchestrator = async (params: RollbackAppFromOrchestratorParams, options?: Parameters<typeof validatingMutator>[1]): Promise<RecoveryAppsResponse> => {
+
+  return validatingMutator<RecoveryAppsResponse>(getRollbackAppFromOrchestratorUrl(params),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getRollbackAppFromOrchestratorMutationKey = () => ['rollbackAppFromOrchestrator'] as const;
+
+export const getRollbackAppFromOrchestratorMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rollbackAppFromOrchestrator>>, TError,RollbackAppFromOrchestratorMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+): UseMutationOptions<Awaited<ReturnType<typeof rollbackAppFromOrchestrator>>, TError,RollbackAppFromOrchestratorMutationVariables, TContext> => {
+
+const mutationKey = getRollbackAppFromOrchestratorMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof rollbackAppFromOrchestrator>>, RollbackAppFromOrchestratorMutationVariables> = (props) => {
+          const {params} = props ?? {};
+
+          return  rollbackAppFromOrchestrator(params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RollbackAppFromOrchestratorMutationResult = NonNullable<Awaited<ReturnType<typeof rollbackAppFromOrchestrator>>>
+
+    export type RollbackAppFromOrchestratorMutationError = ErrorType<HTTPValidationError>
+    export type RollbackAppFromOrchestratorMutationVariables = {params: RollbackAppFromOrchestratorParams}
+
+    /**
+ * @summary Rollback App From Orchestrator
+ */
+export const useRollbackAppFromOrchestrator = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rollbackAppFromOrchestrator>>, TError,RollbackAppFromOrchestratorMutationVariables, TContext>, request?: SecondParameter<typeof validatingMutator>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof rollbackAppFromOrchestrator>>,
+        TError,
+        RollbackAppFromOrchestratorMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRollbackAppFromOrchestratorMutationOptions(options), queryClient);
+    }
+    export const getDeleteRecoveryAppUrl = (params: DeleteRecoveryAppParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {

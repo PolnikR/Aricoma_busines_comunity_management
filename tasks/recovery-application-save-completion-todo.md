@@ -200,7 +200,7 @@ Execution approved on 2026-10-22, inline. Tests and a checkpoint follow every ph
 **Acceptance criteria:**
 
 - [ ] Smoke both pages: local Save; pushed/manual-only dialog and DAG URL; skipped/null/missing results; close-to-list; error retaining draft; Back cancel/confirm; edit locks. **Blocked:** no Chrome DevTools MCP or installed browser runner.
-- [ ] Check actual browser Back/refresh and slow Save followed by edit; record retained race behavior without claiming it fixed. **Blocked:** same browser tooling limitation.
+- [ ] Check actual browser Back/refresh and slow Save followed by edit; record retained race behavior without claiming it fixed. **Evidence 2026-10-27:** real Edge + Playwright (mock POST) verified pending Save disables UI Back and repeat Save, HTTP 500 preserves editable draft, retry succeeds and navigates. **Still open:** native browser Back/refresh during an unresolved Save and follow-up edits; real authenticated backend. Browser tooling itself is now available.
 - [x] Identify real-backend versus stubbed scenarios and any unavailable environment, Airflow permission or browser limitations explicitly.
 
 **Verification:**

@@ -35,14 +35,16 @@ export const RecoveryAppsResponse = zod.object({
 })).default(recoveryAppsResponseApplicationsItemApplicationTiersRecoveryGroupVmsDefault)
 })
 })),
-  "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional()
+  "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "dag_template_version": zod.union([zod.string(),zod.null()]).exactOptional()
 }).describe('Read shape: tolerates a record not yet migrated by scripts/migrate_recovery_apps_to_provider_ids.py\n(old source_connection/target_connection keys, no provider ids) so one legacy record cannot 500 the\nlist/submit/delete responses. The submit body keeps the strict RecoveryApplication.'),
   "policy_set_id": zod.union([zod.string(),zod.null()]).exactOptional(),
   "orchestration": zod.union([zod.object({
   "run_id": zod.union([zod.string(),zod.null()]).exactOptional(),
   "pushed": zod.union([zod.boolean(),zod.null()]).exactOptional(),
-  "provider_id": zod.union([zod.string(),zod.null()]).exactOptional()
-}).describe('Where a recovery group or app stands with its orchestrator: the run id that\nnames its DAG, whether the DAG is currently pushed, and the provider it went to.'),zod.null()]).exactOptional()
+  "provider_id": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "template_version": zod.union([zod.string(),zod.null()]).exactOptional()
+}).describe('A recovery app\'s state also records the DAG template version its last push rendered.'),zod.null()]).exactOptional()
 }).describe('\'application\' shape mirrors what apache_airflow/dags/recovery_app_template.py\naccesses unconditionally - see recovery.recovery.RecoveryApplication.')),
   "rollback": zod.union([zod.object({
   "status": zod.enum(['ok', 'partial', 'failed', 'skipped']),

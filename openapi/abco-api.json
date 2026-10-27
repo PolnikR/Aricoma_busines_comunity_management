@@ -2397,6 +2397,78 @@
         }
       }
     },
+    "/get_dag_template_versions": {
+      "get": {
+        "tags": [
+          "Recovery Apps"
+        ],
+        "summary": "Get Dag Template Versions",
+        "operationId": "get_dag_template_versions_get_dag_template_versions_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "platform",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "vmware or ibm_power; omit to list every platform",
+              "title": "Platform"
+            },
+            "description": "vmware or ibm_power; omit to list every platform"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DagTemplateVersionsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/submit_recovery_dag": {
       "post": {
         "tags": [
@@ -2569,6 +2641,108 @@
         }
       }
     },
+    "/rollback_app_from_orchestrator": {
+      "post": {
+        "tags": [
+          "Recovery Apps"
+        ],
+        "summary": "Rollback App From Orchestrator",
+        "description": "Tear down the app's Airflow DAG and recovered resources like /delete_recovery_app with\nrollback_from_orchestrator=true, but keep the record: on ok/skipped it is unlocked (pushed=false) so it\ncan be edited and pushed again; on partial/failed it stays locked (retry the rollback).",
+        "operationId": "rollback_app_from_orchestrator_rollback_app_from_orchestrator_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "recovery_app_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "id of the recovery app to roll back",
+              "title": "Recovery App Id"
+            },
+            "description": "id of the recovery app to roll back"
+          },
+          {
+            "name": "provider_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "orchestration (AIRFLOW) provider the app was pushed to; defaults to the stored orchestration.provider_id and must match it when both are present",
+              "title": "Provider Id"
+            },
+            "description": "orchestration (AIRFLOW) provider the app was pushed to; defaults to the stored orchestration.provider_id and must match it when both are present"
+          },
+          {
+            "name": "compute_provider_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "as on /delete_recovery_app; defaults to application.target_provider_id",
+              "title": "Compute Provider Id"
+            },
+            "description": "as on /delete_recovery_app; defaults to application.target_provider_id"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryAppsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/delete_recovery_app": {
       "delete": {
         "tags": [
@@ -2630,11 +2804,10 @@
                   "type": "null"
                 }
               ],
-              "description": "orchestration (AIRFLOW) provider - required when rollback_from_orchestrator",
-              "default": "airflow-01",
+              "description": "orchestration (AIRFLOW) provider the app was pushed to. With rollback_from_orchestrator it defaults to the stored orchestration.provider_id and must match it when both are present (409 otherwise). With rollback_orphans (no record) it defaults to airflow-01.",
               "title": "Provider Id"
             },
-            "description": "orchestration (AIRFLOW) provider - required when rollback_from_orchestrator"
+            "description": "orchestration (AIRFLOW) provider the app was pushed to. With rollback_from_orchestrator it defaults to the stored orchestration.provider_id and must match it when both are present (409 otherwise). With rollback_orphans (no record) it defaults to airflow-01."
           },
           {
             "name": "compute_provider_id",
@@ -3863,6 +4036,57 @@
   },
   "components": {
     "schemas": {
+      "AppOrchestrationState": {
+        "properties": {
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Id"
+          },
+          "pushed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pushed"
+          },
+          "provider_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Id"
+          },
+          "template_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Version"
+          }
+        },
+        "type": "object",
+        "title": "AppOrchestrationState",
+        "description": "A recovery app's state also records the DAG template version its last push rendered."
+      },
       "CacheConfigResponse": {
         "properties": {
           "defaults": {
@@ -4219,6 +4443,50 @@
           "credentials"
         ],
         "title": "CredentialsResponse"
+      },
+      "DagTemplateVersion": {
+        "properties": {
+          "platform": {
+            "type": "string",
+            "title": "Platform"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "default": {
+            "type": "boolean",
+            "title": "Default"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "platform",
+          "version",
+          "default",
+          "description"
+        ],
+        "title": "DagTemplateVersion"
+      },
+      "DagTemplateVersionsResponse": {
+        "properties": {
+          "templates": {
+            "items": {
+              "$ref": "#/components/schemas/DagTemplateVersion"
+            },
+            "type": "array",
+            "title": "Templates"
+          }
+        },
+        "type": "object",
+        "required": [
+          "templates"
+        ],
+        "title": "DagTemplateVersionsResponse"
       },
       "HTTPValidationError": {
         "properties": {
@@ -6433,7 +6701,7 @@
           "orchestration": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/OrchestrationState"
+                "$ref": "#/components/schemas/AppOrchestrationState"
               },
               {
                 "type": "null"
@@ -6549,6 +6817,17 @@
               }
             ],
             "title": "Notificationemail"
+          },
+          "dag_template_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dag Template Version"
           }
         },
         "type": "object",
@@ -6621,6 +6900,17 @@
               }
             ],
             "title": "Notificationemail"
+          },
+          "dag_template_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dag Template Version"
           }
         },
         "additionalProperties": true,

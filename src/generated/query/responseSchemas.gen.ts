@@ -5,6 +5,7 @@ import { CacheConfigResponse } from './zod/cacheConfigResponse.gen'
 import { CacheHistoryResponse } from './zod/cacheHistoryResponse.gen'
 import { CleanRoomPoliciesResponse } from './zod/cleanRoomPoliciesResponse.gen'
 import { CredentialsResponse } from './zod/credentialsResponse.gen'
+import { DagTemplateVersionsResponse } from './zod/dagTemplateVersionsResponse.gen'
 import { HealthResponse } from './zod/healthResponse.gen'
 import { IdentityClient } from './zod/identityClient.gen'
 import { IdentityClientsResponse } from './zod/identityClientsResponse.gen'
@@ -64,8 +65,10 @@ export const responseSchemas: Record<string, z.ZodType> = {
   'GET /get_access_logs': AccessLogsResponse,
   'GET /get_orchestrator_runs': OrchestratorRunsResponse,
   'GET /get_recovery_apps': RecoveryAppsResponse,
+  'GET /get_dag_template_versions': DagTemplateVersionsResponse,
   'POST /submit_recovery_dag': RecoveryAppSubmitResponse,
   'GET /get_recovery_app_inventory': RecoveryAppInventoryResponse,
+  'POST /rollback_app_from_orchestrator': RecoveryAppsResponse,
   'DELETE /delete_recovery_app': RecoveryAppsResponse,
   'GET /get_recovery_groups': RecoveryGroupsResponse,
   'POST /submit_recovery_group': RecoveryGroupsResponse,
