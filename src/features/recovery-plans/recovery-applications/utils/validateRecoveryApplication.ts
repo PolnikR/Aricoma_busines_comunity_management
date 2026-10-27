@@ -5,11 +5,33 @@ import { isValidRecoveryApplicationFileName, isValidRecoveryApplicationName } fr
 import type { RecoveryGroup } from '../../recovery-groups/model/recoveryGroupTypes'
 import { getEligibleTargetProviders, isEligiblePlatformProvider, isEligibleSourceProvider } from './eligibleProviders'
 import { isRecoveryGroupCompatible, isRecoveryGroupEligible } from './recoveryGroupPlatform'
+import type { DagTemplateVersion } from '@/generated/query/zod'
 
 export interface ValidationError {
-  field: 'fileName' | 'name' | 'description' | 'policySet' | 'platform' | 'targetProvider' | 'recoveryGroup'
+  field: 'fileName' | 'name' | 'description' | 'policySet' | 'platform' | 'targetProvider' | 'recoveryGroup' | 'dagTemplateVersion'
   messageKey: string
   params?: Record<string, string>
+}
+
+export interface ApplicationTemplateCatalog {
+  templates: DagTemplateVersion[]
+  verified: boolean
+}
+
+export function validateRecoveryApplicationTemplate(
+  draft: RecoveryApplicationFormState, catalog?: ApplicationTemplateCatalog,
+): ValidationError | null {
+  const version = draft.dagTemplateVersion ?? null
+  const verified = catalog?.verified && catalog.templates.filter(template => template.default).length === 1
+  if (!verified) {
+    return !draft.pushToOrchestrator && version === null ? null : {
+      field: 'dagTemplateVersion', messageKey: 'recovery.application.lifecycle.templateUnverified',
+    }
+  }
+  if (version !== null && !catalog.templates.some(template => template.version === version)) {
+    return { field: 'dagTemplateVersion', messageKey: 'recovery.application.lifecycle.templateUnknown', params: { version } }
+  }
+  return null
 }
 
 // The backend's LPAR_NAME_RE (recovery/recovery.py): each LPAR name becomes part
@@ -48,8 +70,9 @@ export function validateRecoveryApplication(
   formState: RecoveryApplicationFormState,
   providers: ProviderRecord[],
   platformProviders: PlatformProviderRecord[] = [],
-  { lockedProviders = null, groups }: {
+  { lockedProviders = null, groups, templateCatalog }: {
     lockedProviders?: LockedProviders | null
+    templateCatalog?: ApplicationTemplateCatalog
     // The current recovery groups; the sidebar filter alone does not cover
     // groups stored on a saved application.
     groups?: Pick<RecoveryGroup, 'id' | 'sourceCategory' | 'workloadType' | 'pushToOrchestrator' | 'airflowRunId'>[]
@@ -112,6 +135,9 @@ export function validateRecoveryApplication(
       messageKey: 'recovery.application.validation.targetProviderRequired',
     }
   }
+
+  const templateProblem = validateRecoveryApplicationTemplate(formState, templateCatalog)
+  if (templateProblem) return templateProblem
 
   if (formState.pushToOrchestrator) {
     const orchestrationProviderIsAvailable = platformProviders.some(

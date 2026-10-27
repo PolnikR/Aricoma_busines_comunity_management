@@ -7,8 +7,17 @@ import type { ProviderRecord } from '@/features/providers-connectors/providers/m
 import { RecoveryAppBuilder } from './RecoveryAppBuilder'
 import type { RecoveryGroup } from '../../recovery-groups/model/recoveryGroupTypes'
 import type { LockedProviders, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
+import { useGetDagTemplateVersions } from '@/generated/query/recovery-apps/recovery-apps.gen'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+
+const templatesQuery = vi.hoisted(() => ({
+  current: { data: { templates: [{ platform: 'vmware', version: 'future-3', default: true, description: 'Server default description' }] }, isPending: false, isError: false, error: null as Error | null, refetch: vi.fn() },
+}))
+vi.mock('@/generated/query/recovery-apps/recovery-apps.gen', async importOriginal => ({
+  ...await importOriginal<typeof import('@/generated/query/recovery-apps/recovery-apps.gen')>(),
+  useGetDagTemplateVersions: vi.fn(() => templatesQuery.current),
+}))
 
 const platformProvidersQuery = vi.hoisted(() => ({
   current: {
@@ -197,6 +206,80 @@ function draftFixture(): RecoveryApplicationFormState {
     ]),
   }
 }
+
+describe('read-only and DAG templates', () => {
+  it('does not query DAG templates for an unsupported stored platform', () => {
+    render(<RecoveryAppBuilder readOnly initialData={draftFixture()} lockedProviders={{ platform: 'UNSUPPORTED', sourceProviderId: 'vmware-01', targetProviderId: 'vmware-target-01' }} />)
+    const call = vi.mocked(useGetDagTemplateVersions).mock.lastCall
+    expect(call).toBeDefined()
+    expect(call?.[0]).toBeUndefined()
+    expect(call?.[1]?.query?.enabled).toBe(false)
+  })
+  afterEach(() => {
+    templatesQuery.current.error = null
+    templatesQuery.current.isPending = false
+    templatesQuery.current.data.templates = [{ platform: 'vmware', version: 'future-3', default: true, description: 'Server default description' }]
+  })
+  it.each([null, 'future-3'])('applies outage gating without losing configured %s and rechecks Retry data', async dagTemplateVersion => {
+    templatesQuery.current.error = new Error('offline')
+    const user = userEvent.setup()
+    const onSave = vi.fn()
+    const props = { initialData: { ...draftFixture(), dagTemplateVersion }, onSave }
+    const { rerender } = render(<RecoveryAppBuilder {...props} />)
+    await user.click(screen.getByRole('button', { name: 'Orchestration' }))
+    const save = screen.getByRole('button', { name: 'Save Application' })
+    if (dagTemplateVersion === null) {
+      expect(save).toBeEnabled()
+      expect(screen.getByText(/You can save with the backend default/)).toBeInTheDocument()
+      await user.click(screen.getByRole('switch', { name: 'Push to orchestrator' }))
+      expect(save).toBeDisabled()
+      await user.click(screen.getByRole('switch', { name: 'Push to orchestrator' }))
+    } else expect(save).toBeDisabled()
+    templatesQuery.current.error = null
+    rerender(<RecoveryAppBuilder {...props} />)
+    expect(screen.getByLabelText('DAG Template Version')).toHaveValue(dagTemplateVersion ?? '')
+    expect(save).toBeEnabled()
+    await user.click(save)
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ dagTemplateVersion }))
+  })
+  it('ignores another platform catalog without resetting the explicit draft', async () => {
+    templatesQuery.current.data.templates = [{ platform: 'ibm_power', version: 'future-3', default: true, description: 'Wrong platform' }]
+    const user = userEvent.setup()
+    render(<RecoveryAppBuilder initialData={{ ...draftFixture(), dagTemplateVersion: 'future-3' }} />)
+    await user.click(screen.getByRole('button', { name: 'Orchestration' }))
+    expect(screen.getByLabelText('DAG Template Version')).toHaveValue('future-3')
+    expect(screen.queryByText('Wrong platform')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Save Application' })).toBeDisabled()
+  })
+  it('opens every step with missing references and blocks metadata and save mutations', async () => {
+    const user = userEvent.setup()
+    const onSave = vi.fn()
+    const dirty = vi.fn()
+    render(<RecoveryAppBuilder readOnly initialData={{ ...draftFixture(), platform: 'gone', targetProviderId: '', policySetId: '', name: '' }} onSave={onSave} onDirtyChange={dirty} />)
+    expect(screen.getByLabelText('Application Name *')).toBeDisabled()
+    act(() => callbackHarness.metadata?.onMetadataChange?.({ name: 'Changed' }))
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+    expect(screen.getByText('Tier count: 2')).toBeInTheDocument()
+    act(() => callbackHarness.canvas?.onTierDelete?.('tier_id'))
+    expect(screen.getByText('Tier count: 2')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Orchestration' }))
+    expect(screen.getByRole('button', { name: 'Save Application' })).toBeDisabled()
+    expect(dirty).not.toHaveBeenCalled()
+    expect(onSave).not.toHaveBeenCalled()
+    await user.click(screen.getByRole('button', { name: 'Back' }))
+    expect(screen.getByRole('heading', { name: 'Policy set' })).toBeInTheDocument()
+  })
+  it('saves an explicit template while Push is off', async () => {
+    const user = userEvent.setup()
+    const onSave = vi.fn()
+    render(<RecoveryAppBuilder initialData={draftFixture()} onSave={onSave} />)
+    await user.click(screen.getByRole('button', { name: 'Orchestration' }))
+    await user.selectOptions(screen.getByLabelText('DAG Template Version'), 'future-3')
+    expect(screen.getByText('Server default description')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Save Application' }))
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ dagTemplateVersion: 'future-3', pushToOrchestrator: false }))
+  })
+})
 
 function metadataProps() {
   if (!callbackHarness.metadata) throw new Error('Expected mounted metadata form')

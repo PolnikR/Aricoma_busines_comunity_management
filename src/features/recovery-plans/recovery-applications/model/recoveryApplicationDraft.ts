@@ -5,7 +5,7 @@ import { isRecoveryGroupCompatible, isRecoveryGroupEligible } from '../utils/rec
 import type { DraftRecoveryTier, LockedProviders, RecoveryApplicationFormState } from './recoveryApplicationTypes'
 
 export type ApplicationMetadataPatch = Partial<Pick<RecoveryApplicationFormState,
-  'fileName' | 'name' | 'description' | 'environment' | 'platform' | 'targetProviderId'
+  'fileName' | 'name' | 'description' | 'environment' | 'platform' | 'targetProviderId' | 'dagTemplateVersion'
 >>
 
 export interface DraftContext {
@@ -30,7 +30,7 @@ export type SourceChangeDecision =
 
 function editableMetadata(update: ApplicationMetadataPatch, lockedProviders: LockedProviders | null): ApplicationMetadataPatch {
   return lockedProviders
-    ? Object.fromEntries(Object.entries(update).filter(([key]) => key !== 'platform' && key !== 'targetProviderId'))
+    ? Object.fromEntries(Object.entries(update).filter(([key]) => key !== 'platform' && key !== 'targetProviderId' && key !== 'dagTemplateVersion'))
     : { ...update }
 }
 
@@ -40,7 +40,7 @@ export function createApplicationDraft(initialData?: RecoveryApplicationFormStat
   }
   return {
     fileName: '', policySetId: '', pushToOrchestrator: false, name: '', description: '',
-    environment: 'dev', platform: '', orchestrationProviderId: '', targetProviderId: '', notificationEmail: null,
+    environment: 'dev', platform: '', orchestrationProviderId: '', targetProviderId: '', notificationEmail: null, dagTemplateVersion: null,
     tiers: new Map([['tier_id', { order: 1, description: 'tier_description' }]]),
   }
 }
@@ -56,8 +56,12 @@ export function planApplicationMetadataChange(
   if (changesSource) {
     const previousType = context.providers.find(provider => provider.id === draft.platform)?.type
     const nextType = context.providers.find(provider => provider.id === platform)?.type
-    if (previousType !== nextType) metadata.targetProviderId = ''
-    if (Array.from(draft.tiers.values()).some(tier => Boolean(tier.recovery_group))) {
+    const changesPlatform = previousType !== nextType
+    if (changesPlatform) {
+      metadata.targetProviderId = ''
+      metadata.dagTemplateVersion = null
+    }
+    if ((changesPlatform && draft.dagTemplateVersion != null) || Array.from(draft.tiers.values()).some(tier => Boolean(tier.recovery_group))) {
       return { kind: 'confirmationRequired', proposal: { metadata: { ...metadata, platform } } }
     }
   }

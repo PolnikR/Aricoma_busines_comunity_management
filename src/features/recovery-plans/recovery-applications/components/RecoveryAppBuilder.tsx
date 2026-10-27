@@ -22,6 +22,8 @@ import { isRecoveryGroupCompatible, isRecoveryGroupEligible } from '../utils/rec
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { AppMetadataForm } from './AppMetadataForm'
 import { TierCanvas } from './TierCanvas'
+import { DagTemplateVersionSelect } from './DagTemplateVersionSelect'
+import { useGetDagTemplateVersions } from '@/generated/query/recovery-apps/recovery-apps.gen'
 import { addApplicationTier, applyApplicationTierOrder, applyConfirmedSourceChange, assignRecoveryGroup, createApplicationDraft, deleteApplicationTier, editApplicationTier, planApplicationMetadataChange, removeRecoveryGroup, selectRecoveryVm } from '../model/recoveryApplicationDraft'
 import type { ApplicationMetadataPatch, SourceChangeProposal } from '../model/recoveryApplicationDraft'
 import { getEligiblePlatformProviders } from '../utils/eligibleProviders'
@@ -37,6 +39,7 @@ interface RecoveryAppBuilderProps {
   initialData?: RecoveryApplicationFormState
   disableFileName?: boolean
   isInitialLoading?: boolean
+  readOnly?: boolean
   // The app is deployed to Airflow: saving it without a push would make the
   // backend record pushed=false while its DAG stays deployed, so delete would
   // no longer roll it back. Keep the push on until the backend preserves it.
@@ -55,9 +58,10 @@ export function RecoveryAppBuilder({
   isInitialLoading = false,
   lockPushToOrchestrator = false,
   lockedProviders = null,
+  readOnly = false,
 }: RecoveryAppBuilderProps) {
   const { t } = useTranslation()
-  const isFormDisabled = isInitialLoading || isSaving
+  const isFormDisabled = isInitialLoading || isSaving || readOnly
   const [step, setStep] = useState(1)
   const [formState, setFormState] = useState<RecoveryApplicationFormState>(
     () => ({
@@ -85,6 +89,14 @@ export function RecoveryAppBuilder({
   // saved application, whose provider may be gone); without one no group fits.
   const platform = lockedProviders?.platform
     ?? providersQuery.data?.find(provider => provider.id === formState.platform)?.type
+  const normalizedPlatform = platform?.toUpperCase()
+  const templatePlatform = normalizedPlatform === 'VMWARE' ? 'vmware' : normalizedPlatform === 'IBM_POWER' ? 'ibm_power' : undefined
+  const templatesQuery = useGetDagTemplateVersions(
+    templatePlatform ? { platform: templatePlatform } : undefined,
+    { query: { enabled: Boolean(templatePlatform), placeholderData: () => undefined } },
+  )
+  const templates = (templatesQuery.data?.templates ?? []).filter(template => template.platform.toLowerCase() === templatePlatform)
+  const templateCatalog = { templates, verified: Boolean(templatePlatform && templatesQuery.data && !templatesQuery.error) }
   const compatibleGroups = useMemo(
     () => groups.filter(group => isRecoveryGroupCompatible(group, platform)),
     [groups, platform],
@@ -114,7 +126,7 @@ export function RecoveryAppBuilder({
     [availableGroups],
   )
 
-  const updateFormState = useCallback((update: Partial<Pick<RecoveryApplicationFormState, 'policySetId' | 'orchestrationProviderId' | 'pushToOrchestrator'>>) => {
+  const updateFormState = useCallback((update: Partial<Pick<RecoveryApplicationFormState, 'policySetId' | 'orchestrationProviderId' | 'pushToOrchestrator' | 'dagTemplateVersion'>>) => {
     if (isFormDisabled) return
     setFormState(current => ({ ...current, ...update }))
     onDirtyChange?.(true)
@@ -137,7 +149,7 @@ export function RecoveryAppBuilder({
     setFormState(current => ({ ...current, ...decision.metadata }))
     const notifyDirty = decision.kind === 'applied' ? decision.transition.notifyDirty : decision.notifyDirty
     if (notifyDirty) onDirtyChange?.(true)
-  }, [formState, isFormDisabled, lockedProviders, onDirtyChange, providersQuery.data])
+  }, [formState, isFormDisabled, lockedProviders, onDirtyChange, providersQuery.data, setPendingSourceChange])
   const confirmSourceChange = () => {
     if (isFormDisabled || !pendingSourceChange) return
     const result = applyConfirmedSourceChange(formState, pendingSourceChange, lockedProviders)
@@ -205,6 +217,7 @@ export function RecoveryAppBuilder({
     platformProviders: platformProvidersQuery.data ?? [],
     areGroupsLoading,
     lockedProviders,
+    templateCatalog,
   })
 
   const steps = [
@@ -212,17 +225,17 @@ export function RecoveryAppBuilder({
     {
       id: 'tiers',
       label: t('pages.recoveryBuilder.steps.tiers'),
-      disabled: !detailsValid,
+      disabled: !readOnly && !detailsValid,
     },
     {
       id: 'policy-set',
       label: t('pages.recoveryBuilder.steps.policySet'),
-      disabled: !detailsValid || !tiersValid,
+      disabled: !readOnly && (!detailsValid || !tiersValid),
     },
     {
       id: 'orchestration',
       label: t('pages.recoveryBuilder.steps.orchestration'),
-      disabled: !detailsValid || !tiersValid || !policySetValid,
+      disabled: !readOnly && (!detailsValid || !tiersValid || !policySetValid),
     },
   ]
 
@@ -232,7 +245,7 @@ export function RecoveryAppBuilder({
       formState,
       providersQuery.data ?? [],
       eligiblePlatformProviders,
-      { lockedProviders, groups },
+      { lockedProviders, groups, templateCatalog },
     )
     if (validationError) {
       alert(t(validationError.messageKey, validationError.params))
@@ -242,7 +255,7 @@ export function RecoveryAppBuilder({
   }
 
   return (
-    <fieldset className="contents" disabled={isFormDisabled} aria-busy={isFormDisabled}>
+    <fieldset className="contents" disabled={isInitialLoading || isSaving} aria-busy={isInitialLoading || isSaving}>
     <div className="flex min-h-0 flex-1 p-4">
       <div className="grid min-h-0 flex-1 overflow-hidden rounded-[20px] border border-border bg-surface shadow-sm lg:grid-cols-[280px_minmax(0,1fr)]">
         <aside className="custom-scrollbar min-h-0 overflow-x-hidden overflow-y-auto border-b border-border bg-surface-subtle lg:border-b-0 lg:border-r">
@@ -255,6 +268,9 @@ export function RecoveryAppBuilder({
         </aside>
         <div className="flex min-h-0 flex-col">
           <div className={`custom-scrollbar min-h-0 flex-1 p-5 sm:p-6 ${step === 2 || step === 3 ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+            <fieldset role="presentation" className="contents" disabled={readOnly}
+              onDragStartCapture={event => { if (isFormDisabled) { event.preventDefault(); event.stopPropagation() } }}
+              onDropCapture={event => { if (isFormDisabled) { event.preventDefault(); event.stopPropagation() } }}>
             {lockedProviders && providersQuery.error ? (
               <FetchErrorAlert
                 className="mb-4 max-w-5xl"
@@ -341,6 +357,7 @@ export function RecoveryAppBuilder({
               <div className="flex h-full min-h-0 flex-col">
                 <h2 className="text-base font-semibold text-text-primary">{t('pages.recoveryBuilder.policySet.title')}</h2>
                 <p className="mt-1 text-sm text-text-muted">{t('pages.recoveryBuilder.policySet.description')}</p>
+                {readOnly && formState.policySetId ? <p className="mt-2 text-sm text-text-secondary">{formState.policySetId}</p> : null}
                 {policySetsQuery.isLoading ? (
                   <p className="mt-5 text-sm text-text-muted" role="status">{t('pages.recoveryBuilder.policySet.loading')}</p>
                 ) : policySetsQuery.error ? (
@@ -383,6 +400,16 @@ export function RecoveryAppBuilder({
               <div>
                 <h2 className="text-base font-semibold text-text-primary">{t('pages.recoveryBuilder.orchestration.title')}</h2>
                 <p className="mt-1 text-sm text-text-muted">{t('pages.recoveryBuilder.orchestration.description')}</p>
+                <DagTemplateVersionSelect
+                  platform={templatePlatform}
+                  value={formState.dagTemplateVersion ?? null}
+                  templates={templates}
+                  isLoading={Boolean(templatePlatform && templatesQuery.isPending)}
+                  error={templatesQuery.error}
+                  disabled={isFormDisabled}
+                  onChange={dagTemplateVersion => { updateFormState({ dagTemplateVersion }) }}
+                  onRetry={() => { void templatesQuery.refetch() }}
+                />
                 <div className="mt-5 flex max-w-4xl items-start gap-3 rounded-lg border border-border bg-surface p-4">
                   <Toggle
                     checked={formState.pushToOrchestrator}
@@ -443,6 +470,7 @@ export function RecoveryAppBuilder({
                 ) : null}
               </div>
             ) : null}
+            </fieldset>
           </div>
           <div className="flex flex-col-reverse gap-3 border-t border-border bg-surface-subtle p-4 sm:flex-row sm:items-center sm:justify-between">
             <Button variant="ghost" onClick={onCancel}>{t('buttons.cancel')}</Button>
@@ -451,12 +479,12 @@ export function RecoveryAppBuilder({
                 {t('buttons.back')}
               </Button>
               {step < 4 ? (
-                <Button disabled={!canContinue} onClick={() => { setStep(current => Math.min(4, current + 1)) }}>
+                <Button disabled={!readOnly && !canContinue} onClick={() => { setStep(current => Math.min(4, current + 1)) }}>
                   {t('buttons.next')}
                 </Button>
               ) : (
                 <Button
-                  disabled={!canSave || isSaving}
+                  disabled={!canSave || isFormDisabled}
                   startIcon={isSaving ? <Spinner /> : undefined}
                   onClick={handleSave}
                 >

@@ -2,7 +2,12 @@ import { describe, expect, it } from 'vitest'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import type { PlatformProviderRecord } from '@/features/platform-administration/platform-providers/model/platformProviderTypes'
 import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
-import { validateRecoveryApplication } from './validateRecoveryApplication'
+import { validateRecoveryApplication as validate, validateRecoveryApplicationTemplate } from './validateRecoveryApplication'
+
+const templateCatalog = { templates: [{ platform: 'vmware', version: 'future-3', default: true, description: 'Default' }], verified: true }
+function validateRecoveryApplication(...[draft, providers, platformProviders, options]: Parameters<typeof validate>) {
+  return validate(draft, providers, platformProviders, { templateCatalog, ...options })
+}
 
 function provider(id: string, type: ProviderRecord['type'], role: 'source' | 'target'): ProviderRecord {
   return { id, name: id, description: '', type, role, ipAddress: '10.0.0.1', credentialId: 'creds', credentialStatus: 'ok' }
@@ -28,6 +33,25 @@ const formState: RecoveryApplicationFormState = {
   notificationEmail: null,
   tiers: new Map(),
 }
+
+describe('template submit validation', () => {
+  const templates = [{ platform: 'vmware', version: 'future-3', default: true, description: 'Server default' }]
+  it.each([undefined, { templates: [], verified: true }, { templates, verified: false }])('allows only default Save when catalog is unavailable: %j', catalog => {
+    expect(validateRecoveryApplicationTemplate(formState, catalog)).toBeNull()
+    expect(validateRecoveryApplicationTemplate({ ...formState, pushToOrchestrator: true }, catalog)).not.toBeNull()
+    expect(validateRecoveryApplicationTemplate({ ...formState, dagTemplateVersion: 'future-3' }, catalog)).not.toBeNull()
+  })
+  it('accepts the server default and explicit supported versions after verification', () => {
+    const catalog = { templates, verified: true }
+    expect(validateRecoveryApplicationTemplate({ ...formState, pushToOrchestrator: true }, catalog)).toBeNull()
+    expect(validateRecoveryApplicationTemplate({ ...formState, dagTemplateVersion: 'future-3' }, catalog)).toBeNull()
+    expect(validateRecoveryApplicationTemplate({ ...formState, dagTemplateVersion: 'removed' }, catalog)?.messageKey).toBe('recovery.application.lifecycle.templateUnknown')
+  })
+  it('treats ambiguous defaults as unavailable', () => {
+    const catalog = { templates: [...templates, { platform: 'vmware', version: 'other', default: true, description: 'Another default' }], verified: true }
+    expect(validateRecoveryApplicationTemplate({ ...formState, pushToOrchestrator: true }, catalog)).not.toBeNull()
+  })
+})
 
 describe('validateRecoveryApplication', () => {
   it.each([false, true])('currently accepts zero tiers with explicit empty Groups (locked=%s), unlike Builder readiness', locked => {

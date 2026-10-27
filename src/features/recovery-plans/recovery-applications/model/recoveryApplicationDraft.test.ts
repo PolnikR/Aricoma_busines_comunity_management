@@ -13,12 +13,41 @@ const providers: ProviderRecord[] = [
 ]
 const locks: LockedProviders = { platform: 'VMWARE', sourceProviderId: 'source', targetProviderId: 'target' }
 const context = { providers, lockedProviders: null }
+
+describe('DAG template source transitions', () => {
+  it('starts with the backend default', () => {
+    expect(createApplicationDraft().dagTemplateVersion).toBeNull()
+  })
+  it('resets a pinned template only after confirming a platform change', () => {
+    const current = { ...draft(false), dagTemplateVersion: 'custom-2' }
+    const decision = planApplicationMetadataChange(current, { platform: 'power' }, context)
+    expect(decision.kind).toBe('confirmationRequired')
+    expect(current.dagTemplateVersion).toBe('custom-2')
+    if (decision.kind !== 'confirmationRequired') throw new Error('Confirmation expected')
+    expect(applyConfirmedSourceChange(current, decision.proposal, null).draft.dagTemplateVersion).toBeNull()
+  })
+  it('preserves a pinned version when switching providers of the same platform', () => {
+    const current = { ...draft(false), dagTemplateVersion: 'custom-2' }
+    const decision = planApplicationMetadataChange(current, { platform: 'same' }, context)
+    expect(decision.kind).toBe('applied')
+    if (decision.kind !== 'applied') throw new Error('Immediate change expected')
+    expect(decision.transition.draft.dagTemplateVersion).toBe('custom-2')
+  })
+  it('preserves a pinned version if provider locks activate before confirmation', () => {
+    const current = { ...draft(), dagTemplateVersion: 'custom-2' }
+    const decision = planApplicationMetadataChange(current, { platform: 'power' }, context)
+    if (decision.kind !== 'confirmationRequired') throw new Error('Confirmation expected')
+    const result = applyConfirmedSourceChange(current, decision.proposal, locks)
+    expect(result.draft.dagTemplateVersion).toBe('custom-2')
+    expect(result.draft.platform).toBe('source')
+  })
+})
 const richTier: DraftRecoveryTier = {
   order: 3, description: 'Database', vms: [{ name: 'legacy' }],
   recovery_group: { id: 'group', name: 'Group', description: 'Stored', vms: [{ name: 'db', order: 8, hostname: 'stored' }], volumes: [{ name: 'volume' }] },
 }
 function draft(withGroup = true): RecoveryApplicationFormState {
-  return { fileName: 'app', name: 'Application', description: 'Description', environment: 'prod', platform: 'source', targetProviderId: 'invalid-retained', policySetId: 'policy', orchestrationProviderId: 'airflow', pushToOrchestrator: false, notificationEmail: 'a@b.test', tiers: new Map([['db', structuredClone(withGroup ? richTier : { order: 3, description: 'Database' })]]) }
+  return { fileName: 'app', name: 'Application', description: 'Description', environment: 'prod', platform: 'source', targetProviderId: 'invalid-retained', policySetId: 'policy', orchestrationProviderId: 'airflow', pushToOrchestrator: false, notificationEmail: 'a@b.test', dagTemplateVersion: null, tiers: new Map([['db', structuredClone(withGroup ? richTier : { order: 3, description: 'Database' })]]) }
 }
 function freezeDraft(value: RecoveryApplicationFormState) {
   for (const tier of value.tiers.values()) {
@@ -39,7 +68,7 @@ function freezeDraft(value: RecoveryApplicationFormState) {
 describe('draft initialization', () => {
   it('creates independent default tiers without inferring providers or Push', () => {
     const first = createApplicationDraft()
-    expect(first).toEqual({ fileName: '', policySetId: '', pushToOrchestrator: false, name: '', description: '', environment: 'dev', platform: '', orchestrationProviderId: '', targetProviderId: '', notificationEmail: null, tiers: new Map([['tier_id', { order: 1, description: 'tier_description' }]]) })
+    expect(first).toEqual({ fileName: '', policySetId: '', pushToOrchestrator: false, name: '', description: '', environment: 'dev', platform: '', orchestrationProviderId: '', targetProviderId: '', notificationEmail: null, dagTemplateVersion: null, tiers: new Map([['tier_id', { order: 1, description: 'tier_description' }]]) })
     first.tiers.clear()
     expect(createApplicationDraft().tiers.size).toBe(1)
   })
@@ -185,7 +214,7 @@ describe('metadata transaction', () => {
   it('freezes reset at proposal time with derived reset overriding a supplied target', () => {
     const decision = planApplicationMetadataChange(draft(), { platform: 'power', targetProviderId: 'supplied' }, context)
     if (decision.kind !== 'confirmationRequired') throw new Error('Expected confirmation')
-    expect(decision.proposal.metadata).toEqual({ platform: 'power', targetProviderId: '' })
+    expect(decision.proposal.metadata).toEqual({ platform: 'power', targetProviderId: '', dagTemplateVersion: null })
     expect(applyConfirmedSourceChange({ ...draft(), targetProviderId: 'later' }, decision.proposal, null).draft.targetProviderId).toBe('')
   })
   it('enforces newly active locks at acceptance without detaching Groups', () => {
@@ -265,8 +294,8 @@ describe('metadata patch composition', () => {
     const target = planApplicationMetadataChange(initial, { targetProviderId: 'queued-target' }, context)
     const source = planApplicationMetadataChange(initial, { platform: 'power' }, context)
     if (target.kind !== 'applied' || source.kind !== 'applied') throw new Error('Expected applied')
-    expect(source.metadata).toEqual({ platform: 'power', targetProviderId: '' })
-    expect({ ...initial, ...target.metadata, ...source.metadata }).toMatchObject({ platform: 'power', targetProviderId: '' })
+    expect(source.metadata).toEqual({ platform: 'power', targetProviderId: '', dagTemplateVersion: null })
+    expect({ ...initial, ...target.metadata, ...source.metadata }).toMatchObject({ platform: 'power', targetProviderId: '', dagTemplateVersion: null })
   })
 
   it('returns a copied exact patch for unchanged explicit values and filters locked providers', () => {

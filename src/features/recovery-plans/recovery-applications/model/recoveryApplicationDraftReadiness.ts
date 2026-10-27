@@ -1,8 +1,8 @@
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import type { PlatformProviderRecord } from '@/features/platform-administration/platform-providers/model/platformProviderTypes'
 import type { LockedProviders, RecoveryApplicationFormState } from './recoveryApplicationTypes'
-import type { ValidationError } from '../utils/validateRecoveryApplication'
-import { storedProvidersProblem } from '../utils/validateRecoveryApplication'
+import type { ApplicationTemplateCatalog, ValidationError } from '../utils/validateRecoveryApplication'
+import { storedProvidersProblem, validateRecoveryApplicationTemplate } from '../utils/validateRecoveryApplication'
 import { getEligibleSourceProviders, getEligibleTargetProviders, isEligiblePlatformProvider } from '../utils/eligibleProviders'
 import { isValidRecoveryApplicationFileName, isValidRecoveryApplicationName } from '../utils/recoveryApplicationFileName'
 
@@ -13,6 +13,7 @@ export interface DraftReadinessContext {
   readonly platformProviders: PlatformProviderRecord[]
   readonly areGroupsLoading: boolean
   readonly lockedProviders: LockedProviders | null
+  readonly templateCatalog?: ApplicationTemplateCatalog
 }
 
 export interface DraftReadiness {
@@ -50,6 +51,7 @@ export function getRecoveryApplicationDraftReadiness(
     ? storedProvidersProblem(lockedProviders, providers ?? [])
     : null
   const canSave = detailsValid && tiersValid && policySetValid && orchestrationValid && !areGroupsLoading
+    && !validateRecoveryApplicationTemplate(draft, context.templateCatalog)
     && (!lockedProviders || (providersLoaded && !lockedProvidersError))
 
   return { detailsValid, tiersValid, policySetValid, orchestrationValid, canContinue, canSave, providersLoaded, lockedProvidersError }

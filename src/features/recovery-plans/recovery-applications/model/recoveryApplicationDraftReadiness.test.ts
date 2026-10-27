@@ -22,10 +22,26 @@ function draft(update: Partial<RecoveryApplicationFormState> = {}): RecoveryAppl
 }
 
 function context(update: Partial<DraftReadinessContext> = {}): DraftReadinessContext {
-  return { step: 1, providers, providersError: null, platformProviders: [airflow], areGroupsLoading: false, lockedProviders: null, ...update }
+  return { step: 1, providers, providersError: null, platformProviders: [airflow], areGroupsLoading: false, lockedProviders: null,
+    templateCatalog: { templates: [{ platform: 'vmware', version: 'future-3', default: true, description: 'Default' }], verified: true }, ...update }
 }
 
 describe('getRecoveryApplicationDraftReadiness', () => {
+  it.each([
+    [false, null, false, true],
+    [false, 'future-3', false, false],
+    [true, null, false, false],
+    [true, 'future-3', false, false],
+    [false, null, true, true],
+    [false, 'future-3', true, true],
+    [false, 'removed', true, false],
+    [true, null, true, true],
+    [true, 'removed', true, false],
+  ] as const)('matches submit template gating for Push=%s version=%s verified=%s', (pushToOrchestrator, dagTemplateVersion, verified, canSave) => {
+    expect(getRecoveryApplicationDraftReadiness(draft({ pushToOrchestrator, dagTemplateVersion }), context({
+      templateCatalog: { templates: [{ platform: 'vmware', version: 'future-3', default: true, description: 'Default' }], verified },
+    })).canSave).toBe(canSave)
+  })
   it('returns the eight preliminary readiness values for a complete Create draft', () => {
     expect(getRecoveryApplicationDraftReadiness(draft(), context())).toEqual({
       detailsValid: true, tiersValid: true, policySetValid: true, orchestrationValid: true,
