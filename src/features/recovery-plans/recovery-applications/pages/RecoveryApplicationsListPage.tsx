@@ -27,7 +27,8 @@ export function RecoveryApplicationsListPage() {
 
   const handleEdit = (id: string): void => {
     const app = applications?.find(item => item.id === id)
-    if (!app || app.pushToOrchestrator === true || rollingBackId !== null || isDeleting) return
+    // Deployed applications remain inspectable via Edit; the editor enforces read-only.
+    if (!app || rollingBackId !== null || isDeleting) return
     const routeId = toRecoveryApplicationFileName(id)
     void navigate(`/recovery-plans/recovery-applications/${encodeURIComponent(routeId)}/edit`)
   }

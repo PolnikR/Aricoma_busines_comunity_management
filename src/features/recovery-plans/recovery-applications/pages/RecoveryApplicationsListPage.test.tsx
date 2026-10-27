@@ -85,6 +85,15 @@ beforeEach(() => {
 })
 
 describe('RecoveryApplicationsListPage', () => {
+  it('opens the verified read-only editor for a pushed application', async () => {
+    const user = userEvent.setup()
+    query = { ...query, data: [{ id: 'finance-app', pushToOrchestrator: true, data: { application: { name: 'Finance', environment: 'prod', platform: 'IBM_POWER', tiers: {} } } }] }
+    renderListPage()
+    await user.click(screen.getByRole('button', { name: 'Actions: Finance' }))
+    await user.click(screen.getByRole('menuitem', { name: 'Edit' }))
+    expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-applications/finance-app/edit')
+  })
+
   it('closes a failed delete dialog and shows backend detail in the list context', async () => {
     const user = userEvent.setup()
     deleteMutation.mutateAsync.mockRejectedValueOnce(new Error('Delete recovery application request failed with status 409', {

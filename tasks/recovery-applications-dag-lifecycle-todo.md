@@ -32,9 +32,9 @@ Skratka `A` v cestách nižšie = `src/features/recovery-plans/recovery-applicat
 ### T2a — Menu a drawer
 
 **Súbory:** `A/components/RecoveryApplicationsTable.tsx`, `.test.tsx`, `.orchestration.test.tsx`; `A/pages/RecoveryApplicationsListPage.tsx`, `.test.tsx`. **Scope:** M, 5 súborov.
-- [x] Draft Edit dostupný, pushed row menu aj drawer Edit disabled s vysvetlením; callback neobíde guard.
+- [x] Draft Edit dostupný; pushed row menu aj drawer Edit umožňujú otvoriť wizard v read-only režime (rovnako ako Recovery Groups), bez mutácií alebo Save. Pending rollback/delete Edit blokuje.
 - [x] Display/JSON/provider/run informácie fungujú pre oba stavy; tiers Active badge nemení lock pravidlá.
-- [x] List navigačný callback nevstúpi do Edit pre aktuálne pushed/rollback pending app.
+- [x] List navigačný callback umožní vstup do read-only Edit aj pri pushed, ale nie pri rollback/delete pending; Editor pred povolením mutácií vynúti fresh GET.
 
 ### T2b — Priamy Edit a save guards
 
@@ -180,7 +180,7 @@ Skratka `A` v cestách nižšie = `src/features/recovery-plans/recovery-applicat
 **Súbory:** nový `scripts/qa/verify-recovery-applications-dag-lifecycle.mjs`; prípadný nový lokálny fixture modul pre tento skript; tieto dva PLAN/TODO dokumenty pre dôkazy. **Scope:** M, do 4 súborov; `scripts/qa/verify-recovery-groups.mjs` ostáva nedotknutý.
 
 **Akceptácia:**
-- [x] Všetky /api requesty mocked, unknown endpoint fail; Create→Save-only version→Push→locked menu/direct URL→Rollback→Edit→re-push pre VMware aj IBM Power; Confirm Cancel/pending/report/403/409/502/Retry, EN/SK/CS a console/network.
+- [x] Všetky /api requesty mocked, unknown endpoint fail; Create→Save-only version→Push→Edit prístupné, wizard read-only/direct URL→Rollback→Edit→re-push pre VMware aj IBM Power; Confirm Cancel/pending/report/403/409/502/Retry, EN/SK/CS a console/network.
 - [x] Reálne browser reload/keyboard/focus, všetky štyri kroky v read-only aj pri neplatných/chýbajúcich referenciách, version description a Save-only null warning pri výpadku katalógu overené; report, retained ID/run ID a configured/deployed správne po refetch. Screenshot/network dôkazy bez credentials.
 - [x] Reálna BE integrácia označená zvlášť ako nevykonaná, kým nie je explicitné oprávnenie na test provisioning/rollback a určené izolované fixtures. Mock smoke nie je BE integration dôkaz.
 

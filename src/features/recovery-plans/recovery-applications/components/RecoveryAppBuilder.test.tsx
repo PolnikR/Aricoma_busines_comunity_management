@@ -237,7 +237,7 @@ describe('read-only and DAG templates', () => {
     } else expect(save).toBeDisabled()
     templatesQuery.current.error = null
     rerender(<RecoveryAppBuilder {...props} />)
-    expect(screen.getByLabelText('DAG Template Version')).toHaveValue(dagTemplateVersion ?? '')
+    expect(screen.getByLabelText('DAG Template Version')).toHaveValue(dagTemplateVersion ?? 'future-3')
     expect(save).toBeEnabled()
     await user.click(save)
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ dagTemplateVersion }))
@@ -269,15 +269,19 @@ describe('read-only and DAG templates', () => {
     await user.click(screen.getByRole('button', { name: 'Back' }))
     expect(screen.getByRole('heading', { name: 'Policy set' })).toBeInTheDocument()
   })
-  it('saves an explicit template while Push is off', async () => {
+  it('saves an explicit nondefault template while Push is off', async () => {
+    templatesQuery.current.data.templates = [
+      { platform: 'vmware', version: 'future-3', default: true, description: 'Server default description' },
+      { platform: 'vmware', version: 'v2', default: false, description: 'Explicit v2 graph' },
+    ]
     const user = userEvent.setup()
     const onSave = vi.fn()
     render(<RecoveryAppBuilder initialData={draftFixture()} onSave={onSave} />)
     await user.click(screen.getByRole('button', { name: 'Orchestration' }))
-    await user.selectOptions(screen.getByLabelText('DAG Template Version'), 'future-3')
-    expect(screen.getByText('Server default description')).toBeInTheDocument()
+    await user.selectOptions(screen.getByLabelText('DAG Template Version'), 'v2')
+    expect(screen.getByText('Explicit v2 graph')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Save Application' }))
-    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ dagTemplateVersion: 'future-3', pushToOrchestrator: false }))
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ dagTemplateVersion: 'v2', pushToOrchestrator: false }))
   })
 })
 
@@ -756,7 +760,7 @@ describe('RecoveryAppBuilder', () => {
     recoveryGroupsQuery.current.groups = recoveryGroupsQuery.current.groups.map(group => ({ ...group, pushToOrchestrator, airflowRunId }))
     render(<RecoveryAppBuilder />)
     await openTiers()
-    expect(screen.getByText('No VMware recovery groups are available')).toBeInTheDocument()
+    expect(screen.getByText('No recovery groups are available')).toBeInTheDocument()
     await userEvent.setup().click(screen.getByRole('button', { name: 'Add test group' }))
     expect(screen.getByText('Group id: none')).toBeInTheDocument()
   })

@@ -173,14 +173,14 @@ async function rollback(id, mode) {
   console.log(`PASS rollback-${mode}`)
 }
 try {
-  for (const platform of ['vmware', 'power']) for (const version of [null, 'v1']) {
+  for (const [platform, version] of [['vmware', null], ['power', null], ['power', 'v1']]) {
     const id = `${platform}-draft`
     await edit(id)
     await step('orchestration')
     const select = page.locator('#recovery-application-template-version')
     await select.locator('option[value="v1"]').waitFor({ state: 'attached' })
-    assert((await select.locator('option[value=""]').innerText()).includes(platform === 'power' ? 'v2' : 'v1'), 'default comes from catalog')
-    await select.selectOption(version ?? '')
+    assert((await select.locator('option:checked').innerText()).includes(platform === 'power' ? 'v2' : 'v1'), 'default comes from catalog')
+    await select.selectOption(version ?? (platform === 'power' ? 'v2' : 'v1'))
     await save()
     await page.waitForURL('**/recovery-plans/recovery-applications')
     const request = submitRequests().at(-1)
@@ -188,7 +188,7 @@ try {
     assert.equal(request.body.application.dag_template_version ?? null, version)
     await edit(id)
     await step('orchestration')
-    assert.equal(await select.inputValue(), version ?? '', 'configured version survives GET/edit round trip')
+    assert.equal(await select.inputValue(), version ?? (platform === 'power' ? 'v2' : 'v1'), 'configured version survives GET/edit round trip')
     await screenshot(`${platform}-${version ?? 'default'}-save-only`)
     results.push({ scenario: `${platform}-${version ?? 'default'}-save-only`, result: 'pass' })
     console.log(`PASS ${platform}-${version ?? 'default'}-save-only`)
@@ -246,6 +246,12 @@ try {
     await page.keyboard.press('Escape')
     await page.waitForURL('**/recovery-plans/recovery-applications')
     assert.equal(records.find(item => item.id === id).orchestration.pushed, true)
+    const deployedRow = page.getByRole('row').filter({ hasText: `QA-${id}` })
+    await deployedRow.getByRole('button', { name: /actions/i }).click()
+    const inspectEdit = page.getByRole('menuitem', { name: 'Edit', exact: true })
+    assert.equal(await inspectEdit.isEnabled(), true, 'pushed Edit must open a read-only wizard')
+    await inspectEdit.click()
+    await page.getByText(catalogs.en['recovery.application.lifecycle.readOnly'], { exact: true }).waitFor()
     await assertReadOnly(id)
     await screenshot(`${platform}-readonly`)
     await rollback(id, 'ok')

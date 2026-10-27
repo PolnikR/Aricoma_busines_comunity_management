@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { DagTemplateVersionSelect } from './DagTemplateVersionSelect'
@@ -12,25 +12,46 @@ const templates = [
 const props = { platform: 'ibm_power', value: null, templates, isLoading: false, error: null, disabled: false, onChange: vi.fn(), onRetry: vi.fn() }
 
 describe('DagTemplateVersionSelect', () => {
-  it('keeps backend default null and displays its server description', async () => {
+  it('shows the BE default as the selected option exactly once, but submits null for it', async () => {
     const onChange = vi.fn()
     render(<DagTemplateVersionSelect {...props} onChange={onChange} />)
     const select = screen.getByRole('combobox')
-    expect(select).toHaveValue('')
+    expect(select).toHaveValue('release-2027')
+    expect(within(select).getAllByRole('option').map(option => option.textContent)).toEqual(['release-2027 (default)', 'v1'])
     expect(screen.getByText('Current server description')).toBeInTheDocument()
     await userEvent.selectOptions(select, 'v1')
     expect(onChange).toHaveBeenLastCalledWith('v1')
-    await userEvent.selectOptions(select, '')
-    expect(onChange).toHaveBeenLastCalledWith(null)
   })
-  it('preserves an unknown version visibly and offers a deliberate default selection', async () => {
+
+  it('shows IBM Power v1 (default) and v2 with no duplicate v1', async () => {
+    const onChange = vi.fn()
+    const ibmTemplates = [
+      { platform: 'ibm_power', version: 'v1', default: true, description: 'Original graph' },
+      { platform: 'ibm_power', version: 'v2', default: false, description: 'Improved graph' },
+    ]
+    const { rerender } = render(<DagTemplateVersionSelect {...props} templates={ibmTemplates} onChange={onChange} />)
+    const select = screen.getByRole('combobox')
+    expect(select).toHaveValue('v1')
+    expect(within(select).getAllByRole('option').map(option => option.textContent)).toEqual(['v1 (default)', 'v2'])
+    await userEvent.selectOptions(select, 'v2')
+    expect(onChange).toHaveBeenLastCalledWith('v2')
+    rerender(<DagTemplateVersionSelect {...props} templates={ibmTemplates} value="v2" onChange={onChange} />)
+    await userEvent.selectOptions(select, 'v1')
+    expect(onChange).toHaveBeenLastCalledWith(null)
+    rerender(<DagTemplateVersionSelect {...props} templates={ibmTemplates} value="v1" onChange={onChange} />)
+    expect(select).toHaveValue('v1')
+    expect(within(select).getAllByRole('option')).toHaveLength(2)
+  })
+
+  it('preserves an unknown explicit version and offers a deliberate default selection', async () => {
     const onChange = vi.fn()
     render(<DagTemplateVersionSelect {...props} value="removed" onChange={onChange} />)
     expect(screen.getByRole('combobox')).toHaveValue('removed')
     expect(screen.getByRole('alert')).toHaveTextContent('removed')
-    await userEvent.selectOptions(screen.getByRole('combobox'), '')
+    await userEvent.selectOptions(screen.getByRole('combobox'), 'release-2027')
     expect(onChange).toHaveBeenCalledWith(null)
   })
+
   it('exposes Retry on errors and keeps explicit selection intact', async () => {
     const onRetry = vi.fn()
     render(<DagTemplateVersionSelect {...props} templates={[]} value="saved" error={new Error('offline')} onRetry={onRetry} />)
@@ -38,11 +59,21 @@ describe('DagTemplateVersionSelect', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
     expect(onRetry).toHaveBeenCalledOnce()
   })
+
+  it('keeps a stored default version visible when refreshing a cached catalog fails', () => {
+    render(<DagTemplateVersionSelect {...props} value="release-2027" error={new Error('offline')} />)
+    const select = screen.getByRole('combobox')
+    expect(select).toBeDisabled()
+    expect(select).toHaveValue('release-2027')
+    expect(within(select).getAllByRole('option').filter(option => option.getAttribute('value') === 'release-2027')).toHaveLength(1)
+  })
+
   it('disables selection while loading and read-only', () => {
     render(<DagTemplateVersionSelect {...props} disabled isLoading />)
     expect(screen.getByRole('combobox')).toBeDisabled()
     expect(screen.getByRole('status')).toBeInTheDocument()
   })
+
   it.each([[], templates.slice(0, 1), templates.map(template => ({ ...template, default: true }))].map(catalog => ({ catalog })))('warns for empty or invalid defaults: %j', ({ catalog }) => {
     render(<DagTemplateVersionSelect {...props} templates={catalog} />)
     expect(screen.getAllByRole('alert').length).toBeGreaterThan(0)

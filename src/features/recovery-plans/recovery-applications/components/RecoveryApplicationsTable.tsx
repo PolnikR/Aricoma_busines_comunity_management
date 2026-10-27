@@ -403,11 +403,11 @@ export function RecoveryApplicationsTable({
           onClose={() => { setOpenMenuId(null) }}
           ariaLabel={`${t('tables.recovery.actions')} for ${currentMenuApp.data.application.name}`}
           editLabel={t('buttons.edit')}
-          editDisabled={!onEdit || currentMenuApp.pushToOrchestrator === true || mutationPending}
-          editDisabledTitle={t('recovery.application.lifecycle.readOnly')}
+          editDisabled={!onEdit || mutationPending}
+
           deleteLabel={t('buttons.delete')}
           edit={() => {
-            if (currentMenuApp.pushToOrchestrator === true || mutationPending) return
+            if (mutationPending) return
             onEdit?.(currentMenuApp.id)
             setSelectedId(null)
           }}
@@ -449,9 +449,9 @@ export function RecoveryApplicationsTable({
           footer={onEdit ? (
             <Button
               size="sm"
-              disabled={selected.pushToOrchestrator === true || mutationPending}
-              title={selected.pushToOrchestrator === true ? t('recovery.application.lifecycle.readOnly') : undefined}
-              onClick={() => { if (selected.pushToOrchestrator === true || mutationPending) return; onEdit(selected.id); setSelectedId(null) }}
+              disabled={mutationPending}
+
+              onClick={() => { if (mutationPending) return; onEdit(selected.id); setSelectedId(null) }}
             >
               {t('buttons.edit')}
             </Button>

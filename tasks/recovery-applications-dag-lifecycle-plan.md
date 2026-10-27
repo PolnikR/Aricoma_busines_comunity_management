@@ -76,7 +76,7 @@ T1 musí odlíšiť OpenAPI problém, generátor problém a spotrebiteľské FE 
 | Rollback ok/skipped + overený pushed=false | Povolené | Nedostupný | Dostupný |
 | Rollback partial/failed + pushed=true | Zakázané | Možný potvrdený retry po settlement/refetch | Dostupný |
 
-Jedno pravidlo pushed===true sa uplatní v row Edit aj drawer footer, v navigačnom callbacku a priamo v Editor handleSave. Zachovať provider locks nezávisle od lifecycle lock; run_id ani Active/Draft badge nie sú zámok.
+Pushed===true uzamyká zmeny vo wizardi a Editor handleSave, nie samotný vstup cez row Edit alebo drawer footer: podľa Recovery Groups ostáva Edit navigácia dostupná na read-only prehliadanie. Pending rollback/delete stále blokuje Edit. Zachovať provider locks nezávisle od lifecycle lock; run_id ani Active/Draft badge nie sú zámok.
 
 Priama Edit URL: vynútiť čerstvý GET pri vstupe; kým sa nepotvrdí aktuálny stav, nepovoliť mutácie ani zo stale cache. Pri pushed zobraziť vysvetlenie a read-only konfiguráciu v existujúcom builderi, s navigáciou medzi krokmi a Back; skryť/zakázať Save a všetky editácie vrátane custom tier/drop/reorder callbackov. **V read-only režime musí byť možné prejsť všetky štyri kroky nezávisle od `detailsValid`, `tiersValid`, `policySetValid` či dostupnosti providerov, Recovery Groups alebo template katalógu.** `WizardSteps` disabled flags aj Next/canContinue musia v tomto režime obísť validačné brány, nie však ochranu mutácií. Nový `readOnly` stav nesmie reuse celej disabled fieldset tak, že znemožní čítať ďalšie kroky. Pri provider/template load chybe alebo stale/zmazanej referencii musí čítanie uloženej konfigurácie zostať dostupné; otestovať direct Edit URL aj kliknutie na každý krok.
 
@@ -161,7 +161,7 @@ Paralelizácia je možná až po T1/T5 kontrakte: izolované modal/error testy a
 
 | Oblasť | Vitest / wire | Mockovaný browser | Reálna BE integrácia |
 | --- | --- | --- | --- |
-| Read-only | draft edit, pushed menu/footer/callback/save guard; stale cache, direct URL, fresh refetch, 409 | reload/Edit URL, čítanie všetkých krokov, mouse/keyboard/drop blok | Overiť GET/409 iba v schválenom test prostredí |
+| Read-only | draft edit, pushed menu/footer povoľujú prístup na read-only wizard, submit guard; stale cache, direct URL, fresh refetch, 409 | reload/Edit URL, čítanie všetkých krokov, mouse/keyboard/drop blok | Overiť GET/409 iba v schválenom test prostredí |
 | Rollback request | iba app ID query, bez provider override/body; target sa neberie zo source; dve odlišné Airflow IDs | Confirm/Cancel, pending/double click, Delete oddelený | Stored provider/target resolution pre VMware aj Power |
 | Rollback výsledok | ok/skipped, partial/failed 502, report parse, 403/409/400, malformed/network | report sekcie, app zostáva, unlock vs retry locked, failed refresh | Úspešný aj partial cleanup len s výslovným oprávnením |
 | Templates | VMware v1, Power v1/v2, server default iný než v1, null/absent/explicit, unknown, loading/error/empty/Retry, neskorá response | krok 4, description, platform confirmation/cancel, Save-only zachová voľbu | GET katalóg a exact validation bez hardcode |
@@ -186,7 +186,7 @@ Definition of Done implementácie: všetky acceptance TODO splnené, focused tes
 | Read-only zablokuje čítanie wizardu | Stredný | `readOnly` obíde `WizardSteps.disabled` a Next/canContinue validačné brány aj pri chýbajúcich referenciách, nie mutation guards; testovať všetky kroky. |
 | Default sa zmení alebo verzia zmizne | Stredný | Null default semantics, endpoint truth, explicit unknown state bez downgrade. |
 
-Rozhodnutia po review: (1) Save-only umožňuje `dagTemplateVersion=null` a sleduje BE default; explicitná verzia je pripnutá. (2) Pri nedostupnom/nekonzistentnom katalógu **null Save-only povoliť s upozornením**, ale Push aj Save s neoverenou explicitnou verziou blokovať do Retry; BE zostáva autoritou validácie. (3) Priamy pushed Edit je čitateľný wizard: všetky kroky sú prístupné bez readiness validácie, všetky mutácie blokované. (4) Standalone rollback odosiela iba app ID; legacy record bez providerov nemá automatický fallback. (5) Skipped report môže zostať warning, odomknutie riadi pushed=false. (6) FE `mockPermissions` nie je autorizačný zdroj; Rollback HTTP 403 od BE sa musí zobraziť bez odomknutia.
+Rozhodnutia po review: (1) Save-only umožňuje `dagTemplateVersion=null` a sleduje BE default; explicitná verzia je pripnutá. (2) Pri nedostupnom/nekonzistentnom katalógu **null Save-only povoliť s upozornením**, ale Push aj Save s neoverenou explicitnou verziou blokovať do Retry; BE zostáva autoritou validácie. (3) Pushed Edit z tabuľky/detailu aj priamou URL otvára čitateľný wizard: všetky kroky sú prístupné bez readiness validácie, všetky mutácie blokované. (4) Standalone rollback odosiela iba app ID; legacy record bez providerov nemá automatický fallback. (5) Skipped report môže zostať warning, odomknutie riadi pushed=false. (6) FE `mockPermissions` nie je autorizačný zdroj; Rollback HTTP 403 od BE sa musí zobraziť bez odomknutia.
 
 Pred implementáciou: potvrdiť tieto UX rozhodnutia, dostupnosť browser runtime a prípadné test environment oprávnenie. Backend kontrakt pre tieto body nie je otvorený; ide o FE UX a test podmienky. Po vytvorení PLAN/TODO sa práca zastaví na review.
 

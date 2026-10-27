@@ -19,15 +19,18 @@ const app: RecoveryApplicationListItem = {
 }
 
 describe('application DAG lifecycle actions', () => {
-  it('blocks pushed menu and drawer Edit while keeping Display available', async () => {
+  it('allows pushed menu and drawer Edit to inspect a read-only wizard', async () => {
     const user = userEvent.setup(), onEdit = vi.fn()
     render(<MemoryRouter><RecoveryApplicationsTable applications={[app]} onEdit={onEdit} onDelete={vi.fn()} /></MemoryRouter>)
     await user.click(screen.getByRole('button', { name: 'Actions: Finance' }))
-    expect(screen.getByRole('menuitem', { name: 'Edit' })).toBeDisabled()
-    await user.keyboard('{Escape}')
+    expect(screen.getByRole('menuitem', { name: 'Edit' })).toBeEnabled()
+    await user.click(screen.getByRole('menuitem', { name: 'Edit' }))
+    expect(onEdit).toHaveBeenCalledWith('finance.json')
     await user.click(screen.getByText('Finance'))
-    expect(within(screen.getByRole('dialog', { name: 'Application detail' })).getByRole('button', { name: 'Edit' })).toBeDisabled()
-    expect(onEdit).not.toHaveBeenCalled()
+    const drawerEdit = within(screen.getByRole('dialog', { name: 'Application detail' })).getByRole('button', { name: 'Edit' })
+    expect(drawerEdit).toBeEnabled()
+    await user.click(drawerEdit)
+    expect(onEdit).toHaveBeenCalledTimes(2)
   })
 
   it('offers standalone rollback without Delete, cancels then reports success and retains the row', async () => {
@@ -49,7 +52,7 @@ describe('application DAG lifecycle actions', () => {
     expect(screen.getAllByText('Finance').length).toBeGreaterThan(0)
   })
 
-  it.each(['partial', 'failed'] as const)('shows a %s report from HTTP 502 and keeps Edit locked', async status => {
+  it.each(['partial', 'failed'] as const)('shows a %s report from HTTP 502 while the pushed application remains read-only', async status => {
     const user = userEvent.setup()
     const onRollback = vi.fn().mockRejectedValue(new OrvalApiError(502, 'Bad Gateway', { detail: { rollback: { status, compute: { status: 'failed', errors: ['cleanup error'] } } } }))
     render(<MemoryRouter><RecoveryApplicationsTable applications={[app]} onEdit={vi.fn()} onRollback={onRollback} /></MemoryRouter>)
@@ -81,7 +84,7 @@ describe('application DAG lifecycle actions', () => {
     expect(await screen.findByRole('dialog', { name: 'Recovery application rollback result' })).toBeInTheDocument()
   })
 
-  it('displays backend authorization failure without enabling Edit', async () => {
+  it('displays backend authorization failure while allowing read-only inspection', async () => {
     const user = userEvent.setup()
     render(<MemoryRouter><RecoveryApplicationsTable applications={[app]} onEdit={vi.fn()}
       onRollback={vi.fn().mockRejectedValue(new OrvalApiError(403, 'Forbidden', { detail: 'Forbidden' }))} /></MemoryRouter>)
@@ -90,7 +93,7 @@ describe('application DAG lifecycle actions', () => {
     await user.click(within(screen.getByRole('dialog', { name: 'Rollback recovery application' })).getByRole('button', { name: 'Rollback' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('You do not have permission')
     await user.click(screen.getByRole('button', { name: 'Actions: Finance' }))
-    expect(screen.getByRole('menuitem', { name: 'Edit' })).toBeDisabled()
+    expect(screen.getByRole('menuitem', { name: 'Edit' })).toBeEnabled()
   })
 
   it('displays the deployed version independently of configured selection', async () => {
