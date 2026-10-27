@@ -38,7 +38,36 @@ afterEach(() => {
 })
 
 describe('recovery application hooks', () => {
-  it('starts invalidation before per-call completion without waiting for its promise', async () => {
+  it('stores the raw submit response before a failed refresh without failing the save', async () => {
+    const raw = { applications: [{ ...data, orchestration: { pushed: true, run_id: 'stored-run', provider_id: 'airflow-02', template_version: 'v2' } }] }
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(raw), { status: 200 })))
+    const { queryClient, wrapper } = setup()
+    vi.spyOn(queryClient, 'invalidateQueries').mockRejectedValue(new Error('refresh unavailable'))
+    const { result } = renderHook(() => useSubmitRecoveryApplication(), { wrapper })
+    await act(async () => {
+      await result.current.mutateAsync({ providerId: 'airflow-02', data, pushToOrchestrator: false })
+    })
+    expect(queryClient.getQueryData(getGetRecoveryAppsQueryKey())).toEqual(raw)
+    await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
+    queryClient.clear()
+  })
+
+  it.each([409, 502])('reconciles HTTP %s after unmount without claiming success', async status => {
+    let respond!: (response: Response) => void
+    vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>(resolve => { respond = resolve })))
+    const { queryClient, wrapper } = setup()
+    queryClient.setQueryData(getGetRecoveryAppsQueryKey(), { applications: [] })
+    const { result, unmount } = renderHook(() => useSubmitRecoveryApplication(), { wrapper })
+    act(() => { result.current.mutate({ providerId: 'airflow-02', data, pushToOrchestrator: true }) })
+    await waitFor(() => { expect(result.current.isPending).toBe(true) })
+    unmount()
+    respond(new Response(JSON.stringify({ detail: status === 502 ? 'saved locally, but Airflow push failed: offline' : 'already pushed' }), { status }))
+    await waitFor(() => { expect(queryClient.getMutationCache().getAll()[0]?.state.status).toBe('error') })
+    expect(queryClient.getQueryState(getGetRecoveryAppsQueryKey())?.isInvalidated).toBe(true)
+    queryClient.clear()
+  })
+
+  it('waits for reconciliation before per-call completion', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ applications: [] }), { status: 200 })))
     const { queryClient, wrapper } = setup()
     const order: string[] = []
@@ -52,9 +81,11 @@ describe('recovery application hooks', () => {
     act(() => { result.current.mutate({ providerId: '', data, pushToOrchestrator: false }, {
       onSuccess: () => { order.push('complete') },
     }) })
+    await waitFor(() => { expect(order).toEqual(['invalidate']) })
+    expect(result.current.isPending).toBe(true)
+    finishInvalidation()
     await waitFor(() => { expect(order).toEqual(['invalidate', 'complete']) })
     expect(result.current.isSuccess).toBe(true)
-    finishInvalidation()
     queryClient.clear()
   })
 
