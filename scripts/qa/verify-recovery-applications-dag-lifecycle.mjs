@@ -27,21 +27,26 @@ const groups = ['vmware', 'power'].map(platform => ({ id: `${platform}-group`, n
   orchestration: { pushed: true, provider_id: 'airflow-stored', run_id: `group-${platform}` },
   vms: [{ name: platform === 'vmware' ? 'VM-01' : 'LPAR-01' }], volumes: [{ name: 'VOL-01' }],
 }))
+// A second source of each type proves that type compatibility alone is insufficient.
+for (const platform of ['vmware', 'power']) {
+  providers.push({ ...providers.find(provider => provider.id === platform + '-source'), id: platform + '-other-source', name: 'QA other ' + platform + ' source' })
+  groups.push({ ...structuredClone(groups.find(group => group.id === platform + '-group')), id: platform + '-other-group', name: 'QA other ' + platform + ' group', provider_id_vm: platform + '-other-source' })
+}
 const templates = [
   { platform: 'VMWARE', version: 'v1', default: true, description: 'QA VMware template description' },
-  { platform: 'IBM_POWER', version: 'v1', default: false, description: 'QA Power legacy description' },
-  { platform: 'IBM_POWER', version: 'v2', default: true, description: 'QA Power current description' },
+  { platform: 'IBM_POWER', version: 'v1', default: true, description: 'QA Power legacy description' },
+  { platform: 'IBM_POWER', version: 'v2', default: false, description: 'QA Power current description' },
 ]
 function application(id, platform = 'vmware', pushed = false) {
   const group = groups.find(item => item.id === `${platform}-group`)
   return { id, policy_set_id: 'policy', application: { name: `QA-${id}`, description: 'Browser lifecycle fixture', environment: 'dev',
     platform: platform === 'vmware' ? 'VMWARE' : 'IBM_POWER', source_provider_id: `${platform}-source`, target_provider_id: `${platform}-target`,
     notificationEmail: null, dag_template_version: null,
-    tiers: { database: { order: 1, description: 'Database tier', recovery_group: { id: group.id, name: group.name, vms: group.vms } } },
+    tiers: { database: { order: 1, description: 'Database tier', recovery_group: { id: group.id, name: group.name, vms: structuredClone(group.vms) } } },
   }, orchestration: { pushed, provider_id: 'airflow-stored', run_id: `dag-${id}`, ...(pushed ? { template_version: platform === 'vmware' ? 'v1' : 'v2' } : {}) } }
 }
 let records = [application('vmware-draft'), application('power-draft', 'power')]
-let catalogFailure = false, pushFailure = false, rollbackMode = 'ok', rollbackGate
+let catalogFailure = false, groupsFailure = false, pushFailure = false, rollbackMode = 'ok', rollbackGate
 page.on('pageerror', error => errors.push(error.message))
 page.on('dialog', async dialog => { errors.push(`Unexpected browser ${dialog.type()}: ${dialog.message()}`); await dialog.dismiss() })
 page.on('console', message => {
@@ -68,7 +73,7 @@ await context.route('**/*', async route => {
   }
   if (path === '/get_providers') return respond({ providers })
   if (path === '/get_platform_providers') return respond({ providers: ['airflow-other', 'airflow-stored'].map(id => ({ id, name: `QA ${id}`, type: 'AIRFLOW', role: 'source', credentialStatus: 'ok', url: 'http://127.0.0.1:8080' })) })
-  if (path === '/get_recovery_groups') return respond({ recovery_groups: groups })
+  if (path === '/get_recovery_groups') return groupsFailure ? respond({ detail: 'QA groups unavailable' }, 503) : respond({ recovery_groups: groups })
   if (path === '/get_policy_sets') return respond({ policy_sets: [{ id: 'policy', name: 'QA Policy', description: 'Lifecycle policy fixture' }] })
   if (path === '/get_policies') return respond({ policies: [] })
   if (path === '/get_recovery_app_policies') return respond({ recovery_app_policies: [] })
@@ -108,7 +113,15 @@ await context.route('**/*', async route => {
 })
 const navigate = path => page.goto(`${base}/recovery-plans/recovery-applications${path}`, { waitUntil: 'domcontentloaded' })
 const step = (name, language = 'en') => page.getByRole('button', { name: catalogs[language][`pages.recoveryBuilder.steps.${name}`], exact: true }).click()
-const save = () => page.getByRole('button', { name: catalogs.en['buttons.saveApplication'], exact: true }).click()
+const save = async () => {
+  const before = requests.length
+  await Promise.all([
+    page.waitForRequest(request => new URL(request.url()).pathname === '/api/submit_recovery_dag'),
+    page.getByRole('button', { name: catalogs.en['buttons.saveApplication'], exact: true }).click(),
+  ])
+  const beforeSubmit = requests.slice(before).filter(request => request.path !== '/submit_recovery_dag')
+  assert.equal(beforeSubmit.some(request => ['/get_providers', '/get_recovery_groups'].includes(request.path)), false, 'Save must not preflight provider/group GETs')
+}
 const screenshot = name => page.screenshot({ path: `${output}/${name}.png`, fullPage: true })
 const submitRequests = () => requests.filter(req => req.path === '/submit_recovery_dag')
 async function edit(id) {
@@ -173,22 +186,105 @@ async function rollback(id, mode) {
   console.log(`PASS rollback-${mode}`)
 }
 try {
-  for (const [platform, version] of [['vmware', null], ['power', null], ['power', 'v1']]) {
+  // Phase 1 functional checks over the real wizard, all requests still mocked.
+  for (const platform of ['vmware', 'power']) {
+    const id = platform + '-functional'
+    const record = application(id, platform)
+    if (platform === 'power') record.application.target_provider_id = 'power-source'
+    record.application.tiers.second = { ...structuredClone(record.application.tiers.database), order: 2 }
+    records.push(record)
+    await edit(id)
+    const email = page.locator('#application-notification-email')
+    await email.fill('invalid')
+    assert.equal(await page.getByRole('button', { name: 'Next', exact: true }).isDisabled(), true)
+    assert.equal(submitRequests().filter(request => request.body.id === id).length, 0)
+    await email.fill('Team@Example.test')
+    await step('tiers')
+    assert.equal(await page.getByText('QA other ' + platform + ' group', { exact: true }).count(), 0, 'another source must not appear in sidebar')
+    await step('orchestration')
+    if (platform === 'power') {
+      await page.locator('#recovery-application-template-version').selectOption('v2')
+      assert.equal(await page.getByRole('button', { name: 'Save Application', exact: true }).isDisabled(), true)
+      await page.getByText(/IBM Power v2: LPAR.*database, second/).waitFor()
+      await step('tiers')
+      await page.getByRole('checkbox', { name: 'LPAR-01', exact: true }).last().uncheck()
+      await step('orchestration')
+      assert.equal(await page.getByRole('button', { name: 'Save Application', exact: true }).isEnabled(), true)
+      await step('tiers')
+      await page.getByRole('checkbox', { name: 'LPAR-01', exact: true }).last().check()
+      await step('orchestration')
+      assert.equal(await page.getByRole('button', { name: 'Save Application', exact: true }).isDisabled(), true)
+      await page.locator('#recovery-application-template-version').selectOption('v1')
+    }
+    await save()
+    await page.waitForURL('**/recovery-plans/recovery-applications')
+    assert.equal(submitRequests().at(-1).body.application.notificationEmail, 'Team@Example.test')
+    assert.equal(Object.keys(submitRequests().at(-1).body.application.tiers).length, 2, 'v1 keeps repeated names across tiers')
+    await edit(id)
+    assert.equal(await email.inputValue(), 'Team@Example.test')
+    await email.fill('')
+    await step('orchestration')
+    await save()
+    await page.waitForURL('**/recovery-plans/recovery-applications')
+    assert.equal(submitRequests().at(-1).body.application.notificationEmail, null)
+    const mismatch = application(platform + '-source-mismatch', platform)
+    mismatch.application.source_provider_id = platform + '-other-source'
+    records.push(mismatch)
+    await edit(mismatch.id)
+    await step('tiers')
+    await page.getByText(/uses source.*but the application uses/).waitFor()
+    assert.equal(await page.getByRole('button', { name: 'Orchestration', exact: true }).isDisabled(), true)
+    assert.equal(submitRequests().filter(request => request.body.id === mismatch.id).length, 0)
+    const missing = application(platform + '-workload-missing', platform)
+    missing.application.tiers.database.recovery_group.vms = [{ name: 'missing-workload' }]
+    records.push(missing)
+    await edit(missing.id)
+    await step('tiers')
+    await page.getByText(/Workload.*missing-workload.*no longer belongs/).waitFor()
+    assert.equal(submitRequests().filter(request => request.body.id === missing.id).length, 0)
+    results.push({ scenario: platform + '-functional-email-source-membership-duplicates', result: 'pass' })
+    console.log('PASS ' + platform + '-functional-email-source-membership-duplicates')
+  }
+  const sameTier = application('power-same-tier', 'power')
+  sameTier.application.dag_template_version = 'v2'
+  sameTier.application.tiers.database.recovery_group.vms.push({ name: 'LPAR-01' })
+  records.push(sameTier)
+  await edit(sameTier.id)
+  await step('orchestration')
+  await page.getByText(/IBM Power v2: LPAR.*repeated in tier/).waitFor()
+  assert.equal(await page.getByRole('button', { name: 'Save Application', exact: true }).isDisabled(), true)
+  await page.locator('#recovery-application-template-version').selectOption('v1')
+  assert.equal(await page.getByRole('button', { name: 'Save Application', exact: true }).isEnabled(), true)
+  await save()
+  await page.waitForURL('**/recovery-plans/recovery-applications')
+  results.push({ scenario: 'power-v2-same-tier-v1-switch', result: 'pass' })
+  groupsFailure = true
+  await edit('vmware-draft')
+  await step('tiers')
+  await page.getByText('QA groups unavailable', { exact: true }).waitFor()
+  assert.equal(await page.getByRole('button', { name: 'Orchestration', exact: true }).isDisabled(), true)
+  groupsFailure = false
+  await page.getByRole('button', { name: 'Retry', exact: true }).click()
+  await page.getByText('QA vmware group', { exact: true }).first().waitFor()
+  results.push({ scenario: 'query-error-retry-no-preflight', result: 'pass' })
+  // Remove transient invalid fixtures before lifecycle list/table assertions.
+  records = records.filter(record => ['vmware-draft', 'power-draft'].includes(record.id))
+  for (const [platform, version] of [['vmware', null], ['power', null], ['power', 'v2'], ['power', 'v1']]) {
     const id = `${platform}-draft`
     await edit(id)
     await step('orchestration')
     const select = page.locator('#recovery-application-template-version')
     await select.locator('option[value="v1"]').waitFor({ state: 'attached' })
-    assert((await select.locator('option:checked').innerText()).includes(platform === 'power' ? 'v2' : 'v1'), 'default comes from catalog')
-    await select.selectOption(version ?? (platform === 'power' ? 'v2' : 'v1'))
+    assert.equal(await select.inputValue(), records.find(record => record.id === id).application.dag_template_version ?? 'v1', 'configured selection or catalog default is shown')
+    await select.selectOption(version ?? 'v1')
     await save()
     await page.waitForURL('**/recovery-plans/recovery-applications')
     const request = submitRequests().at(-1)
     assert.equal(request.params.push_to_orchestrator, 'false')
-    assert.equal(request.body.application.dag_template_version ?? null, version)
+    assert.equal(request.body.application.dag_template_version ?? null, version === 'v2' ? 'v2' : null, 'selecting the default keeps null on the wire')
     await edit(id)
     await step('orchestration')
-    assert.equal(await select.inputValue(), version ?? (platform === 'power' ? 'v2' : 'v1'), 'configured version survives GET/edit round trip')
+    assert.equal(await select.inputValue(), version ?? 'v1', 'configured version survives GET/edit round trip')
     await screenshot(`${platform}-${version ?? 'default'}-save-only`)
     results.push({ scenario: `${platform}-${version ?? 'default'}-save-only`, result: 'pass' })
     console.log(`PASS ${platform}-${version ?? 'default'}-save-only`)
@@ -201,6 +297,22 @@ try {
   await page.locator('#application-target-provider').selectOption('vmware-target')
   await step('tiers')
   await page.locator('[draggable="true"]').filter({ hasText: 'QA vmware group' }).dragTo(page.getByLabel('Unassigned recovery group', { exact: true }))
+  await step('details')
+  await page.locator('#application-platform').selectOption('vmware-other-source')
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancel', exact: true }).click()
+  assert.equal(await page.locator('#application-platform').inputValue(), 'vmware-source')
+  await page.locator('#application-platform').selectOption('vmware-other-source')
+  await page.getByRole('dialog').getByRole('button', { name: 'Change provider', exact: true }).click()
+  await step('tiers')
+  await page.getByLabel('Unassigned recovery group', { exact: true }).waitFor()
+  await step('details')
+  await page.locator('#application-platform').selectOption('power-source')
+  assert.equal(await page.locator('#application-target-provider').inputValue(), '')
+  await page.locator('#application-platform').selectOption('vmware-source')
+  await page.locator('#application-target-provider').selectOption('vmware-target')
+  await step('tiers')
+  await page.locator('[draggable="true"]').filter({ hasText: 'QA vmware group' }).dragTo(page.getByLabel('Unassigned recovery group', { exact: true }))
+  results.push({ scenario: 'source-confirm-cancel-confirm-platform-reset', result: 'pass' })
   await step('policySet')
   await page.getByRole('button', { name: /QA Policy/ }).click()
   await step('orchestration')
