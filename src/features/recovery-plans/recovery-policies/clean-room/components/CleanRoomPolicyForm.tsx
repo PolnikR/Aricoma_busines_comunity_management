@@ -1,5 +1,6 @@
 import type { ChangeEvent, KeyboardEvent } from 'react'
-import { CheckboxField, Field, Input, Textarea } from '@/shared/components/form/FormControls'
+import { Field, Input, Textarea } from '@/shared/components/form/FormControls'
+import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { useTranslation } from '@/hooks/useTranslation'
 
 export interface CleanRoomPolicyFormData {
@@ -45,7 +46,13 @@ export function CleanRoomPolicyForm({ data, errors, isSubmitting, idDisabled = f
         {errors.description ? <p className="mt-1 text-xs text-red-600">{errors.description}</p> : null}
       </Field>
 
-      <CheckboxField id="clean-room-policy-enabled" label={t('cleanRoomPolicies.form.enabled')} checked={data.enabled} disabled={isSubmitting} variant="bordered" onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('enabled', event.target.checked) }} />
+      <div className={`inline-flex min-h-10 items-center gap-3 rounded-xl border border-border-strong bg-surface px-3 text-xs text-text-secondary shadow-sm ${isSubmitting ? 'opacity-60' : ''}`}>
+        <input id="clean-room-policy-enabled" type="checkbox" className="size-4 shrink-0 rounded border-border-strong accent-accent focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15" checked={data.enabled} disabled={isSubmitting} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('enabled', event.target.checked) }} />
+        <div className="flex min-w-0 items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+          <label htmlFor="clean-room-policy-enabled" className="cursor-pointer font-medium">{t('cleanRoomPolicies.form.enabled')}</label>
+          <KeyedHelpPopover helpKey="cleanRoomPolicies.fieldHelp.enabled" sections={[]} />
+        </div>
+      </div>
     </div>
   )
 }
