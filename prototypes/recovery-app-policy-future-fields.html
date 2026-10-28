@@ -22,7 +22,7 @@
     header { padding: 1.5rem; border-bottom: 1px solid var(--border); }
     h1 { margin: 0; font-size: 1.125rem; line-height: 1.5; }
     .intro { margin: .5rem 0 0; font-size: .875rem; color: var(--text-helper); line-height: 1.5; }
-    .content { padding: 1.5rem; display: grid; gap: 1.25rem; }
+    .content { padding: 1.5rem; display: grid; gap: .75rem; }
     .columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; align-items: start; }
     .field { min-width: 0; }
     label, .field-label { display: block; margin-bottom: .5rem; color: var(--text-secondary); font-size: .8125rem; font-weight: 500; }
@@ -31,17 +31,17 @@
     .badge { display: inline-flex; align-items: center; padding: .25rem .5rem; border-radius: .25rem; background: var(--notice-bg); color: var(--notice-text); font-size: .6875rem; font-weight: 600; line-height: 1.25; }
     input:not([type="checkbox"]), select, textarea { display: block; width: 100%; min-width: 0; padding: .75rem; border: 1px solid var(--border-strong); border-radius: .75rem; background: var(--surface-subtle); color: var(--text-secondary); font: inherit; font-size: .875rem; line-height: 1.25rem; box-shadow: 0 1px 2px rgb(23 35 61 / 6%); }
     input[readonly] { background: var(--surface-muted); color: var(--text-helper); }
-    textarea { min-height: 4.5rem; resize: vertical; }
+    textarea { min-height: 2.5rem; height: 2.5rem; padding: .5rem .75rem; resize: vertical; }
     .interval { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: .5rem; }
     .section { background: var(--surface-subtle); border: 1px solid var(--border); border-radius: .5rem; padding: 1rem; }
     h2 { margin: 0 0 1rem; font-size: .875rem; line-height: 1.5; }
     input[type="checkbox"] { width: 1rem; height: 1rem; margin: .25rem 0 0; flex: none; accent-color: var(--accent); }
-    .boot-control { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; min-height: 2.5rem; }
-    .boot-control input { margin: 0 .25rem 0 0; }
-    .boot-control label { margin: 0; cursor: pointer; }
-    .status-control { display: flex; align-items: center; gap: .75rem; min-height: 3rem; }
-    .status-control label { margin: 0; }
-    .status-control input { margin: 0; }
+    .checkbox-control { display: flex; align-items: center; gap: .75rem; min-height: 2.5rem; padding: .25rem .75rem; border: 1px solid var(--border-strong); border-radius: .75rem; background: var(--surface); box-shadow: 0 1px 2px rgb(23 35 61 / 6%); }
+    .checkbox-control input { margin: 0; }
+    .checkbox-control .label-row { margin: 0; gap: .25rem; }
+    .checkbox-control label { cursor: pointer; font-size: .75rem; }
+    .checkbox-control .help-button { width: 1.5rem; min-height: 1.5rem; }
+    .checkbox-control .badge { font-size: .625rem; padding: .25rem; }
     footer { border-top: 1px solid var(--border); padding: 1rem 1.5rem; display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: .75rem; }
     button { border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-secondary); border-radius: .5rem; min-height: 2.75rem; padding: .5rem 1rem; cursor: pointer; font: inherit; font-size: .8125rem; font-weight: 600; }
     button:hover { background: var(--surface-muted); }
@@ -67,7 +67,7 @@
   </style>
 </head>
 <body>
-  <p class="preview-note"><strong>Vizuálny návrh</strong> · Recovery App Policies · Samostatný náhľad, hodnoty sa nikam neodosielajú.</p>
+  <p class="preview-note"><strong>Vizuálny návrh</strong> · Pôvodné rozloženie pred commitom 4e849113, doplnené o označenie nevyužívaných polí. Hodnoty sa nikam neodosielajú.</p>
   <main aria-labelledby="page-title">
     <header>
       <h1 id="page-title">Upraviť politiku obnovy aplikácie</h1>
@@ -80,6 +80,7 @@
           <div class="field"><label for="policy-name">Názov politiky</label><input id="policy-name" value="Critical - Daily" required></div>
         </div>
         <div class="field"><label for="description">Popis</label><textarea id="description">Denný test obnovy s najnovšou dostupnou FlashCopy snímkou.</textarea></div>
+        <div class="field"><div class="label-row"><label for="level">Úroveň</label><button type="button" class="help-button" data-help="level-help" aria-label="Nápoveda k úrovni" aria-haspopup="dialog" aria-expanded="false" aria-controls="help-panel"><span aria-hidden="true">?</span></button></div><select id="level"><option>Critical</option><option>High</option><option>Medium</option><option>Low</option></select></div>
         <div class="columns">
           <div class="field">
             <div class="label-row"><label for="frequency">Frekvencia</label><button type="button" class="help-button" data-help="frequency-help" aria-label="Nápoveda k frekvencii" aria-haspopup="dialog" aria-expanded="false" aria-controls="help-panel"><span aria-hidden="true">?</span></button></div>
@@ -103,15 +104,16 @@
           <div class="label-row"><label for="snapshot">Spôsob výberu</label><button type="button" class="help-button" data-help="snapshot-help" aria-label="Nápoveda k výberu snímky" aria-haspopup="dialog" aria-expanded="false" aria-controls="help-panel"><span aria-hidden="true">?</span></button></div>
           <select id="snapshot"><option value="latest">Najnovšia dostupná snímka</option></select>
         </section>
-        <div class="boot-control">
-          <input id="boot-verify" type="checkbox" aria-describedby="boot-note">
-          <label for="boot-verify">Boot verification</label>
-          <button type="button" class="help-button" data-help="boot-help" aria-label="Nápoveda k overeniu spustenia" aria-haspopup="dialog" aria-expanded="false" aria-controls="help-panel"><span aria-hidden="true">?</span></button>
-          <span class="badge" id="boot-note">Zatiaľ sa nepoužíva</span>
-        </div>
-        <div class="columns">
-          <div class="field"><div class="label-row"><label for="level">Úroveň</label><button type="button" class="help-button" data-help="level-help" aria-label="Nápoveda k úrovni" aria-haspopup="dialog" aria-expanded="false" aria-controls="help-panel"><span aria-hidden="true">?</span></button></div><select id="level"><option>Critical</option><option>High</option><option>Medium</option><option>Low</option></select></div>
-          <div class="status-control"><input id="enabled" type="checkbox" checked><label for="enabled">Politika povolená</label><button type="button" class="help-button" data-help="enabled-help" aria-label="Nápoveda k povoleniu politiky" aria-haspopup="dialog" aria-expanded="false" aria-controls="help-panel"><span aria-hidden="true">?</span></button></div>
+        <div class="columns" id="policy-flags">
+          <div class="checkbox-control">
+            <input id="boot-verify" type="checkbox" aria-describedby="boot-note">
+            <div class="label-row">
+              <label for="boot-verify">Boot verification</label>
+              <button type="button" class="help-button" data-help="boot-help" aria-label="Nápoveda k overeniu spustenia" aria-haspopup="dialog" aria-expanded="false" aria-controls="help-panel"><span aria-hidden="true">?</span></button>
+              <span class="badge" id="boot-note">Zatiaľ sa nepoužíva</span>
+            </div>
+          </div>
+          <div class="checkbox-control"><input id="enabled" type="checkbox" checked><div class="label-row"><label for="enabled">Politika povolená</label><button type="button" class="help-button" data-help="enabled-help" aria-label="Nápoveda k povoleniu politiky" aria-haspopup="dialog" aria-expanded="false" aria-controls="help-panel"><span aria-hidden="true">?</span></button></div></div>
         </div>
       </div>
       <footer>
