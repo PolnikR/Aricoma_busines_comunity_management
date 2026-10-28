@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { LanguageContext } from '@/contexts/LanguageContext'
 import en from '@/locales/en.json'
 import sk from '@/locales/sk.json'
+import cs from '@/locales/cs.json'
 import type { RecoveryAppPolicyRecordOutput } from '@/generated/query/zod'
 import { RecoveryAppPolicyModal } from './RecoveryAppPolicyModal'
 import { RecoveryAppPoliciesTable } from './RecoveryAppPoliciesTable'
@@ -24,9 +25,9 @@ const policy: RecoveryAppPolicyRecordOutput = {
 }
 const commonParameters = ['level', 'frequency', 'retention', 'boot_verify', 'snapshot_selection_mode', 'enabled', 'target_lpar_prefix', 'manual_zoning', 'manual_wwpn_entry', 'source_shutdown_timeout_seconds', 'zoning_wait_minutes']
 
-describe.each(['en', 'sk'] as const)('Recovery App Policy help in %s', language => {
+describe.each(['en', 'sk', 'cs'] as const)('Recovery App Policy help in %s', language => {
   it.each(['latest', 'time_range', 'exact_time'] as const)('provides the same localized %s help in Create, Edit and Display', async selection => {
-    const translations: Record<string, string> = language === 'en' ? en : sk
+    const translations: Record<string, string> = { en, sk, cs }[language]
     const text = (key: string) => {
       const value = translations[key]
       if (value === undefined) throw new Error(`Missing ${language} translation: ${key}`)
@@ -34,7 +35,6 @@ describe.each(['en', 'sk'] as const)('Recovery App Policy help in %s', language 
     }
     const keys = [...commonParameters, ...(selection === 'time_range' ? ['snapshot_max_age'] : selection === 'exact_time' ? ['snapshot_target_time'] : [])]
     for (const mode of ['create', 'edit', 'display']) {
-      const visibleKeys = mode === 'display' ? keys : keys.filter(key => key !== 'boot_verify')
       const onClose = vi.fn()
       const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
       const { unmount } = render(
@@ -50,8 +50,9 @@ describe.each(['en', 'sk'] as const)('Recovery App Policy help in %s', language 
       if (mode === 'create') fireEvent.change(screen.getByLabelText(text('recoveryAppPolicies.form.snapshotSelection')), { target: { value: selection } })
       const parent = screen.getByRole('dialog')
       const triggers = within(parent).getAllByRole('button').filter(button => button.hasAttribute('aria-haspopup'))
-      expect(triggers).toHaveLength(visibleKeys.length + (mode === 'display' ? 1 : 0))
-      for (const parameter of visibleKeys) {
+      expect(triggers).toHaveLength(keys.length + (mode === 'display' ? 1 : 0))
+      expect(within(parent).getAllByText(text('recoveryAppPolicies.reservedForFutureUse'))).toHaveLength(2)
+      for (const parameter of keys) {
         const key = `recoveryAppPolicies.fieldHelp.${parameter}`
         const trigger = within(parent).getByRole('button', { name: text(`${key}.trigger`) })
         expect(trigger.closest('label')).toBeNull()
@@ -69,9 +70,10 @@ describe.each(['en', 'sk'] as const)('Recovery App Policy help in %s', language 
         expect(within(parent).getByText(text(`recoveryAppPolicies.selection.${selection}`))).toBeInTheDocument()
       } else {
         expect(screen.getByLabelText(text('recoveryAppPolicies.form.frequency'))).toHaveValue(1)
-        expect(screen.queryByRole('checkbox', { name: text('recoveryAppPolicies.form.bootVerify') })).not.toBeInTheDocument()
-        expect(screen.queryByRole('button', { name: text('recoveryAppPolicies.fieldHelp.boot_verify.trigger') })).not.toBeInTheDocument()
-        for (const label of ['enabled', 'manualZoning', 'manualWwpnEntry']) {
+        expect(screen.getByRole('checkbox', { name: text('recoveryAppPolicies.form.bootVerify') })).toHaveAccessibleDescription(text('recoveryAppPolicies.reservedForFutureUse'))
+        expect(screen.getByLabelText(text('recoveryAppPolicies.form.retention'))).toHaveAccessibleDescription(text('recoveryAppPolicies.reservedForFutureUse'))
+        expect(screen.getByLabelText(text('recoveryAppPolicies.form.retentionUnit'))).toHaveAccessibleDescription(text('recoveryAppPolicies.reservedForFutureUse'))
+        for (const label of ['bootVerify', 'enabled', 'manualZoning', 'manualWwpnEntry']) {
           expect(screen.getByRole('checkbox', { name: text(`recoveryAppPolicies.form.${label}`) })).toHaveProperty('checked', label === 'enabled')
         }
         // An unchanged edit must close without a dirty confirmation after visiting all helps.

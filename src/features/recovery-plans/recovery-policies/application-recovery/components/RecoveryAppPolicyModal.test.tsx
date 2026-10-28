@@ -85,23 +85,35 @@ function renderModal(props: Partial<React.ComponentProps<typeof RecoveryAppPolic
 afterEach(() => vi.unstubAllGlobals())
 
 describe('RecoveryAppPolicyModal', () => {
-  it.each([false, true])('preserves hidden boot_verify=%s when editing another field', async bootVerify => {
+  it.each([false, true])('preserves boot_verify=%s when editing another field', async bootVerify => {
     const fetchMock = stubSubmitResponse()
     const onClose = vi.fn()
     renderModal({ policy: { ...policy, boot_verify: bootVerify }, onClose })
-    expect(screen.queryByRole('checkbox', { name: 'Boot verification' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Help for boot verification' })).not.toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'Boot verification' })).toHaveProperty('checked', bootVerify)
+    expect(screen.getByRole('button', { name: 'Help for boot verification' })).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('Level'), { target: { value: 'high' } })
     fireEvent.click(screen.getByRole('button', { name: 'Edit policy' }))
     await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
     expect(submittedBody(fetchMock)).toMatchObject({ level: 'high', boot_verify: bootVerify })
   })
 
+  it.each([false, true])('saves a changed boot_verify from %s without changing retention', async bootVerify => {
+    const fetchMock = stubSubmitResponse()
+    const onClose = vi.fn()
+    renderModal({ policy: { ...policy, boot_verify: bootVerify }, onClose })
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Boot verification' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Edit policy' }))
+    await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+    expect(submittedBody(fetchMock)).toMatchObject({
+      boot_verify: !bootVerify, retention_value: policy.retention_value, retention_unit: policy.retention_unit,
+    })
+  })
+
   it('opens input and checkbox help with Enter without submitting or changing form state', async () => {
     const onClose = vi.fn()
     const fetchMock = stubSubmitResponse()
     renderModal({ policy, onClose })
-    for (const name of ['Help for frequency', 'Help for manual zoning']) {
+    for (const name of ['Help for frequency', 'Help for boot verification', 'Help for manual zoning']) {
       const trigger = screen.getByRole('button', { name })
       await userEvent.click(trigger)
       await userEvent.keyboard('{Escape}')
@@ -320,16 +332,18 @@ describe('RecoveryAppPolicyModal', () => {
     expect(screen.getByRole('checkbox', { name: 'Manual zoning' })).not.toBeChecked()
   })
 
-  it('renders scheduling, snapshot selection and enabled controls', () => {
+  it('renders level before scheduling and restores boot verification beside enabled', () => {
     renderModal()
 
     expect(screen.getByLabelText('Policy ID')).toBeInTheDocument()
     expect(screen.getByText('Configure a policy for automated application recovery tests and snapshot selection.')).toBeInTheDocument()
     expect(screen.getByLabelText('Snapshot selection')).toHaveValue('latest')
-    expect(screen.queryByRole('checkbox', { name: 'Boot verification' })).not.toBeInTheDocument()
+    const bootVerify = screen.getByRole('checkbox', { name: 'Boot verification' })
+    expect(bootVerify).not.toBeChecked()
     const level = screen.getByLabelText('Level')
-    expect(screen.getByLabelText('Snapshot selection').compareDocumentPosition(level) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    expect(level.compareDocumentPosition(screen.getByRole('checkbox', { name: 'Enabled' })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(level.compareDocumentPosition(screen.getByLabelText('Frequency')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(screen.getByLabelText('Snapshot selection').compareDocumentPosition(bootVerify) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(bootVerify.parentElement?.parentElement).toBe(screen.getByRole('checkbox', { name: 'Enabled' }).parentElement?.parentElement)
     expect(screen.getByRole('checkbox', { name: 'Enabled' })).toBeChecked()
   })
 

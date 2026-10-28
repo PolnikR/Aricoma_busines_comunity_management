@@ -76,6 +76,19 @@ export function RecoveryAppPolicyForm({
         {errors.description ? <p className="mt-1 text-xs text-red-600">{errors.description}</p> : null}
       </Field>
 
+      <div className="min-w-0">
+        <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+          <label htmlFor="recovery-app-policy-level" className="text-xs font-medium text-text-secondary">{t('recoveryAppPolicies.form.level')}</label>
+          <KeyedHelpPopover helpKey="recoveryAppPolicies.fieldHelp.level" sections={[]} />
+        </div>
+        <Select id="recovery-app-policy-level" value={data.level} disabled={isSubmitting} aria-invalid={Boolean(errors.level)} onChange={(event: ChangeEvent<HTMLSelectElement>) => { onChange('level', event.target.value) }}>
+          <option value="">{t('recoveryAppPolicies.form.selectLevel')}</option>
+          {selectedLevelIsCustom ? <option value={data.level}>{data.level}</option> : null}
+          {POLICY_LEVELS.map(level => <option key={level} value={level}>{t(`recoveryAppPolicies.level.${level}`)}</option>)}
+        </Select>
+        {errors.level ? <p className="mt-1 text-xs text-red-600">{errors.level}</p> : null}
+      </div>
+
       <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] gap-x-2">
           <div className="col-span-2 mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
@@ -91,13 +104,14 @@ export function RecoveryAppPolicyForm({
           {errors.frequency_value ? <p className="col-span-2 text-xs text-red-600">{errors.frequency_value}</p> : null}
         </div>
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] gap-x-2">
-          <div className="col-span-2 mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+          <div className="col-span-2 mb-1.5 flex flex-wrap items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
             <label htmlFor="recovery-app-policy-retention" className="text-xs font-medium text-text-secondary">{t('recoveryAppPolicies.form.retention')}</label>
             <KeyedHelpPopover helpKey="recoveryAppPolicies.fieldHelp.retention" sections={[]} />
+            <span id="recovery-app-policy-retention-note" className="rounded bg-surface-muted px-1.5 text-[10px] leading-4 text-text-secondary">{t('recoveryAppPolicies.reservedForFutureUse')}</span>
           </div>
-          <Input id="recovery-app-policy-retention" type="number" min={data.retention_unit === 'minutes' ? 15 : 1} step={data.retention_unit === 'minutes' ? 15 : 1} value={data.retention_value} disabled={isSubmitting} invalid={Boolean(errors.retention_value)} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('retention_value', event.target.value) }} />
+          <Input id="recovery-app-policy-retention" aria-describedby="recovery-app-policy-retention-note" type="number" min={data.retention_unit === 'minutes' ? 15 : 1} step={data.retention_unit === 'minutes' ? 15 : 1} value={data.retention_value} disabled={isSubmitting} invalid={Boolean(errors.retention_value)} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('retention_value', event.target.value) }} />
           <Field label={t('recoveryAppPolicies.form.retentionUnit')} htmlFor="recovery-app-policy-retention-unit" className="self-end [&>span]:sr-only">
-            <Select id="recovery-app-policy-retention-unit" value={data.retention_unit} disabled={isSubmitting} onChange={(event: ChangeEvent<HTMLSelectElement>) => { onChange('retention_unit', event.target.value) }}>
+            <Select id="recovery-app-policy-retention-unit" aria-describedby="recovery-app-policy-retention-note" value={data.retention_unit} disabled={isSubmitting} onChange={(event: ChangeEvent<HTMLSelectElement>) => { onChange('retention_unit', event.target.value) }}>
               {RECOVERY_APP_POLICY_TIME_UNITS.map(unit => <option key={unit} value={unit}>{t(`recoveryAppPolicies.unit.${unit}`)}</option>)}
             </Select>
           </Field>
@@ -154,19 +168,15 @@ export function RecoveryAppPolicyForm({
       </div>
 
       <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
-        <div className="min-w-0">
-          <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
-            <label htmlFor="recovery-app-policy-level" className="text-xs font-medium text-text-secondary">{t('recoveryAppPolicies.form.level')}</label>
-            <KeyedHelpPopover helpKey="recoveryAppPolicies.fieldHelp.level" sections={[]} />
+        <div className={`flex min-h-10 items-center gap-2 rounded-xl border border-border-strong bg-surface px-2 text-xs text-text-secondary shadow-sm ${isSubmitting ? 'opacity-60' : ''}`}>
+          <input type="checkbox" className="size-4 shrink-0 rounded border-border-strong accent-accent focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15" id="recovery-app-policy-boot-verify" checked={data.boot_verify} disabled={isSubmitting} aria-describedby="recovery-app-policy-boot-verify-note" onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('boot_verify', event.target.checked) }} />
+          <div className="flex min-w-0 flex-wrap items-center gap-1 [&>span]:h-4 [&>span]:items-center [&>span>button]:size-6">
+            <label htmlFor="recovery-app-policy-boot-verify" className="cursor-pointer font-medium">{t('recoveryAppPolicies.form.bootVerify')}</label>
+            <KeyedHelpPopover helpKey="recoveryAppPolicies.fieldHelp.boot_verify" sections={[]} />
+            <span id="recovery-app-policy-boot-verify-note" className="rounded bg-surface-muted px-1.5 text-[10px] leading-4 text-text-secondary">{t('recoveryAppPolicies.reservedForFutureUse')}</span>
           </div>
-          <Select id="recovery-app-policy-level" value={data.level} disabled={isSubmitting} aria-invalid={Boolean(errors.level)} onChange={(event: ChangeEvent<HTMLSelectElement>) => { onChange('level', event.target.value) }}>
-            <option value="">{t('recoveryAppPolicies.form.selectLevel')}</option>
-            {selectedLevelIsCustom ? <option value={data.level}>{data.level}</option> : null}
-            {POLICY_LEVELS.map(level => <option key={level} value={level}>{t(`recoveryAppPolicies.level.${level}`)}</option>)}
-          </Select>
-          {errors.level ? <p className="mt-1 text-xs text-red-600">{errors.level}</p> : null}
         </div>
-        <div className={`flex min-h-10 self-end items-center gap-3 rounded-xl border border-border-strong bg-surface px-3 text-xs text-text-secondary shadow-sm ${isSubmitting ? 'opacity-60' : ''}`}>
+        <div className={`flex min-h-10 items-center gap-3 rounded-xl border border-border-strong bg-surface px-3 text-xs text-text-secondary shadow-sm ${isSubmitting ? 'opacity-60' : ''}`}>
           <input type="checkbox" className="size-4 shrink-0 rounded border-border-strong accent-accent focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15" id="recovery-app-policy-enabled" checked={data.enabled} disabled={isSubmitting} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('enabled', event.target.checked) }} />
           <div className="flex min-w-0 items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
             <label htmlFor="recovery-app-policy-enabled" className="cursor-pointer font-medium">{t('recoveryAppPolicies.form.enabled')}</label>
