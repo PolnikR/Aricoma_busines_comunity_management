@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="sk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Recovery App Policy — návrh neaktívnych polí</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page: #f7f9fc; --surface: #fff; --surface-subtle: #fbfdff;
+      --surface-muted: #f1f6fb; --text-primary: #17233d; --text-secondary: #3b4763;
+      --text-helper: #536581; --border: #dbe7f2; --border-strong: #c8d7e7;
+      --accent: #0d91d7; --accent-soft: #e8f6fd; --focus: #1596dd;
+      --notice-text: #355d78; --notice-bg: #edf4f8;
+      font-family: Arial, Helvetica, sans-serif; color: var(--text-primary); background: var(--page);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 2rem 1rem; }
+    .preview-note { max-width: 48rem; margin: 0 auto 1rem; color: var(--text-helper); font-size: .75rem; line-height: 1.5; }
+    .preview-note strong { color: var(--text-secondary); }
+    main { max-width: 48rem; margin: auto; background: var(--surface); border: 1px solid var(--border); border-radius: .75rem; box-shadow: 0 .5rem 2rem rgb(23 35 61 / 7%); }
+    header { padding: 1.5rem; border-bottom: 1px solid var(--border); }
+    h1 { margin: 0; font-size: 1.125rem; line-height: 1.5; }
+    .intro { margin: .5rem 0 0; font-size: .875rem; color: var(--text-helper); line-height: 1.5; }
+    .content { padding: 1.5rem; display: grid; gap: 1.25rem; }
+    .columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; align-items: start; }
+    .field { min-width: 0; }
+    label, .field-label { display: block; margin-bottom: .5rem; color: var(--text-secondary); font-size: .8125rem; font-weight: 500; }
+    .label-row { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-bottom: .5rem; min-height: 1.5rem; }
+    .label-row label { margin: 0; }
+    .badge { display: inline-flex; align-items: center; padding: .25rem .5rem; border-radius: .25rem; background: var(--notice-bg); color: var(--notice-text); font-size: .6875rem; font-weight: 600; line-height: 1.25; }
+    input:not([type="checkbox"]), select, textarea { display: block; width: 100%; min-width: 0; padding: .75rem; border: 1px solid var(--border-strong); border-radius: .75rem; background: var(--surface-subtle); color: var(--text-secondary); font: inherit; font-size: .875rem; line-height: 1.25rem; box-shadow: 0 1px 2px rgb(23 35 61 / 6%); }
+    input[readonly] { background: var(--surface-muted); color: var(--text-helper); }
+    textarea { min-height: 4.5rem; resize: vertical; }
+    .interval { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: .5rem; }
+    .helper { margin: .5rem 0 0; font-size: .75rem; color: var(--text-helper); line-height: 1.6; }
+    .section { background: var(--surface-subtle); border: 1px solid var(--border); border-radius: .5rem; padding: 1rem; }
+    h2 { margin: 0 0 1rem; font-size: .875rem; line-height: 1.5; }
+    .check-heading { display: flex; align-items: start; gap: .75rem; }
+    input[type="checkbox"] { width: 1rem; height: 1rem; margin: .25rem 0 0; flex: none; accent-color: var(--accent); }
+    .check-copy { flex: 1; min-width: 0; }
+    .check-copy .label-row { margin-bottom: 0; }
+    .check-copy label { cursor: pointer; font-weight: 600; }
+    .status-control { display: flex; align-items: center; gap: .75rem; min-height: 3rem; }
+    .status-control label { margin: 0; }
+    .status-control input { margin: 0; }
+    details { margin-top: .75rem; font-size: .75rem; color: var(--text-secondary); }
+    summary { width: fit-content; cursor: pointer; padding: .25rem 0; line-height: 1.5; text-decoration: underline; text-underline-offset: .25rem; }
+    details p { margin: .5rem 0 0; line-height: 1.6; color: var(--text-helper); }
+    footer { border-top: 1px solid var(--border); padding: 1rem 1.5rem; display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: .75rem; }
+    button { border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-secondary); border-radius: .5rem; min-height: 2.75rem; padding: .5rem 1rem; cursor: pointer; font: inherit; font-size: .8125rem; font-weight: 600; }
+    button:hover { background: var(--surface-muted); }
+    .primary { background: var(--accent-soft); border-color: var(--border-strong); color: var(--text-primary); }
+    .primary:hover { background: var(--surface-muted); }
+    :focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+    #save-status { flex-basis: 100%; margin: 0; color: var(--text-helper); font-size: .75rem; line-height: 1.5; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+    @media (max-width: 36rem) {
+      body { padding: 1rem .5rem; }
+      .columns { grid-template-columns: minmax(0, 1fr); }
+      header, .content { padding: 1rem; }
+      footer { padding: 1rem; }
+      footer button { flex: 1; }
+    }
+  </style>
+</head>
+<body>
+  <p class="preview-note"><strong>Vizuálny návrh</strong> · Recovery App Policies · Samostatný náhľad, hodnoty sa nikam neodosielajú.</p>
+  <main aria-labelledby="page-title">
+    <header>
+      <h1 id="page-title">Upraviť politiku obnovy aplikácie</h1>
+      <p class="intro">Nastavte frekvenciu testov obnovy a spôsob výberu snímky.</p>
+    </header>
+    <form id="policy-form">
+      <div class="content">
+        <div class="columns">
+          <div class="field"><label for="policy-id">ID politiky</label><input id="policy-id" value="critical-daily-latest" readonly></div>
+          <div class="field"><label for="policy-name">Názov politiky</label><input id="policy-name" value="Critical - Daily" required></div>
+        </div>
+        <div class="field"><label for="description">Popis</label><textarea id="description">Denný test obnovy s najnovšou dostupnou FlashCopy snímkou.</textarea></div>
+        <div class="columns">
+          <div class="field">
+            <div class="label-row"><label for="frequency">Frekvencia</label></div>
+            <div class="interval">
+              <input id="frequency" type="number" min="1" step="1" value="1" required>
+              <label class="sr-only" for="frequency-unit">Jednotka frekvencie</label>
+              <select id="frequency-unit"><option value="days">dni</option><option value="hours">hodiny</option></select>
+            </div>
+          </div>
+          <div class="field">
+            <div class="label-row"><label for="retention">Retention</label><span class="badge">Zatiaľ sa nepoužíva</span></div>
+            <div class="interval">
+              <input id="retention" type="number" min="1" step="1" value="4" aria-describedby="retention-note" required>
+              <label class="sr-only" for="retention-unit">Jednotka uchovania</label>
+              <select id="retention-unit" aria-describedby="retention-note"><option value="hours">hodiny</option><option value="days">dni</option></select>
+            </div>
+            <p class="helper" id="retention-note">Hodnota sa ukladá pre budúce použitie. Momentálne nespúšťa automatické odstránenie obnovenej aplikácie.</p>
+          </div>
+        </div>
+        <section class="section" aria-labelledby="snapshot-title">
+          <h2 id="snapshot-title">Výber snímky</h2>
+          <label for="snapshot">Spôsob výberu</label>
+          <select id="snapshot"><option value="latest">Najnovšia dostupná snímka</option></select>
+        </section>
+        <section class="section" aria-label="Overenie spustenia">
+          <div class="check-heading">
+            <input id="boot-verify" type="checkbox" aria-describedby="boot-note">
+            <div class="check-copy">
+              <div class="label-row"><label for="boot-verify">Boot verification</label><span class="badge">Zatiaľ sa nepoužíva</span></div>
+              <p class="helper" id="boot-note">Nastavenie sa ukladá pre budúce použitie. Momentálne nespúšťa overenie štartu obnovenej aplikácie.</p>
+              <details><summary>Čo znamená toto nastavenie?</summary><p>Voľba je súčasťou politiky, ale aktuálne šablóny obnovy ju nepoužívajú. Zaškrtnutie preto nezapne kontrolu spustenia aplikácie.</p></details>
+            </div>
+          </div>
+        </section>
+        <div class="columns">
+          <div class="field"><label for="level">Úroveň</label><select id="level"><option>Critical</option><option>High</option><option>Medium</option><option>Low</option></select></div>
+          <div class="status-control"><input id="enabled" type="checkbox" checked><label for="enabled">Politika povolená</label></div>
+        </div>
+      </div>
+      <footer>
+        <button type="reset">Obnoviť hodnoty</button>
+        <button type="submit" class="primary">Vyskúšať uloženie</button>
+        <p id="save-status" role="status" aria-live="polite"></p>
+      </footer>
+    </form>
+  </main>
+  <script>
+    const form = document.querySelector('#policy-form');
+    const status = document.querySelector('#save-status');
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      status.textContent = 'Ukážka uloženia: Retention ' + document.querySelector('#retention').value + ' ' + document.querySelector('#retention-unit').selectedOptions[0].text + ', Boot verification: ' + (document.querySelector('#boot-verify').checked ? 'áno' : 'nie') + '. Žiadne údaje sa neodoslali.';
+    });
+    form.addEventListener('reset', () => { status.textContent = ''; });
+  </script>
+</body>
+</html>
