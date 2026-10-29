@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { PolicySetRecordOutput } from '@/generated/query/zod'
@@ -122,6 +122,19 @@ const cleanRoomPolicies = [
 ] as const
 
 describe('PolicySetPicker', () => {
+  it('marks only recovery retention and boot verification as reserved for future use', () => {
+    render(<PolicySetPicker policySets={policySets} selectedPolicySetId="tier2-apps" onSelect={vi.fn()} />)
+
+    const recovery = screen.getByRole('region', { name: 'Recovery application policy' })
+    for (const [label, value] of [['Retention', '4 hours'], ['Boot verification', 'Yes']]) {
+      const field = within(recovery).getByText(label).parentElement
+      expect(field).toHaveTextContent(value)
+      expect(field).toHaveTextContent('Reserved for future use')
+    }
+    expect(screen.getAllByText('Reserved for future use')).toHaveLength(2)
+    expect(screen.getByRole('region', { name: 'Snapshot policy' })).not.toHaveTextContent('Reserved for future use')
+  })
+
   it.each([0, 50])('shows snapshot copy rate %s in the selected policy set', rate => {
     useSnapshotPoliciesMock.mockReturnValue({ status: 'success', fetchStatus: 'idle', data: snapshotPolicies.map(policy => ({ ...policy, flashcopy_copy_rate: rate })), isLoading: false, error: null })
     render(<PolicySetPicker policySets={policySets} selectedPolicySetId="tier2-apps" onSelect={vi.fn()} />)
