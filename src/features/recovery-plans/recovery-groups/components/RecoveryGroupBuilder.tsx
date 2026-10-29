@@ -13,6 +13,7 @@ import { TruncatedText } from '@/shared/components/truncated-text/TruncatedText'
 import { ListSkeleton } from '@/shared/components/list-skeleton/ListSkeleton'
 import { WizardSteps } from '@/shared/components/wizard-steps/WizardSteps'
 import { useTranslation } from '@/hooks/useTranslation'
+import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { useGetProviders } from '@/generated/query/providers/providers.gen'
 import { selectProviders } from '@/features/providers-connectors/providers/model/selectProviders'
 import { useGetPlatformProviders } from '@/generated/query/platform-providers/platform-providers.gen'
@@ -93,6 +94,8 @@ export function RecoveryGroupBuilder({
     request.relatedVolumeRequest.sourceId,
     hasRelatedStorageStep && step === relatedStorageStepIndex,
   )
+  const discoveryDetail = extractBackendErrorDetail(relatedVolumesDiscovery.error)
+  const discoveryReason = discoveryDetail && !/^[{[]/.test(discoveryDetail) ? discoveryDetail : undefined
   const relatedObservation = { ...baseObservation, related: { ...relatedVolumesDiscovery, identity: request.discoveryIdentity } }
   const selection = resolveEffectiveDraft(lifecycle, relatedObservation)
   const relationships = useRecoveryGroupMetroMirrorRelationships(
@@ -295,8 +298,19 @@ export function RecoveryGroupBuilder({
                     {t('pages.recoveryGroupBuilder.relatedStorage.description')}
                   </p>
                 </div>
-                {relatedVolumesDiscovery.error ? <FetchErrorAlert title={t('pages.recoveryGroupBuilder.topology.discoveryError')}
-                  onRetry={() => { relatedVolumesDiscovery.refetch?.() }} retryLabel={t('buttons.retry')} /> : null}
+                {relatedVolumesDiscovery.error ? (
+                  <FetchErrorAlert
+                    title={t('pages.recoveryGroupBuilder.topology.discoveryError')}
+                    description={[
+                      t('pages.recoveryGroupBuilder.topology.discoveryErrorDescription'),
+                      discoveryReason ? `${t('pages.recoveryGroupBuilder.topology.discoveryErrorReason')}: ${discoveryReason}` : null,
+                    ].filter(Boolean).join('\n\n')}
+                    className="shrink-0 [&_p]:whitespace-pre-line"
+                    isRetrying={relatedVolumesDiscovery.isFetching}
+                    onRetry={() => { relatedVolumesDiscovery.refetch?.() }}
+                    retryLabel={t('pages.recoveryGroupBuilder.topology.discoveryRetry')}
+                  />
+                ) : null}
                 {relatedVolumesDiscovery.isLoading ? <ListSkeleton rowCount={1} ariaLabel={t('pages.recoveryGroupBuilder.resources.volumes.loading')} /> : null}
                 {metroFields}
                 {draft.relatedVolumeProviderId ? (

@@ -5,6 +5,7 @@ interface RecoveryGroupRelatedVolumes {
   flashcopyProviderId: string | null
   discoveredVolumeNames: string[]
   isLoading: boolean
+  isFetching?: boolean
   isResolved: boolean
   error?: Error | null
   refetch?: () => void
@@ -38,6 +39,7 @@ export function useRecoveryGroupRelatedVolumes(
     flashcopyProviderId,
     discoveredVolumeNames,
     isLoading: queryEnabled && results.some(result => result.isLoading),
+    isFetching: queryEnabled && results.some(result => result.isFetching),
     isResolved: results.every(result => result.isFetched || result.isError),
     error: results.find(result => result.error)?.error ?? null,
     refetch: () => { results.forEach(result => { void result.refetch() }) },
