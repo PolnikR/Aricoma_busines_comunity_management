@@ -1,6 +1,6 @@
 # Plán: Recovery Group Inventory refresh
 
-Dátum: 2026-10-29. Stav: plán na review; implementácia nezačala.
+Dátum: 2026-10-29. Stav: implementované a automaticky overené; browser QA čaká na sprístupnenie ovládania prehliadača.
 Checklist: [recovery-group-inventory-refresh-todo.md](recovery-group-inventory-refresh-todo.md).
 Umiestnenie samostatných súborov schválil používateľ; existujúce plan.md a todo.md zachovať.
 
@@ -52,4 +52,4 @@ Pracovať sekvenčne v existujúcom workspace; rozsah je malý a zdieľa kompone
 
 ## Review a odovzdanie
 
-Pred implementáciou musí používateľ schváliť obsah plánu. Schválenie umiestnenia súborov samo osebe nie je schválením implementácie. Po implementácii uviesť skutočné príkazy, výsledky a limity; po úspešnom overení commitnúť iba vlastné zmeny bez pushu.
+Používateľ schválil vykonanie cez executing-plans inline a doplnil vlastné code review a browser test s jeho prihlásením. Implementačný commit: 35b3b0f8. Výsledky a otvorené browser overenie sú v sprievodnom checkliste. Bez pushu a bez zmien backendu.
