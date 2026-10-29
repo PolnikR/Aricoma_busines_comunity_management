@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Badge } from '@/shared/components/badge/Badge'
+import { Button } from '@/shared/components/button/Button'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { ResponseBodyViewer } from '@/shared/components/response-body/ResponseBodyViewer'
 import { AlertTriangleIcon, ChevronDownIcon, DiskIcon } from '@/shared/icons/Icons'
 import { cn } from '@/shared/utils/cn'
 import { useTranslation } from '@/hooks/useTranslation'
-import { useGetRecoveryGroupInventory } from '@/generated/query/recovery-groups/recovery-groups.gen'
+import { getGetRecoveryGroupInventoryQueryKey, getRecoveryGroupInventory, useGetRecoveryGroupInventory } from '@/generated/query/recovery-groups/recovery-groups.gen'
 import { selectRecoveryGroupInventory } from '../model/recoveryGroupTypes'
 import { countLabel } from '../helpers/countLabel'
 import { RecoveryGroupFlashCopyFanOut } from './RecoveryGroupFlashCopyFanOut'
@@ -34,6 +36,22 @@ function GroupHeader({ title, description }: { title: ReactNode; description: st
 export function RecoveryGroupInventory({ runId, active }: RecoveryGroupInventoryProps) {
   const { t, language } = useTranslation()
   const query = useGetRecoveryGroupInventory({ run_id: runId ?? '' }, { query: { select: selectRecoveryGroupInventory, enabled: active && Boolean(runId) } })
+  const queryClient = useQueryClient()
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [refreshErrorRunId, setRefreshErrorRunId] = useState<string | null>(null)
+  const handleRefresh = async () => {
+    if (!runId || isRefreshing) return
+    setIsRefreshing(true)
+    setRefreshErrorRunId(null)
+    try {
+      const data = await getRecoveryGroupInventory({ run_id: runId, force_refresh: true })
+      queryClient.setQueryData(getGetRecoveryGroupInventoryQueryKey({ run_id: runId }), data)
+    } catch {
+      setRefreshErrorRunId(runId)
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
   const [openVolumes, setOpenVolumes] = useState<ReadonlySet<string>>(() => new Set())
   const [chainActive, setChainActive] = useState<string | null>(null)
   const [listActive, setListActive] = useState<string | null>(null)
@@ -76,7 +94,12 @@ export function RecoveryGroupInventory({ runId, active }: RecoveryGroupInventory
 
   return (
     <div className="flex flex-col gap-7 px-5 py-4">
-      {query.error ? <FetchErrorAlert title={t('recoveryInventory.refreshFailed')} retryLabel={t('buttons.retry')} isRetrying={query.isFetching} onRetry={() => { void query.refetch() }} /> : null}
+      <div className="flex justify-end">
+        <Button size="sm" variant="outline" disabled={isRefreshing || query.isFetching} onClick={() => { void handleRefresh() }}>
+          {isRefreshing ? t('buttons.refreshing') : t('buttons.refreshInventory')}
+        </Button>
+      </div>
+      {query.error || refreshErrorRunId === runId ? <FetchErrorAlert title={t('recoveryInventory.refreshFailed')} retryLabel={t('buttons.retry')} isRetrying={isRefreshing || query.isFetching} onRetry={() => { if (refreshErrorRunId === runId) void handleRefresh(); else void query.refetch() }} /> : null}
       {metroMirror ? (
         <>
           {metroMirror.error || metroMirror.consistency_group ? (
