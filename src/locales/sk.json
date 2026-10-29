@@ -2908,6 +2908,7 @@
   "recoveryInventory.loading": "Načítava sa inventár…",
   "recoveryInventory.error": "Inventár sa nepodarilo načítať",
   "recoveryInventory.refreshFailed": "Obnovenie inventára zlyhalo. Zobrazujú sa posledné známe údaje, ktoré môžu byť neaktuálne.",
+  "recoveryInventory.refreshHelp": "Znovu načíta inventár; server môže vrátiť údaje z cache.",
   "recovery.application.rollback.reportUnavailable": "Požiadavka na odstránenie uspela, ale nebol vrátený report rollbacku. Výsledok rollbacku nemožno potvrdiť.",
   "recoveryInventory.empty": "Inventár neobsahuje žiadne položky.",
   "recoveryInventory.found": "Nájdené",

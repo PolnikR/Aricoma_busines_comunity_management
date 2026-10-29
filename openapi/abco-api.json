@@ -3054,18 +3054,6 @@
             "description": "the recovery group's own orchestration.run_id"
           },
           {
-            "name": "force_refresh",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "description": "bypass cached storage inventory and fetch live",
-              "default": false,
-              "title": "Force Refresh"
-            },
-            "description": "bypass cached storage inventory and fetch live"
-          },
-          {
             "name": "X-User",
             "in": "header",
             "required": false,
