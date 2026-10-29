@@ -2941,6 +2941,7 @@
   "recoveryInventory.loading": "Loading inventory...",
   "recoveryInventory.error": "Inventory could not be loaded",
   "recoveryInventory.refreshFailed": "Inventory refresh failed. Showing the last known data, which may be out of date.",
+  "recoveryInventory.refreshHelp": "Reloads inventory data; the server may return cached data.",
   "recovery.application.rollback.reportUnavailable": "The deletion request succeeded, but no rollback report was returned. The rollback outcome cannot be confirmed.",
   "recoveryInventory.empty": "No inventory items were returned.",
   "recoveryInventory.found": "Found",

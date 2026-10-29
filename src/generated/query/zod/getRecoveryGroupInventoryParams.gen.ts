@@ -6,10 +6,8 @@
  */
 import * as zod from 'zod';
 
-export const getRecoveryGroupInventoryParamsForceRefreshDefault = false;
 export const GetRecoveryGroupInventoryParams = zod.object({
-  "run_id": zod.string().describe('the recovery group\'s own orchestration.run_id'),
-  "force_refresh": zod.boolean().default(getRecoveryGroupInventoryParamsForceRefreshDefault).describe('bypass cached storage inventory and fetch live')
+  "run_id": zod.string().describe('the recovery group\'s own orchestration.run_id')
 })
 
 export type GetRecoveryGroupInventoryParams = zod.input<typeof GetRecoveryGroupInventoryParams>;

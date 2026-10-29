@@ -3,13 +3,13 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { createAppQueryClient } from '@/shared/query/createAppQueryClient'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { getRecoveryGroupInventory, useGetRecoveryGroupInventory } from '@/generated/query/recovery-groups/recovery-groups.gen'
+import { useGetRecoveryGroupInventory } from '@/generated/query/recovery-groups/recovery-groups.gen'
 import { RecoveryGroupInventory } from './RecoveryGroupInventory'
+import { RecoveryGroupInventorySummary } from './RecoveryGroupInventorySummary'
 
-vi.mock('@/generated/query/recovery-groups/recovery-groups.gen', () => ({
+vi.mock('@/generated/query/recovery-groups/recovery-groups.gen', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/generated/query/recovery-groups/recovery-groups.gen')>(),
   useGetRecoveryGroupInventory: vi.fn(),
-  getRecoveryGroupInventory: vi.fn(),
-  getGetRecoveryGroupInventoryQueryKey: (params: { run_id: string }) => ['/get_recovery_group_inventory', params],
 }))
 // Keys come back as-is with their parameters appended, so labels stay distinguishable.
 vi.mock('@/hooks/useTranslation', () => ({
@@ -217,38 +217,77 @@ describe('RecoveryGroupInventory', () => {
     expect(document.querySelector(`[data-entity-id="aux:${AUX}RDM_DISK01"]`)).toHaveAttribute('data-highlight', 'off')
   })
 
-  it('forces storage refresh and updates the inventory query shared by the summary', async () => {
-    mockInventory({})
+  it('refetches without force_refresh and updates visible snapshots and the shared summary', async () => {
+    const actual = await vi.importActual<typeof import('@/generated/query/recovery-groups/recovery-groups.gen')>('@/generated/query/recovery-groups/recovery-groups.gen')
+    vi.mocked(useGetRecoveryGroupInventory).mockImplementation(actual.useGetRecoveryGroupInventory)
     const client = createAppQueryClient()
-    const fresh = {
+    const inventory = (count: number) => ({
       recovery_group_id: 'group-1', recovery_group_name: 'rdb_and_app', run_id: 'run-1',
-      volumes: { 'fresh-volume': { found: true, relations: [] } },
-    }
-    vi.mocked(getRecoveryGroupInventory).mockResolvedValueOnce(fresh)
-    render(<QueryClientProvider client={client}><RecoveryGroupInventory runId="run-1" active /></QueryClientProvider>)
-
-    await userEvent.setup().click(screen.getByRole('button', { name: 'buttons.refreshInventory' }))
-    await waitFor(() => {
-      expect(getRecoveryGroupInventory).toHaveBeenCalledWith({ run_id: 'run-1', force_refresh: true })
-      expect(client.getQueryData(['/get_recovery_group_inventory', { run_id: 'run-1' }])).toEqual(fresh)
+      volumes: volumes({ V5000_VOLUME01: count }),
     })
-    expect(screen.getByRole('button', { name: 'buttons.refreshInventory' })).toBeEnabled()
-    client.clear()
+    let finishRefresh: (response: Response) => void = () => { throw new Error('Refresh has not started') }
+    const fetchMock = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(Response.json(inventory(1)))
+      .mockImplementationOnce(() => new Promise<Response>(resolve => { finishRefresh = resolve }))
+    vi.stubGlobal('fetch', fetchMock)
+    const view = render(<QueryClientProvider client={client}>
+      <output aria-label="Inventory summary"><RecoveryGroupInventorySummary runId="run-1" fallback="Loading summary" /></output>
+      <RecoveryGroupInventory runId="run-1" active />
+    </QueryClientProvider>)
+    try {
+      const volume = await screen.findByTitle(`${AUX}V5000_VOLUME01`)
+      expect(screen.getByText('recoveryInventory.refreshHelp')).toBeInTheDocument()
+      await userEvent.setup().click(volume)
+      expect(await screen.findByTitle(`snap1_${AUX}V5000_VOLUME01`)).toBeInTheDocument()
+      expect(screen.getByLabelText('Inventory summary')).toHaveTextContent('recoveryInventory.summary.relations.one:1')
+
+      await userEvent.setup().click(screen.getByRole('button', { name: 'buttons.refreshInventory' }))
+      await waitFor(() => { expect(fetchMock).toHaveBeenCalledTimes(2) })
+      expect(fetchMock.mock.calls[1]?.[0]).toBe('/api/get_recovery_group_inventory?run_id=run-1')
+      expect(fetchMock.mock.calls[1]?.[1]?.method).toBe('GET')
+      expect(screen.getByRole('button', { name: 'buttons.refreshing' })).toBeDisabled()
+      expect(volume.closest('details')).toHaveAttribute('open')
+      expect(screen.getByTitle(`snap1_${AUX}V5000_VOLUME01`)).toBeInTheDocument()
+      act(() => { finishRefresh(Response.json(inventory(2))) })
+
+      expect(await screen.findByTitle(`snap2_${AUX}V5000_VOLUME01`)).toBeInTheDocument()
+      expect(volume.closest('details')).toHaveAttribute('open')
+      expect(screen.getByLabelText('Inventory summary')).toHaveTextContent('recoveryInventory.summary.relations.other:2')
+      expect(screen.getByRole('button', { name: 'buttons.refreshInventory' })).toBeEnabled()
+    } finally {
+      view.unmount()
+      client.clear()
+      vi.unstubAllGlobals()
+    }
   })
 
-  it('retains cached inventory and shows an error when live storage refresh fails', async () => {
-    mockInventory({})
+  it('keeps visible snapshots on refresh failure and retries the same ordinary GET', async () => {
+    const actual = await vi.importActual<typeof import('@/generated/query/recovery-groups/recovery-groups.gen')>('@/generated/query/recovery-groups/recovery-groups.gen')
+    vi.mocked(useGetRecoveryGroupInventory).mockImplementation(actual.useGetRecoveryGroupInventory)
     const client = createAppQueryClient()
-    const cached = { recovery_group_id: 'group-1', run_id: 'run-1', volumes: { cached: { found: true, relations: [] } } }
-    client.setQueryData(['/get_recovery_group_inventory', { run_id: 'run-1' }], cached)
-    vi.mocked(getRecoveryGroupInventory).mockRejectedValueOnce(new Error('storage unavailable'))
-    render(<QueryClientProvider client={client}><RecoveryGroupInventory runId="run-1" active /></QueryClientProvider>)
-
-    await userEvent.setup().click(screen.getByRole('button', { name: 'buttons.refreshInventory' }))
-    expect(await screen.findByRole('alert')).toHaveTextContent('recoveryInventory.refreshFailed')
-    expect(client.getQueryData(['/get_recovery_group_inventory', { run_id: 'run-1' }])).toEqual(cached)
-    expect(screen.getByTitle(`${AUX}V5000_VOLUME01`)).toBeInTheDocument()
-    client.clear()
+    client.setDefaultOptions({ queries: { ...client.getDefaultOptions().queries, retry: false } })
+    const inventory = { recovery_group_id: 'group-1', recovery_group_name: 'Group', run_id: 'run-1', volumes: volumes({ V5000_VOLUME01: 1 }) }
+    const fetchMock = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(Response.json(inventory))
+      .mockResolvedValueOnce(Response.json({ detail: 'Unavailable' }, { status: 503 }))
+      .mockResolvedValueOnce(Response.json(inventory))
+    vi.stubGlobal('fetch', fetchMock)
+    const view = render(<QueryClientProvider client={client}><RecoveryGroupInventory runId="run-1" active /></QueryClientProvider>)
+    try {
+      await userEvent.setup().click(await screen.findByTitle(`${AUX}V5000_VOLUME01`))
+      await screen.findByTitle(`snap1_${AUX}V5000_VOLUME01`)
+      await userEvent.setup().click(screen.getByRole('button', { name: 'buttons.refreshInventory' }))
+      expect(await screen.findByRole('alert')).toHaveTextContent('recoveryInventory.refreshFailed')
+      expect(screen.getByTitle(`snap1_${AUX}V5000_VOLUME01`)).toBeInTheDocument()
+      await userEvent.setup().click(screen.getByRole('button', { name: 'buttons.retry' }))
+      await waitFor(() => { expect(screen.queryByRole('alert')).not.toBeInTheDocument() })
+      expect(fetchMock).toHaveBeenCalledTimes(3)
+      for (const [url] of fetchMock.mock.calls) expect(url).toBe('/api/get_recovery_group_inventory?run_id=run-1')
+    } finally {
+      view.unmount()
+      client.clear()
+      vi.unstubAllGlobals()
+    }
   })
 
   it('pages many mappings five at a time', async () => {
