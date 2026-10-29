@@ -51,7 +51,11 @@ describe.each(['en', 'sk', 'cs'] as const)('Recovery App Policy help in %s', lan
       const parent = screen.getByRole('dialog')
       const triggers = within(parent).getAllByRole('button').filter(button => button.hasAttribute('aria-haspopup'))
       expect(triggers).toHaveLength(keys.length + (mode === 'display' ? 1 : 0))
-      expect(within(parent).getAllByText(text('recoveryAppPolicies.reservedForFutureUse'))).toHaveLength(2)
+      if (mode === 'display') {
+        expect(within(parent).queryByText(text('recoveryAppPolicies.reservedForFutureUse'))).not.toBeInTheDocument()
+      } else {
+        expect(within(parent).getAllByText(text('recoveryAppPolicies.reservedForFutureUse'))).toHaveLength(2)
+      }
       for (const parameter of keys) {
         const key = `recoveryAppPolicies.fieldHelp.${parameter}`
         const trigger = within(parent).getByRole('button', { name: text(`${key}.trigger`) })
