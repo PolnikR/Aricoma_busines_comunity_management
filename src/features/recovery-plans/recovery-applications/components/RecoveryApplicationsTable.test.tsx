@@ -387,7 +387,7 @@ describe('RecoveryApplicationsTable', () => {
     )
     expect(within(drawer).getByText('success')).toBeInTheDocument()
 
-    await user.click(within(drawer).getByRole('button', { name: 'View recovery runs →' }))
+    await user.click(within(drawer).getByRole('button', { name: 'View recovery app runs →' }))
     expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-runs?tab=applications&entityType=application&entityId=finance-app')
   })
 
@@ -400,7 +400,7 @@ describe('RecoveryApplicationsTable', () => {
     await user.click(within(drawer).getByRole('button', { name: 'Orchestration' }))
 
     expect(within(drawer).queryByText('Airflow DAG ID')).not.toBeInTheDocument()
-    expect(within(drawer).queryByRole('button', { name: 'View recovery runs →' })).not.toBeInTheDocument()
+    expect(within(drawer).queryByRole('button', { name: 'View recovery app runs →' })).not.toBeInTheDocument()
   })
   describe('DetailView', () => {
     beforeEach(() => {
@@ -479,7 +479,7 @@ describe('RecoveryApplicationsTable', () => {
       expect(header(drawer)).toHaveTextContent('Orchestration incomplete')
       expect(drawer).not.toHaveTextContent('Not orchestrated')
       await user.click(within(drawer).getByRole('button', { name: 'Orchestration' }))
-      expect(within(drawer).queryByRole('button', { name: 'View recovery runs →' })).not.toBeInTheDocument()
+      expect(within(drawer).queryByRole('button', { name: 'View recovery app runs →' })).not.toBeInTheDocument()
     })
 
     it('shows an unset policy set as Not set', async () => {
