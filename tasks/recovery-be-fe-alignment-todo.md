@@ -291,10 +291,10 @@ unit očakávanie, že VMware v2 patrí do generic.
 
 **Akceptačné kritériá:**
 
-- [ ] Explicitné Power v3 a VMware v2 zvolia novú existujúcu help vetvu aj bez katalógu.
-- [ ] Null vyberie vetvu iba podľa verified unique defaultu správnej platformy;
+- [x] Explicitné Power v3 a VMware v2 zvolia novú existujúcu help vetvu aj bez katalógu.
+- [x] Null vyberie vetvu iba podľa verified unique defaultu správnej platformy;
   pri chybe, viacerých defaultoch alebo inej platforme je generic.
-- [ ] V1/Power v2 zachovajú routing, future v9 a neznáme platformy zostanú generic.
+- [x] V1/Power v2 zachovajú routing, future v9 a neznáme platformy zostanú generic.
 
 **Overenie:**
 
@@ -302,16 +302,16 @@ unit očakávanie, že VMware v2 patrí do generic.
 node node_modules/vitest/vitest.mjs run src/features/recovery-plans/recovery-applications/helpers/recoveryApplicationFieldHelp.test.ts src/locales/recoveryApplicationFieldHelpTranslations.test.ts
 ```
 
-- [ ] Parametrizované unit scenáre pre explicit/null/default/outage prešli;
+- [x] Parametrizované unit scenáre pre explicit/null/default/outage prešli;
   focused ESLint oboch súborov, diff check a atomic commit.
 
 **Závislosti:** T6a.
 
 ## CP3: Pravidlá a texty
 
-- [ ] T4 unit matica pokrýva tri nové layout kombinácie aj legacy v1/null.
-- [ ] T6a locale doplnenie aj T6b routing s unit testom sú overené.
-- [ ] Review potvrdil Python normalizáciu vrátane Unicode a order/namespace hraníc.
+- [x] T4 unit matica pokrýva tri nové layout kombinácie aj legacy v1/null.
+- [x] T6a locale doplnenie aj T6b routing s unit testom sú overené.
+- [x] Review potvrdil Python normalizáciu vrátane Unicode a order/namespace hraníc.
 
 ## T5: Napojenie DAG pravidiel na validáciu a readiness
 
@@ -416,3 +416,4 @@ node node_modules/vitest/vitest.mjs run src/features/recovery-plans/recovery-app
 - T3/CP2: 67 policy component/help testov prešlo, focused ESLint prešiel. Žiadna produkčná zmena formulára nebola potrebná; doplnená server-response matica a array-422 correction cez Enter.
 - T4: 44 unit testov DAG/workloads prešlo; focused ESLint prešiel. BE normalizácia a refusal funkcie znovu porovnané priamo s checkoutom b0b4ab3. Helper je čistý, vrátane unique defaultu, Unicode a order/namespace pravidiel.
 - T6a: 9 locale testov, JSON parse EN/SK/CS a focused ESLint prešli. Rozsah doplnený o existujúci recoveryApplicationFunctionalTranslations.test.ts: obsahoval neplatný predpoklad, že každá duplicita patrí výhradne IBM Power v2. Retention/frequency krok sa nemenil.
+- T6b/CP3: 16 helper/locale testov prešlo; 3 nové routing assertions boli pred úpravou RED. Focused ESLint prešiel. Explicitné a server-default Power v3/VMware v2 rozpoznané, unknown generic zachovaný.

@@ -14,6 +14,8 @@ describe('application technical help context', () => {
     expect(recoveryApplicationTierOrderHelpKey('IBM_POWER', 'v2')).toBe('recoveryApplications.fieldHelp.tierOrder.ibmPower.v2')
     expect(recoveryApplicationTierOrderHelpKey('ibm_power', 'v1')).toBe('recoveryApplications.fieldHelp.tierOrder.ibmPower.v1')
     expect(recoveryApplicationTierOrderHelpKey('VMWARE', 'v1')).toBe('recoveryApplications.fieldHelp.tierOrder.vmware.v1')
+    expect(recoveryApplicationTierOrderHelpKey('VMWARE', 'v2')).toBe('recoveryApplications.fieldHelp.tierOrder.vmware.v2')
+    expect(recoveryApplicationTierOrderHelpKey('IBM_POWER', 'v3')).toBe('recoveryApplications.fieldHelp.tierOrder.ibmPower.v3')
   })
 
   it('resolves null only from a verified, unique default for the same platform', () => {
@@ -27,8 +29,14 @@ describe('application technical help context', () => {
   })
 
   it('does not invent layouts for future templates or unsupported platforms', () => {
-    for (const [platform, version] of [['VMWARE', 'v2'], ['IBM_POWER', 'v9'], ['unknown', 'v1']]) {
+    for (const [platform, version] of [['VMWARE', 'v9'], ['IBM_POWER', 'v9'], ['unknown', 'v1']]) {
       expect(recoveryApplicationTierOrderHelpKey(platform, version)).toBe('recoveryApplications.fieldHelp.tierOrder.generic')
     }
+  })
+
+  it.each([['IBM_POWER', 'v3', 'ibmPower'], ['VMWARE', 'v2', 'vmware']])('uses a verified new default for %s', (platform, version, suffix) => {
+    const templates = [{ platform, version, default: true }]
+    expect(recoveryApplicationTierOrderHelpKey(platform, null, { templates, verified: true })).toBe(`recoveryApplications.fieldHelp.tierOrder.${suffix}.${version}`)
+    expect(recoveryApplicationTierOrderHelpKey(platform, null, { templates, verified: false })).toBe('recoveryApplications.fieldHelp.tierOrder.generic')
   })
 })
