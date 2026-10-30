@@ -145,12 +145,12 @@ Uvoľnenie minút odložiť až po vyriešení cron generovania.
 
 **Akceptačné kritériá:**
 
-- [ ] Zachovaný FE krok frequency 15 minút, bez pevného 600-minútového
+- [x] Zachovaný FE krok frequency 15 minút, bez pevného 600-minútového
   limitu vo FE. BE rozhoduje o minimálnej frekvencii pri submit. Retention
   a Snapshot Policies ostávajú nedotknuté.
-- [ ] String aj Pydantic-array HTTP 422 detail zostávajú viditeľné bez zatvorenia
+- [x] String aj Pydantic-array HTTP 422 detail zostávajú viditeľné bez zatvorenia
   modalu, zmeny vstupov alebo hlásenia úspechu; BE limit sa neodvodzuje z chybovej vety.
-- [ ] Historické hodnoty a jednotky sa pri otvorení neprepočítajú, cancel nie je
+- [x] Historické hodnoty a jednotky sa pri otvorení neprepočítajú, cancel nie je
   dirty; BE odmietnutie starého intervalu umožňuje opravu, neobchádza server kontrolu.
 
 **Scenáre:**
@@ -177,7 +177,7 @@ Uvoľnenie minút odložiť až po vyriešení cron generovania.
 node node_modules/vitest/vitest.mjs run src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPolicyModal.test.tsx src/features/recovery-plans/recovery-policies/application-recovery/components/RecoveryAppPolicyHelp.test.tsx
 ```
 
-- [ ] Cielené testy, focused ESLint a atomic commit.
+- [x] Cielené testy, focused ESLint a atomic commit.
 
 **Závislosti:** D2 je schválené: ponechať FE krok 15 minút aj serverové minimum.
 Nie je povolený BE fix, normalizácia jednotiek ani capabilities endpoint.
@@ -185,9 +185,9 @@ T6 môže upresniť BE minimum/HTTP 422, nesmie však odstrániť krok 15 z help
 
 ## CP2: Policy
 
-- [ ] Schválené D2 implementované bez zmeny FE kroku 15; BE minimum a UI krok nezamenené.
-- [ ] Regresie dokazujú 422, zachovanie historických vstupov a nezmenenú retention.
-- [ ] Cron riziko ostáva evidované; ľubovoľné minúty sa nezavádzajú, úspech DTO testov nie je Airflow QA.
+- [x] Schválené D2 implementované bez zmeny FE kroku 15; BE minimum a UI krok nezamenené.
+- [x] Regresie dokazujú 422, zachovanie historických vstupov a nezmenenú retention.
+- [x] Cron riziko ostáva evidované; ľubovoľné minúty sa nezavádzajú, úspech DTO testov nie je Airflow QA.
 
 ## T4: Čisté pravidlá DAG identít
 
@@ -413,3 +413,4 @@ node node_modules/vitest/vitest.mjs run src/features/recovery-plans/recovery-app
 
 - T1: 13 component testov a 13 hook testov prešlo. RED: dva URL assertions zlyhali bez force; GREEN po zapojení live hooku. Hook pokrýva aj invalidáciu pri rollback/delete, run/unmount, odstránenie/nahradenie query, mismatch odpovede a súbežný obyčajný GET. A→B→A test používa dve samostatné render fázy (React batch bez B commitu nepredstavuje opustenie runu).
 - T2/CP1: 16 hook testov prešlo; predicate invaliduje iba snapshot-provider volumes/tree bez refetchu. Focused ESLint T1/T2 prešiel.
+- T3/CP2: 67 policy component/help testov prešlo, focused ESLint prešiel. Žiadna produkčná zmena formulára nebola potrebná; doplnená server-response matica a array-422 correction cez Enter.

@@ -192,6 +192,48 @@ describe('RecoveryAppPolicyModal', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Configured recovery interval is too short.')
   })
 
+  it.each([
+    [585, 'minutes', 600, 422], [9, 'hours', 600, 422],
+    [600, 'minutes', 600, 200], [10, 'hours', 600, 200], [1, 'days', 600, 200],
+    [10, 'hours', 720, 422], [15, 'minutes', 0, 200],
+  ] as const)('defers %s %s to the server (configured %s, status %s)', async (value, unit, minimum, status) => {
+    const detail = `Server minimum is ${String(minimum)} minutes.`
+    const fetchMock = vi.fn().mockResolvedValue(Response.json(status === 422
+      ? { detail } : { recovery_app_policies: [policy] }, { status }))
+    vi.stubGlobal('fetch', fetchMock)
+    const onClose = vi.fn()
+    renderModal({ policy: { ...policy, frequency_value: value, frequency_unit: unit }, onClose })
+    fireEvent.click(screen.getByRole('button', { name: 'Edit policy' }))
+    await waitFor(() => { expect(fetchMock).toHaveBeenCalledOnce() })
+    expect(submittedBody(fetchMock)).toMatchObject({ frequency_value: value, frequency_unit: unit })
+    if (status === 422) {
+      expect(await screen.findByRole('alert')).toHaveTextContent(detail)
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
+      expect(onClose).not.toHaveBeenCalled()
+      expect(screen.getByLabelText('Frequency')).toHaveValue(value)
+    } else await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+  })
+
+  it('retains a legacy draft on array 422 and allows correction with Enter', async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(Response.json({ detail: [
+      { loc: ['body', 'frequency_value'], msg: 'Interval rejected by deployment configuration.', type: 'value_error' },
+    ] }, { status: 422 })).mockResolvedValueOnce(Response.json({ recovery_app_policies: [policy] }))
+    vi.stubGlobal('fetch', fetchMock)
+    const onClose = vi.fn()
+    renderModal({ policy: { ...powerPolicy, frequency_value: 9, frequency_unit: 'hours' }, onClose })
+    fireEvent.change(screen.getByLabelText('Policy name'), { target: { value: 'Edited legacy policy' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Edit policy' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Interval rejected by deployment configuration.')
+    expect(screen.getByLabelText('Policy name')).toHaveValue('Edited legacy policy')
+    expect(screen.getByLabelText('Frequency')).toHaveValue(9)
+    expect(screen.getByRole('checkbox', { name: 'Manual zoning' })).toBeChecked()
+    expect(onClose).not.toHaveBeenCalled()
+    fireEvent.change(screen.getByLabelText('Frequency'), { target: { value: '10' } })
+    fireEvent.keyDown(screen.getByLabelText('Frequency'), { key: 'Enter' })
+    await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
   it.each(['Manual zoning', 'Manual WWPN entry'])('explains ignored IBM Power frequency for %s while retaining its payload', async mode => {
     const fetchMock = stubSubmitResponse()
     const onClose = vi.fn()
