@@ -1,20 +1,23 @@
 # TODO: Recovery BE/FE alignment
 
-Stav: návrh, nič z implementácie nie je vykonané ani schválené.
+Stav: implementácia prebieha inline podľa pokynu používateľa z 2026-10-30. D1/D2 zachované; D3–D5 vykonávame podľa odporúčaní plánu.
 Zdroj: [plán a zdrojové dôkazy](recovery-be-fe-alignment-plan.md).
 
 ## Brána pred implementáciou
 
-- [ ] Používateľ prečítal plán a rozhodol D1–D5.
-- [ ] Používateľ dal ďalší výslovný pokyn začať implementáciu.
-- [ ] Znovu overené FE/BE HEAD, lokálne AGENTS.md a pracovné stromy.
-- [ ] Vstupné OpenAPI/Zod zmeny zachované; vlastníctvo kontraktu overené bez generácie.
+- [x] D1: samostatný forced request, lokálne blokovanie dvojkliku, bez cooldownu a koordinácie hypotetických ovládačov.
+- [x] D2: zachovať FE krok 15 minút, bez pevného limitu 600; BE autorita a viditeľný HTTP 422 detail.
+- [x] Používateľ rozhodol D3–D5.
+- [x] Používateľ dal ďalší výslovný pokyn začať implementáciu.
+- [x] Znovu overené FE/BE HEAD, lokálne AGENTS.md a pracovné stromy.
+- [x] Vstupné OpenAPI/Zod zmeny zachované; vlastníctvo kontraktu overené bez generácie.
 
 Poradie: **T1 → T2 → CP1 → T3 → CP2 → T4 → T6a → T6b → CP3 → T5 → T7 → CP4**.
 T2 je voliteľná vetva podľa D4. Pri jej odložení označiť rozhodnutie, nie hotovú
-implementáciu. Pri D2 variante zachovať krok 15 sa nemení frequency pravidlo T3;
-ostatné regresie T3 stále platia. Všetky príkazy nižšie sú na budúce vykonanie,
-nie výsledky tejto plánovacej práce.
+implementáciu. D1 a D2 sú pevné rozhodnutia: bez cooldownu, bez zdieľaného
+registry pre hypotetické ovládače a bez uvoľnenia FE kroku 15 minút. T3 sa
+sústredí na HTTP 422 a regresie, nie na zmenu frequency pravidiel.
+Všetky príkazy nižšie sú na budúce vykonanie, nie výsledky tejto plánovacej práce.
 
 V cestách používame presné prefixy:
 
@@ -29,6 +32,8 @@ Prefixy sú iba skratky dokumentácie. Do CLI vkladať rozvinuté cesty.
 **Opis:** Pridať feature hook pre jednorazový forced fetch a zapojiť existujúci
 Refresh. Zachovať bežný generated query, jeho key aj summary observer. Naplniť
 race/cancellation invarianty z plánu; nezmeniť retry na implicitný live refresh.
+Použiť len lokálny pending lock jediného existujúceho ovládača; nepridávať
+cross-component registry/singleton ani 5-sekundový cooldown.
 
 **Súbory (4, M):**
 
@@ -42,31 +47,35 @@ test ich používa ako skutočných pozorovateľov, nie iba mock summary textu.
 
 **Akceptačné kritériá:**
 
-- [ ] Refresh odosiela `run_id` a `force_refresh=true` presne raz; bežný load,
+- [x] Refresh odosiela `run_id` a `force_refresh=true` presne raz; bežný load,
   retry, focus/reconnect a nasledujúci refetch force neobsahujú. Žiadny forced cache key.
-- [ ] Inventory aj Summary zobrazia výsledok z jediného raw canonical cache záznamu;
+- [x] Inventory aj Summary zobrazia výsledok z jediného raw canonical cache záznamu;
   HTTP chyba zachová dáta a otvorené volume riadky, error je viazaný na správny run.
-- [ ] Synchronný pending lock, abort/token a query identity zabránia duplicitám,
-  neskorým zápisom po zmene run/unmount/delete a prepísaniu forced výsledku starým GET.
+- [x] Synchronný lokálny pending lock zabráni dvojkliku; abort alebo ignorovanie
+  neskorého výsledku, token a query identity zabránia stale zápisom po zmene
+  run/unmount/delete a prepísaniu forced výsledku starým GET. Bez globálnej
+  koordinácie hypotetických ovládačov a bez cooldownu.
 
 **Scenáre:**
 
 1. Initial GET A bez force → pending Refresh A s force → nové snapshots aj summary;
    cache neobsahuje key s force; uložená hodnota je celý response.
-2. Dvojklik v tom istom ticku aj dva mounted refresh ovládače A → iba jeden request.
-   Tlačidlo disabled počas query fetch aj live pending; po ukončení sa odomkne.
+2. Dvojklik v tom istom ticku na existujúcom jednom Refresh tlačidle A → iba jeden
+   request. Tlačidlo disabled počas query fetch aj forced pending, po dokončení
+   sa odomkne. Nepridávať test koordinácie dvoch hypotetických ovládačov.
 3. Forced HTTP 404/500, network a contract error → staré dáta zostanú; Retry je obyčajný
    GET. Pri initial chybe bez cache funguje pôvodný FetchErrorAlert.
 4. Deferred A → zmena na B → oneskorený úspech/chyba A nemení UI/error/cache B;
    A→B→A neprijme starú operáciu. Zopakovať so signal-ignorujúcim fetch mockom.
-5. Unmount alebo odstránenie canonical query počas live requestu → žiadna resurrected
-   cache. Existujúci delete/rollback flow je vstup do tohto testu, netreba ho refaktorovať.
+5. Unmount: vlastný request abortovať alebo bezpečne ignorovať jeho oneskorený
+   výsledok a chybu. Odstránenie canonical query počas requestu nesmie resurrectnúť
+   cache. Existujúci delete/rollback flow netreba refaktorovať.
 6. Obyčajný GET rozbehnutý pred live a focus GET počas live → dokončenie v oboch
    poradiach; stale odpoveď neprepíše finálny live výsledok. Summary mount nesmie
    zmeniť request na force. Nasledujúci refetch je znovu obyčajný.
 7. HTTP 200 s identickým starým payloadom → žiadne hlásenie garantujúce čerstvosť.
    `metro_mirror.error` zostáva viditeľné bez straty volumes.
-8. Ak D1 schváli cooldown: fake timers, 5 s od settle, nezávislosť A/B a cleanup.
+8. Bez cooldownu: tlačidlo sa po dokončení požiadavky odomkne bez časovača.
 
 **Overenie:**
 
@@ -74,8 +83,8 @@ test ich používa ako skutočných pozorovateľov, nie iba mock summary textu.
 node node_modules/vitest/vitest.mjs run src/features/recovery-plans/recovery-groups/hooks/useRefreshRecoveryGroupInventory.test.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupInventory.test.tsx
 ```
 
-- [ ] Cielený Vitest prešiel; real-hook test kontroluje URL, viditeľné dáta a cache.
-- [ ] ESLint zmenených TS/TSX, diff check a atomic commit.
+- [x] Cielený Vitest prešiel; real-hook test kontroluje URL, viditeľné dáta a cache.
+- [x] ESLint zmenených TS/TSX, diff check a atomic commit.
 
 **Závislosti:** brána, D1/D5. Nový refresh help text dodá T6; existujúci opatrný
 cache text je dočasne stále pravdivý. Žiadny success toast ani nové tvrdenie o fresh.
@@ -121,10 +130,12 @@ node node_modules/vitest/vitest.mjs run src/features/recovery-plans/recovery-gro
 
 ## T3: Frequency kontrakt a serverové zamietnutie
 
-**Opis:** Zachovať BE ako autoritu pre efektívne minimum. Po rozhodnutí D2
-oddeliť frequency validáciu od retention: pre frequency kladné celé číslo a
-`min=1, step=1`; retention zostáva v dnešnom režime. Pri variante odkladu ponechať
-frequency krok 15 a zdokumentovať ho ako samostatné FE obmedzenie.
+**Opis:** Podľa schváleného D2 ponechať existujúcu FE validáciu frequency
+(min=15, step=15, deliteľnosť 15 v minutes) a bez hardcodovania minima BE 600.
+BE zostáva autoritou pre konfigurovateľný limit; prípadné HTTP 422 musí byť
+viditeľné so zachovaním draftu a modalu. Ak už toto funguje, stačia cielené
+regresné testy a prípadné upresnenie textu. Retention a Snapshot Policies nemeníme.
+Uvoľnenie minút odložiť až po vyriešení cron generovania.
 
 **Súbory (3, M):**
 
@@ -134,8 +145,9 @@ frequency krok 15 a zdokumentovať ho ako samostatné FE obmedzenie.
 
 **Akceptačné kritériá:**
 
-- [ ] Žiadny pevný 600 limit; kladnosť a minutes/hours/days overenie ostáva.
-  D2 vetva je explicitná, frequency úprava nemení retention ani Snapshot Policies.
+- [ ] Zachovaný FE krok frequency 15 minút, bez pevného 600-minútového
+  limitu vo FE. BE rozhoduje o minimálnej frekvencii pri submit. Retention
+  a Snapshot Policies ostávajú nedotknuté.
 - [ ] String aj Pydantic-array HTTP 422 detail zostávajú viditeľné bez zatvorenia
   modalu, zmeny vstupov alebo hlásenia úspechu; BE limit sa neodvodzuje z chybovej vety.
 - [ ] Historické hodnoty a jednotky sa pri otvorení neprepočítajú, cancel nie je
@@ -145,11 +157,13 @@ frequency krok 15 a zdokumentovať ho ako samostatné FE obmedzenie.
 
 - Obe submit cesty (Save aj Enter): prázdne, 0, záporné, desatinné, neplatné jednotky;
   platné kladné hodnoty vo všetkých troch jednotkách bez lokálneho 600 minima.
-- Ak D2 povoľuje: 7 a 601 minutes prejdú lokálnou frequency kontrolou, payload
-  zachová jednotku a číslo; retention 7/20 minutes ostáva lokálne neplatné.
-- Mock servera s limitom 600: 599 minutes/9 hours → 422; 600 minutes/10 hours/1 day
-  → úspech. Iný limit 720: 10 hours → 422. Limit 0: kladná krátka frequency → úspech.
-  Testuje sa reakcia FE na server, nie reimplementácia BE validátora.
+- Frequency 7 a 601 minutes **neprejdú** FE krokom 15; 15/30/600 minutes
+  lokálnym intervalovým pravidlom prejdú. Retention 7/20 minutes ostáva
+  neplatné. Neuvoľňovať frekvenciu na ľubovoľné kladné minúty.
+- Mock servera s limitom 600: 585 minutes/9 hours → 422; 600 minutes/10 hours/
+  1 day → úspech. Iný limit 720: 10 hours → 422. Limit 0: FE-validná krátka
+  frequency (napr. 15 minutes) → úspech. Testuje sa reakcia FE na server,
+  nie reimplementácia BE validátora.
 - Skutočný OrvalApiError zo stub fetch 422 string/array detail; upraviť vstup a
   opakovať úspešný submit. Bez globálnej parser úpravy, ak existujúci parser vyhovuje.
 - Legacy 7 minutes otvorenie/cancel; edit názvu legacy 9 hours pri server min 600
@@ -165,15 +179,15 @@ node node_modules/vitest/vitest.mjs run src/features/recovery-plans/recovery-pol
 
 - [ ] Cielené testy, focused ESLint a atomic commit.
 
-**Závislosti:** D2 vrátane prijatia cron obmedzenia. Nie je povolený BE fix,
-normalizácia jednotiek ani capabilities endpoint. Text odstránenia kroku 15
-v help musí byť v tom istom pracovnom odovzdaní doplnený cez T6 pred dokončením.
+**Závislosti:** D2 je schválené: ponechať FE krok 15 minút aj serverové minimum.
+Nie je povolený BE fix, normalizácia jednotiek ani capabilities endpoint.
+T6 môže upresniť BE minimum/HTTP 422, nesmie však odstrániť krok 15 z helperov.
 
 ## CP2: Policy
 
-- [ ] Rozhodnutie D2 zaznamenané, server minimum a UI krok nezamenené.
+- [ ] Schválené D2 implementované bez zmeny FE kroku 15; BE minimum a UI krok nezamenené.
 - [ ] Regresie dokazujú 422, zachovanie historických vstupov a nezmenenú retention.
-- [ ] Cron riziko ostáva výslovne evidované; úspech DTO testov nie je Airflow QA.
+- [ ] Cron riziko ostáva evidované; ľubovoľné minúty sa nezavádzajú, úspech DTO testov nie je Airflow QA.
 
 ## T4: Čisté pravidlá DAG identít
 
@@ -238,15 +252,17 @@ sa zapojí v samostatnej úlohe T6b.
 - [ ] EN/SK/CS validation texty obsahujú rovnaké interpolácie a identifikujú
   tier/mená/konfliktné ID; nové message keys sedia s T4 štruktúrovanými problémami.
 - [ ] Texty potvrdzujú iba zdrojové správanie: Power ready/VIOS pool, VMware parallel
-  branches/done, cache fallback a BE minimum bez univerzálnej hodnoty 600.
+  branches/done, cache fallback, ponechaný FE krok 15 minút a BE minimum
+  bez univerzálnej hodnoty 600.
 
 **Scenáre a kontrola textov:**
 
 - Power v3 help explicitne odlišuje pripravenosť na cutover od readiness aplikácie;
   nehovorí, že všetky operácie VIOS alebo všetky tasky sú serializované.
 - VMware v2 nedostane Power bariéru. Legacy v1/v2 texty sa významovo nemenia.
-- Inventory HTTP 200 sa neoznačí za preukázaný live success. Policy text zodpovedá
-  zvolenej D2 vetve; retention preklady ostávajú nezmenené.
+- Inventory HTTP 200 sa neoznačí za preukázaný live success. Policy text
+  zachová vysvetlenie kroku FE 15 minút a konfigurovateľného BE minima;
+  retention preklady ostávajú nezmenené.
 - Pri nových validačných kľúčoch rozšíriť parametrizovanú kontrolu ich prítomnosti
   a `{name}`/`{tier}`/`{tiers}`/`{id}` parametrov v existujúcom locale teste;
   nepoužiť iba regex pre `{{...}}`, pretože runtime preklady používajú aj `{...}`.
@@ -392,3 +408,7 @@ node node_modules/vitest/vitest.mjs run src/features/recovery-plans/recovery-app
 - [ ] Finálne zhrnutie obsahuje reálne spustené príkazy a výsledky, browser QA stav,
   nebežanú kompletnú sadu/build a zostávajúce BE obmedzenia (stale 200, minimum API, cron).
 - [ ] Používateľ dostal implementáciu na review; žiadny automatický push/deploy.
+
+## Priebežné výsledky
+
+- T1: 13 component testov a 13 hook testov prešlo. RED: dva URL assertions zlyhali bez force; GREEN po zapojení live hooku. Hook pokrýva aj invalidáciu pri rollback/delete, run/unmount, odstránenie/nahradenie query, mismatch odpovede a súbežný obyčajný GET. A→B→A test používa dve samostatné render fázy (React batch bez B commitu nepredstavuje opustenie runu).

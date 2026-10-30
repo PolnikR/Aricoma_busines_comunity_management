@@ -217,7 +217,7 @@ describe('RecoveryGroupInventory', () => {
     expect(document.querySelector(`[data-entity-id="aux:${AUX}RDM_DISK01"]`)).toHaveAttribute('data-highlight', 'off')
   })
 
-  it('refetches without force_refresh and updates visible snapshots and the shared summary', async () => {
+  it('forces explicit refresh and updates visible snapshots and the shared summary', async () => {
     const actual = await vi.importActual<typeof import('@/generated/query/recovery-groups/recovery-groups.gen')>('@/generated/query/recovery-groups/recovery-groups.gen')
     vi.mocked(useGetRecoveryGroupInventory).mockImplementation(actual.useGetRecoveryGroupInventory)
     const client = createAppQueryClient()
@@ -243,7 +243,7 @@ describe('RecoveryGroupInventory', () => {
 
       await userEvent.setup().click(screen.getByRole('button', { name: 'buttons.refreshInventory' }))
       await waitFor(() => { expect(fetchMock).toHaveBeenCalledTimes(2) })
-      expect(fetchMock.mock.calls[1]?.[0]).toBe('/api/get_recovery_group_inventory?run_id=run-1')
+      expect(fetchMock.mock.calls[1]?.[0]).toBe('/api/get_recovery_group_inventory?run_id=run-1&force_refresh=true')
       expect(fetchMock.mock.calls[1]?.[1]?.method).toBe('GET')
       expect(screen.getByRole('button', { name: 'buttons.refreshing' })).toBeDisabled()
       expect(volume.closest('details')).toHaveAttribute('open')
@@ -282,7 +282,11 @@ describe('RecoveryGroupInventory', () => {
       await userEvent.setup().click(screen.getByRole('button', { name: 'buttons.retry' }))
       await waitFor(() => { expect(screen.queryByRole('alert')).not.toBeInTheDocument() })
       expect(fetchMock).toHaveBeenCalledTimes(3)
-      for (const [url] of fetchMock.mock.calls) expect(url).toBe('/api/get_recovery_group_inventory?run_id=run-1')
+      expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+        '/api/get_recovery_group_inventory?run_id=run-1',
+        '/api/get_recovery_group_inventory?run_id=run-1&force_refresh=true',
+        '/api/get_recovery_group_inventory?run_id=run-1',
+      ])
     } finally {
       view.unmount()
       client.clear()

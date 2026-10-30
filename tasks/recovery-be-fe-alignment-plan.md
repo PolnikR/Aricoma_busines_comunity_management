@@ -54,15 +54,18 @@ Bezpečnostné invarianty implementácie:
 
 1. Pred requestom zachytiť run, generated canonical key, identitu existujúcej query
    a token operácie. Pending zámok nastaviť synchronne pred prvým `await`.
-   Zdieľať operáciu pre rovnaký QueryClient/run aj pri dvoch mounted ovládačoch;
-   malá koordinácia zostane v tomto feature hooku, bez globálneho query frameworku.
+   V aktuálnom UI má Refresh iba jeden ovládač: lokálny synchronný pending
+   zámok stačí na zabránenie dvojkliku. Nezavádzať zdieľaný registry/singleton
+   ani koordináciu hypotetických dvoch komponentov; pri rozšírení UI to posúdiť znovu.
 2. Tlačidlo zakázať pri bežnom `query.isFetching` aj forced pending. Obyčajné query
    rozbehnuté pred force zrušiť cez `cancelQueries({queryKey, exact:true})`.
    Pri dokončení znovu zrušiť obyčajný request, ktorý mohol začať medzičasom
    (napr. focus alebo summary mount), až potom uložiť výsledok.
 3. Po každom `await` overiť aktuálnosť tokenu a identitu query. Pri zmene run,
-   unmount, rollback/delete alebo zrušení abortovať a ignorovať neskorý výsledok
-   aj chybu. Samotný AbortController nestačí, fetch/mock môže odpoveď ešte doručiť.
+   unmount, rollback/delete alebo zrušení vlastný request abortovať **alebo**
+   bezpečne ignorovať jeho neskorý výsledok a chybu. Nie je potrebná globálna
+   koordinácia ďalších ovládačov. Samotný AbortController nestačí: fetch/mock
+   môže odpoveď ešte doručiť.
    A→B→A nesmie prijať starý token A. Pred finálnym zápisom query musí stále
    existovať ako tá istá query; neobnovovať odstránenú cache pomocou `setQueryData`.
 4. Uložiť celý validovaný wire response pod captured canonical key, nie `select`
@@ -80,11 +83,10 @@ Toto riešenie zachová bežný TanStack Query lifecycle a izoluje iba imperatí
 refresh. Alternatíva s dočasným prepisom canonical `queryFn` je riziková: forced
 voľba môže uniknúť do neskoršieho refetchu alebo zdieľaného observera. Nepoužiť ju.
 
-### Voliteľné opatrenia
+### Cooldown a ďalšie opatrenia
 
-- Cooldown: odporúčanie zatiaľ vynechať. Pending zámok je povinný; cooldown je
-  UX voľba, nie ochrana proti požiadavkám z iných klientov. Ak sa schváli 5 s,
-  počítať od dokončenia pokusu, viazať na run a testovať s fake timers.
+- Cooldown: **nezavádzať**. Tlačidlo je blokované iba počas prebiehajúceho
+  fetchu; po dokončení sa odomkne, bez 5-sekundového časovača a cooldown testov.
 - Volumes/tree: odporúčanie schváliť úzko cielené označenie stale po HTTP 200,
   bez ďalšieho forced fetchu. Použiť `response.snapshot_provider_id`; pri Metro
   Mirror to nemusí byť `provider_id_volume`. Pri chýbajúcom snapshot providerovi
@@ -131,25 +133,26 @@ kontrola BE ho prijme. Pri limite 0 odpadá iba BE minimum, kladnosť zostáva.
 Zachovať detail chyby a draft po zamietnutí, doplniť regresie pre všetky jednotky
 a historické hodnoty. Lokálny minimum error nemožno spoľahlivo ukázať pred submitom.
 
-Rozhodnutie D2: či odstrániť iba frequency pravidlo násobkov 15 a nastaviť jej
-`min=1, step=1`, aby vstup zodpovedal BE DTO. Retention vetvu a Snapshot Policies
-ponechať presne ako sú. Odporúčame odstránenie iba ako zosúladenie vstupného
-kontraktu, so schválením nasledujúceho obmedzenia:
+**Rozhodnutie D2 — schválené:** zachovať existujúci **15-minútový FE krok**
+frequency (v minútach minimum 15 a násobky 15; hours/days celé kladné hodnoty).
+Neuvoľňovať vstupy na ľubovoľné minúty, nepridávať pevný FE limit 600 minút.
+BE zostáva autoritou pre efektívne konfigurovateľné minimum. Pri HTTP 422
+zobraziť detail a zachovať draft aj otvorený modal. Retention a Snapshot Policies
+sa nemenia. Uvoľnenie 15-minútového kroku sa odkladá do vyriešenia cron.
 
 **Minimum v minútach nie je záruka správneho cron intervalu.** Napr. 600 minutes
 sa do cron vloží ako `*/600`, bez konverzie na 10 hours; ani dnešné 75/90 minutes
 nemajú automaticky význam pravidelného N-minútového intervalu. Analýza zdroja
 neoverovala správanie cron parsera v nasadenom Airflow. FE nesmie automaticky
 prepisovať jednotky, zavádzať nové horné limity alebo tvrdiť podporu ľubovoľnej
-cadence. Pred rozšírením prípustných vstupov musí vlastník schváliť oddelenie DTO
-validácie od scheduler problému, prípadne ponechať dnešný frequency krok 15 do
-samostatného BE rozhodnutia. Toto je explicitná brána úlohy T3, nie tichý fix BE.
+cadence. T3 nesmie uvoľniť existujúci FE krok; zmena čaká na samostatné rozhodnutie
+po vyriešení generovania cron výrazov na BE.
 
 Ďalšie možnosti:
 
 | Možnosť | Výhoda | Nevýhoda / rozhodnutie |
 | --- | --- | --- |
-| BE-only minimum (odporúčané teraz) | Správne aj pri odlišnej konfigurácii a 0; bez BE zmien | Chyba až po submit; nie je známa dopredu. |
+| BE-only minimum + FE krok 15 (schválené) | Rešpektuje konfigurovateľný BE limit bez hardcodovania | Minimum sa prejaví po submit ako HTTP 422; FE krok 15 je zámerne konzervatívny. |
 | Budúce read-only capabilities API | FE vie zobraziť a kontrolovať efektívny limit | Samostatná BE práca, kontrakt, oprávnenia a následná riadna Orval generácia; mimo tohto plánu. |
 | Deployment config vo FE | Bez nového endpointu | Dvojitý zdroj pravdy, drift a potreba explicitnej hodnoty; nepoužiť predvolené 600. Neodporúčané. |
 
@@ -274,8 +277,8 @@ Potvrdený význam nových textov:
   nesúvisiaci nový všeobecný technický panel. Mená workloadov FE nepremenuje;
   oprava môže vyžadovať výber iného workloadu alebo zmenu mena v zdrojovom systéme.
 - Inventory refresh help spresniť na pokus o storage refresh s možným cache fallback.
-  Policy frequency help pri schválení D2 odstráni tvrdenie o kroku 15, ponechá
-  konfigurovateľné minimum a manual Power/VMware rozdiely.
+  Policy frequency help zachová informáciu o FE kroku 15 minút a môže vysvetliť
+  konfigurovateľné serverové minimum aj HTTP 422; ostatné help texty nemení.
 
 Relevantné testy už existujú (neboli spustené):
 
@@ -318,14 +321,15 @@ ani paralelné editovanie zdieľaných súborov. Presné súbory, AC a príkazy 
 
 | ID | Odporúčanie | Dopad / alternatíva |
 | --- | --- | --- |
-| D1 | Pending lock povinný; bez cooldown | Voliteľných 5 s znamená dodatočný stav a časové testy. |
-| D2 | BE-only minimum; frequency-only kladné celé čísla po prijatí scheduler obmedzenia | Alternatíva ponechať krok 15 do samostatného BE scheduler rozhodnutia. Žiadna z možností nepridáva pevné 600. |
+| D1 — schválené | Samostatný force request, spoločná canonical cache, lokálny pending lock, bez cooldownu a bez koordinácie hypotetických ovládačov | Pri zmene run/unmount abort alebo ignorovanie výsledku; ochrániť cache pred stale zápisom. |
+| D2 — schválené | Zachovať FE krok 15; BE autorita pre minimum, viditeľný detail HTTP 422 | Žiadne uvoľnenie minút ani hardcoded 600; cron zostáva samostatná budúca úloha. |
 | D3 | Rovnaké template blokovanie Save aj Push | BE draft Save je tolerantnejší; povolenie neplatných draftov by vyžadovalo upravený plán a UX. |
 | D4 | Volumes/tree označiť stale iba pre snapshot provider, bez okamžitého refetch | Možno úplne odložiť T2; inventory funguje nezávisle. |
 | D5 | Pri zmene run/unmount zahodiť výsledok forced requestu | Jednoduché vlastníctvo operácie; starý run sa obnoví až bežným loadom. Cache sa neplní na pozadí pre opustený run. |
 
-Schválenie dokumentov samo osebe nie je pokyn na implementáciu. Čakať na ďalší
-výslovný pokyn používateľa. Pre D2 neexistuje predpokladaný súhlas uplynutím času.
+D1 a D2 sú výslovne rozhodnuté. D3–D5 zostávajú otvorené na schválenie.
+Úprava týchto dokumentov nie je pokyn na implementáciu: kód následne zapracuje
+implementačný agent až na ďalší výslovný pokyn používateľa.
 
 ## 7. Riziká a overovanie
 
@@ -341,7 +345,7 @@ výslovný pokyn používateľa. Pre D2 neexistuje predpokladaný súhlas uplynu
 | Striktnejšia Save validácia | D3, bez migrácie; v1/null regresie a opraviteľná navigácia. |
 | Rozdielny/default budúci katalóg | Kontext platformy, verified unique default; žiadne prepísanie null na wire. |
 | Historická policy nejde znovu uložiť | Jasný server detail a zachovaný draft; neprezentovať grandfathering. |
-| Minimum a cron znamenajú odlišné veci | D2 brána a samostatné BE rozhodnutie; žiadny skrytý FE scheduler fix. |
+| Minimum a cron znamenajú odlišné veci | Schválené D2 ponecháva FE krok 15 a BE minimum s HTTP 422; žiadny skrytý FE scheduler fix. |
 | Generated drift a cudzie zmeny | Žiadna generácia v tomto scope; stage iba vlastné súbory. |
 
 Pri implementácii spúšťať explicitné Vitest súbory uvedené pri úlohách,
