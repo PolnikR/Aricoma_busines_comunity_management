@@ -209,6 +209,42 @@ function draftFixture(): RecoveryApplicationFormState {
 }
 
 describe('read-only and DAG templates', () => {
+  it.each(['workload', 'tier'])('allows repairing a %s Task Group collision by changing the DAG version', async collision => {
+    const previousGroups = recoveryGroupsQuery.current.groups
+    onTestFinished(() => { recoveryGroupsQuery.current.groups = previousGroups })
+    recoveryGroupsQuery.current.groups = previousGroups.map(group => ({ ...group, resources: ['db.a', 'db_a'] }))
+    templatesQuery.current.data.templates = [
+      { platform: 'vmware', version: 'v1', default: true, description: 'Legacy' },
+      { platform: 'vmware', version: 'v2', default: false, description: 'New graph' },
+    ]
+    const initialData = { ...draftFixture(), dagTemplateVersion: 'v2' }
+    const group = { id: 'database_group', name: 'Database Group', vms: [{ name: 'db.a' }] }
+    initialData.tiers = collision === 'tier' ? new Map([
+      ['db.one', { order: 1, description: 'One', recovery_group: group }],
+      ['db_one', { order: 1, description: 'Two', recovery_group: { ...group, vms: [{ name: 'db_a' }] } }],
+    ]) : new Map([['database', { order: 1, description: 'Database', recovery_group: { ...group, vms: [{ name: 'db.a' }, { name: 'db_a' }] } }]])
+    const onSave = vi.fn()
+    const user = userEvent.setup()
+    const view = render(<RecoveryAppBuilder initialData={initialData} onSave={onSave} />)
+    expect(screen.getByRole('button', { name: 'Orchestration' })).toBeEnabled()
+    await user.click(screen.getByRole('button', { name: 'Orchestration' }))
+    expect(screen.getByRole('button', { name: 'Save Application' })).toBeDisabled()
+    await user.selectOptions(screen.getByLabelText('DAG Template Version'), 'v1')
+    await user.click(screen.getByRole('button', { name: 'Recovery groups & tiers' }))
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Orchestration' }))
+    await user.selectOptions(screen.getByLabelText('DAG Template Version'), 'v2')
+    expect(screen.getByRole('button', { name: 'Save Application' })).toBeDisabled()
+    recoveryGroupsQuery.current.groups = recoveryGroupsQuery.current.groups.map(group => ({ ...group, providerId: 'missing' }))
+    view.rerender(<RecoveryAppBuilder initialData={initialData} onSave={onSave} />)
+    expect(screen.getByRole('button', { name: 'Orchestration' })).toBeDisabled()
+    recoveryGroupsQuery.current.groups = recoveryGroupsQuery.current.groups.map(group => ({ ...group, providerId: 'vmware-01' }))
+    view.rerender(<RecoveryAppBuilder initialData={initialData} onSave={onSave} />)
+    await user.selectOptions(screen.getByLabelText('DAG Template Version'), 'v1')
+    await user.click(screen.getByRole('button', { name: 'Save Application' }))
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ dagTemplateVersion: null, tiers: initialData.tiers }))
+  })
+
   it('uses generic tier execution help while refreshing a cached default catalog', async () => {
     templatesQuery.current.data.templates = [{ platform: 'vmware', version: 'v1', default: true, description: 'Cached default' }]
     templatesQuery.current.isFetching = true

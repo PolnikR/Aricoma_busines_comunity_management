@@ -365,12 +365,12 @@ overiť zmenu verzie aj opravu tiers a skutočné helper popovery.
 
 **Akceptačné kritériá:**
 
-- [ ] Exact duplicita, workload ID aj tier ID kolízia umožnia prejsť do kroku 4
+- [x] Exact duplicita, workload ID aj tier ID kolízia umožnia prejsť do kroku 4
   a zmeniť verziu; Save zostane disabled do opravy. Nevalidný provider/reference
   tým nezíska výnimku. Tiers sa dajú opraviť aj bez zmeny verzie.
-- [ ] V2/v3→v1/null a späť okamžite prepočíta readiness bez straty tiers/policy;
+- [x] V2/v3→v1/null a späť okamžite prepočíta readiness bez straty tiers/policy;
   dynamický select verzií a null payload ostávajú zachované.
-- [ ] Power v3/VMware v2 zobrazia správny technický help a lokalizované chyby;
+- [x] Power v3/VMware v2 zobrazia správny technický help a lokalizované chyby;
   unknown/default outage má bezpečný generic fallback a existujúci read-only režim platí.
 
 **Component/integration scenáre:**
@@ -392,8 +392,8 @@ overiť zmenu verzie aj opravu tiers a skutočné helper popovery.
 node node_modules/vitest/vitest.mjs run src/features/recovery-plans/recovery-applications/components/RecoveryAppBuilder.test.tsx src/features/recovery-plans/recovery-applications/helpers/recoveryApplicationFieldHelp.test.ts src/features/recovery-plans/recovery-applications/components/RecoveryApplicationFieldHelp.integration.test.tsx src/features/recovery-plans/recovery-applications/pages/RecoveryApplicationFunctionalConsistency.integration.test.tsx src/features/recovery-plans/recovery-applications/components/DagTemplateVersionSelect.test.tsx src/features/recovery-plans/recovery-applications/utils/recoveryApplicationFormMapper.test.ts
 ```
 
-- [ ] Cielené testy, focused ESLint a atomic commit; routing helper test spustený už v T6b.
-- [ ] Manuálne v test prostredí: Refresh/pending/error, policy 422, navigácia pri
+- [x] Cielené testy, focused ESLint a atomic commit; routing helper test spustený už v T6b.
+- [x] Manuálne v test prostredí: Refresh/pending/error, policy 422, navigácia pri
   kolízii a nové helpery v EN/SK/CS. Mockovať Push; nespúšťať recovery na storage.
 
 **Závislosti:** T5, T6a, T6b.
@@ -418,3 +418,4 @@ node node_modules/vitest/vitest.mjs run src/features/recovery-plans/recovery-app
 - T6a: 9 locale testov, JSON parse EN/SK/CS a focused ESLint prešli. Rozsah doplnený o existujúci recoveryApplicationFunctionalTranslations.test.ts: obsahoval neplatný predpoklad, že každá duplicita patrí výhradne IBM Power v2. Retention/frequency krok sa nemenil.
 - T6b/CP3: 16 helper/locale testov prešlo; 3 nové routing assertions boli pred úpravou RED. Focused ESLint prešiel. Explicitné a server-default Power v3/VMware v2 rozpoznané, unknown generic zachovaný.
 - T5: 162 validator/readiness testov prešlo (pred zapojením 14 RED), focused ESLint prešiel. Oba validátory dostávajú rovnaký template context, chyby sú explicitne templateDependent, provider/reference priorita zachovaná.
+- T7: všetkých 199 testov v šiestich súboroch z príkazu T7 prešlo, focused ESLint štyroch zmenených súborov prešiel. Dva normalized-collision component testy boli RED pred zmenou navigácie. Browser Edge/Playwright: 14 scenárov prešlo, EN/SK/CS × Power v3/VMware v2 × workload/tier kolízie, Inventory pending/force/error/retry a policy 422. Všetky API mockované, žiadny live Push. Screenshoty vizuálne skontrolované. Report: node_modules/.cache/recovery-alignment-qa/report.json.

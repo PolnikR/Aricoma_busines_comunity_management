@@ -224,7 +224,7 @@ export function RecoveryAppBuilder({
     templateCatalog,
   })
 
-  const hasDuplicateWorkloads = tiersError?.messageKey.startsWith('recovery.application.validation.duplicateWorkload') ?? false
+  const hasTemplateProblem = tiersError?.templateDependent === true
   const steps = [
     { id: 'details', label: t('pages.recoveryBuilder.steps.details') },
     {
@@ -240,8 +240,8 @@ export function RecoveryAppBuilder({
     {
       id: 'orchestration',
       label: t('pages.recoveryBuilder.steps.orchestration'),
-      // A v2 duplicate can be repaired by selecting v1/null in Orchestration.
-      disabled: !readOnly && (!detailsValid || (!hasDuplicateWorkloads && (!tiersValid || !policySetValid))),
+      // A template collision can be repaired by changing the DAG version here.
+      disabled: !readOnly && (!detailsValid || (!hasTemplateProblem && (!tiersValid || !policySetValid))),
     },
   ]
 
