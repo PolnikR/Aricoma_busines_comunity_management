@@ -32,6 +32,29 @@ afterEach(() => {
 })
 
 describe('live inventory request ownership', () => {
+  it.each(['snapshot', 'missing', 'failure'])('marks only snapshot-provider storage queries stale after %s', async mode => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(mode === 'failure'
+      ? Response.json({ detail: 'Unavailable' }, { status: 503 })
+      : Response.json({ ...inventory(), provider_id_volume: 'master', snapshot_provider_id: mode === 'snapshot' ? 'aux' : null }))
+    vi.stubGlobal('fetch', fetchMock)
+    const { result, client } = setup()
+    const keys = [
+      ['/get_volumes', { provider_id: 'aux' }],
+      ['/get_volume_tree', { provider_id: 'aux', view: 'flat' }],
+      ['/get_volume_tree', { provider_id: 'aux', view: 'pool', force_refresh: false }],
+      ['/get_volumes', { provider_id: 'master' }],
+      ['/get_volumes', { provider_id: 'other' }],
+      ['/get_volumes'],
+      ['/get_vdisks_by_vm', { provider_id: 'aux', vm_name: 'vm' }],
+    ]
+    keys.forEach(key => { client.setQueryData(key, {}) })
+    await act(async () => { await result.current.refresh() })
+    expect(keys.map(key => client.getQueryState(key)?.isInvalidated)).toEqual([
+      ...Array<boolean>(3).fill(mode === 'snapshot'), false, false, false, false,
+    ])
+    expect(fetchMock).toHaveBeenCalledOnce()
+  })
+
   it('locks synchronously, stores raw data under only the ordinary key, then refetches normally', async () => {
     const response = deferred<Response>()
     const fetchMock = vi.fn<typeof fetch>().mockReturnValueOnce(response.promise)

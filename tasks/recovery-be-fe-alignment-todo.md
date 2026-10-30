@@ -101,11 +101,11 @@ queries snapshot providera. Nevyvolávať ďalší live fetch ani plošný refet
 
 **Akceptačné kritériá:**
 
-- [ ] Stale sú všetky `/get_volumes` a `/get_volume_tree` varianty pre rovnaké
+- [x] Stale sú všetky `/get_volumes` a `/get_volume_tree` varianty pre rovnaké
   `snapshot_provider_id`, vrátane rôznych views a dodatočných parametrov.
-- [ ] Iný provider, inventory, VM discovery a agregované queries sa nemenia;
+- [x] Iný provider, inventory, VM discovery a agregované queries sa nemenia;
   chýbajúci snapshot provider nevytvorí širokú invalidáciu.
-- [ ] Invalidácia používa `refetchType:'none'`, nenastáva po HTTP chybe/zrušení
+- [x] Invalidácia používa `refetchType:'none'`, nenastáva po HTTP chybe/zrušení
   a neprezentuje HTTP 200 ako dôkaz storage úspechu.
 
 **Scenáre:** Metro Mirror master P1 / snapshot P2 → iba P2; dve views P2;
@@ -117,16 +117,16 @@ P3 nezmenené; snapshot ID null; HTTP chyba; HTTP 200 s cache fallback payloadom
 node node_modules/vitest/vitest.mjs run src/features/recovery-plans/recovery-groups/hooks/useRefreshRecoveryGroupInventory.test.tsx
 ```
 
-- [ ] Testy overujú stale flags aj absenciu nových fetchov; focused ESLint a commit.
+- [x] Testy overujú stale flags aj absenciu nových fetchov; focused ESLint a commit.
 
 **Závislosti:** T1, D4.
 
 ## CP1: Inventory
 
-- [ ] T1 a schválená vetva T2 majú overenie a samostatné commity.
-- [ ] Refresh + Summary fungujú cez canonical cache a bežné retry je bez force.
-- [ ] Deferred race tests dokazujú run isolation, bez obnovy odstránenej cache.
-- [ ] Review diffs: bez generated/BE zmien a bez pridaných live success záruk.
+- [x] T1 a schválená vetva T2 majú overenie a samostatné commity.
+- [x] Refresh + Summary fungujú cez canonical cache a bežné retry je bez force.
+- [x] Deferred race tests dokazujú run isolation, bez obnovy odstránenej cache.
+- [x] Review diffs: bez generated/BE zmien a bez pridaných live success záruk.
 
 ## T3: Frequency kontrakt a serverové zamietnutie
 
@@ -412,3 +412,4 @@ node node_modules/vitest/vitest.mjs run src/features/recovery-plans/recovery-app
 ## Priebežné výsledky
 
 - T1: 13 component testov a 13 hook testov prešlo. RED: dva URL assertions zlyhali bez force; GREEN po zapojení live hooku. Hook pokrýva aj invalidáciu pri rollback/delete, run/unmount, odstránenie/nahradenie query, mismatch odpovede a súbežný obyčajný GET. A→B→A test používa dve samostatné render fázy (React batch bez B commitu nepredstavuje opustenie runu).
+- T2/CP1: 16 hook testov prešlo; predicate invaliduje iba snapshot-provider volumes/tree bez refetchu. Focused ESLint T1/T2 prešiel.

@@ -51,6 +51,14 @@ export function useRefreshRecoveryGroupInventory(runId: string | null) {
       await client.cancelQueries({ queryKey, exact: true })
       if (!isCurrent()) return
       client.setQueryData(queryKey, response)
+      const providerId = response.snapshot_provider_id
+      if (providerId) {
+        void client.invalidateQueries({
+          predicate: ({ queryKey: [endpoint, params] }) => (endpoint === '/get_volumes' || endpoint === '/get_volume_tree')
+            && typeof params === 'object' && params !== null && 'provider_id' in params && params.provider_id === providerId,
+          refetchType: 'none',
+        })
+      }
       setState({ runId, pending: false, error: null })
     } catch (error) {
       if (isCurrent()) setState({ runId, pending: false, error })
