@@ -32,6 +32,17 @@ afterEach(() => {
 })
 
 describe('live inventory request ownership', () => {
+  it('does not revive a settled error when returning to a previously viewed run', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')))
+    const { result, rerender } = setup()
+    await act(async () => { await result.current.refresh() })
+    expect(result.current.error).toBeInstanceOf(Error)
+    rerender({ run: 'B' })
+    expect(result.current.error).toBeNull()
+    rerender({ run: 'A' })
+    expect(result.current.error).toBeNull()
+  })
+
   it.each(['snapshot', 'missing', 'failure'])('marks only snapshot-provider storage queries stale after %s', async mode => {
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(mode === 'failure'
       ? Response.json({ detail: 'Unavailable' }, { status: 503 })
@@ -117,7 +128,7 @@ describe('live inventory request ownership', () => {
     expect(fetchMock).toHaveBeenCalledOnce()
   })
 
-  it.each([true, false])('cancels an ordinary request started %s the live request', async before => {
+  it.each([[true, true], [true, false], [false, true], [false, false]])('keeps the live result (ordinary starts before=%s, settles first=%s)', async (before, settlesFirst) => {
     const ordinary = deferred<Response>()
     const live = deferred<Response>()
     const fetchMock = vi.fn<typeof fetch>().mockImplementation(url => typeof url === 'string' && url.includes('force_refresh') ? live.promise : ordinary.promise)
@@ -130,8 +141,9 @@ describe('live inventory request ownership', () => {
     act(() => { pending = result.current.refresh() })
     await waitFor(() => { expect(fetchMock).toHaveBeenCalledTimes(before ? 2 : 1) })
     if (!before) normalPending = normal()
+    if (settlesFirst) await act(async () => { ordinary.resolve(Response.json(inventory('A', 'stale'))); await normalPending })
     await act(async () => { live.resolve(Response.json(inventory('A', 'live'))); await pending })
-    await act(async () => { ordinary.resolve(Response.json(inventory('A', 'stale'))); await normalPending })
+    if (!settlesFirst) await act(async () => { ordinary.resolve(Response.json(inventory('A', 'stale'))); await normalPending })
     expect(client.getQueryData(key)).toEqual(inventory('A', 'live'))
   })
 })

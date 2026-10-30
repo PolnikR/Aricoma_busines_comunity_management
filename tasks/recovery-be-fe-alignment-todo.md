@@ -1,6 +1,6 @@
 # TODO: Recovery BE/FE alignment
 
-Stav: implementácia prebieha inline podľa pokynu používateľa z 2026-10-30. D1/D2 zachované; D3–D5 vykonávame podľa odporúčaní plánu.
+Stav: implementácia dokončená inline 2026-10-30. D1/D2 zachované; D3–D5 vykonané podľa odporúčaní plánu. Výsledky a limity overenia sú nižšie.
 Zdroj: [plán a zdrojové dôkazy](recovery-be-fe-alignment-plan.md).
 
 ## Brána pred implementáciou
@@ -400,14 +400,14 @@ node node_modules/vitest/vitest.mjs run src/features/recovery-plans/recovery-app
 
 ## CP4: Odovzdanie implementácie
 
-- [ ] Všetky schválené AC majú dôkaz; odložené voliteľné vetvy sú označené rozhodnutím.
-- [ ] Žiadny aplikačný commit neobsahuje cudzie OpenAPI/Zod zmeny alebo BE zmeny.
-- [ ] `node node_modules/eslint/bin/eslint.js <explicitné zmenené TS/TSX> --max-warnings 0`
+- [x] Všetky schválené AC majú dôkaz; odložené voliteľné vetvy sú označené rozhodnutím.
+- [x] Žiadny aplikačný commit neobsahuje cudzie OpenAPI/Zod zmeny alebo BE zmeny.
+- [x] `node node_modules/eslint/bin/eslint.js <explicitné zmenené TS/TSX> --max-warnings 0`
   prešlo; placeholder nahradiť skutočným zoznamom súborov, nespúšťať nad celým repo.
-- [ ] `git diff --check`, kontrola staged diffu a atomic commity dokončené.
-- [ ] Finálne zhrnutie obsahuje reálne spustené príkazy a výsledky, browser QA stav,
+- [x] `git diff --check`, kontrola staged diffu a atomic commity dokončené.
+- [x] Finálne zhrnutie obsahuje reálne spustené príkazy a výsledky, browser QA stav,
   nebežanú kompletnú sadu/build a zostávajúce BE obmedzenia (stale 200, minimum API, cron).
-- [ ] Používateľ dostal implementáciu na review; žiadny automatický push/deploy.
+- [x] Používateľ dostal implementáciu na review; žiadny automatický push/deploy.
 
 ## Priebežné výsledky
 
@@ -419,3 +419,14 @@ node node_modules/vitest/vitest.mjs run src/features/recovery-plans/recovery-app
 - T6b/CP3: 16 helper/locale testov prešlo; 3 nové routing assertions boli pred úpravou RED. Focused ESLint prešiel. Explicitné a server-default Power v3/VMware v2 rozpoznané, unknown generic zachovaný.
 - T5: 162 validator/readiness testov prešlo (pred zapojením 14 RED), focused ESLint prešiel. Oba validátory dostávajú rovnaký template context, chyby sú explicitne templateDependent, provider/reference priorita zachovaná.
 - T7: všetkých 199 testov v šiestich súboroch z príkazu T7 prešlo, focused ESLint štyroch zmenených súborov prešiel. Dva normalized-collision component testy boli RED pred zmenou navigácie. Browser Edge/Playwright: 14 scenárov prešlo, EN/SK/CS × Power v3/VMware v2 × workload/tier kolízie, Inventory pending/force/error/retry a policy 422. Všetky API mockované, žiadny live Push. Screenshoty vizuálne skontrolované. Report: node_modules/.cache/recovery-alignment-qa/report.json.
+- Inline záverečný review: opravené oživenie už dokončenej chyby pri A→B→A (nový test RED pred opravou). Cleanup teraz vyčistí aj settled stav. Race testy doplnené o oba poradia dokončenia obyčajného GET a live odpovede. Finálne Inventory: 32 testov prešlo, focused ESLint prešiel.
+
+## Finálne overenie a limity
+
+- Vykonané všetky explicitné Vitest príkazy uvedené pri T1–T7 (T6a navyše src/locales/recoveryApplicationFunctionalTranslations.test.ts). Posledné zelené výsledky po oblastiach: Inventory 32, policy 67, DAG/workloads 44, locales 9, validator/readiness 162, builder/helper/integrácia/select/mapper 199. Spolu 613 testov v 16 rôznych súboroch; nejde o kompletnú sadu repo.
+- Cielený ESLint prešiel pre všetky zmenené TS/TSX. JSON parse EN/SK/CS prešiel. git diff --check prešiel; pred každým commitom aj git diff --cached --check.
+- Browser príkaz: node node_modules/.cache/recovery-alignment-qa.mjs proti samostatnému lokálnemu Vite na porte 5206. Izolovaný headless Edge/Playwright, vypnuté auth iba v mock config odpovedi, všetky API interceptované; žiadne reálne storage recovery ani Airflow Push. 14/14 scenárov prešlo. Očakávané HTTP 503/422 browser resource hlásenia sú zaznamenané, žiadne neočakávané console/page errors. Screenshoty EN/SK/CS helperov, inventory a policy modalu vizuálne skontrolované.
+- Browser artefakty (lokálna ignorovaná cache): node_modules/.cache/recovery-alignment-qa/report.json, network.json, en/sk/cs-power-help.png, en/sk/cs-vmware-help.png, inventory-refreshed.png, policy-422-draft.png. Harness opravy sa týkali iba QA synchronizácie (response listener pred klikom, čakanie na save navigáciu, otvorenie Inventory sekcie) a klasifikácie zámerného 422.
+- Doplnkový príkaz node node_modules/typescript/bin/tsc -p tsconfig.app.json --noEmit --incremental false NEPREŠIEL: tri existujúce diagnostiky v dvoch nezmenených súboroch: RecoveryGroupBuilder.tsx:302 (boolean | undefined pre isRetrying), PolicySetPicker.test.tsx:130 a :131 (string | undefined pre matchery). git diff 0535e118 -- nad týmito dvoma súbormi je prázdny. Žiadna diagnostika v súboroch tejto implementácie; cudzie chyby sa neopravovali.
+- Kompletná testovacia sada, production build a live-backend QA neboli spustené. Orval sa negeneroval. BE pracovný strom ostal čistý a FE diff OpenAPI/generated oproti 0535e118 je prázdny.
+- Vetva spike/ant-design-shell zostáva na mieste; bez merge, pushu a deploy. Všetky aplikačné úlohy sú v atomic commitoch. Známymi limitmi zostávajú stale HTTP 200, chýbajúce minimum API a BE cron interpretácia; FE krok 15 je zachovaný.

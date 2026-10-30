@@ -11,6 +11,7 @@ export function useRefreshRecoveryGroupInventory(runId: string | null) {
 
   useEffect(() => () => {
     operation.current?.cancel()
+    setState(null)
   }, [client, runId])
 
   const refresh = async () => {
@@ -20,7 +21,7 @@ export function useRefreshRecoveryGroupInventory(runId: string | null) {
     const query = cache.find({ queryKey, exact: true })
     if (!query) return
     const controller = new AbortController()
-    let unsubscribe = () => { /* Replaced when the operation subscribes below. */ }
+    let unsubscribe: () => void = () => undefined
     const current = {
       cancel: () => {
         controller.abort()

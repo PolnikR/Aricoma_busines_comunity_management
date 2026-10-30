@@ -1,6 +1,6 @@
 # Plán zosúladenia Recovery BE/FE
 
-Dátum: 2026-10-30. Stav: návrh na schválenie; implementácia sa nezačala.
+Dátum: 2026-10-30. Stav: implementované inline; výsledky overenia sú v sprievodnom TODO.
 Úlohy: [recovery-be-fe-alignment-todo.md](recovery-be-fe-alignment-todo.md).
 
 ## Rozsah a východiská
@@ -16,8 +16,9 @@ obsahuje práve doplnenie force parametra); aktuálny rozdiel aplikácie bol pr�
 Počas analýzy sme tieto súbory neupravovali.
 V aktuálnom pracovnom strome je `force_refresh` už dostupný cez generated typ.
 
-Výstupom tejto práce sú iba dva dokumenty. Žiadne zmeny aplikácie, BE, generovanie
-Orval, testy aplikácie ani build. Existujúce `tasks/plan.md`, `tasks/todo.md`
+Výstupom pôvodnej plánovacej fázy boli iba dva dokumenty. Implementačný pokyn
+používateľa následne autorizoval vykonanie inline v existujúcom workspace.
+BE ani generated kontrakty sa nemenili a Orval sa nespúšťal. Existujúce `tasks/plan.md`, `tasks/todo.md`
 a historické plány zostávajú zachované. Pred implementáciou znovu overiť HEAD,
 pracovné stromy a príslušné AGENTS.md; tento dokument opisuje lokálny checkout,
 nie overenú verziu nasadeného servera ani jeho runtime konfiguráciu.
@@ -323,13 +324,13 @@ ani paralelné editovanie zdieľaných súborov. Presné súbory, AC a príkazy 
 | --- | --- | --- |
 | D1 — schválené | Samostatný force request, spoločná canonical cache, lokálny pending lock, bez cooldownu a bez koordinácie hypotetických ovládačov | Pri zmene run/unmount abort alebo ignorovanie výsledku; ochrániť cache pred stale zápisom. |
 | D2 — schválené | Zachovať FE krok 15; BE autorita pre minimum, viditeľný detail HTTP 422 | Žiadne uvoľnenie minút ani hardcoded 600; cron zostáva samostatná budúca úloha. |
-| D3 | Rovnaké template blokovanie Save aj Push | BE draft Save je tolerantnejší; povolenie neplatných draftov by vyžadovalo upravený plán a UX. |
-| D4 | Volumes/tree označiť stale iba pre snapshot provider, bez okamžitého refetch | Možno úplne odložiť T2; inventory funguje nezávisle. |
-| D5 | Pri zmene run/unmount zahodiť výsledok forced requestu | Jednoduché vlastníctvo operácie; starý run sa obnoví až bežným loadom. Cache sa neplní na pozadí pre opustený run. |
+| D3 — vykonané | Rovnaké template blokovanie Save aj Push | BE draft Save je tolerantnejší; povolenie neplatných draftov by vyžadovalo upravený plán a UX. |
+| D4 — vykonané | Volumes/tree označiť stale iba pre snapshot provider, bez okamžitého refetch | Implementované v T2. |
+| D5 — vykonané | Pri zmene run/unmount zahodiť výsledok forced requestu | Jednoduché vlastníctvo operácie; starý run sa obnoví až bežným loadom. Cache sa neplní na pozadí pre opustený run. |
 
-D1 a D2 sú výslovne rozhodnuté. D3–D5 zostávajú otvorené na schválenie.
-Úprava týchto dokumentov nie je pokyn na implementáciu: kód následne zapracuje
-implementačný agent až na ďalší výslovný pokyn používateľa.
+D1 a D2 sú výslovne rozhodnuté. Po ďalšom výslovnom pokyne „načítaj plán,
+TODO a vykonaj inline“ boli D3–D5 vykonané podľa odporúčaní plánu, ako bolo
+oznámené pred začatím implementácie. Bez pushu, merge alebo deploy.
 
 ## 7. Riziká a overovanie
 
@@ -358,5 +359,5 @@ draftu a viditeľné výsledky; žiadny Push do skutočného Airflow v automatic
 
 Overenie samotných dokumentov: existencia všetkých referencovaných FE súborov
 (nové sú výslovne označené), kompletnosť úloh a checkpointov, `git diff --check`.
-Testy/build aplikácie teraz neboli spustené. Historické výsledky nepredstavujú
-overenie tohto návrhu.
+Aktuálne cielené testy, browser QA, lint a limit doplnkového typechecku sú
+zaznamenané v TODO. Kompletná testovacia sada a production build neboli spustené.
