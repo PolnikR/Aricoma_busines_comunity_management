@@ -6,6 +6,7 @@ const fields: Record<string, string[]> = {
   recoveryGroupSourceMismatch: ['actual', 'expected', 'group', 'tier'], recoveryGroupSourceMissing: ['group', 'tier'],
   workloadMissing: ['group', 'name', 'tier'], duplicateWorkloadAcrossTiers: ['name', 'tiers'],
   duplicateWorkloadWithinTier: ['name', 'tier'], tiersRequired: [], referencesUnverified: [],
+  workloadTaskGroupCollision: ['first', 'id', 'second', 'tier'], tierTaskGroupCollision: ['first', 'id', 'second'],
 }
 describe('application functional messages', () => {
   it.each([en, sk, cs])('provides actionable messages with matching context', catalog => {
@@ -14,7 +15,7 @@ describe('application functional messages', () => {
       const value = messages['recovery.application.validation.' + suffix]
       expect(value?.trim(), suffix).toBeTruthy()
       expect([...(value ?? '').matchAll(/\{\{(\w+)\}\}/g)].map(match => match[1]).sort()).toEqual(params)
-      if (suffix.startsWith('duplicate')) expect(value).toContain('IBM Power v2')
+      if (suffix.startsWith('duplicate')) expect(value).not.toContain('IBM Power v2:')
     }
   })
 })

@@ -248,10 +248,10 @@ sa zapojí v samostatnej úlohe T6b.
 
 **Akceptačné kritériá:**
 
-- [ ] Nové help vetvy majú všetkých sedem podkľúčov pripravených pre routing T6b.
-- [ ] EN/SK/CS validation texty obsahujú rovnaké interpolácie a identifikujú
+- [x] Nové help vetvy majú všetkých sedem podkľúčov pripravených pre routing T6b.
+- [x] EN/SK/CS validation texty obsahujú rovnaké interpolácie a identifikujú
   tier/mená/konfliktné ID; nové message keys sedia s T4 štruktúrovanými problémami.
-- [ ] Texty potvrdzujú iba zdrojové správanie: Power ready/VIOS pool, VMware parallel
+- [x] Texty potvrdzujú iba zdrojové správanie: Power ready/VIOS pool, VMware parallel
   branches/done, cache fallback, ponechaný FE krok 15 minút a BE minimum
   bez univerzálnej hodnoty 600.
 
@@ -274,7 +274,7 @@ node node_modules/vitest/vitest.mjs run src/locales/recoveryApplicationFieldHelp
 node -e "for (const l of ['en','sk','cs']) JSON.parse(require('fs').readFileSync('src/locales/'+l+'.json','utf8'))"
 ```
 
-- [ ] Locale test aj JSON parse prešli; focused ESLint testu, diff check a commit.
+- [x] Locale test aj JSON parse prešli; focused ESLint testu, diff check a commit.
 
 **Závislosti:** T1, T3 rozhodnutie, T4 (tvary problémov). Je zámerne pred T5,
 aby integrácia nepoužila chýbajúce message keys.
@@ -415,3 +415,4 @@ node node_modules/vitest/vitest.mjs run src/features/recovery-plans/recovery-app
 - T2/CP1: 16 hook testov prešlo; predicate invaliduje iba snapshot-provider volumes/tree bez refetchu. Focused ESLint T1/T2 prešiel.
 - T3/CP2: 67 policy component/help testov prešlo, focused ESLint prešiel. Žiadna produkčná zmena formulára nebola potrebná; doplnená server-response matica a array-422 correction cez Enter.
 - T4: 44 unit testov DAG/workloads prešlo; focused ESLint prešiel. BE normalizácia a refusal funkcie znovu porovnané priamo s checkoutom b0b4ab3. Helper je čistý, vrátane unique defaultu, Unicode a order/namespace pravidiel.
+- T6a: 9 locale testov, JSON parse EN/SK/CS a focused ESLint prešli. Rozsah doplnený o existujúci recoveryApplicationFunctionalTranslations.test.ts: obsahoval neplatný predpoklad, že každá duplicita patrí výhradne IBM Power v2. Retention/frequency krok sa nemenil.
