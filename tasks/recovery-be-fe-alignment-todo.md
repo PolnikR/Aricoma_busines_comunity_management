@@ -328,11 +328,11 @@ od referenčnej chyby bez závislosti navigácie na prefixe prekladového kľú�
 
 **Akceptačné kritériá:**
 
-- [ ] Save aj Push rešpektujú D3 pre tri potvrdené layout kombinácie; details,
+- [x] Save aj Push rešpektujú D3 pre tri potvrdené layout kombinácie; details,
   tiers a výsledný canSave sa nerozchádzajú v template kontexte.
-- [ ] V1/null default v1 nemajú nové kolízne blokovanie; unknown explicitná verzia,
+- [x] V1/null default v1 nemajú nové kolízne blokovanie; unknown explicitná verzia,
   katalóg chyba a neoverené referencie zachovávajú doterajšie ochrany.
-- [ ] Problém nesie explicitnú klasifikáciu pre neskoršiu navigáciu; preklady T6
+- [x] Problém nesie explicitnú klasifikáciu pre neskoršiu navigáciu; preklady T6
   dostanú správne parametre a zmena verzie odstráni iba template chybu.
 
 **Scenáre:** T4 matica cez verejný validátor s push false/true; valid provider/group
@@ -346,7 +346,7 @@ v9 uvedená serverom bez známeho lokálneho layoutu. Zachovať Power LPAR synta
 node node_modules/vitest/vitest.mjs run src/features/recovery-plans/recovery-applications/utils/validateRecoveryApplication.test.ts src/features/recovery-plans/recovery-applications/model/recoveryApplicationDraftReadiness.test.ts
 ```
 
-- [ ] Cielené testy prešli, focused ESLint a atomic commit.
+- [x] Cielené testy prešli, focused ESLint a atomic commit.
 
 **Závislosti:** T4, T6a, T6b, D3. T7 nasleduje hneď po T5; feature sa neodovzdáva
 používateľovi medzi nimi, kým nie je dokončená opraviteľná navigácia.
@@ -417,3 +417,4 @@ node node_modules/vitest/vitest.mjs run src/features/recovery-plans/recovery-app
 - T4: 44 unit testov DAG/workloads prešlo; focused ESLint prešiel. BE normalizácia a refusal funkcie znovu porovnané priamo s checkoutom b0b4ab3. Helper je čistý, vrátane unique defaultu, Unicode a order/namespace pravidiel.
 - T6a: 9 locale testov, JSON parse EN/SK/CS a focused ESLint prešli. Rozsah doplnený o existujúci recoveryApplicationFunctionalTranslations.test.ts: obsahoval neplatný predpoklad, že každá duplicita patrí výhradne IBM Power v2. Retention/frequency krok sa nemenil.
 - T6b/CP3: 16 helper/locale testov prešlo; 3 nové routing assertions boli pred úpravou RED. Focused ESLint prešiel. Explicitné a server-default Power v3/VMware v2 rozpoznané, unknown generic zachovaný.
+- T5: 162 validator/readiness testov prešlo (pred zapojením 14 RED), focused ESLint prešiel. Oba validátory dostávajú rovnaký template context, chyby sú explicitne templateDependent, provider/reference priorita zachovaná.

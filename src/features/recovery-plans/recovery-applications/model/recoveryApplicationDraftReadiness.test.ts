@@ -27,6 +27,20 @@ function context(update: Partial<DraftReadinessContext> = {}): DraftReadinessCon
 }
 
 describe('getRecoveryApplicationDraftReadiness', () => {
+  it('uses the same template context for tier readiness and Save', () => {
+    const state = draft({ dagTemplateVersion: null, tiers: new Map([['database', {
+      order: 1, description: 'Database', recovery_group: { id: 'stored-group', name: 'Group', vms: [{ name: 'vm' }, { name: 'vm' }] },
+    }]]) })
+    const base = context({ step: 2 })
+    const inputs = { ...base, groups: base.groups.map(group => ({ ...group, resources: ['vm'] })),
+      templateCatalog: { templates: [{ platform: 'vmware', version: 'v2', default: true, description: 'Default' }], verified: true } }
+    const readiness = getRecoveryApplicationDraftReadiness(state, inputs)
+    expect(readiness).toMatchObject({ canContinue: false, canSave: false, tiersError: { templateDependent: true } })
+    expect(readiness.validationError).toEqual(readiness.tiersError)
+    inputs.templateCatalog.templates = inputs.templateCatalog.templates.map(template => ({ ...template, version: 'v1' }))
+    expect(getRecoveryApplicationDraftReadiness(state, inputs)).toMatchObject({ canContinue: true, canSave: true })
+    expect(state.dagTemplateVersion).toBeNull()
+  })
   it.each([
     [false, null, false, true],
     [false, 'future-3', false, false],
