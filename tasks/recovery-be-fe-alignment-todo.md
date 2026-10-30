@@ -201,11 +201,11 @@ UI, query zmien a mutácií draftu. Použiť existujúci exact duplicate helper.
 
 **Akceptačné kritériá:**
 
-- [ ] Power v2/v3 a VMware v2 implementujú presne normalizáciu, namespace a empty
+- [x] Power v2/v3 a VMware v2 implementujú presne normalizáciu, namespace a empty
   tier pravidlá uvedené v pláne; v1 a neznámy layout nedostanú nové blokovanie.
-- [ ] Null sa vyhodnotí cez verified unique default správnej platformy, wire
+- [x] Null sa vyhodnotí cez verified unique default správnej platformy, wire
   draft ostane nezmenený; unknown/unverified default nemá vymyslené pravidlá.
-- [ ] Problém rozlišuje exact duplicates, workload ID collision a tier ID collision
+- [x] Problém rozlišuje exact duplicates, workload ID collision a tier ID collision
   a poskytuje mená/tier/order/ID potrebné pre zrozumiteľnú chybu a navigáciu.
 
 **Unit matica:**
@@ -228,7 +228,7 @@ UI, query zmien a mutácií draftu. Použiť existujúci exact duplicate helper.
 node node_modules/vitest/vitest.mjs run src/features/recovery-plans/recovery-applications/utils/recoveryApplicationDagValidation.test.ts src/features/recovery-plans/recovery-applications/utils/recoveryApplicationWorkloads.test.ts
 ```
 
-- [ ] Fixtures porovnané s konkrétnymi BE funkciami, focused ESLint a atomic commit.
+- [x] Fixtures porovnané s konkrétnymi BE funkciami, focused ESLint a atomic commit.
 
 **Závislosti:** D3. BE šablóny sú read-only referencia; nevykonávať ich import
 na produkčnom Airflow a nepridávať BE zmeny.
@@ -414,3 +414,4 @@ node node_modules/vitest/vitest.mjs run src/features/recovery-plans/recovery-app
 - T1: 13 component testov a 13 hook testov prešlo. RED: dva URL assertions zlyhali bez force; GREEN po zapojení live hooku. Hook pokrýva aj invalidáciu pri rollback/delete, run/unmount, odstránenie/nahradenie query, mismatch odpovede a súbežný obyčajný GET. A→B→A test používa dve samostatné render fázy (React batch bez B commitu nepredstavuje opustenie runu).
 - T2/CP1: 16 hook testov prešlo; predicate invaliduje iba snapshot-provider volumes/tree bez refetchu. Focused ESLint T1/T2 prešiel.
 - T3/CP2: 67 policy component/help testov prešlo, focused ESLint prešiel. Žiadna produkčná zmena formulára nebola potrebná; doplnená server-response matica a array-422 correction cez Enter.
+- T4: 44 unit testov DAG/workloads prešlo; focused ESLint prešiel. BE normalizácia a refusal funkcie znovu porovnané priamo s checkoutom b0b4ab3. Helper je čistý, vrátane unique defaultu, Unicode a order/namespace pravidiel.
