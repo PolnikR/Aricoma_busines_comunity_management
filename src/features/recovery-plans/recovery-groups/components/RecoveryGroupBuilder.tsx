@@ -306,7 +306,7 @@ export function RecoveryGroupBuilder({
                       discoveryReason ? `${t('pages.recoveryGroupBuilder.topology.discoveryErrorReason')}: ${discoveryReason}` : null,
                     ].filter(Boolean).join('\n\n')}
                     className="shrink-0 [&_p]:whitespace-pre-line"
-                    isRetrying={relatedVolumesDiscovery.isFetching}
+                    isRetrying={relatedVolumesDiscovery.isFetching ?? false}
                     onRetry={() => { relatedVolumesDiscovery.refetch?.() }}
                     retryLabel={t('pages.recoveryGroupBuilder.topology.discoveryRetry')}
                   />

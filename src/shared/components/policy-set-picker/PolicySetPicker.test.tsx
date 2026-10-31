@@ -126,7 +126,7 @@ describe('PolicySetPicker', () => {
     render(<PolicySetPicker policySets={policySets} selectedPolicySetId="tier2-apps" onSelect={vi.fn()} />)
 
     const recovery = screen.getByRole('region', { name: 'Recovery application policy' })
-    for (const [label, value] of [['Retention', '4 hours'], ['Boot verification', 'Yes']]) {
+    for (const [label, value] of [['Retention', '4 hours'], ['Boot verification', 'Yes']] as const) {
       const field = within(recovery).getByText(label).parentElement
       expect(field).toHaveTextContent(value)
       expect(field).toHaveTextContent('Reserved for future use')
