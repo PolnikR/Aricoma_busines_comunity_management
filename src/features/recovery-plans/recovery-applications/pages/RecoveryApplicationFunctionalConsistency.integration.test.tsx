@@ -61,7 +61,7 @@ function setup(power = false, version: string | null = null, duplicate = false, 
       case '/api/get_recovery_apps': data = { applications: records }; break
       case '/api/get_dag_template_versions': data = { templates: [
         { platform: power ? 'ibm_power' : 'vmware', version: 'v1', default: true, description: 'Default' },
-        ...(power ? [{ platform: 'ibm_power', version: 'v2', default: false, description: 'Power v2' }] : []),
+        ...(['v2', ...(power ? ['v3'] : [])].map(version => ({ platform: power ? 'ibm_power' : 'vmware', version, default: false, description: version }))),
       ] }; break
       case '/api/submit_recovery_dag': {
         if (!body) throw new Error('Missing submit body')
@@ -150,7 +150,7 @@ describe('real wizard to HTTP functional consistency', () => {
     expect(fixture.requests.filter(req => req.method === 'POST')[1]?.body?.application.notificationEmail).toBeNull()
   })
 
-  it.each([[false, null], [true, null], [true, 'v1'], [true, 'v2']] as const)('preserves template-specific duplicate behavior on Push (Power=%s, version=%s)', async (power, version) => {
+  it.each([[false, null], [false, 'v2'], [true, null], [true, 'v1'], [true, 'v2'], [true, 'v3']] as const)('preserves template-specific duplicate behavior on Push (Power=%s, version=%s)', async (power, version) => {
     const fixture = setup(power, version, true)
     const user = userEvent.setup()
     fixture.mount()
@@ -159,9 +159,9 @@ describe('real wizard to HTTP functional consistency', () => {
     await user.click(screen.getByRole('switch'))
     await user.selectOptions(screen.getByLabelText('Airflow provider *'), 'airflow')
     const save = screen.getByRole('button', { name: 'Save Application' })
-    if (power && version === 'v2') {
+    if (version === 'v2' || version === 'v3') {
       expect(save).toBeDisabled()
-      expect(screen.getByRole('alert')).toHaveTextContent('LPAR "db" is selected in tiers first, second')
+      expect(screen.getByRole('alert')).toHaveTextContent('workload "db" in only one tier; it appears in first, second')
       await user.click(save)
       expect(fixture.requests.filter(req => req.method === 'POST')).toHaveLength(0)
       await user.selectOptions(screen.getByLabelText('DAG Template Version'), 'v1')
@@ -172,7 +172,7 @@ describe('real wizard to HTTP functional consistency', () => {
     await waitFor(() => { expect(fixture.requests.filter(req => req.method === 'POST')).toHaveLength(1) })
     expect(fixture.requests[before]?.method).toBe('POST')
     expect(fixture.requests[before]?.params.get('push_to_orchestrator')).toBe('true')
-    expect(fixture.requests[before]?.body?.application.dag_template_version).toBe(power && version === 'v2' ? null : version)
+    expect(fixture.requests[before]?.body?.application.dag_template_version).toBe(version === 'v2' || version === 'v3' ? null : version)
   })
 
   it.each(['email', 'source', 'membership', 'query-error'] as const)('blocks %s before HTTP submit using current query data', async problem => {

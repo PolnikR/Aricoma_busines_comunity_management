@@ -9,6 +9,7 @@ import type { OrchestrationState } from '../helpers/recoveryGroupOrchestrationSt
 type Translate = (key: string, params?: Record<string, string | number>) => string
 
 interface RecoveryGroupOrchestrationStatusProps {
+  entityType: 'group' | 'application'
   state: OrchestrationState
   airflowRunId: string | null | undefined
   providerUrl: string | null | undefined
@@ -44,7 +45,7 @@ function statusOf(state: OrchestrationState, t: Translate): { status: string; to
 // Orchestration section content of the Recovery Group detail: the latest run as a shared
 // DetailStatusBlock — status, execution time, duration, orchestrator, Airflow run ID and the
 // way to Recovery Runs. It only presents the existing orchestration state.
-export function RecoveryGroupOrchestrationStatus({ state, airflowRunId, providerUrl, onViewRecoveryRuns }: RecoveryGroupOrchestrationStatusProps) {
+export function RecoveryGroupOrchestrationStatus({ entityType, state, airflowRunId, providerUrl, onViewRecoveryRuns }: RecoveryGroupOrchestrationStatusProps) {
   const { t } = useTranslation()
   const { status, tone } = statusOf(state, t)
   const providerName = 'providerName' in state ? state.providerName : undefined
@@ -62,7 +63,7 @@ export function RecoveryGroupOrchestrationStatus({ state, airflowRunId, provider
         copyValue: airflowRunId,
       } : undefined}
       action={onViewRecoveryRuns ? (
-        <Button size="sm" variant="soft" onClick={onViewRecoveryRuns}>{t('buttons.viewRecoveryRuns')}</Button>
+        <Button size="sm" variant="soft" onClick={onViewRecoveryRuns}>{t(entityType === 'group' ? 'buttons.viewRecoveryGroupRuns' : 'buttons.viewRecoveryAppRuns')}</Button>
       ) : undefined}
     >
       {run ? <DetailField label={t('details.duration')} value={formatRunDuration(run.durationSeconds)} /> : null}

@@ -6,13 +6,14 @@ import type { RecoveryGroup } from '../../recovery-groups/model/recoveryGroupTyp
 import { getEligibleTargetProviders, isEligiblePlatformProvider, isEligibleSourceProvider } from './eligibleProviders'
 import { isRecoveryGroupCompatible, isRecoveryGroupSourceCompatible, isRecoveryGroupSourceEligible } from './recoveryGroupPlatform'
 import { isValidRecoveryApplicationEmail } from './recoveryApplicationEmail'
-import { findDuplicateRecoveryApplicationWorkloads } from './recoveryApplicationWorkloads'
+import { findRecoveryApplicationDagProblem } from './recoveryApplicationDagValidation'
 import type { DagTemplateVersion } from '@/generated/query/zod'
 
 export interface ValidationError {
   field: 'notificationEmail' | 'workloads' | 'fileName' | 'name' | 'description' | 'policySet' | 'platform' | 'targetProvider' | 'recoveryGroup' | 'dagTemplateVersion'
   messageKey: string
   params?: Record<string, string>
+  templateDependent?: boolean
 }
 
 export interface ApplicationTemplateCatalog {
@@ -142,6 +143,7 @@ export function validateRecoveryApplicationTiers(
   platform: string | undefined,
   sourceProviderId: string | null,
   groups: readonly ApplicationValidationGroup[],
+  templateCatalog?: ApplicationTemplateCatalog,
 ): ValidationError | null {
   if (formState.tiers.size === 0) {
     return { field: 'recoveryGroup', messageKey: 'recovery.application.validation.tiersRequired' }
@@ -171,15 +173,12 @@ export function validateRecoveryApplicationTiers(
       }
     }
   }
-  // Only the explicitly selected Power v2 template refuses repeated source LPARs.
-  // Null follows the current BE default (v1), as does an explicit v1 selection.
-  if (platform?.toUpperCase() === 'IBM_POWER' && formState.dagTemplateVersion === 'v2') {
-    const duplicate = findDuplicateRecoveryApplicationWorkloads(formState.tiers)[0]
-    if (duplicate) {
-      return duplicate.tierIds.length > 1
-        ? { field: 'workloads', messageKey: 'recovery.application.validation.duplicateWorkloadAcrossTiers', params: { name: duplicate.name, tiers: duplicate.tierIds.join(', ') } }
-        : { field: 'workloads', messageKey: 'recovery.application.validation.duplicateWorkloadWithinTier', params: { name: duplicate.name, tier: duplicate.tierIds[0] ?? '' } }
-    }
+  const dagProblem = findRecoveryApplicationDagProblem(formState, platform, templateCatalog)
+  if (dagProblem) return {
+    field: dagProblem.kind === 'tierTaskGroupCollision' ? 'recoveryGroup' : 'workloads',
+    templateDependent: true,
+    messageKey: `recovery.application.validation.${dagProblem.kind}`,
+    params: dagProblem.params,
   }
   return null
 }
@@ -194,7 +193,7 @@ export function validateRecoveryApplication(
   if (detailsProblem) return detailsProblem
   const sourceProvider = providers.find(provider => provider.id === formState.platform)
   const tierProblem = validateRecoveryApplicationTiers(formState, lockedProviders?.platform ?? sourceProvider?.type,
-    lockedProviders ? lockedProviders.sourceProviderId : formState.platform, groups)
+    lockedProviders ? lockedProviders.sourceProviderId : formState.platform, groups, templateCatalog)
   if (tierProblem) return tierProblem
   if (!formState.policySetId.trim()) return { field: 'policySet', messageKey: 'recovery.application.validation.policySetRequired' }
   const templateProblem = validateRecoveryApplicationTemplate(formState, templateCatalog)

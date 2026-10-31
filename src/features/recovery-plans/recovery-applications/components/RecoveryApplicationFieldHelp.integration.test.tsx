@@ -49,7 +49,7 @@ function setup(power = false, version: string | null = null, pushed = false) {
       case '/api/get_recovery_apps': data = { applications: records }; break
       case '/api/get_dag_template_versions': data = { templates: [
         { platform: power ? 'ibm_power' : 'vmware', version: 'v1', default: true, description: 'Default' },
-        ...(power ? [{ platform: 'ibm_power', version: 'v2', default: false, description: 'Power v2' }] : []),
+        ...(['v2', ...(power ? ['v3'] : [])].map(version => ({ platform: power ? 'ibm_power' : 'vmware', version, default: false, description: version }))),
       ] }; break
       case '/api/submit_recovery_dag': {
         if (!body) throw new Error('Missing submit body')
@@ -90,14 +90,15 @@ async function inspectHelp() {
 }
 
 describe('technical help through the real wizard and HTTP boundary', () => {
-  it.each([false, true])('preserves the exact Edit payload after all nine helpers (Power=%s)', async power => {
-    const fixture = setup(power)
+  it.each([[false, null], [true, null], [false, 'v2'], [true, 'v3']] as const)('preserves the exact Edit payload after all nine helpers (Power=%s, version=%s)', async (power, version) => {
+    const fixture = setup(power, version)
     const expected = structuredClone(fixture.application)
     const user = userEvent.setup()
     fixture.mount()
     await ready()
     expect(await inspectHelp()).toBe(3)
     await user.click(screen.getByRole('button', { name: 'Recovery groups & tiers' }))
+    if (version) expect(screen.getByRole('button', { name: power ? 'About Power v3 execution order' : 'About VMware v2 execution order' })).toBeInTheDocument()
     expect(await inspectHelp()).toBe(2)
     await user.click(screen.getByRole('button', { name: 'Policy set' }))
     expect(await inspectHelp()).toBe(1)

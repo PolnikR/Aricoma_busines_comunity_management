@@ -507,6 +507,7 @@ export function RecoveryApplicationsTable({
             </DetailOverview>
             {orchestration ? (
               <RecoveryGroupOrchestrationStatus
+                entityType="application"
                 state={orchestration.state}
                 airflowRunId={orchestration.displayRunId}
                 providerUrl={orchestration.providerUrl}

@@ -42,7 +42,7 @@ export function getRecoveryApplicationDraftReadiness(
   const platform = lockedProviders?.platform ?? providers?.find(provider => provider.id === draft.platform)?.type
   const sourceProviderId = lockedProviders ? lockedProviders.sourceProviderId : draft.platform
   const referencesVerified = providersLoaded && !areGroupsLoading && !groupsError
-  const tiersError = referencesVerified ? validateRecoveryApplicationTiers(draft, platform, sourceProviderId, groups) : unverified
+  const tiersError = referencesVerified ? validateRecoveryApplicationTiers(draft, platform, sourceProviderId, groups, context.templateCatalog) : unverified
   const detailsValid = !detailsError
   const tiersValid = !tiersError
   const policySetValid = Boolean(draft.policySetId.trim())

@@ -502,6 +502,7 @@ export function RecoveryGroupsTable({
               labelHelp={<KeyedHelpPopover helpKey="recoveryGroups.fieldHelp.orchestration" sections={[]} />} />
             {orchestration ? (
               <RecoveryGroupOrchestrationStatus
+                entityType="group"
                 state={orchestration.state}
                 airflowRunId={orchestration.displayRunId}
                 providerUrl={orchestration.providerUrl}

@@ -56,12 +56,16 @@ describe('useRecoveryGroupRelatedVolumes', () => {
 
   it('exposes a discovery failure and supports retry without treating it as empty success', async () => {
     let failed = true
-    vi.stubGlobal('fetch', vi.fn(() => failed ? Promise.reject(new Error('Offline')) : Promise.resolve(response('VOL-01'))))
+    let finishRetry: (value: Response) => void = () => { throw new Error('Retry not started') }
+    vi.stubGlobal('fetch', vi.fn(() => failed ? Promise.reject(new Error('Offline')) : new Promise<Response>(resolve => { finishRetry = resolve })))
     const { result } = renderHook(() => useRecoveryGroupRelatedVolumes('compute', ['VM'], 'source', true), { wrapper: wrapper() })
     await waitFor(() => { expect(result.current.error).toBeInstanceOf(Error) })
     failed = false
     act(() => { result.current.refetch?.() })
+    await waitFor(() => { expect(result.current.isFetching).toBe(true) })
+    act(() => { finishRetry(response('VOL-01')) })
     await waitFor(() => { expect(result.current.discoveredVolumeNames).toEqual(['VOL-01']) })
     expect(result.current.error).toBeNull()
+    expect(result.current.isFetching).toBe(false)
   })
 })

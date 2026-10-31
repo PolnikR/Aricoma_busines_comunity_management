@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
+import { useRefreshRecoveryGroupInventory } from '../hooks/useRefreshRecoveryGroupInventory'
 import { Badge } from '@/shared/components/badge/Badge'
 import { Button } from '@/shared/components/button/Button'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
@@ -35,6 +36,9 @@ function GroupHeader({ title, description }: { title: ReactNode; description: st
 export function RecoveryGroupInventory({ runId, active }: RecoveryGroupInventoryProps) {
   const { t, language } = useTranslation()
   const query = useGetRecoveryGroupInventory({ run_id: runId ?? '' }, { query: { select: selectRecoveryGroupInventory, enabled: active && Boolean(runId) } })
+  const live = useRefreshRecoveryGroupInventory(runId)
+  const isFetching = query.isFetching || live.isRefreshing
+  const retry = () => { live.clearError(); void query.refetch() }
   const [openVolumes, setOpenVolumes] = useState<ReadonlySet<string>>(() => new Set())
   const [chainActive, setChainActive] = useState<string | null>(null)
   const [listActive, setListActive] = useState<string | null>(null)
@@ -79,11 +83,11 @@ export function RecoveryGroupInventory({ runId, active }: RecoveryGroupInventory
     <div className="flex flex-col gap-7 px-5 py-4">
       <div className="flex flex-wrap items-center justify-end gap-2">
         <p id="recovery-inventory-refresh-help" className="text-xs text-text-muted">{t('recoveryInventory.refreshHelp')}</p>
-        <Button size="sm" variant="outline" aria-describedby="recovery-inventory-refresh-help" disabled={query.isFetching} onClick={() => { void query.refetch() }}>
-          {query.isFetching ? t('buttons.refreshing') : t('buttons.refreshInventory')}
+        <Button size="sm" variant="outline" aria-describedby="recovery-inventory-refresh-help" disabled={isFetching} onClick={() => { void live.refresh() }}>
+          {isFetching ? t('buttons.refreshing') : t('buttons.refreshInventory')}
         </Button>
       </div>
-      {query.error ? <FetchErrorAlert title={t('recoveryInventory.refreshFailed')} retryLabel={t('buttons.retry')} isRetrying={query.isFetching} onRetry={() => { void query.refetch() }} /> : null}
+      {query.error || live.error ? <FetchErrorAlert title={t('recoveryInventory.refreshFailed')} retryLabel={t('buttons.retry')} isRetrying={isFetching} onRetry={retry} /> : null}
       {metroMirror ? (
         <>
           {metroMirror.error || metroMirror.consistency_group ? (

@@ -8,6 +8,7 @@ import type { RecoveryGroup } from '../model/recoveryGroupTypes'
 import { RecoveryGroupBuilder } from './RecoveryGroupBuilder'
 import { useRecoveryGroupMetroMirrorRelationships } from '../hooks/useRecoveryGroupMetroMirrorRelationships'
 import { useRecoveryGroupRelatedVolumes } from '../hooks/useRecoveryGroupRelatedVolumes'
+import { OrvalApiError } from '@/shared/api/orvalMutator'
 import { validateRecoveryGroupDraft } from '../api/recoveryGroupsValidation'
 import { toRecoveryGroupSubmitPayload } from '../helpers/mapRecoveryGroups'
 
@@ -488,8 +489,26 @@ describe('RecoveryGroupBuilder', () => {
     await userEvent.setup().click(screen.getByRole('button', { name: 'Related storage' }))
     expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Orchestration' })).toBeDisabled()
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Retry' }))
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Retry discovery' }))
     expect(retry).toHaveBeenCalled()
+  })
+
+  it.each([
+    [{ detail: 'Connection to the provider timed out.' }, 'Reason: Connection to the provider timed out.'],
+    [{ detail: [{ msg: 'Unknown VM', loc: ['query', 'vm_name'], type: 'value_error' }] }, 'Reason: Unknown VM'],
+    [{ internal: 'technical payload' }, null],
+    [{ detail: '{"internal":"technical payload"}' }, null],
+  ])('shows readable discovery details without exposing the response body: %j', async (body, reason) => {
+    vi.mocked(useRecoveryGroupRelatedVolumes).mockReturnValue({ flashcopyProviderId: 'ibm-flashsystem-01', discoveredVolumeNames: [], isLoading: false, isResolved: true, error: new OrvalApiError(500, 'Internal Server Error', body) })
+    render(<RecoveryGroupBuilder initialData={{ ...existingGroup, relatedVolumeProviderId: 'ibm-flashsystem-01' }} onCreate={vi.fn()} onCancel={vi.fn()} />)
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Related storage' }))
+    const alert = screen.getByRole('alert')
+    expect(alert).toHaveTextContent('Unable to discover related FlashSystem volumes')
+    expect(alert).toHaveTextContent('Retry discovery to continue.')
+    if (reason) expect(alert).toHaveTextContent(reason)
+    else expect(alert).not.toHaveTextContent('Reason:')
+    expect(alert).not.toHaveTextContent('technical payload')
+    expect(alert).not.toHaveTextContent('API request failed')
   })
 
   it('preserves explicitly selected source volumes and auxiliary names when adding a VM', async () => {

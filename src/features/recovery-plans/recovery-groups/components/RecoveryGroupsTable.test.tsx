@@ -493,7 +493,7 @@ describe('RecoveryGroupsTable', () => {
 
     expect(within(detail).getByText('success')).toBeInTheDocument()
 
-    await user.click(within(detail).getByRole('button', { name: 'View recovery runs →' }))
+    await user.click(within(detail).getByRole('button', { name: 'View recovery group runs →' }))
     expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-runs?tab=groups&entityType=group&entityId=database-group')
   })
 
@@ -507,7 +507,7 @@ describe('RecoveryGroupsTable', () => {
     const detail = await screen.findByRole('dialog', { name: 'Recovery group detail' })
     await user.click(within(detail).getByRole('button', { name: 'Orchestration' }))
 
-    expect(within(detail).queryByRole('button', { name: 'View recovery runs →' })).not.toBeInTheDocument()
+    expect(within(detail).queryByRole('button', { name: 'View recovery group runs →' })).not.toBeInTheDocument()
   })
 
   it('opens a JSON viewer showing the recovery group submit payload', async () => {
@@ -686,7 +686,7 @@ describe('RecoveryGroupsTable', () => {
       expect(orchestration).toHaveTextContent('Latest run status')
       expect(orchestration).toHaveTextContent('Not configured')
       expect(orchestration).not.toHaveTextContent('Orchestration: Yes')
-      expect(within(orchestration).queryByRole('button', { name: 'View recovery runs →' })).not.toBeInTheDocument()
+      expect(within(orchestration).queryByRole('button', { name: 'View recovery group runs →' })).not.toBeInTheDocument()
     })
 
     it('B: orchestration incomplete without an orchestration provider', async () => {
@@ -722,7 +722,7 @@ describe('RecoveryGroupsTable', () => {
       expect(orchestration).toHaveTextContent('No runs yet')
       expect(orchestration).toHaveTextContent('Dynamic Airflow')
       expect(within(orchestration).getByRole('link', { name: /run-1/ })).toBeInTheDocument()
-      expect(within(orchestration).getByRole('button', { name: 'View recovery runs →' })).toBeInTheDocument()
+      expect(within(orchestration).getByRole('button', { name: 'View recovery group runs →' })).toBeInTheDocument()
     })
 
     it('E4: last run status, execution time, duration, orchestrator and run ID', async () => {

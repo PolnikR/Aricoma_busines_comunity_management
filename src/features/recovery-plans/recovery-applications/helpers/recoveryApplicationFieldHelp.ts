@@ -19,6 +19,7 @@ export function recoveryApplicationTierOrderHelpKey(platform?: string | null, ve
     ? catalog.templates.filter(template => template.default && template.platform.toUpperCase() === platform?.toUpperCase())
     : []
   const resolved = version ?? (defaults.length === 1 ? defaults[0]?.version : undefined)
-  const known = resolved === 'v1' && suffix !== 'generic' || resolved === 'v2' && suffix === 'ibmPower'
+  const known = suffix !== 'generic' && (resolved === 'v1' || resolved === 'v2')
+    || suffix === 'ibmPower' && resolved === 'v3'
   return `recoveryApplications.fieldHelp.tierOrder.${known ? `${suffix}.${resolved}` : 'generic'}`
 }
