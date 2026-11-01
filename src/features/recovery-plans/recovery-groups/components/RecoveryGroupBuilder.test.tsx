@@ -1,10 +1,10 @@
 import type { ReactElement } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render as renderComponent, screen, cleanup } from '@testing-library/react'
+import { fireEvent, render as renderComponent, screen, cleanup, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockVirtualLayout } from '@/shared/components/resource-sidebar/test/mockVirtualLayout'
-import type { RecoveryGroup } from '../model/recoveryGroupTypes'
+import type { RecoveryGroup, RecoveryGroupDraft } from '../model/recoveryGroupTypes'
 import { RecoveryGroupBuilder } from './RecoveryGroupBuilder'
 import { useRecoveryGroupMetroMirrorRelationships } from '../hooks/useRecoveryGroupMetroMirrorRelationships'
 import { useRecoveryGroupRelatedVolumes } from '../hooks/useRecoveryGroupRelatedVolumes'
@@ -22,6 +22,11 @@ afterEach(() => { cleanup(); clients.splice(0).forEach(client => { client.clear(
 
 const { usePlatformProvidersMock } = vi.hoisted(() => ({ usePlatformProvidersMock: vi.fn() }))
 const providerStatus = vi.hoisted(() => ({ isFetching: false }))
+const dagVersions = vi.hoisted(() => ({ query: vi.fn() }))
+vi.mock('@/generated/query/recovery-groups/recovery-groups.gen', async importOriginal => ({
+  ...await importOriginal<typeof import('@/generated/query/recovery-groups/recovery-groups.gen')>(),
+  useGetGroupDagTemplateVersions: dagVersions.query,
+}))
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('@/generated/query/providers/providers.gen', async (importOriginal) => ({
@@ -259,6 +264,47 @@ beforeEach(() => { restoreVirtualLayout = mockVirtualLayout() })
 afterEach(() => { restoreVirtualLayout() })
 
 describe('RecoveryGroupBuilder', () => {
+  beforeEach(() => {
+    dagVersions.query.mockReturnValue({ data: { templates: [
+      { platform: 'flashcopy', version: 'v1', default: false, description: 'Legacy' },
+      { platform: 'flashcopy', version: 'future', default: true, description: 'Future BE default' },
+      { platform: 'hitachi', version: 'other', default: true, description: 'Wrong platform' },
+    ] }, isLoading: false, error: null, refetch: vi.fn() })
+  })
+
+  it('filters the volume platform catalog and saves default as null through the real reducer and mapper', async () => {
+    const onCreate = vi.fn<(draft: RecoveryGroupDraft) => void>()
+    const onDirtyChange = vi.fn()
+    const user = userEvent.setup()
+    render(<RecoveryGroupBuilder initialData={{ ...existingStorageGroup, orchestrationProviderId: 'airflow-01', dagTemplateVersion: 'v1' }}
+      onCreate={onCreate} onCancel={vi.fn()} onDirtyChange={onDirtyChange} />)
+    await user.click(screen.getByRole('button', { name: 'Orchestration' }))
+    expect(screen.getByLabelText('DAG Template Version')).toHaveValue('v1')
+    expect(screen.queryByRole('option', { name: 'other (default)' })).not.toBeInTheDocument()
+    expect(dagVersions.query).toHaveBeenLastCalledWith({ platform: 'flashcopy' }, expect.objectContaining({ query: { enabled: true } }))
+    expect(onDirtyChange).not.toHaveBeenCalled()
+    await user.selectOptions(screen.getByLabelText('DAG Template Version'), 'future')
+    await user.click(screen.getByRole('button', { name: 'Create Recovery Group' }))
+    const submitted = onCreate.mock.calls[0]?.[0]
+    expect(submitted).toMatchObject({ dagTemplateVersion: null })
+    if (!submitted) throw new Error('Expected a submitted draft')
+    expect(toRecoveryGroupSubmitPayload(validateRecoveryGroupDraft(submitted), 'group')).toMatchObject({ dag_template_version: null })
+    expect(onDirtyChange).toHaveBeenCalledWith(true)
+  })
+
+  it.each([false, true])('does not introduce a catalog gate for Save/Push=%s and preserves unavailable configuration', async pushToOrchestrator => {
+    dagVersions.query.mockReturnValue({ data: undefined, isLoading: false, error: new Error('offline'), refetch: vi.fn() })
+    const onCreate = vi.fn()
+    render(<RecoveryGroupBuilder initialData={{ ...existingStorageGroup, orchestrationProviderId: 'airflow-01', dagTemplateVersion: 'unlisted' }}
+      onCreate={onCreate} onCancel={vi.fn()} />)
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: 'Orchestration' }))
+    expect(screen.getByLabelText('DAG Template Version')).toHaveValue('unlisted')
+    if (pushToOrchestrator) await user.click(screen.getByRole('switch', { name: 'Deploy to orchestrator' }))
+    expect(screen.getByRole('button', { name: 'Create Recovery Group' })).toBeEnabled()
+    await user.click(screen.getByRole('button', { name: 'Create Recovery Group' }))
+    expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({ dagTemplateVersion: 'unlisted', pushToOrchestrator }))
+  })
   it('disables lookup for Local and waits for VM discovery before looking up selected source volumes', async () => {
     const mock = vi.mocked(useRecoveryGroupMetroMirrorRelationships)
     const props = { initialData: { ...existingGroup, relatedVolumeProviderId: 'ibm-flashsystem-01' }, onCreate: vi.fn(), onCancel: vi.fn() }
@@ -429,8 +475,8 @@ describe('RecoveryGroupBuilder', () => {
     render(<RecoveryGroupBuilder initialData={{ ...existingStorageGroup, pushToOrchestrator: false }} onCreate={onCreate} onCancel={vi.fn()} />)
     const user = userEvent.setup()
     await user.click(screen.getByRole('button', { name: 'Orchestration' }))
-    expect(screen.getByRole('combobox')).toHaveValue('airflow-01')
-    expect(screen.getAllByRole('option')).toHaveLength(2)
+    expect(screen.getByLabelText('Airflow platform provider *')).toHaveValue('airflow-01')
+    expect(within(screen.getByLabelText('Airflow platform provider *')).getAllByRole('option')).toHaveLength(2)
     expect(screen.getByRole('option', { name: 'Primary Airflow - AIRFLOW' })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Create Recovery Group' }))
     expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({ orchestrationProviderId: 'airflow-01' }))
@@ -748,7 +794,7 @@ describe('RecoveryGroupBuilder', () => {
 
     await userEvent.setup().click(screen.getByRole('button', { name: 'Orchestration' }))
 
-    expect(screen.getByRole('combobox')).toHaveValue('airflow-02')
+    expect(screen.getByLabelText('Airflow platform provider *')).toHaveValue('airflow-02')
   })
 
   it('uses a dedicated provider step between resource type and resources', () => {

@@ -43,6 +43,20 @@ function renderStep(overrides: Partial<Parameters<typeof RecoveryGroupOrchestrat
 }
 
 describe('RecoveryGroupOrchestrationStep', () => {
+  it.each([false, true])('offers DAG versions independently of Airflow errors and Push=%s', async pushToOrchestrator => {
+    const onChange = vi.fn()
+    renderStep({ error: new Error('Airflow unavailable'), pushToOrchestrator, dagTemplate: {
+      platform: 'hitachi', value: null, templates: [
+        { platform: 'hitachi', version: 'v1', default: false, description: 'Legacy' },
+        { platform: 'hitachi', version: 'v2', default: true, description: 'Default from BE' },
+      ], isLoading: false, error: null, disabled: false, onChange, onRetry: vi.fn(),
+    } })
+    const select = screen.getByLabelText('DAG Template Version')
+    expect(select).toHaveValue('v2')
+    await userEvent.selectOptions(select, 'v1')
+    expect(onChange).toHaveBeenCalledWith('v1')
+    expect(screen.getByText('Failed to load platform providers.')).toBeInTheDocument()
+  })
   it('renders the toggle as off by default', () => {
     renderStep()
 

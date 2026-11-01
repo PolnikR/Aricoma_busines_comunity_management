@@ -3,10 +3,12 @@ import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErro
 import { Select } from '@/shared/components/form/FormControls'
 import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { Toggle } from '@/shared/components/toggle/Toggle'
+import { DagTemplateVersionSelect, type DagTemplateVersionSelectProps } from '@/shared/components/dag-template-version-select/DagTemplateVersionSelect'
 import { useTranslation } from '@/hooks/useTranslation'
 import type { PlatformProviderRecord } from '@/features/platform-administration/platform-providers/model/platformProviderTypes'
 
 interface RecoveryGroupOrchestrationStepProps {
+  dagTemplate?: Omit<DagTemplateVersionSelectProps, 'id' | 'translationPrefix' | 'help'>
   platformProviders: PlatformProviderRecord[]
   isLoading: boolean
   error: Error | null
@@ -18,6 +20,7 @@ interface RecoveryGroupOrchestrationStepProps {
 }
 
 export function RecoveryGroupOrchestrationStep({
+  dagTemplate,
   platformProviders,
   isLoading,
   error,
@@ -60,6 +63,10 @@ export function RecoveryGroupOrchestrationStep({
           </p>
         </div>
       </div>
+
+      {dagTemplate ? <DagTemplateVersionSelect {...dagTemplate}
+        id="recovery-group-template-version" translationPrefix="recoveryGroups.dagTemplate"
+        help={<KeyedHelpPopover helpKey="recoveryGroups.fieldHelp.template" sections={['effect', 'limitations']} />} /> : null}
 
       {error ? (
         <div className="mt-5 max-w-4xl">

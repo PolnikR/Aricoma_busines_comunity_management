@@ -40,6 +40,9 @@ beforeEach(() => {
 })
 afterEach(() => { cleanup(); client.clear(); restoreLayout(); vi.unstubAllGlobals() })
 function show(initialData = group) {
+  client.setQueryData(['/get_group_dag_template_versions', { platform: 'flashcopy' }], { templates: [
+    { platform: 'flashcopy', version: 'v1', default: true, description: 'Catalog fixture' },
+  ] })
   const onCreate = vi.fn()
   const onDirtyChange = vi.fn()
   render(<StrictMode><QueryClientProvider client={client}><RecoveryGroupBuilder initialData={initialData} onCreate={onCreate} onCancel={vi.fn()} onDirtyChange={onDirtyChange} /></QueryClientProvider></StrictMode>)

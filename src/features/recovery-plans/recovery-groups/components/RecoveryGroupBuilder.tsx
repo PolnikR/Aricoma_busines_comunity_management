@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useId, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useGetVolumes } from '@/generated/query/storage-volumes/storage-volumes.gen'
+import { useGetGroupDagTemplateVersions } from '@/generated/query/recovery-groups/recovery-groups.gen'
+import { resolveRecoveryGroupDagPlatform } from '../model/recoveryGroupDagTemplate'
 import { flashSystemInventoryQuery, powerInventoryQuery, vdisksByVmQuery, vmwareInventoryQuery } from '@/features/discovery-inventory/resources/model/inventoryQueries'
 import { resolveVmwareProviderFilter } from '@/features/discovery-inventory/resources/helpers/vmwareProviderFilter'
 import { Alert } from '@/shared/components/alert/Alert'
@@ -104,6 +106,11 @@ export function RecoveryGroupBuilder({
   const observation = { ...relatedObservation, relationships: relationships.data }
   const resolution = resolveEffectiveDraft(lifecycle, observation)
   const { draft, selectedVolumes, metroExisting, metroManaged, prefill, allowLegacyLocal } = resolution
+  const dagPlatform = resolveRecoveryGroupDagPlatform(draft, allProviders)
+  const dagVersions = useGetGroupDagTemplateVersions(dagPlatform ? { platform: dagPlatform } : undefined, {
+    query: { enabled: Boolean(dagPlatform) && step === orchestrationStepIndex },
+  })
+  const dagTemplates = dagPlatform ? (dagVersions.data?.templates ?? []).filter(template => template.platform === dagPlatform) : []
   const observationEvent = resolution.selectionObservation
   const poolSource = allProviders.find(provider => provider.id === draft.relatedVolumeProviderId)
   const targetPools = useRecoveryGroupTargetPools(poolSource?.partnerProviderId ?? undefined,
@@ -345,6 +352,12 @@ export function RecoveryGroupBuilder({
             ) : null}
             {step === orchestrationStepIndex ? (
               <RecoveryGroupOrchestrationStep
+                dagTemplate={{
+                  platform: dagPlatform, value: draft.dagTemplateVersion ?? null, templates: dagTemplates,
+                  isLoading: dagVersions.isLoading, error: dagVersions.error, disabled: readOnly,
+                  onChange: value => { send({ type: 'dagTemplateVersionChanged', value }) },
+                  onRetry: () => { void dagVersions.refetch() },
+                }}
                 platformProviders={eligiblePlatformProviders}
                 isLoading={platformProvidersQuery.isLoading}
                 error={platformProvidersQuery.error instanceof Error ? platformProvidersQuery.error : null}
