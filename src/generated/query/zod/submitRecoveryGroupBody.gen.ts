@@ -36,7 +36,8 @@ export const SubmitRecoveryGroupBody = zod.object({
   "name": zod.string(),
   "auxiliary_name": zod.union([zod.string(),zod.null()]).exactOptional()
 })).default(submitRecoveryGroupBodyVolumesDefault),
-  "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional()
+  "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "dag_template_version": zod.union([zod.string(),zod.null()]).exactOptional()
 })
 
 export type SubmitRecoveryGroupBody = zod.input<typeof SubmitRecoveryGroupBody>;

@@ -71,6 +71,7 @@ export const responseSchemas: Record<string, z.ZodType> = {
   'POST /rollback_app_from_orchestrator': RecoveryAppsResponse,
   'DELETE /delete_recovery_app': RecoveryAppsResponse,
   'GET /get_recovery_groups': RecoveryGroupsResponse,
+  'GET /get_group_dag_template_versions': DagTemplateVersionsResponse,
   'POST /submit_recovery_group': RecoveryGroupsResponse,
   'GET /get_recovery_group_inventory': RecoveryGroupInventoryResponse,
   'POST /rollback_group_from_orchestrator': RecoveryGroupsResponse,

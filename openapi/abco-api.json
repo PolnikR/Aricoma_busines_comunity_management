@@ -2941,6 +2941,78 @@
         }
       }
     },
+    "/get_group_dag_template_versions": {
+      "get": {
+        "tags": [
+          "Recovery Groups"
+        ],
+        "summary": "Get Group Dag Template Versions",
+        "operationId": "get_group_dag_template_versions_get_group_dag_template_versions_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "platform",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "flashcopy or hitachi; omit to list every platform",
+              "title": "Platform"
+            },
+            "description": "flashcopy or hitachi; omit to list every platform"
+          },
+          {
+            "name": "X-User",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DagTemplateVersionsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/submit_recovery_group": {
       "post": {
         "tags": [
@@ -4500,6 +4572,57 @@
         ],
         "title": "DagTemplateVersionsResponse"
       },
+      "GroupOrchestrationState": {
+        "properties": {
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Id"
+          },
+          "pushed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pushed"
+          },
+          "provider_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Id"
+          },
+          "template_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Version"
+          }
+        },
+        "type": "object",
+        "title": "GroupOrchestrationState",
+        "description": "A recovery group's state also records the DAG template version its push rendered."
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -5461,46 +5584,6 @@
           "type"
         ],
         "title": "OrchestrationProviderRecord"
-      },
-      "OrchestrationState": {
-        "properties": {
-          "run_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Run Id"
-          },
-          "pushed": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Pushed"
-          },
-          "provider_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Provider Id"
-          }
-        },
-        "type": "object",
-        "title": "OrchestrationState",
-        "description": "Where a recovery group or app stands with its orchestrator: the run id that\nnames its DAG, whether the DAG is currently pushed, and the provider it went to."
       },
       "OrchestratorPush": {
         "properties": {
@@ -7062,6 +7145,17 @@
               }
             ],
             "title": "Notificationemail"
+          },
+          "dag_template_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dag Template Version"
           }
         },
         "type": "object",
@@ -7234,10 +7328,21 @@
             ],
             "title": "Notificationemail"
           },
+          "dag_template_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dag Template Version"
+          },
           "orchestration": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/OrchestrationState"
+                "$ref": "#/components/schemas/GroupOrchestrationState"
               },
               {
                 "type": "null"

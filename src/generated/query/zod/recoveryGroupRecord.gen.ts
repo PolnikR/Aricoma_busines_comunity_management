@@ -37,11 +37,13 @@ export const RecoveryGroupRecord = zod.object({
   "auxiliary_name": zod.union([zod.string(),zod.null()]).exactOptional()
 })).default(recoveryGroupRecordVolumesDefault),
   "notificationEmail": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "dag_template_version": zod.union([zod.string(),zod.null()]).exactOptional(),
   "orchestration": zod.union([zod.object({
   "run_id": zod.union([zod.string(),zod.null()]).exactOptional(),
   "pushed": zod.union([zod.boolean(),zod.null()]).exactOptional(),
-  "provider_id": zod.union([zod.string(),zod.null()]).exactOptional()
-}).describe('Where a recovery group or app stands with its orchestrator: the run id that\nnames its DAG, whether the DAG is currently pushed, and the provider it went to.'),zod.null()]).exactOptional()
+  "provider_id": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "template_version": zod.union([zod.string(),zod.null()]).exactOptional()
+}).describe('A recovery group\'s state also records the DAG template version its push rendered.'),zod.null()]).exactOptional()
 })
 
 export type RecoveryGroupRecord = zod.input<typeof RecoveryGroupRecord>;

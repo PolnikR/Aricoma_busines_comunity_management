@@ -26,7 +26,9 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  DagTemplateVersionsResponse,
   DeleteRecoveryGroupParams,
+  GetGroupDagTemplateVersionsParams,
   GetRecoveryGroupInventoryParams,
   HTTPValidationError,
   RecoveryGroup,
@@ -148,6 +150,113 @@ export function useGetRecoveryGroups<TData = Awaited<ReturnType<typeof getRecove
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetRecoveryGroupsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export const getGetGroupDagTemplateVersionsUrl = (params?: GetGroupDagTemplateVersionsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/get_group_dag_template_versions?${stringifiedParams}` : `/get_group_dag_template_versions`
+}
+
+/**
+ * @summary Get Group Dag Template Versions
+ */
+export const getGroupDagTemplateVersions = async (params?: GetGroupDagTemplateVersionsParams, options?: Parameters<typeof validatingMutator>[1]): Promise<DagTemplateVersionsResponse> => {
+
+  return validatingMutator<DagTemplateVersionsResponse>(getGetGroupDagTemplateVersionsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetGroupDagTemplateVersionsQueryKey = (params?: GetGroupDagTemplateVersionsParams,) => {
+    return [
+    `/get_group_dag_template_versions`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetGroupDagTemplateVersionsQueryOptions = <TData = Awaited<ReturnType<typeof getGroupDagTemplateVersions>>, TError = ErrorType<HTTPValidationError>>(params?: GetGroupDagTemplateVersionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGroupDagTemplateVersions>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetGroupDagTemplateVersionsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getGroupDagTemplateVersions>>> = ({ signal }) => getGroupDagTemplateVersions(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getGroupDagTemplateVersions>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetGroupDagTemplateVersionsQueryResult = NonNullable<Awaited<ReturnType<typeof getGroupDagTemplateVersions>>>
+export type GetGroupDagTemplateVersionsQueryError = ErrorType<HTTPValidationError>
+
+
+export function useGetGroupDagTemplateVersions<TData = Awaited<ReturnType<typeof getGroupDagTemplateVersions>>, TError = ErrorType<HTTPValidationError>>(
+ params: undefined |  GetGroupDagTemplateVersionsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGroupDagTemplateVersions>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getGroupDagTemplateVersions>>,
+          TError,
+          Awaited<ReturnType<typeof getGroupDagTemplateVersions>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof validatingMutator>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetGroupDagTemplateVersions<TData = Awaited<ReturnType<typeof getGroupDagTemplateVersions>>, TError = ErrorType<HTTPValidationError>>(
+ params?: GetGroupDagTemplateVersionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGroupDagTemplateVersions>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getGroupDagTemplateVersions>>,
+          TError,
+          Awaited<ReturnType<typeof getGroupDagTemplateVersions>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof validatingMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetGroupDagTemplateVersions<TData = Awaited<ReturnType<typeof getGroupDagTemplateVersions>>, TError = ErrorType<HTTPValidationError>>(
+ params?: GetGroupDagTemplateVersionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGroupDagTemplateVersions>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Group Dag Template Versions
+ */
+
+export function useGetGroupDagTemplateVersions<TData = Awaited<ReturnType<typeof getGroupDagTemplateVersions>>, TError = ErrorType<HTTPValidationError>>(
+ params?: GetGroupDagTemplateVersionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGroupDagTemplateVersions>>, TError, TData>>, request?: SecondParameter<typeof validatingMutator>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetGroupDagTemplateVersionsQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
