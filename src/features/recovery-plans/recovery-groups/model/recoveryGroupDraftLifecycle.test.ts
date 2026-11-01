@@ -8,6 +8,18 @@ const group: RecoveryGroup = {
   topology: 'metro_mirror', metroMirrorMode: 'existing', consistencyGroupId: 'MANUAL', auxiliaryNamesByVolume: { VOL: 'AUX' }, vmMetadataByName: { A: { order: 8 } },
 }
 describe('draft lifecycle transitions', () => {
+  it('changes DAG configuration deliberately, preserves it across source changes and respects both locks', () => {
+    const state = initializeDraft({ ...group, dagTemplateVersion: 'saved' })
+    const event = { type: 'dagTemplateVersionChanged', value: 'future' } as const
+    const updated = transitionDraft(state, event)
+    expect(updated.state.draft.dagTemplateVersion).toBe('future')
+    expect(updated.notifyDirty).toBe(true)
+    expect(transitionDraft(updated.state, { type: 'sourceChanged', sourceId: 'other' }).state.draft.dagTemplateVersion).toBe('future')
+    for (const editAuthority of [{ ...group, pushToOrchestrator: true }, { ...group, metroMirrorMode: 'managed' as const }]) {
+      expect(transitionDraft(state, event, { editAuthority })).toEqual({ state, notifyDirty: false })
+    }
+    expect(initializeDraft().draft.dagTemplateVersion).toBeNull()
+  })
   it('restores optional fields and resets only the pool on a deliberate source or mode change', () => {
     const state = initializeDraft({ ...group, metroMirrorMode: 'managed', consistencyGroupId: '', auxiliaryNamesByVolume: {}, notificationEmail: 'ops@example.com', targetPool: 'Saved pool' })
     expect(state.draft).toMatchObject({ notificationEmail: 'ops@example.com', targetPool: 'Saved pool' })

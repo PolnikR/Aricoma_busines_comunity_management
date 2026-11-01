@@ -25,6 +25,7 @@ export interface DraftLifecycle {
 }
 
 export type DraftEvent =
+  | { type: 'dagTemplateVersionChanged'; value: string | null }
   | { type: 'detailsChanged'; values: Partial<Pick<RecoveryGroupDraft, 'id' | 'name' | 'description' | 'notificationEmail'>> }
   | { type: 'targetPoolChanged'; value: string | null }
   | { type: 'sourceChanged'; sourceId: string | null }
@@ -54,6 +55,7 @@ export interface DraftObservation {
 
 export function initializeDraft(initialData?: RecoveryGroup): DraftLifecycle {
   const draft: RecoveryGroupDraft = initialData ? {
+    dagTemplateVersion: initialData.dagTemplateVersion ?? null,
     id: initialData.id, name: initialData.name, description: initialData.description,
     notificationEmail: initialData.notificationEmail ?? '', targetPool: initialData.targetPool ?? null,
     sourceCategory: initialData.sourceCategory, workloadType: initialData.workloadType, resourceType: initialData.resourceType,
@@ -65,6 +67,7 @@ export function initializeDraft(initialData?: RecoveryGroup): DraftLifecycle {
     topology: initialData.topology ?? 'local', metroMirrorMode: initialData.metroMirrorMode ?? null,
     consistencyGroupId: initialData.consistencyGroupId ?? '', auxiliaryNamesByVolume: { ...initialData.auxiliaryNamesByVolume },
   } : {
+    dagTemplateVersion: null,
     id: '', name: '', description: '', sourceCategory: null, workloadType: null, resourceType: null,
     notificationEmail: '', targetPool: null,
     providerId: null, policySetId: null, resources: [], relatedVolumeProviderId: null, relatedVolumes: [],
@@ -98,6 +101,7 @@ export function transitionDraft(current: DraftLifecycle, event: DraftEvent, cont
   let exclusions = current.exclusions
   const withoutAuxiliary = (name: string) => Object.fromEntries(Object.entries(raw.auxiliaryNamesByVolume ?? {}).filter(([key]) => key !== name))
   switch (event.type) {
+    case 'dagTemplateVersionChanged': patch = { dagTemplateVersion: event.value }; break
     case 'detailsChanged': patch = event.values; break
     case 'targetPoolChanged': patch = { targetPool: event.value }; break
     case 'sourceChanged':

@@ -84,6 +84,8 @@ export function mapRecoveryGroupApiRecord(
   )
 
   const common = {
+    dagTemplateVersion: record.dag_template_version === '' ? null : record.dag_template_version ?? null,
+    deployedTemplateVersion: record.orchestration?.pushed === true ? record.orchestration.template_version ?? null : null,
     notificationEmail: record.notificationEmail ?? null,
     targetPool: record.metro_mirror?.target_pool ?? null,
     targetVolumeProviderId: record.topology === 'metro_mirror' ? providers.find(provider => provider.id === volumeProviderId)?.partnerProviderId ?? null : null,
@@ -165,6 +167,7 @@ export function toRecoveryGroupSubmitPayload(
     name: draft.name,
     description: draft.description,
     notificationEmail: draft.notificationEmail ?? null,
+    dag_template_version: draft.dagTemplateVersion ?? null,
     provider_id_vm: isVmGroup ? draft.providerId : '',
     provider_id_volume: isVmGroup
       ? (draft.relatedVolumeProviderId ?? '')
@@ -195,6 +198,7 @@ export function toRecoveryGroupJson(group: RecoveryGroup): RecoveryGroupReadReco
     name: group.name,
     description: group.description,
     notificationEmail: group.notificationEmail ?? null,
+    dag_template_version: group.dagTemplateVersion ?? null,
     provider_id_vm: isVmGroup ? (group.providerId ?? '') : '',
     provider_id_volume: isVmGroup
       ? (group.relatedVolumeProviderId ?? '')
@@ -217,6 +221,7 @@ export function toRecoveryGroupJson(group: RecoveryGroup): RecoveryGroupReadReco
       provider_id: group.orchestrationProviderId ?? null,
       pushed: group.pushToOrchestrator ?? null,
       run_id: group.airflowRunId ?? null,
+      template_version: group.pushToOrchestrator === true ? group.deployedTemplateVersion ?? null : null,
     },
   }
 }
@@ -239,6 +244,8 @@ export function toRecoveryGroup(
     relatedVolumes: isVmGroup ? draft.relatedVolumes : [],
     topology: draft.topology,
     notificationEmail: draft.notificationEmail ?? null,
+    dagTemplateVersion: draft.dagTemplateVersion ?? null,
+    deployedTemplateVersion: null,
     targetPool: draft.targetPool ?? null,
     metroMirrorMode: draft.metroMirrorMode,
     consistencyGroupId: draft.consistencyGroupId,

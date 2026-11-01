@@ -42,6 +42,7 @@ const flashSystemProvider: ProviderRecord = {
 }
 
 const validatedVmDraft: ValidatedRecoveryGroupDraft = {
+  dagTemplateVersion: null,
   id: 'database_group',
   name: 'Database group',
   description: 'Database tier',
@@ -67,6 +68,29 @@ const validatedVmDraft: ValidatedRecoveryGroupDraft = {
 }
 
 describe('toRecoveryGroupSubmitPayload', () => {
+  it.each([null, 'v1', 'future-version'])('round-trips configured DAG version %s independently of deployment', version => {
+    const record = readRecord({ id: 'group', name: 'Group', description: 'Recovery',
+      provider_id_vm: vmwareProvider.id, provider_id_volume: flashSystemProvider.id,
+      policy_set_id: 'policy', vms: [{ name: 'VM' }], volumes: [{ name: 'VOL' }],
+      dag_template_version: version, orchestration: { provider_id: 'airflow', pushed: false, template_version: 'stale' } })
+    const group = mapRecoveryGroupApiRecord(record, [vmwareProvider, flashSystemProvider])
+    expect(group).toMatchObject({ dagTemplateVersion: version, deployedTemplateVersion: null })
+    const validated = validateRecoveryGroupDraft(initializeDraft(group).draft)
+    expect(toRecoveryGroupSubmitPayload(validated, group.id)).toMatchObject({ dag_template_version: version })
+    expect(toRecoveryGroupJson({ ...group, rawRecord: undefined })).toMatchObject({
+      dag_template_version: version, orchestration: { template_version: null },
+    })
+    expect(toRecoveryGroupJson(group)).toBe(record)
+  })
+
+  it.each([undefined, null, 'v2'])('reads deployed DAG version %s only from a pushed record', template_version => {
+    const group = mapRecoveryGroupApiRecord(readRecord({ id: 'group', name: 'Group',
+      provider_id_volume: flashSystemProvider.id,
+      orchestration: { pushed: true, ...(template_version === undefined ? {} : { template_version }) },
+    }), [flashSystemProvider])
+    expect(group).toMatchObject({ dagTemplateVersion: null, deployedTemplateVersion: template_version ?? null })
+  })
+
   it.each(['VMWARE', 'IBM_POWER'] as const)('preserves email and managed pool through %s Edit and fallback JSON', type => {
     const record = readRecord({ id: 'group', name: 'Group', description: 'Recovery', provider_id_vm: 'compute', provider_id_volume: 'source',
       policy_set_id: 'policy', vms: [{ name: 'workload' }], volumes: [{ name: 'VOL' }], topology: 'metro_mirror',
@@ -176,6 +200,7 @@ describe('toRecoveryGroupSubmitPayload', () => {
     expect(payload).toEqual({
       id: 'aaa',
       notificationEmail: null,
+      dag_template_version: null,
       name: 'aa',
       description: 'aa',
       provider_id_vm: resourceType === 'vm' ? 'vmware-vcenter-01' : '',

@@ -68,6 +68,8 @@ interface RecoveryGroupBase {
 export type RecoveryGroupListItem = RecoveryGroupBase & RecoveryGroupResourceConfiguration
 
 export type RecoveryGroup = RecoveryGroupListItem & {
+  dagTemplateVersion?: string | null
+  deployedTemplateVersion?: string | null
   resources: string[]
   relatedVolumeProviderId: string | null
   relatedVolumes: string[]
@@ -101,6 +103,7 @@ export type RecoveryGroupReadRecord = Omit<
 }
 
 export interface RecoveryGroupDraft {
+  dagTemplateVersion?: string | null
   notificationEmail?: string | null | undefined
   targetPool?: string | null | undefined
   id: string

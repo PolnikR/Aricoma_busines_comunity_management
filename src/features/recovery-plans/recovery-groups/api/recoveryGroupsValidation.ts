@@ -24,6 +24,7 @@ function findSubmittableConfiguration(draft: RecoveryGroupDraft): RecoveryGroupR
 }
 
 export interface ValidatedRecoveryGroupDraft {
+  dagTemplateVersion: string | null
   notificationEmail?: string | null
   targetPool?: string | null
   id: string
@@ -100,6 +101,7 @@ export function validateRecoveryGroupDraft(draft: RecoveryGroupDraft): Validated
   }
 
   return {
+    dagTemplateVersion: draft.dagTemplateVersion === '' ? null : draft.dagTemplateVersion ?? null,
     notificationEmail: draft.notificationEmail?.trim() ? draft.notificationEmail.trim() : null,
     targetPool: isMetroMirror && draft.metroMirrorMode === 'managed' && draft.targetPool ? draft.targetPool : null,
     id: draft.id,
