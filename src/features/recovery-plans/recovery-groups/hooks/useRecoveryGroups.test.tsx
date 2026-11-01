@@ -97,6 +97,62 @@ function loadedGroup<T>(groups: T[]): T {
 }
 
 describe('useRecoveryGroups', () => {
+  it.each(['ok', 'partial', 'failed', 'skipped'] as const)('retains configuration and reflects the persisted version after rollback %s', async status => {
+    let pushed = true
+    const persisted = () => ({ ...wireGroup, dag_template_version: 'v1',
+      orchestration: { provider_id: 'airflow-01', pushed, ...(pushed ? { template_version: 'v2' } : {}) } })
+    stubFetch({
+      '/api/get_recovery_groups': () => ({ recovery_groups: [persisted()] }),
+      '/api/rollback_group_from_orchestrator': () => {
+        if (status === 'failed') return new Response(JSON.stringify({ detail: 'Rollback failed' }), { status: 502, headers: { 'Content-Type': 'application/json' } })
+        if (status !== 'skipped') pushed = false
+        return { recovery_groups: [persisted()], rollback: { status } }
+      },
+    })
+    const { result } = renderHook(() => useRecoveryGroups(), { wrapper: createWrapper() })
+    await waitFor(() => { expect(result.current.groups[0]?.deployedTemplateVersion).toBe('v2') })
+    await act(async () => {
+      if (status === 'failed') await expect(result.current.rollback(wireGroup.id, 'airflow-01')).rejects.toThrow()
+      else await result.current.rollback(wireGroup.id, 'airflow-01')
+    })
+    await waitFor(() => { expect(result.current.groups[0]).toMatchObject({
+      dagTemplateVersion: 'v1', deployedTemplateVersion: status === 'ok' || status === 'partial' ? null : 'v2',
+    }) })
+  })
+  it.each([
+    { version: null, pushed: false, deployed: null },
+    { version: 'v1', pushed: true, deployed: 'resolved-version' },
+    { version: 'unlisted', pushed: false, deployed: null },
+  ])('sends configuration $version without a catalog gate and uses returned deployment $deployed', async ({ version, pushed, deployed }) => {
+    const mock = stubFetch({ '/api/submit_recovery_group': () => ({ recovery_groups: [{ ...wireGroup,
+      dag_template_version: version, orchestration: { pushed, template_version: deployed },
+    }], orchestrator_push: { status: pushed ? 'pushed' : 'skipped' } }) })
+    const { result } = renderHook(() => useRecoveryGroups(), { wrapper: createWrapper() })
+    await waitFor(() => { expect(result.current.groups).toHaveLength(1) })
+    let saved: unknown
+    await act(async () => { saved = await result.current.update(draft.id, { ...draft, dagTemplateVersion: version, pushToOrchestrator: true }) })
+    const request = calls(mock, '/api/submit_recovery_group')[0]
+    const body = request?.init?.body
+    if (typeof body !== 'string') throw new Error('Expected a JSON request body')
+    expect(JSON.parse(body)).toMatchObject({ dag_template_version: version })
+    expect(saved).toMatchObject({ dagTemplateVersion: version, deployedTemplateVersion: deployed, pushToOrchestrator: pushed })
+    expect(calls(mock, '/api/get_group_dag_template_versions')).toHaveLength(0)
+  })
+
+  it.each([400, 502])('propagates HTTP %s without adding GET, retry or lock inference', async status => {
+    const mock = stubFetch({ '/api/submit_recovery_group': () => new Response(JSON.stringify({ detail: 'Backend version or push failure' }),
+      { status, headers: { 'Content-Type': 'application/json' } }) })
+    const { result } = renderHook(() => useRecoveryGroups(), { wrapper: createWrapper() })
+    await waitFor(() => { expect(result.current.groups).toHaveLength(1) })
+    const initialReads = calls(mock, '/api/get_recovery_groups').length
+    await act(async () => {
+      await expect(result.current.update(draft.id, { ...draft, dagTemplateVersion: 'unlisted', pushToOrchestrator: true })).rejects.toThrow()
+    })
+    expect(calls(mock, '/api/submit_recovery_group')).toHaveLength(1)
+    expect(calls(mock, '/api/get_recovery_groups')).toHaveLength(initialReads)
+    expect(calls(mock, '/api/get_group_dag_template_versions')).toHaveLength(0)
+    expect(result.current.groups[0]?.pushToOrchestrator).not.toBe(true)
+  })
   beforeEach(() => {
     mocks.useProviders.mockReturnValue({ data: [provider, source, target], isLoading: false, isSuccess: true, error: null, refetch: vi.fn() })
   })
