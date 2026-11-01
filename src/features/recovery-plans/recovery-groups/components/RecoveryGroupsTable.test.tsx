@@ -80,6 +80,21 @@ const groups: RecoveryGroup[] = [
   },
 ]
 
+describe('DAG version detail', () => {
+  it.each([
+    { configured: null, deployed: 'v1', pushed: true, expectedConfig: 'Backend default', expectedDeployment: 'v1' },
+    { configured: 'v2', deployed: 'v1', pushed: true, expectedConfig: 'v2', expectedDeployment: 'v1' },
+    { configured: 'v2', deployed: 'stale', pushed: false, expectedConfig: 'v2', expectedDeployment: 'Not deployed' },
+    { configured: null, deployed: null, pushed: true, expectedConfig: 'Backend default', expectedDeployment: 'Unknown version' },
+  ])('distinguishes configured and active deployed versions: $expectedConfig / $expectedDeployment', async ({ configured, deployed, pushed, expectedConfig, expectedDeployment }) => {
+    renderTable(<RecoveryGroupsTable groups={groups.map(group => ({ ...group, dagTemplateVersion: configured, deployedTemplateVersion: deployed, pushToOrchestrator: pushed }))}
+      onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} />)
+    await userEvent.click(screen.getByText('Database group'))
+    expect(screen.getByText('Configured DAG version').closest('dt')?.nextElementSibling).toHaveTextContent(expectedConfig)
+    expect(screen.getByText('Deployed DAG version').closest('dt')?.nextElementSibling).toHaveTextContent(expectedDeployment)
+  })
+})
+
 const unresolvedGroup: RecoveryGroup = {
   ...groups[0],
   id: 'orphan-vm-group',
@@ -606,7 +621,7 @@ describe('RecoveryGroupsTable', () => {
       expect(within(overview).queryByRole('heading', { name: 'Workload' })).not.toBeInTheDocument()
       expect(overview.querySelectorAll('dl')).toHaveLength(1)
       expect([...overview.querySelectorAll('dt')].map(term => term.textContent)).toEqual([
-        'Description', 'Notification email', 'Policy Set', 'Provider ID', 'Topology mode', 'Source FlashSystem provider', 'Source Category', 'Workload Type', 'Resource Type', 'Resources', 'Status',
+        'Configured DAG version', 'Deployed DAG version', 'Description', 'Notification email', 'Policy Set', 'Provider ID', 'Topology mode', 'Source FlashSystem provider', 'Source Category', 'Workload Type', 'Resource Type', 'Resources', 'Status',
       ])
       expect(overview).toHaveTextContent('Primary database virtual machines')
       expect(overview).toHaveTextContent('Compute workloads')

@@ -463,6 +463,12 @@ export function RecoveryGroupsTable({
           <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
             {/* Persisted configuration stays available even without live inventory. */}
             <DetailOverview>
+              <DetailField label={t('recoveryGroups.dagTemplate.configured')}
+                value={selected.dagTemplateVersion ?? t('recoveryGroups.dagTemplate.backendDefault')} />
+              <DetailField label={t('recoveryGroups.dagTemplate.deployed')}
+                value={selected.pushToOrchestrator === true
+                  ? selected.deployedTemplateVersion ?? t('recoveryGroups.dagTemplate.unknown')
+                  : t('recoveryGroups.dagTemplate.notDeployed')} />
               <DetailField label={t('details.description')} value={selected.description} wide />
               <DetailField label={t('recoveryGroups.notificationEmail')} value={selected.notificationEmail?.trim() ? selected.notificationEmail : t('recoveryGroups.emailInherited')}
                 labelHelp={<KeyedHelpPopover helpKey="recoveryGroups.fieldHelp.email" sections={[]} />} />
