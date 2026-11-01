@@ -1390,6 +1390,8 @@ describe('RecoveryAppBuilder', () => {
     await user.click(screen.getByRole('button', { name: 'Next' }))
 
     const toggle = screen.getByRole('switch', { name: 'Push to orchestrator' })
+    const version = screen.getByLabelText('DAG Template Version')
+    expect(toggle.compareDocumentPosition(version) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(toggle).toBeChecked()
     expect(toggle).toBeDisabled()
     expect(screen.getByText(/already deployed to Airflow/)).toBeInTheDocument()

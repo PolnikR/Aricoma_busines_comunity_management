@@ -419,16 +419,6 @@ export function RecoveryAppBuilder({
               <div>
                 <h2 className="text-base font-semibold text-text-primary">{t('pages.recoveryBuilder.orchestration.title')}</h2>
                 <p className="mt-1 text-sm text-text-muted">{t('pages.recoveryBuilder.orchestration.description')}</p>
-                <DagTemplateVersionSelect
-                  platform={templatePlatform}
-                  value={formState.dagTemplateVersion ?? null}
-                  templates={templates}
-                  isLoading={Boolean(templatePlatform && templatesQuery.isPending)}
-                  error={templatesQuery.error}
-                  disabled={isFormDisabled}
-                  onChange={dagTemplateVersion => { updateFormState({ dagTemplateVersion }) }}
-                  onRetry={() => { void templatesQuery.refetch() }}
-                />
                 <div className="mt-5 flex max-w-4xl items-start gap-3 rounded-lg border border-border bg-surface p-4">
                   <Toggle
                     checked={formState.pushToOrchestrator}
@@ -451,6 +441,16 @@ export function RecoveryAppBuilder({
                     ) : null}
                   </div>
                 </div>
+                <DagTemplateVersionSelect
+                  platform={templatePlatform}
+                  value={formState.dagTemplateVersion ?? null}
+                  templates={templates}
+                  isLoading={Boolean(templatePlatform && templatesQuery.isPending)}
+                  error={templatesQuery.error}
+                  disabled={isFormDisabled}
+                  onChange={dagTemplateVersion => { updateFormState({ dagTemplateVersion }) }}
+                  onRetry={() => { void templatesQuery.refetch() }}
+                />
                 {formState.pushToOrchestrator ? (
                   <div className="mt-5 flex min-w-0 items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
                     {platformProvidersQuery.error || (!platformProvidersQuery.isLoading && eligiblePlatformProviders.length === 0)
