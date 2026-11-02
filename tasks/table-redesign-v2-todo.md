@@ -11,10 +11,15 @@ Spoločné pravidlo pre každú úlohu: focused `npm exec vitest run <testy úlo
 
 **Popis:** Zistiť, prečo `DataTableSurface` na Platform providers pri 4 záznamoch nesiaha po spodok obsahu, hoci route má `contentScroll: 'contained'`, a opraviť to v shared vrstve. Ak je príčina v `AppShell`, najprv navrhnúť opravu a počkať na schválenie.
 
+**Výsledok (2026-11-02):** bez zmeny kódu. Na `test` po merge `7d37317b` karta siaha po spodok stránky. Chyba zo screenshotu pochádzala zo zahodeného lokálneho commitu `3d4f0625` („content-sized surface“). Merané headless Chrome cez CDP na Platform providers (4 záznamy):
+- 1600×900: karta 255–830 px, obsah končí na 842 px (p-3), pätička dole.
+- 1280×600: pätička 464–529 px je viditeľná, scrolluje sa len telo tabuľky (135/328 px).
+- 390×844: scrolluje sa dokument, pätička je dosiahnuteľná.
+
 **Akceptačné kritériá:**
-- [ ] Na šírke ≥1024 px pri krátkom zozname spodná hrana karty lícuje so spodkom obsahu stránky a stránkovanie je pripnuté dole.
-- [ ] Pri dlhom zozname sa scrolluje len telo tabuľky a hlavička stĺpcov ostáva viditeľná. Existuje len jeden vertikálny scroll owner.
-- [ ] Pri 1280×600 je stránkovanie dosiahnuteľné. Na mobile (<1024 px) sa stránka scrolluje ako dnes.
+- [x] Na šírke ≥1024 px pri krátkom zozname spodná hrana karty lícuje so spodkom obsahu stránky a stránkovanie je pripnuté dole.
+- [x] Pri dlhom zozname sa scrolluje len telo tabuľky a hlavička stĺpcov ostáva viditeľná. Existuje len jeden vertikálny scroll owner (`DataTableSurface` stredný riadok, `thead` sticky).
+- [x] Pri 1280×600 je stránkovanie dosiahnuteľné. Na mobile (<1024 px) sa stránka scrolluje ako dnes.
 
 **Overenie:**
 - [ ] `npm exec vitest run src/shared/components/inventory-shell/InventoryShell.test.tsx src/shared/components/data-table/DataTableSurface.test.tsx src/shared/components/page/ContainedViewportFrame.test.tsx`
