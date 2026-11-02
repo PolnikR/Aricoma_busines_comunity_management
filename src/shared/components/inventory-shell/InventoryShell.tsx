@@ -38,15 +38,23 @@ export function InventoryShell({
       className={cn('flex flex-1 flex-col', surfaceMinHeightClassName ?? 'lg:min-h-0')}
       aria-label={inventoryTitle}
     >
-      <Card className={cn('relative flex flex-1 flex-col overflow-hidden p-0 sm:p-0 lg:min-h-0', compactSpacing && 'lg:!p-0')}>
+      {/*
+        The card frames content that has no frame of its own (forms, bare tables). When the
+        content brings a DataTableSurface, that surface is the only card and this one steps back.
+      */}
+      <Card className={cn(
+        'group/inventory relative flex flex-1 flex-col overflow-hidden p-0 sm:p-0 lg:min-h-0',
+        'has-[[data-table-surface]]:overflow-visible has-[[data-table-surface]]:p-0 has-[[data-table-surface]]:rounded-none has-[[data-table-surface]]:border-0 has-[[data-table-surface]]:bg-transparent has-[[data-table-surface]]:shadow-none',
+        compactSpacing && 'lg:!p-0',
+      )}>
         {/* The page header already names the page; the inventory title only labels the region. */}
         {tabs ? (
-          <div className={cn('flex shrink-0 items-center gap-2 border-b border-border px-4 py-2.5', compactSpacing && 'lg:py-0.5')}>
+          <div className={cn('flex shrink-0 items-center gap-2 border-b border-border px-4 py-2.5 group-has-[[data-table-surface]]/inventory:border-b-0 group-has-[[data-table-surface]]/inventory:px-0 group-has-[[data-table-surface]]/inventory:pt-0', compactSpacing && 'lg:py-0.5')}>
             {tabs}
           </div>
         ) : null}
 
-        <div className={cn('flex flex-1 flex-col overflow-hidden bg-surface-subtle p-3 lg:min-h-0', compactSpacing && 'lg:p-0')}>
+        <div className={cn('flex flex-1 flex-col overflow-hidden bg-surface-subtle p-3 lg:min-h-0 group-has-[[data-table-surface]]/inventory:bg-transparent group-has-[[data-table-surface]]/inventory:p-0', compactSpacing && 'lg:p-0')}>
           {children}
         </div>
       </Card>

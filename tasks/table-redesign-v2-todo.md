@@ -51,6 +51,18 @@ Discovery settings sa nemení, lebo popis stránky už vymenúva všetky sekcie.
 **Závislosti:** žiadne.
 **Súbory (S, 2):** `src/shared/components/inventory-shell/InventoryShell.tsx`, `InventoryShell.test.tsx`.
 
+### T2b: Tabuľka je jediná karta (doplnené 2026-11-02 na žiadosť používateľa)
+
+**Popis:** Vonkajšia karta `InventoryShell` okolo `DataTableSurface` bola zbytočný rámik v rámiku. `DataTableSurface` má značku `data-table-surface` a `InventoryShell` cez CSS `:has()` vypne svoj okraj, pozadie, tieň a padding, keď obsah takú kartu obsahuje. Obsah bez vlastnej karty (formuláre Discovery settings) si rámik ponechá. Nepridáva sa prop pre jednotlivé stránky.
+
+**Akceptačné kritériá:**
+- [x] Platform providers, Recovery runs, Audit a Resources majú jedinú kartu a jej ľavý okraj lícuje s nadpisom stránky (headless Chrome: x = 337 px pri 1600×900).
+- [x] Discovery settings (formulár) si rámik ponechá.
+- [x] Záložky zostávajú nad kartou bez spodnej čiary.
+
+**Overenie:** `npm exec vitest run` nad `InventoryShell`, `data-table` a 16 konzumentmi (43 súborov, 361 testov); headless Chrome na piatich stránkach.
+**Súbory (S, 3):** `InventoryShell.tsx`, `DataTableSurface.tsx`, `DataTableSurface.test.tsx`.
+
 ### Checkpoint 1: Rozloženie
 - [ ] `npm run typecheck` a `npm run lint` bez chýb.
 - [ ] Používateľ v prehliadači potvrdí jednu hlavičku a kartu tabuľky na celú výšku (Platform providers, Policy sets, Identity & Access).

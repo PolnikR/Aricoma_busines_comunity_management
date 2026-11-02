@@ -24,4 +24,14 @@ describe('DataTableSurface', () => {
     expect(dataViewport).not.toContainElement(screen.getByRole('button', { name: 'Filters' }))
     expect(dataViewport).not.toContainElement(screen.getByText('Pagination'))
   })
+
+  it('marks itself so a surrounding InventoryShell can drop its own frame', () => {
+    render(
+      <DataTableSurface ariaLabel="Inventory table" toolbar={null}>
+        <div>Inventory rows</div>
+      </DataTableSurface>,
+    )
+
+    expect(screen.getByRole('region', { name: 'Inventory table' })).toHaveAttribute('data-table-surface')
+  })
 })
