@@ -7,6 +7,8 @@ import { getRecoveryGroupResourceOption } from '../config/recoveryGroupResourceO
 import { getProviderScopeDisplay } from '../helpers/providerScopeDisplay'
 import { RecoveryGroupProviderScope } from './RecoveryGroupProviderScope'
 import type { RecoveryGroupWorkloadType } from '../model/recoveryGroupTypes'
+import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
+import { recoveryGroupComputeHelpKey } from '../helpers/recoveryGroupFieldHelp'
 
 interface RecoveryGroupProviderStepProps {
   workloadType: RecoveryGroupWorkloadType
@@ -40,9 +42,9 @@ export function RecoveryGroupProviderStep({
     <div>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-base font-semibold text-text-primary">
+          <div className="flex items-center gap-1.5"><h2 className="text-base font-semibold text-text-primary">
             {title ?? t('pages.recoveryGroupBuilder.provider.title')}
-          </h2>
+          </h2><KeyedHelpPopover helpKey={recoveryGroupComputeHelpKey(providers.find(provider => provider.id === selectedProviderId)?.type)} sections={[]} /></div>
           <p className="mt-1 text-sm text-text-muted">
             {description ?? t('pages.recoveryGroupBuilder.provider.description')}
           </p>

@@ -23,6 +23,10 @@ variables:
   KEYCLOAK_REALM: "aricoma"
   KEYCLOAK_CLIENT_ID: "abcm-fe"
   AUTH_ENABLED: "true"
+  # Test server that receives the built image tar (docker save + scp). Credentials come
+  # from masked CI/CD variables TEST_SERVER_USER and TEST_SERVER_PASS, never from here.
+  TEST_SERVER_HOST: "10.99.99.58"
+  TEST_SERVER_DIR: "/home/aricoma"
 
 stages:
   - api-check
@@ -39,6 +43,25 @@ build-and-deploy:
     - when: manual
   script:
     - docker build -t ${IMAGE_NAME}:${IMAGE_TAG} -t ${IMAGE_NAME}:latest .
+    - |
+      # Non-blocking: export the built image to the test server for independent testing.
+      # Password auth via a temporary SSH_ASKPASS script (sshpass is not installed on the
+      # runners); needs OpenSSH >= 8.4 and setsid. A failure only prints a warning.
+      TAR_FILE=/tmp/${IMAGE_NAME}-${IMAGE_TAG}.tar
+      ASKPASS_SCRIPT=$(mktemp)
+      chmod 700 "$ASKPASS_SCRIPT"
+      printf '#!/bin/sh\necho "$TEST_SERVER_PASS"\n' > "$ASKPASS_SCRIPT"
+      if docker save ${IMAGE_NAME}:${IMAGE_TAG} -o "$TAR_FILE" \
+        && SSH_ASKPASS="$ASKPASS_SCRIPT" SSH_ASKPASS_REQUIRE=force DISPLAY=none setsid -w scp \
+          -o StrictHostKeyChecking=no \
+          -o PreferredAuthentications=password,keyboard-interactive \
+          -o PubkeyAuthentication=no \
+          "$TAR_FILE" ${TEST_SERVER_USER}@${TEST_SERVER_HOST}:${TEST_SERVER_DIR}/; then
+        echo "OK: image ${IMAGE_NAME}:${IMAGE_TAG} copied to ${TEST_SERVER_HOST}"
+      else
+        echo "WARNING: image export/scp to ${TEST_SERVER_HOST} failed"
+      fi
+      rm -f "$ASKPASS_SCRIPT" "$TAR_FILE"
     - docker stop ${CONTAINER_NAME} || true
     - docker rm ${CONTAINER_NAME} || true
     - |

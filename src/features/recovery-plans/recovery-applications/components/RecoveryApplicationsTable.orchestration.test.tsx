@@ -83,7 +83,7 @@ describe('Application selected orchestration HTTP contract', () => {
     const section = view.section('Orchestration')
     await waitFor(() => { expect(http.params('get_orchestrator_runs')).toHaveLength(1) })
     await within(section).findByText(expected)
-    expect(within(section).getByRole('button', { name: /View recovery runs/ })).toBeInTheDocument()
+    expect(within(section).getByRole('button', { name: /View recovery app runs/ })).toBeInTheDocument()
     await act(async () => { pending.resolve(Response.json({ providers: [provider] })); await pending.promise })
   })
 
@@ -171,7 +171,7 @@ describe('Application selected orchestration HTTP contract', () => {
       { provider_id: 'airflow-01', dag_id: 'dag_run-1', limit: '1', order_by: '-logical_date' },
     ])
     expect(http.params('get_platform_providers')).toHaveLength(1)
-    fireEvent.click(within(section).getByRole('button', { name: /View recovery runs/ }))
+    fireEvent.click(within(section).getByRole('button', { name: /View recovery app runs/ }))
     expect(await screen.findByText('?tab=applications&entityType=application&entityId=app%20%2F%20one')).toBeInTheDocument()
   })
 
@@ -184,15 +184,14 @@ describe('Application selected orchestration HTTP contract', () => {
     const section = view.section('Orchestration')
     await waitFor(() => { expect(view.client.isFetching()).toBe(0) })
     expect(http.params('get_orchestrator_runs')).toEqual([])
-    expect(within(section).queryByRole('button', { name: /View recovery runs/ })).not.toBeInTheDocument()
+    expect(within(section).queryByRole('button', { name: /View recovery app runs/ })).not.toBeInTheDocument()
   })
 
-  it('keeps a stored row link with Push off, but hides its detail reference and inventory', async () => {
+  it('keeps a stored historical ID with Push off without an active link, detail reference or inventory', async () => {
     const http = stubSelectedOrchestration()
     const view = setup({ pushToOrchestrator: false })
-    const link = await screen.findByRole('link', { name: /dag_run-1/ })
-    await waitFor(() => { expect(link).toHaveAttribute('href', 'https://airflow.test/dags/dag_run-1') })
-    fireEvent.click(link)
+    expect(screen.getByText('run-1')).toHaveAttribute('title', 'DAG Run ID (retained history)')
+    expect(screen.queryByRole('link', { name: /dag_run-1/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     view.open()
     expect(within(view.section('Orchestration')).queryByRole('link')).not.toBeInTheDocument()

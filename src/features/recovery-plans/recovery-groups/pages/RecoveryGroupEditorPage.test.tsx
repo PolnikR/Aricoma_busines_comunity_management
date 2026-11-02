@@ -259,16 +259,19 @@ describe('RecoveryGroupEditorPage', () => {
     expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-groups')
   })
 
-  it('shows nested backend detail when updating a recovery group fails', async () => {
+  it.each([
+    [409, 'The recovery group is locked by an active run.'],
+    [403, 'missing permission: MANAGE_METRO_MIRROR'],
+  ])('shows backend detail for status %s without a local permission gate', async (status, detail) => {
     const user = userEvent.setup()
     update.mockRejectedValue(new Error('Submit recovery group request failed', {
-      cause: new OrvalApiError(409, 'Conflict', { detail: 'The recovery group is locked by an active run.' }),
+      cause: new OrvalApiError(status, 'Rejected', { detail }),
     }))
     render(<RecoveryGroupEditorPage />)
 
     await user.click(screen.getByRole('button', { name: 'Submit edit' }))
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('The recovery group is locked by an active run.')
+    expect(await screen.findByRole('alert')).toHaveTextContent(detail)
   })
 
   it('keeps the localized domain error mapping when updating a recovery group fails validation', async () => {

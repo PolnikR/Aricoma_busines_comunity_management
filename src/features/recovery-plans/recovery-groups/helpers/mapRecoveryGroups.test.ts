@@ -11,6 +11,7 @@ import { RecoveryGroupRecord } from '@/generated/query/zod'
 import type { ValidatedRecoveryGroupDraft } from '../api/recoveryGroupsValidation'
 import { validateRecoveryGroupDraft } from '../api/recoveryGroupsValidation'
 import type { RecoveryGroupDraft } from '../model/recoveryGroupTypes'
+import { initializeDraft } from '../model/recoveryGroupDraftLifecycle'
 
 // Fixtures go through the generated schema so contract defaults (e.g. topology)
 // apply, exactly like a parsed GET response.
@@ -66,6 +67,27 @@ const validatedVmDraft: ValidatedRecoveryGroupDraft = {
 }
 
 describe('toRecoveryGroupSubmitPayload', () => {
+  it.each(['VMWARE', 'IBM_POWER'] as const)('preserves email and managed pool through %s Edit and fallback JSON', type => {
+    const record = readRecord({ id: 'group', name: 'Group', description: 'Recovery', provider_id_vm: 'compute', provider_id_volume: 'source',
+      policy_set_id: 'policy', vms: [{ name: 'workload' }], volumes: [{ name: 'VOL' }], topology: 'metro_mirror',
+      metro_mirror: { mode: 'managed', target_pool: 'Pool name' }, notificationEmail: 'ops@example.com',
+      orchestration: { provider_id: 'airflow-01', pushed: false } })
+    const group = mapRecoveryGroupApiRecord(record, [{ ...vmwareProvider, id: 'compute', type }])
+    const validated = validateRecoveryGroupDraft(initializeDraft(group).draft)
+    const payload = toRecoveryGroupSubmitPayload(validated, 'group')
+    expect(payload.notificationEmail).toBe('ops@example.com')
+    expect(payload.metro_mirror).toEqual({ mode: 'managed', target_pool: 'Pool name' })
+    const fallback = toRecoveryGroupJson(toRecoveryGroup(validated, 'group'))
+    expect(fallback.notificationEmail).toBe('ops@example.com')
+    expect(fallback.metro_mirror?.target_pool).toBe('Pool name')
+  })
+
+  it('explicitly clears email and omits pools outside Managed', () => {
+    const draft = { ...validatedVmDraft, notificationEmail: null, targetPool: 'UNUSED' }
+    expect(toRecoveryGroupSubmitPayload(draft, 'group')).toMatchObject({ notificationEmail: null })
+    const existing = toRecoveryGroupSubmitPayload({ ...draft, topology: 'metro_mirror', metroMirrorMode: 'existing', consistencyGroupId: '9' }, 'group')
+    expect(existing.metro_mirror).toEqual({ mode: 'existing', consistency_group_id: '9' })
+  })
   it('serializes only selected VM metadata and retains persisted order precedence', () => {
     const payload = toRecoveryGroupSubmitPayload({ ...validatedVmDraft, resources: ['B', 'A'], vmMetadataByName: {
       A: { order: 9, hostname: 'saved-a' }, B: { order: 4 }, REMOVED: { hostname: 'unused' },
@@ -153,6 +175,7 @@ describe('toRecoveryGroupSubmitPayload', () => {
 
     expect(payload).toEqual({
       id: 'aaa',
+      notificationEmail: null,
       name: 'aa',
       description: 'aa',
       provider_id_vm: resourceType === 'vm' ? 'vmware-vcenter-01' : '',

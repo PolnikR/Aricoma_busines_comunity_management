@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ProvidersCreateModal } from './ProvidersCreateModal'
@@ -42,7 +43,7 @@ const mockProviderA: ProviderRecord = {
 
 function renderWithQueryClient(component: React.ReactElement) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(<QueryClientProvider client={queryClient}>{component}</QueryClientProvider>)
+  return render(component, { wrapper: ({ children }) => <QueryClientProvider client={queryClient}>{children}</QueryClientProvider> })
 }
 
 function fillValidForm() {
@@ -55,8 +56,292 @@ function fillValidForm() {
 }
 
 describe('ProvidersCreateModal', () => {
+  it.each(['create', 'edit'] as const)('dismisses field help before the %s modal without changing values', async mode => {
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    try {
+      const { container } = renderWithQueryClient(
+        <ProvidersCreateModal open onClose={onClose} existingProviders={[mockProviderA]}
+          {...(mode === 'edit' ? { provider: mockProviderA } : {})} />,
+      )
+      if (mode === 'create') {
+        fillValidForm()
+        // Settle the existing ID-on-blur normalization before the help comparison.
+        fireEvent.blur(screen.getByLabelText('ID'))
+      }
+      const values = () => [...container.querySelectorAll<HTMLInputElement | HTMLSelectElement>('input, select')]
+        .map(control => [control.id, control.value])
+      const before = values()
+      const trigger = screen.getByRole('button', { name: 'Help: Role' })
+      await user.click(trigger)
+      expect(screen.getByRole('dialog', { name: 'Role' })).toBeInTheDocument()
+      await user.keyboard('{Escape}')
+      expect(screen.queryByRole('dialog', { name: 'Role' })).not.toBeInTheDocument()
+      expect(screen.getByRole('dialog', { name: mode === 'create' ? 'Create provider' : 'Edit provider' })).toBeInTheDocument()
+      expect(values()).toEqual(before)
+      expect(onClose).not.toHaveBeenCalled()
+      expect(fetchMock).not.toHaveBeenCalled()
+
+      await user.click(trigger)
+      await user.click(screen.getByRole('button', { name: 'Close help' }))
+      expect(screen.queryByRole('dialog', { name: 'Role' })).not.toBeInTheDocument()
+      expect(trigger).toHaveFocus()
+      expect(values()).toEqual(before)
+      await user.keyboard('{Escape}')
+      if (mode === 'edit') {
+        // Help alone must not make the pristine edit dirty.
+        expect(onClose).toHaveBeenCalledOnce()
+        expect(screen.queryByRole('heading', { name: 'Discard unsaved provider changes?' })).not.toBeInTheDocument()
+      } else {
+        expect(onClose).not.toHaveBeenCalled()
+        expect(screen.getByRole('heading', { name: 'Discard unsaved provider changes?' })).toBeInTheDocument()
+        await user.click(screen.getByRole('button', { name: 'Stay' }))
+        expect(values()).toEqual(before)
+      }
+      expect(fetchMock).not.toHaveBeenCalled()
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
+  it.each(['VMWARE', 'FLASHCOPY', 'HITACHI', 'IBM_POWER'] as const)('keeps the %s edit payload identical after field help', async type => {
+    const user = userEvent.setup()
+    const provider: ProviderRecord = {
+      ...mockProviderA, type, vmPrefix: ' legacy prefix ', vmTags: ['saved-tag', 'missing-tag'],
+      managedSystem: ' legacy system ', backingStorageProviderIds: ['missing-storage'], partnerProviderId: 'missing-partner',
+    }
+    const fetchMock = vi.fn<typeof fetch>().mockImplementation(() => Promise.resolve(new Response(JSON.stringify({ providers: [] }), { status: 200 })))
+    vi.stubGlobal('fetch', fetchMock)
+    try {
+      for (const withHelp of [false, true]) {
+        const onClose = vi.fn()
+        const view = renderWithQueryClient(<ProvidersCreateModal open onClose={onClose} existingProviders={[provider]} provider={provider} />)
+        if (withHelp) {
+          await user.click(screen.getByRole('button', { name: 'Help: Credential' }))
+          await user.keyboard('{Escape}')
+          expect(onClose).not.toHaveBeenCalled()
+        }
+        await user.click(screen.getByRole('button', { name: 'Edit provider' }))
+        await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+        view.unmount()
+      }
+      expect(fetchMock).toHaveBeenCalledTimes(2)
+      const bodies = fetchMock.mock.calls.map(([, init]) => {
+        if (typeof init?.body !== 'string') throw new Error('Expected a JSON request body')
+        return JSON.parse(init.body) as unknown
+      })
+      expect(bodies[1]).toEqual(bodies[0])
+      expect(bodies[1]).toMatchObject({
+        vmPrefix: provider.vmPrefix, vmTags: provider.vmTags, managedSystem: provider.managedSystem,
+        backingStorageProviderIds: provider.backingStorageProviderIds, partnerProviderId: provider.partnerProviderId,
+      })
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
   const flashA: ProviderRecord = { ...mockProviderA, id: 'flash-a', name: 'Array A', type: 'FLASHCOPY' }
   const flashB: ProviderRecord = { ...mockProviderA, id: 'flash-b', name: 'Array B', type: 'FLASHCOPY', role: 'target' }
+  it('restores the original managed system when the modal reopens', () => {
+    const provider: ProviderRecord = { ...mockProviderA, type: 'IBM_POWER', managedSystem: 'system-a' }
+    const props = { onClose: vi.fn(), existingProviders: [provider], provider }
+    const { rerender } = renderWithQueryClient(<ProvidersCreateModal {...props} open />)
+    fireEvent.change(screen.getByLabelText('Managed system'), { target: { value: 'unsaved' } })
+    rerender(<ProvidersCreateModal {...props} open={false} />)
+    rerender(<ProvidersCreateModal {...props} open />)
+    expect(screen.getByLabelText('Managed system')).toHaveValue('system-a')
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(props.onClose).toHaveBeenCalledOnce()
+  })
+
+  it.each(['prefix', 'tags'])('guards unsaved VMware %s changes', field => {
+    const provider = { ...mockProviderA, vmPrefix: 'prod-', vmTags: ['saved-tag'] }
+    const onClose = vi.fn()
+    renderWithQueryClient(<ProvidersCreateModal open onClose={onClose} existingProviders={[provider]} provider={provider} />)
+    if (field === 'prefix') fireEvent.change(screen.getByLabelText('VM prefix'), { target: { value: 'changed-' } })
+    else {
+      fireEvent.click(screen.getByRole('button', { name: 'VM tags' }))
+      fireEvent.click(screen.getByRole('checkbox', { name: 'saved-tag' }))
+    }
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(screen.getByRole('heading', { name: 'Discard unsaved provider changes?' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Stay' }))
+    expect(onClose).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }))
+    expect(onClose).toHaveBeenCalledOnce()
+  })
+
+  it.each(['create', 'unchanged', 'replace', 'clear'])('submits the IBM Power managed system on %s', async action => {
+    const provider: ProviderRecord = { ...mockProviderA, type: 'IBM_POWER', managedSystem: 'system-a' }
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    const onClose = vi.fn()
+    renderWithQueryClient(<ProvidersCreateModal open onClose={onClose} existingProviders={action === 'create' ? [] : [provider]}
+      {...(action === 'create' ? {} : { provider })} />)
+    if (action === 'create') {
+      fillValidForm()
+      fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'IBM_POWER' } })
+    } else expect(screen.getByLabelText('Managed system')).toHaveValue('system-a')
+    if (action !== 'unchanged') {
+      fireEvent.change(screen.getByLabelText('Managed system'), { target: { value: action === 'clear' ? '' : ' system-b ' } })
+    }
+    fireEvent.click(screen.getByRole('button', { name: action === 'create' ? 'Create provider' : 'Edit provider' }))
+    await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+    expect(JSON.parse((fetchMock.mock.calls[0]?.[1] as RequestInit).body as string)).toMatchObject({
+      type: 'IBM_POWER', managedSystem: action === 'clear' ? null : action === 'unchanged' ? 'system-a' : 'system-b',
+    })
+    vi.unstubAllGlobals()
+  })
+
+  it('clears managed system on IBM_POWER → VMWARE → IBM_POWER but retains backing storage', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    renderWithQueryClient(<ProvidersCreateModal open onClose={vi.fn()} existingProviders={[flashA]} />)
+    fillValidForm()
+    fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'IBM_POWER' } })
+    fireEvent.change(screen.getByLabelText('Managed system'), { target: { value: 'system-a' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Backing storage providers' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Array A — flash-a' }))
+    fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'VMWARE' } })
+    expect(screen.queryByLabelText('Managed system')).not.toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'IBM_POWER' } })
+    expect(screen.getByLabelText('Managed system')).toHaveValue('')
+    fireEvent.click(screen.getByRole('button', { name: 'Create provider' }))
+    await waitFor(() => { expect(fetchMock).toHaveBeenCalledOnce() })
+    expect(JSON.parse((fetchMock.mock.calls[0]?.[1] as RequestInit).body as string)).toMatchObject({ managedSystem: null, backingStorageProviderIds: ['flash-a'] })
+    vi.unstubAllGlobals()
+  })
+
+  it('warns before closing when only managed system changes', () => {
+    const provider: ProviderRecord = { ...mockProviderA, type: 'IBM_POWER', managedSystem: 'system-a' }
+    const onClose = vi.fn()
+    renderWithQueryClient(<ProvidersCreateModal open onClose={onClose} existingProviders={[provider]} provider={provider} />)
+    fireEvent.change(screen.getByLabelText('Managed system'), { target: { value: 'system-b' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(onClose).not.toHaveBeenCalled()
+    expect(screen.getByRole('heading', { name: 'Discard unsaved provider changes?' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }))
+    expect(onClose).toHaveBeenCalledOnce()
+  })
+
+  it.each(['absent', 'null'])('does not mark an unchanged %s managed system dirty', value => {
+    const provider: ProviderRecord = { ...mockProviderA, type: 'IBM_POWER', ...(value === 'null' ? { managedSystem: null } : {}) }
+    const onClose = vi.fn()
+    renderWithQueryClient(<ProvidersCreateModal open onClose={onClose} existingProviders={[provider]} provider={provider} />)
+    expect(screen.getByLabelText('Managed system')).toHaveValue('')
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(onClose).toHaveBeenCalledOnce()
+    expect(screen.queryByRole('heading', { name: 'Discard unsaved provider changes?' })).not.toBeInTheDocument()
+  })
+
+  it.each(['VMWARE', 'FLASHCOPY', 'HITACHI', 'IBM_POWER'] as const)('creates only fields relevant to %s', async type => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    renderWithQueryClient(<ProvidersCreateModal open onClose={vi.fn()} existingProviders={[]} />)
+    fillValidForm()
+    fireEvent.change(screen.getByLabelText('VM prefix'), { target: { value: 'stale-' } })
+    fireEvent.change(screen.getByLabelText('Type'), { target: { value: type } })
+    fireEvent.click(screen.getByRole('button', { name: 'Create provider' }))
+    await waitFor(() => { expect(fetchMock).toHaveBeenCalledOnce() })
+    const body = JSON.parse((fetchMock.mock.calls[0]?.[1] as RequestInit).body as string) as Record<string, unknown>
+    expect(body['partnerProviderId']).toBeNull()
+    if (type === 'VMWARE') {
+      expect(body['vmPrefix']).toBe('stale-')
+      expect(body['vmTags']).toEqual([])
+    } else {
+      expect(body).not.toHaveProperty('vmPrefix')
+      expect(body).not.toHaveProperty('vmTags')
+    }
+    expect('backingStorageProviderIds' in body).toBe(type === 'VMWARE' || type === 'IBM_POWER')
+    expect(body).not.toHaveProperty('credentialStatus')
+    vi.unstubAllGlobals()
+  })
+
+  it.each(['VMWARE', 'FLASHCOPY', 'HITACHI', 'IBM_POWER'] as const)('preserves all historical fields when editing %s', async type => {
+    const provider: ProviderRecord = {
+      ...mockProviderA, type, vmPrefix: ' legacy prefix ', vmTags: ['saved-tag', 'missing-tag'],
+      managedSystem: ' legacy system ', backingStorageProviderIds: ['missing-storage'], partnerProviderId: 'missing-partner',
+    }
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    renderWithQueryClient(<ProvidersCreateModal open onClose={vi.fn()} existingProviders={[provider]} provider={provider} />)
+    fireEvent.change(screen.getByLabelText('Provider name'), { target: { value: 'Renamed' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Edit provider' }))
+    await waitFor(() => { expect(fetchMock).toHaveBeenCalledOnce() })
+    const body = JSON.parse((fetchMock.mock.calls[0]?.[1] as RequestInit).body as string) as Record<string, unknown>
+    for (const field of ['vmPrefix', 'vmTags', 'managedSystem', 'backingStorageProviderIds', 'partnerProviderId'] as const) {
+      expect(body[field]).toEqual(provider[field])
+    }
+    expect(body).not.toHaveProperty('credentialStatus')
+    vi.unstubAllGlobals()
+  })
+
+  it.each([
+    {},
+    { vmPrefix: null, partnerProviderId: null, managedSystem: null, vmTags: [], backingStorageProviderIds: [] },
+  ])('preserves absent and empty historical fields: %j', async specificFields => {
+    const provider = { ...mockProviderA, ...specificFields }
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    renderWithQueryClient(<ProvidersCreateModal open onClose={vi.fn()} existingProviders={[provider]} provider={provider} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Edit provider' }))
+    await waitFor(() => { expect(fetchMock).toHaveBeenCalledOnce() })
+    const body = JSON.parse((fetchMock.mock.calls[0]?.[1] as RequestInit).body as string) as Record<string, unknown>
+    for (const field of ['vmPrefix', 'vmTags', 'managedSystem', 'backingStorageProviderIds', 'partnerProviderId'] as const) {
+      expect(field in body).toBe(field in specificFields)
+      if (field in specificFields) expect(body[field]).toEqual(specificFields[field])
+    }
+    vi.unstubAllGlobals()
+  })
+
+  it.each(['IBM_POWER', 'FLASHCOPY'])('does not restore VMware filters after VMWARE → %s → VMWARE', async intermediateType => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    renderWithQueryClient(<ProvidersCreateModal open onClose={vi.fn()} existingProviders={[]} />)
+    fillValidForm()
+    fireEvent.change(screen.getByLabelText('VM prefix'), { target: { value: 'old-' } })
+    fireEvent.change(screen.getByLabelText('Type'), { target: { value: intermediateType } })
+    fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'VMWARE' } })
+    expect(screen.getByLabelText('VM prefix')).toHaveValue('')
+    fireEvent.click(screen.getByRole('button', { name: 'Create provider' }))
+    await waitFor(() => { expect(fetchMock).toHaveBeenCalledOnce() })
+    expect(JSON.parse((fetchMock.mock.calls[0]?.[1] as RequestInit).body as string)).toMatchObject({ vmPrefix: null, vmTags: [] })
+    vi.unstubAllGlobals()
+  })
+
+  it('does not validate a hidden historical self partner on Hitachi', async () => {
+    const provider: ProviderRecord = { ...mockProviderA, type: 'HITACHI', partnerProviderId: mockProviderA.id }
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    renderWithQueryClient(<ProvidersCreateModal open onClose={vi.fn()} existingProviders={[provider]} provider={provider} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Edit provider' }))
+    await waitFor(() => { expect(fetchMock).toHaveBeenCalledOnce() })
+    expect(JSON.parse((fetchMock.mock.calls[0]?.[1] as RequestInit).body as string)).toMatchObject({ partnerProviderId: provider.id })
+    vi.unstubAllGlobals()
+  })
+
+  it('keeps the draft and historical fields after backend rejection', async () => {
+    const provider: ProviderRecord = { ...mockProviderA, type: 'HITACHI', vmTags: ['legacy-tag'], managedSystem: 'legacy-system' }
+    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(new Response(JSON.stringify({ detail: 'Historical fields rejected' }), { status: 400 })))
+    vi.stubGlobal('fetch', fetchMock)
+    const onClose = vi.fn()
+    renderWithQueryClient(<ProvidersCreateModal open onClose={onClose} existingProviders={[provider]} provider={provider} />)
+    fireEvent.change(screen.getByLabelText('Provider name'), { target: { value: 'Unsaved rename' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Edit provider' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Historical fields rejected')
+    expect(screen.getByLabelText('Provider name')).toHaveValue('Unsaved rename')
+    expect(onClose).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Edit provider' }))
+    await waitFor(() => { expect(fetchMock).toHaveBeenCalledTimes(2) })
+    for (const [, init] of fetchMock.mock.calls) {
+      expect(JSON.parse((init as RequestInit).body as string)).toMatchObject({ vmTags: ['legacy-tag'], managedSystem: 'legacy-system', name: 'Unsaved rename' })
+    }
+    vi.unstubAllGlobals()
+  })
+
   it.each(['create', 'edit', 'clear'])('submits the FlashSystem partner on %s', async mode => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
@@ -242,7 +527,7 @@ describe('ProvidersCreateModal', () => {
 
     expect(useTagsMock).toHaveBeenCalledWith('vmware-vcenter-01', true)
     expect(screen.getByLabelText('VM prefix')).toHaveValue('prod-')
-    expect(screen.getByLabelText('VM tags')).toHaveValue('saved-tag')
+    expect(screen.getByRole('button', { name: 'VM tags' })).toHaveTextContent('saved-tag')
 
     fireEvent.click(screen.getByRole('button', { name: /Edit provider/i }))
 
@@ -255,7 +540,7 @@ describe('ProvidersCreateModal', () => {
     vi.unstubAllGlobals()
   })
 
-  it.each(['unchanged', 'lookup-error', 'replacement', 'clear'])('preserves all saved tags unless explicitly changed: %s', async action => {
+  it.each(['unchanged', 'lookup-error', 'add', 'remove', 'clear'])('preserves all saved tags unless explicitly changed: %s', async action => {
     const mockFetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
     vi.stubGlobal('fetch', mockFetch)
     const editedProvider: ProviderRecord = {
@@ -263,7 +548,7 @@ describe('ProvidersCreateModal', () => {
       vmTags: ['first-tag', 'second-tag'],
     }
     useTagsMock.mockReturnValue({
-      data: ['first-tag', 'second-tag'],
+      data: ['first-tag', 'third-tag'],
       isLoading: false,
       error: action === 'lookup-error' ? new Error('Tag lookup unavailable') : null,
       refetch: vi.fn(),
@@ -278,15 +563,20 @@ describe('ProvidersCreateModal', () => {
       />,
     )
 
-    expect(screen.getByRole('combobox', { name: /VM tags/ })).toHaveValue('first-tag')
+    expect(screen.getByRole('button', { name: 'VM tags' })).toHaveTextContent('first-tag, second-tag')
     fireEvent.change(screen.getByLabelText('Provider name'), { target: { value: 'Renamed' } })
-    if (action === 'replacement') fireEvent.change(screen.getByLabelText('VM tags'), { target: { value: 'second-tag' } })
-    if (action === 'clear') fireEvent.change(screen.getByLabelText('VM tags'), { target: { value: '' } })
+    if (action === 'add' || action === 'remove' || action === 'clear') {
+      fireEvent.click(screen.getByRole('button', { name: 'VM tags' }))
+      if (action === 'add') fireEvent.click(screen.getByRole('checkbox', { name: 'third-tag' }))
+      if (action === 'remove' || action === 'clear') fireEvent.click(screen.getByRole('checkbox', { name: 'first-tag' }))
+      if (action === 'clear') fireEvent.click(screen.getByRole('checkbox', { name: 'second-tag' }))
+    }
     fireEvent.click(screen.getByRole('button', { name: /Edit provider/i }))
     await waitFor(() => { expect(mockFetch).toHaveBeenCalledOnce() })
     const init = mockFetch.mock.calls[0]?.[1] as RequestInit
     expect(JSON.parse(init.body as string)).toMatchObject({
-      name: 'Renamed', vmTags: action === 'replacement' ? ['second-tag'] : action === 'clear' ? [] : ['first-tag', 'second-tag'],
+      name: 'Renamed', vmTags: action === 'add' ? ['first-tag', 'second-tag', 'third-tag']
+        : action === 'remove' ? ['second-tag'] : action === 'clear' ? [] : ['first-tag', 'second-tag'],
     })
     vi.unstubAllGlobals()
   })

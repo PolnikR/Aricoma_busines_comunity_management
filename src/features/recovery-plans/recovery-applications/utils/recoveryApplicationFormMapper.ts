@@ -9,6 +9,7 @@ import type {
 } from '../model/recoveryApplicationTypes'
 import { toRecoveryApplicationFileName } from './recoveryApplicationFileName'
 import { sourceProviderIdOf } from './sourceProvider'
+import { normalizeRecoveryApplicationEmail } from './recoveryApplicationEmail'
 
 function toFormEnvironment(environment: string): string {
   return environment
@@ -58,6 +59,7 @@ export function toRecoveryApplicationFormState(
     orchestrationProviderId: application.orchestrationProviderId ?? '',
     targetProviderId: data.target_provider_id ?? '',
     notificationEmail: data.notificationEmail ?? null,
+    dagTemplateVersion: data.dag_template_version ?? null,
     tiers: new Map(
       Object.entries(data.tiers).map(([id, tier]) => [id, cloneTier(tier)]),
     ),
@@ -113,7 +115,8 @@ export function toRecoveryApplicationData(
       description: formState.description,
       environment: formState.environment,
       ...toWireProviders(formState, providers, locked),
-      notificationEmail: formState.notificationEmail,
+      notificationEmail: normalizeRecoveryApplicationEmail(formState.notificationEmail),
+      dag_template_version: formState.dagTemplateVersion ?? null,
       tiers: Object.fromEntries(
         Array.from(formState.tiers.entries()).map(([id, tier]) => [id, toSubmittableTier(id, tier)]),
       ),

@@ -37,6 +37,8 @@ import { RecoveryGroupOrchestrationStatus } from '@/features/recovery-plans/reco
 import {
   orchestrationMetaText,
 } from '@/features/recovery-plans/recovery-groups/helpers/recoveryGroupOrchestrationState'
+import { applicationHttpStatus, extractApplicationRollbackReport } from '../hooks/useRollbackRecoveryApplication'
+import { recoveryApplicationHelpKey } from '../helpers/recoveryApplicationFieldHelp'
 
 interface RecoveryApplicationsTableProps {
   applications: RecoveryApplicationListItem[]
@@ -45,6 +47,8 @@ interface RecoveryApplicationsTableProps {
   onEdit?: (id: string) => void
   onDelete?: (app: RecoveryApplicationListItem) => Promise<{ applications: RecoveryApplicationListItem[]; rollback: RollbackReport | null }>
   isDeleting?: boolean
+  onRollback?: (app: RecoveryApplicationListItem) => Promise<{ report: RollbackReport | null }>
+  rollingBackId?: string | null
   error?: Error | null
   isRetrying?: boolean
   onRetry?: () => void
@@ -140,6 +144,8 @@ export function RecoveryApplicationsTable({
   onEdit,
   onDelete,
   isDeleting = false,
+  onRollback,
+  rollingBackId = null,
   error = null,
   isRetrying = false,
   onRetry = () => undefined,
@@ -150,7 +156,12 @@ export function RecoveryApplicationsTable({
   const [filters, setFilters] = useState<RecoveryApplicationFilters>(EMPTY_FILTERS)
   const [pendingFilters, setPendingFilters] = useState<RecoveryApplicationFilters>(EMPTY_FILTERS)
   const [deleteTarget, setDeleteTarget] = useState<RecoveryApplicationListItem | null>(null)
-  const [rollbackResult, setRollbackResult] = useState<{ appName: string; report: RollbackReport } | null>(null)
+  const [rollbackResult, setRollbackResult] = useState<{ appName: string; report: RollbackReport; standalone?: boolean } | null>(null)
+  const [rollbackTarget, setRollbackTarget] = useState<RecoveryApplicationListItem | null>(null)
+  const [isRollingBack, setIsRollingBack] = useState(false)
+  const rollbackPendingRef = useRef(false)
+  const [rollbackError, setRollbackError] = useState<unknown>(null)
+  const mutationPending = isDeleting || isRollingBack || rollingBackId !== null
   const [rollbackReportMissing, setRollbackReportMissing] = useState(false)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const triggerRefForMenu = useRef<HTMLButtonElement | null>(null)
@@ -196,6 +207,7 @@ export function RecoveryApplicationsTable({
       header: t('details.airflowDagId'),
       cell: (app: RecoveryApplicationListItem) => {
         if (!app.airflowRunId) return <span className="text-text-subtle">—</span>
+        if (app.pushToOrchestrator !== true) return <span className="font-mono text-xs text-text-muted" title={t('recovery.application.lifecycle.historicalRun')}>{app.airflowRunId}</span>
 
         const providerUrl = platformProviders.find(
           provider => provider.id === app.orchestrationProviderId,
@@ -225,7 +237,7 @@ export function RecoveryApplicationsTable({
         </Button>
       ),
     },
-    ...(onDelete ? [{
+    ...(onDelete || onRollback || onEdit ? [{
       id: 'actions',
       header: t('tables.recovery.actions'),
       cell: (app: RecoveryApplicationListItem) => (
@@ -244,7 +256,7 @@ export function RecoveryApplicationsTable({
         />
       ),
     }] : []),
-  ], [t, providers, platformProviders, openMenuId, onDelete])
+  ], [t, providers, platformProviders, openMenuId, onDelete, onRollback, onEdit])
 
   const searchableRows = useMemo(() => rows.map(application => ({ id: application.id, name: application.data.application.name, application })), [rows])
   const table = useTableState(searchableRows, {
@@ -351,6 +363,9 @@ export function RecoveryApplicationsTable({
   return (
     <>
       {rollbackReportMissing ? <Alert variant="warning" title={t('recovery.application.rollback.reportUnavailable')} /> : null}
+      {rollbackError ? <Alert variant="error" title={t('recovery.application.lifecycle.rollbackFailed')}
+        description={applicationHttpStatus(rollbackError) === 403 ? t('recovery.application.lifecycle.rollbackForbidden')
+          : resolveUserFacingErrorMessage(rollbackError, t('recovery.application.lifecycle.unverifiedState'))} /> : null}
       <DataTableSurface
         ariaLabel={t('pages.recovery.tableAriaLabel')}
         toolbar={toolbar}
@@ -381,7 +396,7 @@ export function RecoveryApplicationsTable({
       </DataTableRequestState>
       </DataTableSurface>
 
-      {openMenuId && currentMenuApp && onDelete ? (
+      {openMenuId && currentMenuApp && (onDelete || onRollback || onEdit) ? (
         <RowActionsMenu
           key={openMenuId}
           triggerRef={triggerRefForMenu}
@@ -389,15 +404,21 @@ export function RecoveryApplicationsTable({
           onClose={() => { setOpenMenuId(null) }}
           ariaLabel={`${t('tables.recovery.actions')} for ${currentMenuApp.data.application.name}`}
           editLabel={t('buttons.edit')}
-          {...(onEdit ? {} : { editDisabled: true })}
+          editDisabled={!onEdit || mutationPending}
+
           deleteLabel={t('buttons.delete')}
           edit={() => {
+            if (mutationPending) return
             onEdit?.(currentMenuApp.id)
             setSelectedId(null)
           }}
-          delete={() => {
-            setDeleteTarget(currentMenuApp)
-          }}
+          {...(onDelete ? { delete: () => { if (!mutationPending) setDeleteTarget(currentMenuApp) } } : {})}
+          {...(onRollback ? { rollback: {
+            label: t('recovery.application.lifecycle.rollback'),
+            onRollback: () => { if (currentMenuApp.pushToOrchestrator === true && !mutationPending) setRollbackTarget(currentMenuApp) },
+            disabled: currentMenuApp.pushToOrchestrator !== true || mutationPending,
+            disabledTitle: t('recovery.application.lifecycle.rollbackUnavailable'),
+          } } : {})}
         />
       ) : null}
 
@@ -420,7 +441,8 @@ export function RecoveryApplicationsTable({
             <Button
               size="sm"
               variant="danger"
-              onClick={() => { setDeleteTarget(selected) }}
+              disabled={mutationPending}
+              onClick={() => { if (!mutationPending) setDeleteTarget(selected) }}
             >
               {t('buttons.delete')}
             </Button>
@@ -428,7 +450,9 @@ export function RecoveryApplicationsTable({
           footer={onEdit ? (
             <Button
               size="sm"
-              onClick={() => { onEdit(selected.id); setSelectedId(null) }}
+              disabled={mutationPending}
+
+              onClick={() => { if (mutationPending) return; onEdit(selected.id); setSelectedId(null) }}
             >
               {t('buttons.edit')}
             </Button>
@@ -439,16 +463,21 @@ export function RecoveryApplicationsTable({
             <DetailOverview>
               <DetailField label={t('details.description')} value={selected.data.application.description} wide />
               <DetailField label={t('details.environment')} value={selected.data.application.environment} />
-              <DetailField label={t('details.platform')} value={getProviderLabel(sourceProviderIdOf(selected.data.application))} emphasis />
+              <DetailField label={t('details.platform')} value={getProviderLabel(sourceProviderIdOf(selected.data.application))} emphasis
+                labelHelp={<KeyedHelpPopover key={selected.data.application.platform} helpKey={recoveryApplicationHelpKey('source', selected.data.application.platform)} sections={['effect', 'limitations']} />} />
               <DetailField
                 label={t('details.targetProvider')}
+                labelHelp={<KeyedHelpPopover key={selected.data.application.platform} helpKey={recoveryApplicationHelpKey('target', selected.data.application.platform)} sections={['effect', 'limitations']} />}
                 value={selected.data.application.target_provider_id
                   ? getProviderLabel(selected.data.application.target_provider_id, providers)
                   : null}
               />
-              <DetailField label={t('details.policySetId')} value={selected.policySetId ?? null} />
-              <DetailField label={t('details.notificationEmail')} value={selected.data.application.notificationEmail} />
-              <DetailField label={t('details.tiers')} value={String(Object.keys(selected.data.application.tiers).length)} />
+              <DetailField label={t('details.policySetId')} value={selected.policySetId ?? null}
+                labelHelp={<KeyedHelpPopover key={selected.data.application.platform} helpKey={recoveryApplicationHelpKey('policySet', selected.data.application.platform)} sections={['effect', 'limitations']} />} />
+              <DetailField label={t('details.notificationEmail')} value={selected.data.application.notificationEmail}
+                labelHelp={<KeyedHelpPopover helpKey="recoveryApplications.fieldHelp.email" sections={['effect', 'limitations']} />} />
+              <DetailField label={t('details.tiers')} value={String(Object.keys(selected.data.application.tiers).length)}
+                labelHelp={<KeyedHelpPopover key={selected.data.application.platform} helpKey={recoveryApplicationHelpKey('workloads', selected.data.application.platform)} sections={['effect', 'limitations']} />} />
               <DetailField label={t('details.status')} value={<ApplicationStatusBadge app={selected} />} />
               {selected.submission ? (
                 <DetailField
@@ -461,8 +490,24 @@ export function RecoveryApplicationsTable({
             </DetailOverview>
           </DetailViewSection>
           <DetailViewSection id="orchestration" title={t('details.tabs.orchestration')} icon={ExecutionIcon}>
+            <DetailOverview>
+              <DetailField label={t('recovery.application.lifecycle.provider')}
+                labelHelp={<KeyedHelpPopover helpKey="recoveryApplications.fieldHelp.airflow" sections={['effect', 'limitations']} />}
+                value={selected.orchestrationProviderId ? getProviderLabel(selected.orchestrationProviderId, platformProviders) : null} />
+              <DetailField label={t('recovery.application.lifecycle.pushed')}
+                labelHelp={<KeyedHelpPopover helpKey="recoveryApplications.fieldHelp.push" sections={['effect', 'limitations']} />}
+                value={<Badge color={selected.pushToOrchestrator ? 'success' : 'light'} size="sm">{t(selected.pushToOrchestrator ? 'common.yes' : 'common.no')}</Badge>} />
+              <DetailField label={t(selected.pushToOrchestrator ? 'details.airflowDagId' : 'recovery.application.lifecycle.historicalRun')}
+                value={selected.airflowRunId} mono />
+              <DetailField label={t(selected.pushToOrchestrator ? 'recovery.application.lifecycle.deployedVersion' : 'recovery.application.lifecycle.configuredVersion')}
+                labelHelp={<KeyedHelpPopover key={selected.data.application.platform} helpKey={recoveryApplicationHelpKey('template', selected.data.application.platform)} sections={['effect', 'limitations']} />}
+                value={selected.pushToOrchestrator
+                  ? selected.deployedTemplateVersion ?? t('recovery.application.lifecycle.unknownVersion')
+                  : selected.data.application.dag_template_version ?? t('recovery.application.lifecycle.defaultVersion')} />
+            </DetailOverview>
             {orchestration ? (
               <RecoveryGroupOrchestrationStatus
+                entityType="application"
                 state={orchestration.state}
                 airflowRunId={orchestration.displayRunId}
                 providerUrl={orchestration.providerUrl}
@@ -542,7 +587,7 @@ export function RecoveryApplicationsTable({
         tone="danger"
         onCancel={() => { setDeleteTarget(null) }}
         onConfirm={() => {
-          if (!deleteTarget || !onDelete || isDeleting) return
+          if (!deleteTarget || !onDelete || mutationPending) return
           const target = deleteTarget
           setRollbackReportMissing(false)
           void (async () => {
@@ -562,11 +607,47 @@ export function RecoveryApplicationsTable({
         }}
       />
 
+      <ConfirmDialog
+        open={rollbackTarget !== null}
+        title={t('recovery.application.lifecycle.rollbackConfirmTitle')}
+        message={t('recovery.application.lifecycle.rollbackConfirmMessage', { name: rollbackTarget?.data.application.name ?? '' })}
+        confirmLabel={t('recovery.application.lifecycle.rollback')}
+        loadingLabel={t('recovery.application.lifecycle.rollingBack')}
+        cancelLabel={t('buttons.cancel')}
+        isLoading={isRollingBack || rollingBackId !== null}
+        tone="danger"
+        onCancel={() => { if (!rollbackPendingRef.current) setRollbackTarget(null) }}
+        onConfirm={() => {
+          const target = applications.find(app => app.id === rollbackTarget?.id)
+          if (!target?.pushToOrchestrator || !onRollback || mutationPending || rollbackPendingRef.current) return
+          rollbackPendingRef.current = true
+          setIsRollingBack(true)
+          setRollbackError(null)
+          setRollbackReportMissing(false)
+          void (async () => {
+            try {
+              const { report } = await onRollback(target)
+              if (report) setRollbackResult({ appName: target.data.application.name, report, standalone: true })
+              else setRollbackReportMissing(true)
+            } catch (cause) {
+              const report = extractApplicationRollbackReport(cause)
+              if (report) setRollbackResult({ appName: target.data.application.name, report, standalone: true })
+              setRollbackError(cause)
+            } finally {
+              rollbackPendingRef.current = false
+              setIsRollingBack(false)
+              setRollbackTarget(null)
+            }
+          })()
+        }}
+      />
+
       <RecoveryApplicationRollbackResultModal
         open={rollbackResult !== null}
         onClose={() => { setRollbackResult(null) }}
         applicationName={rollbackResult?.appName ?? ''}
         report={rollbackResult?.report ?? null}
+        standalone={rollbackResult?.standalone ?? false}
       />
     </>
   )

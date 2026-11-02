@@ -6,8 +6,10 @@
  */
 import * as zod from 'zod';
 
+export const recoveryAppPoliciesResponseRecoveryAppPoliciesItemFrequencyValueDefault = 1;
 export const recoveryAppPoliciesResponseRecoveryAppPoliciesItemFrequencyValueExclusiveMin = 0;
 
+export const recoveryAppPoliciesResponseRecoveryAppPoliciesItemFrequencyUnitDefault = `days`;
 export const recoveryAppPoliciesResponseRecoveryAppPoliciesItemRetentionValueExclusiveMin = 0;
 
 export const recoveryAppPoliciesResponseRecoveryAppPoliciesItemBootVerifyDefault = false;
@@ -32,8 +34,8 @@ export const RecoveryAppPoliciesResponse = zod.object({
   "name": zod.string(),
   "description": zod.union([zod.string(),zod.null()]).exactOptional(),
   "level": zod.union([zod.string(),zod.null()]).exactOptional(),
-  "frequency_value": zod.int().gt(recoveryAppPoliciesResponseRecoveryAppPoliciesItemFrequencyValueExclusiveMin),
-  "frequency_unit": zod.enum(['minutes', 'hours', 'days']),
+  "frequency_value": zod.int().gt(recoveryAppPoliciesResponseRecoveryAppPoliciesItemFrequencyValueExclusiveMin).default(recoveryAppPoliciesResponseRecoveryAppPoliciesItemFrequencyValueDefault),
+  "frequency_unit": zod.enum(['minutes', 'hours', 'days']).default(recoveryAppPoliciesResponseRecoveryAppPoliciesItemFrequencyUnitDefault),
   "retention_value": zod.int().gt(recoveryAppPoliciesResponseRecoveryAppPoliciesItemRetentionValueExclusiveMin),
   "retention_unit": zod.enum(['minutes', 'hours', 'days']),
   "boot_verify": zod.boolean().default(recoveryAppPoliciesResponseRecoveryAppPoliciesItemBootVerifyDefault),

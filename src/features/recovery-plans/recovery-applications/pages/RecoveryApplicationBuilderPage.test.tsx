@@ -5,12 +5,14 @@ import { OrvalApiError } from '@/shared/api/orvalMutator'
 import { RecoveryApplicationBuilderPage } from './RecoveryApplicationBuilderPage'
 import type {
   RecoveryApplicationFormState,
+  RecoveryApplicationListItem,
   SubmitDagResponse,
   SubmitRecoveryApplicationInput,
 } from '../model/recoveryApplicationTypes'
 
 const navigate = vi.fn()
 const mutate = vi.fn()
+const refetch = vi.fn()
 const submitMutation = {
   mutate,
   error: null as Error | null,
@@ -30,6 +32,7 @@ vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'
 
 vi.mock('../hooks/useRecoveryApplications', () => ({
   useSubmitRecoveryApplication: () => submitMutation,
+  useRecoveryApplications: () => ({ refetch, isFetching: false }),
 }))
 
 vi.mock('@/generated/query/platform-providers/platform-providers.gen', async (importOriginal) => ({
@@ -55,13 +58,16 @@ vi.mock('../components/RecoveryAppBuilder', () => ({
   RecoveryAppBuilder: ({
     onSave,
     onDirtyChange,
+    readOnly,
   }: {
     onSave?: (state: RecoveryApplicationFormState) => void
     onDirtyChange?: (isDirty: boolean) => void
+    readOnly?: boolean
   }) => (
     <>
       <button
         type="button"
+        disabled={readOnly}
         onClick={() => {
           onSave?.({
             fileName: 'finance_recovery',
@@ -130,9 +136,67 @@ vi.mock('../components/RecoveryAppBuilder', () => ({
 beforeEach(() => {
   vi.clearAllMocks()
   submitMutation.error = null
+  refetch.mockResolvedValue({ isError: false, data: [] })
 })
 
 describe('RecoveryApplicationBuilderPage', () => {
+  it('checks the submitted filename after 409 and permits retry once its stored pushed lock clears', async () => {
+    const user = userEvent.setup()
+    const stored: RecoveryApplicationListItem = { id: 'finance_recovery.json', pushToOrchestrator: true,
+      data: { application: { name: 'Finance', platform: 'VMWARE', environment: 'prod', tiers: {} } } }
+    refetch.mockResolvedValueOnce({ isError: false, data: [stored] })
+      .mockResolvedValueOnce({ isError: false, data: [{ ...stored, pushToOrchestrator: false }] })
+    render(<RecoveryApplicationBuilderPage />)
+    await user.click(screen.getByRole('button', { name: 'Save fixture' }))
+    const options = mutate.mock.calls[0]?.[1] as { onError: (error: Error) => void }
+    await act(async () => { options.onError(new OrvalApiError(409, 'Conflict', { detail: 'Application is pushed' })); await Promise.resolve() })
+    expect(refetch).toHaveBeenCalledOnce()
+    expect(screen.getByRole('button', { name: 'Save fixture' })).toBeDisabled()
+    await user.click(screen.getByRole('button', { name: 'Save orchestrated fixture' }))
+    expect(mutate).toHaveBeenCalledOnce()
+    await user.click(screen.getByRole('button', { name: 'Retry' }))
+    await waitFor(() => { expect(screen.getByRole('button', { name: 'Save fixture' })).toBeEnabled() })
+    await user.click(screen.getByRole('button', { name: 'Save fixture' }))
+    expect(mutate).toHaveBeenCalledTimes(2)
+    expect(mutate.mock.calls[1]?.[0]).toMatchObject({ data: { id: 'finance_recovery' } })
+  })
+
+  it.each([502, null])('keeps an uncertain Create result locked after failed verification and recovers through Retry (status=%s)', async status => {
+    const user = userEvent.setup()
+    refetch.mockRejectedValueOnce(new Error('GET unavailable'))
+      .mockResolvedValueOnce({ isError: false, data: [] })
+    render(<RecoveryApplicationBuilderPage />)
+    await user.click(screen.getByRole('button', { name: 'Change builder' }))
+    await user.click(screen.getByRole('button', { name: 'Save fixture' }))
+    const options = mutate.mock.calls[0]?.[1] as { onError: (error: Error) => void }
+    await act(async () => { options.onError(status === 502
+      ? new OrvalApiError(502, '', { detail: 'saved locally, but Airflow push failed: offline' })
+      : new Error('Connection lost')); await Promise.resolve() })
+    expect(screen.getByRole('button', { name: 'Save fixture' })).toBeDisabled()
+    await user.click(screen.getByRole('button', { name: 'Save orchestrated fixture' }))
+    expect(mutate).toHaveBeenCalledOnce()
+    const unload = new Event('beforeunload', { cancelable: true })
+    window.dispatchEvent(unload)
+    expect(unload.defaultPrevented).toBe(true)
+    expect(navigate).not.toHaveBeenCalled()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Retry' }))
+    await waitFor(() => { expect(screen.getByRole('button', { name: 'Save fixture' })).toBeEnabled() })
+    await user.click(screen.getByRole('button', { name: 'Save fixture' }))
+    expect(mutate).toHaveBeenCalledTimes(2)
+    expect(mutate.mock.calls[1]?.[0]).toMatchObject({ data: { id: 'finance_recovery' } })
+  })
+
+  it('does not treat an empty refetch result as verified absence of the submitted ID', async () => {
+    refetch.mockResolvedValueOnce({ isError: false })
+    const user = userEvent.setup()
+    render(<RecoveryApplicationBuilderPage />)
+    await user.click(screen.getByRole('button', { name: 'Save fixture' }))
+    const options = mutate.mock.calls[0]?.[1] as { onError: (error: Error) => void }
+    await act(async () => { options.onError(new Error('Connection lost')); await Promise.resolve() })
+    expect(screen.getByRole('button', { name: 'Save fixture' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
+  })
   it.each([false, true])('clears dirty state after a locked successful save (push=%s)', async push => {
     const user = userEvent.setup()
     render(<RecoveryApplicationBuilderPage />)
@@ -181,8 +245,8 @@ describe('RecoveryApplicationBuilderPage', () => {
     await user.click(screen.getByRole('button', { name: 'Save fixture' }))
     await user.click(screen.getByRole('button', { name: 'Save fixture' }))
     expect(mutate).toHaveBeenCalledOnce()
-    const options = mutate.mock.calls[0]?.[1] as { onError: () => void }
-    act(() => { options.onError() })
+    const options = mutate.mock.calls[0]?.[1] as { onError: (error: Error) => void }
+    act(() => { options.onError(new OrvalApiError(400, '', { detail: 'Invalid data' })) })
     expect(screen.getByRole('button', { name: 'Back' })).toBeEnabled()
     await user.click(screen.getByRole('button', { name: 'Back' }))
     expect(screen.getByRole('dialog', { name: 'Discard unsaved changes?' })).toBeInTheDocument()

@@ -105,6 +105,14 @@ function getDatabaseGroup(): RecoveryGroup {
 }
 
 describe('RecoveryGroupsTable', () => {
+  it('shows stored email and pool configuration without live inventory and without description help', async () => {
+    renderTable(<RecoveryGroupsTable groups={groups.map(group => ({ ...group, notificationEmail: 'ops@example.com', topology: 'metro_mirror', metroMirrorMode: 'managed', targetPool: 'Saved pool' }))} onEdit={vi.fn()} onDelete={vi.fn()} onRollback={vi.fn()} />)
+    await userEvent.setup().click(screen.getByText('Database group'))
+    const dialog = await screen.findByRole('dialog', { name: 'Recovery group detail' })
+    expect(within(dialog).getByText('ops@example.com')).toBeInTheDocument()
+    expect(within(dialog).getByText('Saved pool')).toBeInTheDocument()
+    expect(within(dialog).getByText('Description').closest('dt')).not.toContainHTML('button')
+  })
   it('anchors the actions menu to the clicked row on first open and when switching rows', async () => {
     const user = userEvent.setup()
     renderTable(
@@ -485,7 +493,7 @@ describe('RecoveryGroupsTable', () => {
 
     expect(within(detail).getByText('success')).toBeInTheDocument()
 
-    await user.click(within(detail).getByRole('button', { name: 'View recovery runs →' }))
+    await user.click(within(detail).getByRole('button', { name: 'View recovery group runs →' }))
     expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-runs?tab=groups&entityType=group&entityId=database-group')
   })
 
@@ -499,7 +507,7 @@ describe('RecoveryGroupsTable', () => {
     const detail = await screen.findByRole('dialog', { name: 'Recovery group detail' })
     await user.click(within(detail).getByRole('button', { name: 'Orchestration' }))
 
-    expect(within(detail).queryByRole('button', { name: 'View recovery runs →' })).not.toBeInTheDocument()
+    expect(within(detail).queryByRole('button', { name: 'View recovery group runs →' })).not.toBeInTheDocument()
   })
 
   it('opens a JSON viewer showing the recovery group submit payload', async () => {
@@ -539,7 +547,7 @@ describe('RecoveryGroupsTable', () => {
     expect(within(detail).getByRole('button', { name: 'Edit' })).toBeDisabled()
     expect(within(detail).getByRole('button', { name: 'Delete' })).toBeEnabled()
     // The unresolved provider ID is still shown, now as the Overview Provider ID field.
-    expect(within(within(detail).getByRole('region', { name: 'Overview' })).getByText('Provider ID').nextElementSibling).toHaveTextContent('removed-vmware-provider')
+    expect(within(within(detail).getByRole('region', { name: 'Overview' })).getByText('Provider ID').closest('dt')?.nextElementSibling).toHaveTextContent('removed-vmware-provider')
   })
 
   describe('DetailView', () => {
@@ -590,7 +598,7 @@ describe('RecoveryGroupsTable', () => {
       expect(within(detail).queryByRole('button', { name: 'Technical' })).not.toBeInTheDocument()
     })
 
-    it('shows the original fields in order in one Overview, without General / Workload headings', async () => {
+    it('shows original and new configuration fields in one Overview, without General / Workload headings', async () => {
       const { detail } = await openDetail(getDatabaseGroup())
       const overview = within(detail).getByRole('region', { name: 'Overview' })
 
@@ -598,7 +606,7 @@ describe('RecoveryGroupsTable', () => {
       expect(within(overview).queryByRole('heading', { name: 'Workload' })).not.toBeInTheDocument()
       expect(overview.querySelectorAll('dl')).toHaveLength(1)
       expect([...overview.querySelectorAll('dt')].map(term => term.textContent)).toEqual([
-        'Description', 'Policy Set', 'Provider ID', 'Source Category', 'Workload Type', 'Resource Type', 'Resources', 'Status',
+        'Description', 'Notification email', 'Policy Set', 'Provider ID', 'Topology mode', 'Source FlashSystem provider', 'Source Category', 'Workload Type', 'Resource Type', 'Resources', 'Status',
       ])
       expect(overview).toHaveTextContent('Primary database virtual machines')
       expect(overview).toHaveTextContent('Compute workloads')
@@ -655,10 +663,11 @@ describe('RecoveryGroupsTable', () => {
       expect(within(detail).queryByRole('region', { name: 'Overview' })).not.toBeInTheDocument()
     })
 
-    it('does not move the other former Technical identifiers into Overview', async () => {
+    it('keeps other technical identifiers out of Overview while showing source storage configuration', async () => {
       const { detail } = await openDetail({ ...getDatabaseGroup(), pushToOrchestrator: true, orchestrationProviderId: 'airflow-01', airflowRunId: 'run-1' })
       const overview = within(detail).getByRole('region', { name: 'Overview' })
-      for (const value of ['database-group', 'tier2-apps', 'ibm-flashsystem-01', 'airflow-01', 'run-1']) {
+      expect(overview).toHaveTextContent('ibm-flashsystem-01')
+      for (const value of ['database-group', 'tier2-apps', 'airflow-01', 'run-1']) {
         expect(overview).not.toHaveTextContent(value)
       }
     })
@@ -677,7 +686,7 @@ describe('RecoveryGroupsTable', () => {
       expect(orchestration).toHaveTextContent('Latest run status')
       expect(orchestration).toHaveTextContent('Not configured')
       expect(orchestration).not.toHaveTextContent('Orchestration: Yes')
-      expect(within(orchestration).queryByRole('button', { name: 'View recovery runs →' })).not.toBeInTheDocument()
+      expect(within(orchestration).queryByRole('button', { name: 'View recovery group runs →' })).not.toBeInTheDocument()
     })
 
     it('B: orchestration incomplete without an orchestration provider', async () => {
@@ -713,7 +722,7 @@ describe('RecoveryGroupsTable', () => {
       expect(orchestration).toHaveTextContent('No runs yet')
       expect(orchestration).toHaveTextContent('Dynamic Airflow')
       expect(within(orchestration).getByRole('link', { name: /run-1/ })).toBeInTheDocument()
-      expect(within(orchestration).getByRole('button', { name: 'View recovery runs →' })).toBeInTheDocument()
+      expect(within(orchestration).getByRole('button', { name: 'View recovery group runs →' })).toBeInTheDocument()
     })
 
     it('E4: last run status, execution time, duration, orchestrator and run ID', async () => {

@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
@@ -6,6 +7,7 @@ import { useGetRecoveryAppPolicies } from '@/generated/query/recovery-app-polici
 import { useGetCleanRoomPolicies } from '@/generated/query/clean-room-policies/clean-room-policies.gen'
 import type { PolicySetRecordOutput } from '@/generated/query/zod'
 import { PolicySetModal } from './PolicySetModal'
+import en from '@/locales/en.json'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('react-router', async (importOriginal) => ({
@@ -100,6 +102,59 @@ beforeEach(() => {
 })
 
 describe('PolicySetModal', () => {
+  it.each(['create', 'edit'] as const)('keeps %s values and payload unchanged after using inline field help', async mode => {
+    const onClose = vi.fn()
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ policy_sets: [policySet] }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    renderModal({ onClose, ...(mode === 'edit' ? { policySet } : {}) })
+    const user = userEvent.setup()
+    if (mode === 'create') {
+      await user.type(screen.getByLabelText('Policy set ID'), policySet.id)
+      await user.type(screen.getByLabelText('Policy set name'), policySet.name)
+      await user.type(screen.getByLabelText('Description'), policySet.description ?? '')
+      for (const name of ['Medium — 6h (medium-6h)', 'Critical — Daily DR Test (critical-daily-latest)', 'Enforce Clean Target (enforce-clean-target)']) {
+        await user.click(screen.getByRole('radio', { name }))
+      }
+    }
+    const selected = screen.getAllByRole('radio').filter(radio => (radio as HTMLInputElement).checked)
+    expect(selected).toHaveLength(3)
+    for (const field of ['snapshot_policy_id', 'recovery_app_policy_id', 'clean_room_policy_id'] as const) {
+      const trigger = screen.getByRole('button', { name: en[`policySets.fieldHelp.${field}.trigger`] })
+      expect(trigger.closest('section')?.querySelector('h3')?.parentElement).toContainElement(trigger)
+      await user.click(trigger)
+      expect(screen.getByRole('dialog', { name: en[`policySets.fieldHelp.${field}.title`] })).toHaveTextContent(en[`policySets.fieldHelp.${field}.intro`])
+      await user.keyboard('{Escape}')
+      expect(trigger).toHaveFocus()
+      await user.keyboard('{Enter}')
+      await user.keyboard(' ')
+      const popover = screen.getByRole('dialog', { name: en[`policySets.fieldHelp.${field}.title`] })
+      await user.click(within(popover).getByRole('button', { name: 'Close help' }))
+      expect(trigger).toHaveFocus()
+      for (const radio of selected) expect(radio).toBeChecked()
+      expect(screen.getByLabelText('Policy set name')).toHaveValue(policySet.name)
+      expect(screen.getByLabelText('Description')).toHaveValue(policySet.description)
+      expect(fetchMock).not.toHaveBeenCalled()
+      expect(onClose).not.toHaveBeenCalled()
+    }
+    await user.click(screen.getByRole('button', { name: mode === 'edit' ? 'Edit policy set' : 'Create policy set' }))
+    await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+    expect(fetchMock).toHaveBeenCalledOnce()
+    const init = fetchMock.mock.calls[0]?.[1] as RequestInit
+    expect(init.body).toBe(JSON.stringify(policySet))
+  })
+
+  it.each(['loading', 'empty', 'error'] as const)('keeps field help available with a %s catalog', async status => {
+    snapshotState.pending = status === 'loading'
+    snapshotState.error = status === 'error' ? new Error('unavailable') : null
+    if (status === 'empty') mockUseCleanRoomPolicies.mockReturnValue({ status: 'success', fetchStatus: 'idle', data: [], error: null, refetch: vi.fn() } as unknown as ReturnType<typeof useGetCleanRoomPolicies>)
+    renderModal()
+    for (const field of ['snapshot_policy_id', 'recovery_app_policy_id', 'clean_room_policy_id'] as const) {
+      await userEvent.click(screen.getByRole('button', { name: en[`policySets.fieldHelp.${field}.trigger`] }))
+      expect(screen.getByRole('dialog', { name: en[`policySets.fieldHelp.${field}.title`] })).toBeInTheDocument()
+      await userEvent.keyboard('{Escape}')
+    }
+  })
+
   it.each(['fetching', 'paused'] as const)('prevents repeated retry while snapshot recovery is %s', fetchStatus => {
     snapshotState.error = new Error('refresh failed')
     snapshotState.fetchStatus = fetchStatus

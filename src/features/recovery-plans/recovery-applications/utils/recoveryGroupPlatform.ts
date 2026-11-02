@@ -28,3 +28,19 @@ export function isRecoveryGroupEligible(
     && typeof group.airflowRunId === 'string'
     && group.airflowRunId.trim().length > 0
 }
+
+export function isRecoveryGroupSourceCompatible(
+  group: Pick<RecoveryGroup, 'sourceCategory' | 'workloadType' | 'providerId'>,
+  platform: string | undefined,
+  sourceProviderId: string | null | undefined,
+): boolean {
+  return Boolean(sourceProviderId) && group.providerId === sourceProviderId && isRecoveryGroupCompatible(group, platform)
+}
+
+export function isRecoveryGroupSourceEligible(
+  group: Pick<RecoveryGroup, 'sourceCategory' | 'workloadType' | 'providerId' | 'pushToOrchestrator' | 'airflowRunId'>,
+  platform: string | undefined,
+  sourceProviderId: string | null | undefined,
+): boolean {
+  return isRecoveryGroupSourceCompatible(group, platform, sourceProviderId) && isRecoveryGroupEligible(group, platform)
+}

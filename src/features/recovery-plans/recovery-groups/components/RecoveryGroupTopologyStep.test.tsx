@@ -5,9 +5,20 @@ import { RecoveryGroupTopologyStep } from './RecoveryGroupTopologyStep'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 const source = { id: 'source', name: 'Source FS', type: 'FLASHCOPY' as const, role: 'source' as const, credentialStatus: 'ok' as const, partnerProviderId: 'target' }
-const props = { providers: [source, { ...source, id: 'target', name: 'Target FS', role: 'target' as const }], isLoading: false, error: null, onRetry: vi.fn(), onChange: vi.fn() }
+const props = { providers: [source, { ...source, id: 'target', name: 'Target FS', role: 'target' as const, partnerProviderId: 'source' }], isLoading: false, error: null, onRetry: vi.fn(), onChange: vi.fn() }
 
 describe('RecoveryGroupTopologyStep', () => {
+  it('keeps an unavailable saved pool selectable without replacing it with Automatic', async () => {
+    const onChange = vi.fn()
+    render(<RecoveryGroupTopologyStep {...props} onChange={onChange}
+      draft={{ topology: 'metro_mirror', metroMirrorMode: 'managed', relatedVolumeProviderId: 'source', targetPool: 'Saved pool' }}
+      targetPools={{ data: [{ name: 'Other pool', freeCapacity: '1TB' }], isLoading: false, isFetching: false, error: null, refetch: vi.fn() }} />)
+    expect(screen.getByLabelText('Target pool')).toHaveValue('Saved pool')
+    expect(screen.getByText('This pool is not in the discovered target inventory. The backend will check it during provisioning.')).toBeInTheDocument()
+    expect(onChange).not.toHaveBeenCalled()
+    await userEvent.setup().selectOptions(screen.getByLabelText('Target pool'), '')
+    expect(onChange).toHaveBeenCalledWith({ type: 'targetPoolChanged', value: null })
+  })
   it('uses shared selects and emits Local/Metro changes, excluding invalid providers', async () => {
     render(<RecoveryGroupTopologyStep {...props} providers={[source, { ...source, id: 'bad', name: 'Bad FS', credentialStatus: 'missing' }]} draft={{ topology: 'local', relatedVolumeProviderId: 'source' }} />)
     expect(screen.queryByRole('option', { name: 'Bad FS' })).not.toBeInTheDocument()
@@ -33,7 +44,7 @@ describe('RecoveryGroupTopologyStep', () => {
   it('keeps topology, source and mode editable for a new Managed draft', async () => {
     const onChange = vi.fn()
     render(<RecoveryGroupTopologyStep {...props} onChange={onChange} draft={{ topology: 'metro_mirror', relatedVolumeProviderId: 'source', metroMirrorMode: 'managed' }} />)
-    expect(screen.getByText(/ABCO creates the auxiliary volumes/)).toBeInTheDocument()
+    expect(screen.getByText(/ABCO creates auxiliary volumes on the target FlashSystem/)).toHaveTextContent('consistency group on the source FlashSystem')
     expect(screen.getByLabelText('Topology mode')).toBeEnabled()
     expect(screen.getByLabelText('Source FlashSystem provider')).toBeEnabled()
     const mode = screen.getByLabelText('Metro Mirror configuration')

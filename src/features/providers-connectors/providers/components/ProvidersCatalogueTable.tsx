@@ -30,7 +30,7 @@ import { useDeleteProvider } from '@/generated/query/providers/providers.gen'
 import { useConnectionTestManager, useProviderTestState } from '@/shared/connection-test/ConnectionTestContext'
 import { ProvidersCreateModal } from './ProvidersCreateModal'
 import { providerTypeLabel } from '../helpers/providerTypeLabel'
-import { isComputeProviderType, isPartnerProviderType } from '../model/providerCategory'
+import { getProviderFieldConfig } from '../model/providerFieldConfig'
 import { BackingStorageValue } from './BackingStorageValue'
 import { SelectedProviderRelationships } from './SelectedProviderRelationships'
 import type { ProviderRecord, ProviderRoleFilter } from '../model/providerTypes'
@@ -173,6 +173,7 @@ export function ProvidersCatalogueTable({
 
   const rows = useMemo(() => providers, [providers])
   const selected = rows.find((provider) => provider.id === selectedId) ?? null
+  const selectedFieldConfig = getProviderFieldConfig(selected?.type ?? '')
   const connectionTestState = useProviderTestState('infrastructure', selected?.id ?? '')
   const jsonViewed = rows.find(provider => provider.id === jsonViewId) ?? null
   const columns = getColumns(t, setJsonViewId)
@@ -360,32 +361,52 @@ export function ProvidersCatalogueTable({
             <DetailOverview>
               <DetailField label={t('details.providerId')} value={selected.id} mono copyValue={selected.id} />
               <DetailField label={t('details.type')} value={providerTypeLabel(selected.type)} emphasis />
-              {isPartnerProviderType(selected.type) ? (
+              {selectedFieldConfig.partnerProviderId ? (
                 <DetailField
                   label={t('forms.partnerProvider')}
+                  labelHelp={<KeyedHelpPopover helpKey="providers.fieldHelp.partnerProviderId" sections={[]} />}
                   value={selected.partnerProviderId
                     ? (allProviders.find(provider => provider.id === selected.partnerProviderId)?.name ?? selected.partnerProviderId)
                     : t('forms.partnerProviderNone')}
                   secondary={selected.partnerProviderId ? <span className="font-mono">{selected.partnerProviderId}</span> : undefined}
                 />
               ) : null}
-              {isComputeProviderType(selected.type) ? (
+              {selectedFieldConfig.backingStorageProviderIds ? (
                 <DetailField
                   label={t('details.backingStorage')}
+                  labelHelp={<KeyedHelpPopover helpKey="providers.fieldHelp.backingStorageProviderIds" sections={[]} />}
                   value={<BackingStorageValue providerId={selected.id} providers={allProviders} />}
                   wide
                 />
               ) : null}
-              <DetailField label={t('details.role')} value={<ProviderRoleBadge role={selected.role} />} />
+              <DetailField label={t('details.role')} value={<ProviderRoleBadge role={selected.role} />}
+                labelHelp={<KeyedHelpPopover helpKey="providers.fieldHelp.role" sections={[]} />} />
               <DetailField label={t('details.ipAddress')} value={selected.ipAddress} mono copyValue={selected.ipAddress ?? undefined} />
               <DetailField
                 label={t('details.url')}
+                labelHelp={<KeyedHelpPopover helpKey="providers.fieldHelp.url" sections={[]} />}
                 value={selected.url ? <DetailFieldLink href={selected.url} external>{selected.url}</DetailFieldLink> : null}
                 wide
               />
-              <DetailField label={t('details.notificationEmail')} value={selected.notificationEmail} />
-              <DetailField label={t('details.credential')} value={selected.credentialId} mono />
+              <DetailField label={t('details.notificationEmail')} value={selected.notificationEmail}
+                labelHelp={<KeyedHelpPopover helpKey="providers.fieldHelp.notificationEmail" sections={[]} />} />
+              <DetailField label={t('details.credential')} value={selected.credentialId} mono
+                labelHelp={<KeyedHelpPopover helpKey="providers.fieldHelp.credentialId" sections={[]} />} />
               <DetailField label={t('details.credentialStatus')} value={<ProviderCredentialStatusBadge status={selected.credentialStatus} />} />
+              <DetailField label={t('forms.cacheRefreshSeconds')} value={selected.cacheRefreshSeconds}
+                labelHelp={<KeyedHelpPopover helpKey="providers.fieldHelp.cacheRefreshSeconds" sections={[]} />} />
+              {selectedFieldConfig.vmPrefix ? (
+                <DetailField label={t('forms.vmPrefix')} value={selected.vmPrefix}
+                  labelHelp={<KeyedHelpPopover helpKey="providers.fieldHelp.vmPrefix" sections={[]} />} />
+              ) : null}
+              {selectedFieldConfig.vmTags ? (
+                <DetailField label={t('forms.vmTags')} value={selected.vmTags?.join(', ')}
+                  labelHelp={<KeyedHelpPopover helpKey="providers.fieldHelp.vmTags" sections={[]} />} />
+              ) : null}
+              {selectedFieldConfig.managedSystem ? (
+                <DetailField label={t('forms.managedSystem')} value={selected.managedSystem}
+                  labelHelp={<KeyedHelpPopover helpKey="providers.fieldHelp.managedSystem" sections={[]} />} />
+              ) : null}
               <DetailField label={t('details.description')} value={selected.description} wide />
             </DetailOverview>
           </DetailViewSection>

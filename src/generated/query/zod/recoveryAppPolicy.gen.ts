@@ -6,8 +6,10 @@
  */
 import * as zod from 'zod';
 
+export const recoveryAppPolicyFrequencyValueDefault = 1;
 export const recoveryAppPolicyFrequencyValueExclusiveMin = 0;
 
+export const recoveryAppPolicyFrequencyUnitDefault = `days`;
 export const recoveryAppPolicyRetentionValueExclusiveMin = 0;
 
 export const recoveryAppPolicyBootVerifyDefault = false;
@@ -31,8 +33,8 @@ export const RecoveryAppPolicy = zod.object({
   "name": zod.string(),
   "description": zod.union([zod.string(),zod.null()]).exactOptional(),
   "level": zod.union([zod.string(),zod.null()]).exactOptional(),
-  "frequency_value": zod.int().gt(recoveryAppPolicyFrequencyValueExclusiveMin),
-  "frequency_unit": zod.enum(['minutes', 'hours', 'days']),
+  "frequency_value": zod.int().gt(recoveryAppPolicyFrequencyValueExclusiveMin).default(recoveryAppPolicyFrequencyValueDefault),
+  "frequency_unit": zod.enum(['minutes', 'hours', 'days']).default(recoveryAppPolicyFrequencyUnitDefault),
   "retention_value": zod.int().gt(recoveryAppPolicyRetentionValueExclusiveMin),
   "retention_unit": zod.enum(['minutes', 'hours', 'days']),
   "boot_verify": zod.boolean().default(recoveryAppPolicyBootVerifyDefault),

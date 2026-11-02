@@ -5,7 +5,7 @@ import { Button } from '@/shared/components/button/Button'
 import { EmptyState } from '@/shared/components/empty-state/EmptyState'
 import { Alert } from '@/shared/components/alert/Alert'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
-import { Field, Select } from '@/shared/components/form/FormControls'
+import { Select } from '@/shared/components/form/FormControls'
 import { PolicySetPicker } from '@/shared/components/policy-set-picker/PolicySetPicker'
 import { ResourceSidebar } from '@/shared/components/resource-sidebar/ResourceSidebar'
 import { Spinner } from '@/shared/components/spinner/Spinner'
@@ -18,15 +18,19 @@ import { selectProviders } from '@/features/providers-connectors/providers/model
 import { useGetPolicySets } from '@/generated/query/policy-sets/policy-sets.gen'
 import { selectPolicySets } from '@/features/recovery-plans/policy-sets/model/selectPolicySets'
 import { useRecoveryGroups } from '../../recovery-groups/hooks/useRecoveryGroups'
-import { isRecoveryGroupCompatible, isRecoveryGroupEligible } from '../utils/recoveryGroupPlatform'
+import { isRecoveryGroupSourceCompatible, isRecoveryGroupSourceEligible } from '../utils/recoveryGroupPlatform'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { AppMetadataForm } from './AppMetadataForm'
 import { TierCanvas } from './TierCanvas'
-import { cloneTier } from '../utils/recoveryApplicationFormMapper'
-import { getEligiblePlatformProviders, getEligibleSourceProviders, getEligibleTargetProviders } from '../utils/eligibleProviders'
-import { isValidRecoveryApplicationFileName, isValidRecoveryApplicationName } from '../utils/recoveryApplicationFileName'
-import { storedProvidersProblem, validateRecoveryApplication } from '../utils/validateRecoveryApplication'
+import { DagTemplateVersionSelect } from './DagTemplateVersionSelect'
+import { useGetDagTemplateVersions } from '@/generated/query/recovery-apps/recovery-apps.gen'
+import { addApplicationTier, applyApplicationTierOrder, applyConfirmedSourceChange, assignRecoveryGroup, createApplicationDraft, deleteApplicationTier, editApplicationTier, planApplicationMetadataChange, removeRecoveryGroup, selectRecoveryVm } from '../model/recoveryApplicationDraft'
+import type { ApplicationMetadataPatch, SourceChangeProposal } from '../model/recoveryApplicationDraft'
+import { getEligiblePlatformProviders } from '../utils/eligibleProviders'
+import { getRecoveryApplicationDraftReadiness } from '../model/recoveryApplicationDraftReadiness'
 import type { DraftRecoveryTier, LockedProviders, RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
+import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
+import { recoveryApplicationHelpKey, recoveryApplicationTierOrderHelpKey } from '../helpers/recoveryApplicationFieldHelp'
 
 interface RecoveryAppBuilderProps {
   onSave?: (appState: RecoveryApplicationFormState) => void
@@ -36,45 +40,13 @@ interface RecoveryAppBuilderProps {
   initialData?: RecoveryApplicationFormState
   disableFileName?: boolean
   isInitialLoading?: boolean
+  readOnly?: boolean
   // The app is deployed to Airflow: saving it without a push would make the
   // backend record pushed=false while its DAG stays deployed, so delete would
   // no longer roll it back. Keep the push on until the backend preserves it.
   lockPushToOrchestrator?: boolean
   // A saved application keeps its platform and providers (see LockedProviders).
   lockedProviders?: LockedProviders | null
-}
-
-const DEFAULT_TIERS: Record<string, DraftRecoveryTier> = {
-  tier_id: { order: 1, description: 'tier_description' },
-}
-
-function createInitialFormState(initialData?: RecoveryApplicationFormState): RecoveryApplicationFormState {
-  if (initialData) {
-    return {
-      ...initialData,
-      tiers: new Map(
-        Array.from(initialData.tiers, ([id, tier]): [string, DraftRecoveryTier] => [id, cloneTier(tier)]),
-      ),
-    }
-  }
-
-  return {
-    fileName: '',
-    policySetId: '',
-    pushToOrchestrator: false,
-    name: '',
-    description: '',
-    environment: 'dev',
-    platform: '',
-    orchestrationProviderId: '',
-    targetProviderId: '',
-    notificationEmail: null,
-    tiers: new Map(
-      Object.entries(DEFAULT_TIERS).map(
-        ([id, tier]): [string, DraftRecoveryTier] => [id, cloneTier(tier)],
-      ),
-    ),
-  }
 }
 
 export function RecoveryAppBuilder({
@@ -87,13 +59,14 @@ export function RecoveryAppBuilder({
   isInitialLoading = false,
   lockPushToOrchestrator = false,
   lockedProviders = null,
+  readOnly = false,
 }: RecoveryAppBuilderProps) {
   const { t } = useTranslation()
-  const isFormDisabled = isInitialLoading || isSaving
+  const isFormDisabled = isInitialLoading || isSaving || readOnly
   const [step, setStep] = useState(1)
   const [formState, setFormState] = useState<RecoveryApplicationFormState>(
     () => ({
-      ...createInitialFormState(initialData),
+      ...createApplicationDraft(initialData),
       ...(lockPushToOrchestrator ? { pushToOrchestrator: true } : {}),
     }),
   )
@@ -109,10 +82,6 @@ export function RecoveryAppBuilder({
     refresh: refreshGroups,
   } = useRecoveryGroups()
 
-  const eligibleSourceProviders = useMemo(
-    () => getEligibleSourceProviders(providersQuery.data ?? []),
-    [providersQuery.data],
-  )
   const eligiblePlatformProviders = useMemo(
     () => getEligiblePlatformProviders(platformProvidersQuery.data ?? []),
     [platformProvidersQuery.data],
@@ -121,21 +90,30 @@ export function RecoveryAppBuilder({
   // saved application, whose provider may be gone); without one no group fits.
   const platform = lockedProviders?.platform
     ?? providersQuery.data?.find(provider => provider.id === formState.platform)?.type
+  const sourceProviderId = lockedProviders ? lockedProviders.sourceProviderId : formState.platform
+  const normalizedPlatform = platform?.toUpperCase()
+  const templatePlatform = normalizedPlatform === 'VMWARE' ? 'vmware' : normalizedPlatform === 'IBM_POWER' ? 'ibm_power' : undefined
+  const templatesQuery = useGetDagTemplateVersions(
+    templatePlatform ? { platform: templatePlatform } : undefined,
+    { query: { enabled: Boolean(templatePlatform), placeholderData: () => undefined } },
+  )
+  const templates = (templatesQuery.data?.templates ?? []).filter(template => template.platform.toLowerCase() === templatePlatform)
+  const templateCatalog = { templates, verified: Boolean(templatePlatform && templatesQuery.data && !templatesQuery.error) }
   const compatibleGroups = useMemo(
-    () => groups.filter(group => isRecoveryGroupCompatible(group, platform)),
-    [groups, platform],
+    () => groups.filter(group => isRecoveryGroupSourceCompatible(group, platform, sourceProviderId)),
+    [groups, platform, sourceProviderId],
   )
   const availableGroups = useMemo(
-    () => compatibleGroups.filter(group => isRecoveryGroupEligible(group, platform)),
-    [compatibleGroups, platform],
+    () => compatibleGroups.filter(group => isRecoveryGroupSourceEligible(group, platform, sourceProviderId)),
+    [compatibleGroups, platform, sourceProviderId],
   )
   const groupLabels = useMemo(
     () => Object.fromEntries(availableGroups.map(group => [group.id, group.name])),
     [availableGroups],
   )
   const recoveryGroupVmOptions = useMemo(
-    () => Object.fromEntries(compatibleGroups.map(group => [group.id, group.resources])),
-    [compatibleGroups],
+    () => Object.fromEntries(availableGroups.map(group => [group.id, group.resources])),
+    [availableGroups],
   )
   const groupsErrorDescription = resolveUserFacingErrorMessage(groupsError, '')
   const displayedGroupsError = groupsError ? new Error(groupsErrorDescription) : null
@@ -150,7 +128,7 @@ export function RecoveryAppBuilder({
     [availableGroups],
   )
 
-  const updateFormState = useCallback((update: Partial<RecoveryApplicationFormState>) => {
+  const updateFormState = useCallback((update: Partial<Pick<RecoveryApplicationFormState, 'policySetId' | 'orchestrationProviderId' | 'pushToOrchestrator' | 'dagTemplateVersion'>>) => {
     if (isFormDisabled) return
     setFormState(current => ({ ...current, ...update }))
     onDirtyChange?.(true)
@@ -158,198 +136,129 @@ export function RecoveryAppBuilder({
 
   // Assigned groups belong to the current source platform, so a source change
   // asks first and then detaches them from every tier (the tiers stay).
-  const [pendingSourceChange, setPendingSourceChange] = useState<Partial<RecoveryApplicationFormState> | null>(null)
-  const handleMetadataChange = useCallback((update: Partial<RecoveryApplicationFormState>) => {
+  const [pendingSourceChange, setPendingSourceChange] = useState<SourceChangeProposal | null>(null)
+  const handleMetadataChange = useCallback((update: ApplicationMetadataPatch) => {
     if (isFormDisabled) return
-    // Locked providers ignore any change, not only through the disabled selects.
-    const metadata = lockedProviders
-      ? Object.fromEntries(Object.entries(update).filter(([key]) => key !== 'platform' && key !== 'targetProviderId'))
-      : update
-    const changesSource = metadata.platform !== undefined && metadata.platform !== formState.platform
-    const hasAssignedGroups = Array.from(formState.tiers.values()).some(tier => Boolean(tier.recovery_group))
-    if (changesSource && hasAssignedGroups) {
-      setPendingSourceChange(metadata)
+    const decision = planApplicationMetadataChange(formState, update, {
+      providers: providersQuery.data ?? [], lockedProviders,
+    })
+    if (decision.kind === 'confirmationRequired') {
+      setPendingSourceChange(decision.proposal)
       return
     }
-    updateFormState(metadata)
-  }, [formState.platform, formState.tiers, isFormDisabled, lockedProviders, updateFormState])
+    // The planned patch preserves explicit unchanged keys and derived resets;
+    // merge it into the latest draft so queued unrelated edits survive.
+    setFormState(current => ({ ...current, ...decision.metadata }))
+    const notifyDirty = decision.kind === 'applied' ? decision.transition.notifyDirty : decision.notifyDirty
+    if (notifyDirty) onDirtyChange?.(true)
+  }, [formState, isFormDisabled, lockedProviders, onDirtyChange, providersQuery.data, setPendingSourceChange])
   const confirmSourceChange = () => {
     if (isFormDisabled || !pendingSourceChange) return
-    setFormState(prev => ({
-      ...prev,
-      ...pendingSourceChange,
-      tiers: new Map(Array.from(prev.tiers, ([id, tier]): [string, DraftRecoveryTier] => [id, { order: tier.order, description: tier.description }])),
-    }))
+    const result = applyConfirmedSourceChange(formState, pendingSourceChange, lockedProviders)
+    setFormState(current => applyConfirmedSourceChange(current, pendingSourceChange, lockedProviders).draft)
     setPendingSourceChange(null)
-    onDirtyChange?.(true)
+    if (result.notifyDirty) onDirtyChange?.(true)
   }
 
   const handleRecoveryGroupAdded = useCallback((tierId: string, groupId: string) => {
     if (isFormDisabled) return
-    const selectedGroup = availableGroups.find(group => group.id === groupId)
-    if (!selectedGroup) return
-
-    setFormState(prev => {
-      const newTiers = new Map(prev.tiers)
-      const tier = newTiers.get(tierId)
-      if (!tier) return prev
-
-      newTiers.set(tierId, {
-        ...tier,
-        recovery_group: {
-          id: selectedGroup.id,
-          name: selectedGroup.name,
-          description: selectedGroup.description,
-          vms: selectedGroup.resources.map((name, index) => ({
-            name,
-            order: index + 1,
-            ...selectedGroup.vmMetadataByName?.[name],
-          })),
-        },
-      })
-      return { ...prev, tiers: newTiers }
-    })
+    const context = { providers: providersQuery.data ?? [], groups, lockedProviders }
+    const result = assignRecoveryGroup(formState, tierId, groupId, context)
+    if (!result.notifyDirty) return
+    setFormState(current => assignRecoveryGroup(current, tierId, groupId, context).draft)
     onDirtyChange?.(true)
-  }, [availableGroups, isFormDisabled, onDirtyChange])
+  }, [formState, groups, isFormDisabled, lockedProviders, onDirtyChange, providersQuery.data])
 
   const handleRecoveryGroupRemoved = useCallback((tierId: string) => {
     if (isFormDisabled) return
-    setFormState(prev => {
-      const tier = prev.tiers.get(tierId)
-      if (!tier?.recovery_group) return prev
-
-      const newTiers = new Map(prev.tiers)
-      newTiers.set(tierId, { order: tier.order, description: tier.description })
-      return { ...prev, tiers: newTiers }
-    })
-    onDirtyChange?.(true)
-  }, [isFormDisabled, onDirtyChange])
+    const result = removeRecoveryGroup(formState, tierId)
+    setFormState(current => removeRecoveryGroup(current, tierId).draft)
+    if (result.notifyDirty) onDirtyChange?.(true)
+  }, [formState, isFormDisabled, onDirtyChange])
 
   const handleRecoveryVmSelectionChange = useCallback((tierId: string, vmName: string, selected: boolean) => {
     if (isFormDisabled) return
-    setFormState(prev => {
-      const tier = prev.tiers.get(tierId)
-      if (!tier?.recovery_group) return prev
-
-      const alreadySelected = tier.recovery_group.vms.some(vm => vm.name === vmName)
-      if (alreadySelected === selected) return prev
-
-      const selectedGroup = compatibleGroups.find(group => group.id === tier.recovery_group?.id)
-      const nextVms = selected
-        ? [...tier.recovery_group.vms, { name: vmName, ...selectedGroup?.vmMetadataByName?.[vmName] }]
-        : tier.recovery_group.vms.filter(vm => vm.name !== vmName)
-
-      const newTiers = new Map(prev.tiers)
-      newTiers.set(tierId, {
-        ...tier,
-        recovery_group: {
-          ...tier.recovery_group,
-          vms: nextVms.map((vm, index) => ({ ...vm, order: index + 1 })),
-        },
-      })
-      return { ...prev, tiers: newTiers }
-    })
-    onDirtyChange?.(true)
-  }, [compatibleGroups, isFormDisabled, onDirtyChange])
+    const context = { providers: providersQuery.data ?? [], groups, lockedProviders }
+    const result = selectRecoveryVm(formState, tierId, vmName, selected, context)
+    setFormState(current => selectRecoveryVm(current, tierId, vmName, selected, context).draft)
+    if (result.notifyDirty) onDirtyChange?.(true)
+  }, [formState, groups, isFormDisabled, lockedProviders, onDirtyChange, providersQuery.data])
 
   const handleTierEdit = useCallback((tierId: string, newTierId: string, updates: { tierDescription: string }) => {
     if (isFormDisabled) return
-    setFormState(prev => {
-      const newTiers = new Map(prev.tiers)
-      const oldTier = newTiers.get(tierId)
-      if (!oldTier) return prev
-      if (newTierId !== tierId) newTiers.delete(tierId)
-      newTiers.set(newTierId, { ...oldTier, description: updates.tierDescription })
-      return { ...prev, tiers: newTiers }
-    })
-    onDirtyChange?.(true)
-  }, [isFormDisabled, onDirtyChange])
+    const result = editApplicationTier(formState, tierId, newTierId, updates)
+    setFormState(current => editApplicationTier(current, tierId, newTierId, updates).draft)
+    if (result.notifyDirty) onDirtyChange?.(true)
+  }, [formState, isFormDisabled, onDirtyChange])
 
   const handleTierAdd = useCallback((tierId: string, tier: DraftRecoveryTier) => {
     if (isFormDisabled) return
-    setFormState(prev => ({ ...prev, tiers: new Map(prev.tiers).set(tierId, tier) }))
-    onDirtyChange?.(true)
-  }, [isFormDisabled, onDirtyChange])
+    const result = addApplicationTier(formState, tierId, tier)
+    setFormState(current => addApplicationTier(current, tierId, tier).draft)
+    if (result.notifyDirty) onDirtyChange?.(true)
+  }, [formState, isFormDisabled, onDirtyChange])
 
   const handleTierDelete = useCallback((tierId: string) => {
     if (isFormDisabled) return
-    setFormState(prev => {
-      const newTiers = new Map(prev.tiers)
-      newTiers.delete(tierId)
-      return { ...prev, tiers: newTiers }
-    })
-    onDirtyChange?.(true)
-  }, [isFormDisabled, onDirtyChange])
+    const result = deleteApplicationTier(formState, tierId)
+    setFormState(current => deleteApplicationTier(current, tierId).draft)
+    if (result.notifyDirty) onDirtyChange?.(true)
+  }, [formState, isFormDisabled, onDirtyChange])
 
   const handleTierReorder = useCallback((reorderedTiers: Record<string, DraftRecoveryTier>) => {
     if (isFormDisabled) return
-    setFormState(prev => ({ ...prev, tiers: new Map(Object.entries(reorderedTiers)) }))
-    onDirtyChange?.(true)
-  }, [isFormDisabled, onDirtyChange])
+    const result = applyApplicationTierOrder(formState, reorderedTiers)
+    setFormState(current => applyApplicationTierOrder(current, reorderedTiers).draft)
+    if (result.notifyDirty) onDirtyChange?.(true)
+  }, [formState, isFormDisabled, onDirtyChange])
 
-  const sourceProvider = eligibleSourceProviders.find(provider => provider.id === formState.platform)
-  const detailsValid = Boolean(
-    isValidRecoveryApplicationFileName(formState.fileName)
-    && isValidRecoveryApplicationName(formState.name)
-    && formState.description.trim()
-    && (lockedProviders !== null || (sourceProvider
-      && getEligibleTargetProviders(providersQuery.data ?? [], sourceProvider.type)
-        .some(provider => provider.id === formState.targetProviderId))),
-  )
-  const tiersValid = formState.tiers.size > 0
-    && Array.from(formState.tiers.values()).every(tier => Boolean(tier.recovery_group))
-  const policySetValid = Boolean(formState.policySetId.trim())
-  const orchestrationValid = !formState.pushToOrchestrator
-    || eligiblePlatformProviders.some(provider => provider.id === formState.orchestrationProviderId)
+  const { detailsValid, tiersValid, policySetValid, canContinue, canSave, lockedProvidersError, tiersError, validationError } = getRecoveryApplicationDraftReadiness(formState, {
+    step: step === 1 || step === 2 || step === 3 ? step : 4,
+    providers: providersQuery.data,
+    providersError: providersQuery.error,
+    platformProviders: platformProvidersQuery.data ?? [],
+    areGroupsLoading,
+    groups,
+    groupsError,
+    lockedProviders,
+    templateCatalog,
+  })
 
+  const hasTemplateProblem = tiersError?.templateDependent === true
   const steps = [
     { id: 'details', label: t('pages.recoveryBuilder.steps.details') },
     {
       id: 'tiers',
       label: t('pages.recoveryBuilder.steps.tiers'),
-      disabled: !detailsValid,
+      disabled: !readOnly && !detailsValid,
     },
     {
       id: 'policy-set',
       label: t('pages.recoveryBuilder.steps.policySet'),
-      disabled: !detailsValid || !tiersValid,
+      disabled: !readOnly && (!detailsValid || !tiersValid),
     },
     {
       id: 'orchestration',
       label: t('pages.recoveryBuilder.steps.orchestration'),
-      disabled: !detailsValid || !tiersValid || !policySetValid,
+      // A template collision can be repaired by changing the DAG version here.
+      disabled: !readOnly && (!detailsValid || (!hasTemplateProblem && (!tiersValid || !policySetValid))),
     },
   ]
 
-  const canContinue = step === 1 ? detailsValid : step === 2 ? tiersValid : policySetValid
-  // A saved application whose stored providers cannot be submitted stays
-  // viewable, but Save is blocked and the reason shown on every step. Until the
-  // providers load (or after a failed fetch) there is no verdict yet.
-  const providersLoaded = Boolean(providersQuery.data) && !providersQuery.error
-  const lockedProvidersError = lockedProviders && providersLoaded
-    ? storedProvidersProblem(lockedProviders, providersQuery.data ?? [])
-    : null
-  // Stored groups are checked against the current list, so wait for it.
-  const canSave = detailsValid && tiersValid && policySetValid && orchestrationValid && !areGroupsLoading
-    && (!lockedProviders || (providersLoaded && !lockedProvidersError))
+  const helpPlatform = lockedProviders ? lockedProviders.platform : providersQuery.isLoading || providersQuery.error ? undefined : platform
+  const workloadsHelpKey = recoveryApplicationHelpKey('workloads', helpPlatform)
+  const tierOrderHelpKey = recoveryApplicationTierOrderHelpKey(helpPlatform, formState.dagTemplateVersion, {
+    templates, verified: templateCatalog.verified && !templatesQuery.isPending && !templatesQuery.isFetching,
+  })
+  const policyHelpKey = recoveryApplicationHelpKey('policySet', helpPlatform)
 
   const handleSave = () => {
-    if (isFormDisabled) return
-    const validationError = validateRecoveryApplication(
-      formState,
-      providersQuery.data ?? [],
-      eligiblePlatformProviders,
-      { lockedProviders, groups },
-    )
-    if (validationError) {
-      alert(t(validationError.messageKey, validationError.params))
-      return
-    }
+    if (isFormDisabled || !canSave) return
     onSave?.(formState)
   }
 
   return (
-    <fieldset className="contents" disabled={isFormDisabled} aria-busy={isFormDisabled}>
+    <fieldset className="contents" disabled={isInitialLoading || isSaving} aria-busy={isInitialLoading || isSaving}>
     <div className="flex min-h-0 flex-1 p-4">
       <div className="grid min-h-0 flex-1 overflow-hidden rounded-[20px] border border-border bg-surface shadow-sm lg:grid-cols-[280px_minmax(0,1fr)]">
         <aside className="custom-scrollbar min-h-0 overflow-x-hidden overflow-y-auto border-b border-border bg-surface-subtle lg:border-b-0 lg:border-r">
@@ -362,6 +271,9 @@ export function RecoveryAppBuilder({
         </aside>
         <div className="flex min-h-0 flex-col">
           <div className={`custom-scrollbar min-h-0 flex-1 p-5 sm:p-6 ${step === 2 || step === 3 ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+            <div className="contents"
+              onDragStartCapture={event => { if (isFormDisabled) { event.preventDefault(); event.stopPropagation() } }}
+              onDropCapture={event => { if (isFormDisabled) { event.preventDefault(); event.stopPropagation() } }}>
             {lockedProviders && providersQuery.error ? (
               <FetchErrorAlert
                 className="mb-4 max-w-5xl"
@@ -380,6 +292,8 @@ export function RecoveryAppBuilder({
                   <p className="mt-1 text-sm text-text-muted">{t('pages.recoveryBuilder.details.description')}</p>
                 </div>
                 <AppMetadataForm
+                  readOnly={readOnly}
+                  helpPlatform={helpPlatform}
                   onMetadataChange={handleMetadataChange}
                   disableFileName={disableFileName}
                   initialValues={{
@@ -389,6 +303,7 @@ export function RecoveryAppBuilder({
                     environment: formState.environment,
                     platform: formState.platform,
                     targetProviderId: formState.targetProviderId,
+                    notificationEmail: formState.notificationEmail,
                   }}
                   providers={providersQuery.data ?? []}
                   lockProviders={lockedProviders !== null}
@@ -402,9 +317,18 @@ export function RecoveryAppBuilder({
             {step === 2 ? (
               <div className="flex h-full min-h-[480px] flex-col gap-4">
                 <div>
-                  <h2 className="text-base font-semibold text-text-primary">{t('pages.recoveryBuilder.tiers.title')}</h2>
+                  <div className="flex min-w-0 items-center gap-1.5">
+                    <h2 className="text-base font-semibold text-text-primary">{t('pages.recoveryBuilder.tiers.title')}</h2>
+                    <KeyedHelpPopover key={tierOrderHelpKey} helpKey={tierOrderHelpKey} sections={['effect', 'limitations']} />
+                  </div>
                   <p className="mt-1 text-sm text-text-muted">{t('pages.recoveryBuilder.tiers.description')}</p>
                 </div>
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <h3 className="text-sm font-semibold text-text-primary">{t('pages.recoveryBuilder.tiers.workloadSelection')}</h3>
+                  <KeyedHelpPopover key={workloadsHelpKey} helpKey={workloadsHelpKey} sections={['effect', 'limitations']} />
+                </div>
+                {tiersError && !groupsError ? <Alert variant="warning" title={t(tiersError.messageKey, tiersError.params)} /> : null}
+                <fieldset className="contents" disabled={readOnly}>
                 <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden rounded-lg border border-border lg:grid-cols-[280px_minmax(0,1fr)]">
                   {/* Bounded on small screens too, so the virtualized group list keeps its own scroll. */}
                   <div className="custom-scrollbar h-72 min-h-0 overflow-y-auto border-b border-border lg:h-auto lg:border-b-0 lg:border-r">
@@ -441,13 +365,18 @@ export function RecoveryAppBuilder({
                     />
                   </div>
                 </div>
+                </fieldset>
               </div>
             ) : null}
 
             {step === 3 ? (
               <div className="flex h-full min-h-0 flex-col">
-                <h2 className="text-base font-semibold text-text-primary">{t('pages.recoveryBuilder.policySet.title')}</h2>
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <h2 className="text-base font-semibold text-text-primary">{t('pages.recoveryBuilder.policySet.title')}</h2>
+                  <KeyedHelpPopover key={policyHelpKey} helpKey={policyHelpKey} sections={['effect', 'limitations']} />
+                </div>
                 <p className="mt-1 text-sm text-text-muted">{t('pages.recoveryBuilder.policySet.description')}</p>
+                {readOnly && formState.policySetId ? <p className="mt-2 text-sm text-text-secondary">{formState.policySetId}</p> : null}
                 {policySetsQuery.isLoading ? (
                   <p className="mt-5 text-sm text-text-muted" role="status">{t('pages.recoveryBuilder.policySet.loading')}</p>
                 ) : policySetsQuery.error ? (
@@ -467,13 +396,13 @@ export function RecoveryAppBuilder({
                         {t('pages.recoveryBuilder.policySet.unavailable')}
                       </p>
                     ) : null}
-                    <div className="mt-5 min-h-0 flex-1">
+                    <fieldset className="mt-5 min-h-0 flex-1" disabled={readOnly}>
                       <PolicySetPicker
                         policySets={policySetsQuery.data}
                         selectedPolicySetId={formState.policySetId}
                         onSelect={(policySetId) => { updateFormState({ policySetId }) }}
                       />
-                    </div>
+                    </fieldset>
                   </>
                 ) : (
                   <div className="mt-5 max-w-4xl">
@@ -490,15 +419,28 @@ export function RecoveryAppBuilder({
               <div>
                 <h2 className="text-base font-semibold text-text-primary">{t('pages.recoveryBuilder.orchestration.title')}</h2>
                 <p className="mt-1 text-sm text-text-muted">{t('pages.recoveryBuilder.orchestration.description')}</p>
+                <DagTemplateVersionSelect
+                  platform={templatePlatform}
+                  value={formState.dagTemplateVersion ?? null}
+                  templates={templates}
+                  isLoading={Boolean(templatePlatform && templatesQuery.isPending)}
+                  error={templatesQuery.error}
+                  disabled={isFormDisabled}
+                  onChange={dagTemplateVersion => { updateFormState({ dagTemplateVersion }) }}
+                  onRetry={() => { void templatesQuery.refetch() }}
+                />
                 <div className="mt-5 flex max-w-4xl items-start gap-3 rounded-lg border border-border bg-surface p-4">
                   <Toggle
                     checked={formState.pushToOrchestrator}
                     onChange={checked => { updateFormState({ pushToOrchestrator: checked }) }}
                     label={t('recovery.application.orchestration.toggleLabel')}
-                    disabled={lockPushToOrchestrator}
+                    disabled={readOnly || lockPushToOrchestrator}
                   />
                   <div>
-                    <p className="text-sm font-semibold text-text-primary">{t('recovery.application.orchestration.toggleLabel')}</p>
+                    <div className="flex min-w-0 items-center gap-1.5">
+                      <p className="text-sm font-semibold text-text-primary">{t('recovery.application.orchestration.toggleLabel')}</p>
+                      <KeyedHelpPopover helpKey="recoveryApplications.fieldHelp.push" sections={['effect', 'limitations']} />
+                    </div>
                     <p className="mt-1 text-xs text-text-muted">
                       {t(formState.pushToOrchestrator
                         ? 'recovery.application.orchestration.enabled'
@@ -509,6 +451,14 @@ export function RecoveryAppBuilder({
                     ) : null}
                   </div>
                 </div>
+                {formState.pushToOrchestrator ? (
+                  <div className="mt-5 flex min-w-0 items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+                    {platformProvidersQuery.error || (!platformProvidersQuery.isLoading && eligiblePlatformProviders.length === 0)
+                      ? <span className="text-xs font-medium text-text-secondary">{t('pages.recoveryBuilder.orchestration.providerLabel')}</span>
+                      : <label htmlFor="recovery-application-orchestration-provider" className="text-xs font-medium text-text-secondary">{t('pages.recoveryBuilder.orchestration.providerLabel')}</label>}
+                    <KeyedHelpPopover helpKey="recoveryApplications.fieldHelp.airflow" sections={['effect', 'limitations']} />
+                  </div>
+                ) : null}
                 {formState.pushToOrchestrator && platformProvidersQuery.error ? (
                   <div className="mt-5 max-w-4xl">
                     <FetchErrorAlert
@@ -528,12 +478,11 @@ export function RecoveryAppBuilder({
                   </div>
                 ) : formState.pushToOrchestrator ? (
                   <div className="mt-5 max-w-4xl">
-                    <Field label={t('pages.recoveryBuilder.orchestration.providerLabel')} htmlFor="recovery-application-orchestration-provider">
                       <Select
                         id="recovery-application-orchestration-provider"
                         value={formState.orchestrationProviderId}
                         onChange={event => { updateFormState({ orchestrationProviderId: event.target.value }) }}
-                        disabled={platformProvidersQuery.isLoading}
+                        disabled={readOnly || platformProvidersQuery.isLoading}
                         required={formState.pushToOrchestrator}
                       >
                         <option value="">
@@ -545,12 +494,13 @@ export function RecoveryAppBuilder({
                           <option key={provider.id} value={provider.id}>{provider.name} - {provider.type}</option>
                         ))}
                       </Select>
-                    </Field>
                   </div>
                 ) : null}
               </div>
             ) : null}
+            </div>
           </div>
+          {validationError && !(formState.pushToOrchestrator && platformProvidersQuery.error) && (step === 4 || (step === 1 && validationError.field === 'notificationEmail')) ? <Alert className="mx-4 mb-3" variant="warning" title={t(validationError.messageKey, validationError.params)} /> : null}
           <div className="flex flex-col-reverse gap-3 border-t border-border bg-surface-subtle p-4 sm:flex-row sm:items-center sm:justify-between">
             <Button variant="ghost" onClick={onCancel}>{t('buttons.cancel')}</Button>
             <div className="flex gap-3">
@@ -558,12 +508,12 @@ export function RecoveryAppBuilder({
                 {t('buttons.back')}
               </Button>
               {step < 4 ? (
-                <Button disabled={!canContinue} onClick={() => { setStep(current => Math.min(4, current + 1)) }}>
+                <Button disabled={!readOnly && !canContinue} onClick={() => { setStep(current => Math.min(4, current + 1)) }}>
                   {t('buttons.next')}
                 </Button>
               ) : (
                 <Button
-                  disabled={!canSave || isSaving}
+                  disabled={!canSave || isFormDisabled}
                   startIcon={isSaving ? <Spinner /> : undefined}
                   onClick={handleSave}
                 >
@@ -584,7 +534,7 @@ export function RecoveryAppBuilder({
       cancelLabel={t('buttons.cancel')}
       tone="danger"
       onConfirm={confirmSourceChange}
-      onCancel={() => { setPendingSourceChange(null) }}
+      onCancel={() => { if (!isFormDisabled) setPendingSourceChange(null) }}
     />
     </fieldset>
   )

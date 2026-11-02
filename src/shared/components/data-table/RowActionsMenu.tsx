@@ -23,7 +23,7 @@ interface RowActionsMenuProps {
   editDisabledTitle?: string
   deleteLabel: string
   edit: () => void
-  delete: () => void
+  delete?: () => void
   rollback?: {
     label: string
     onRollback: () => void
@@ -127,7 +127,7 @@ export function RowActionsMenu({
       >
         {editLabel}
       </button>
-      <button
+      {onDelete ? <button
         role="menuitem"
         className="w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-surface-hover transition-colors border-t border-border"
         onClick={(e) => {
@@ -137,7 +137,7 @@ export function RowActionsMenu({
         }}
       >
         {deleteLabel}
-      </button>
+      </button> : null}
       {rollback && (
         <button
           role="menuitem"

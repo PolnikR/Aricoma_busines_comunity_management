@@ -10,6 +10,8 @@ import { ConnectionTestManager } from '@/shared/connection-test/ConnectionTestMa
 import { ConnectionTestProvider } from '@/shared/connection-test/ConnectionTestProvider'
 import { ConnectionTestHost } from '@/shared/connection-test/ConnectionTestHost'
 import { selectProviders } from '../model/selectProviders'
+import en from '@/locales/en.json'
+import sk from '@/locales/sk.json'
 
 const keycloakMock = vi.hoisted(() => ({
   token: 'provider-test-token',
@@ -20,7 +22,20 @@ const keycloakMock = vi.hoisted(() => ({
 vi.mock('@/config/keycloak', () => ({ keycloak: keycloakMock }))
 import { detailNavigationLabels, detailSectionsFields, detailSectionsLabels, openDetailSection } from '@/test-utils/detailView'
 
-vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
+const locale = vi.hoisted((): { language: 'en' | 'sk' } => ({ language: 'en' }))
+vi.mock('@/hooks/useTranslation', () => ({
+  useTranslation: () => ({
+    t: (key: string, params?: Record<string, string | number>) => {
+      const dictionary: Record<string, string> = locale.language === 'en' ? en : sk
+      let text = dictionary[key] ?? key
+      for (const [name, value] of Object.entries(params ?? {})) {
+        text = text.replace(`{{${name}}}`, String(value))
+      }
+      return text
+    },
+    language: locale.language,
+  }),
+}))
 vi.mock('react-router', async (importOriginal) => ({
   ...await importOriginal<typeof import('react-router')>(),
   useBlocker: () => ({ state: 'unblocked' as const }),
@@ -131,6 +146,7 @@ function renderTable() {
 
 describe('ProvidersCatalogueTable', () => {
   beforeEach(() => {
+    locale.language = 'en'
     vi.stubGlobal('fetch', mockFetch())
   })
 
@@ -138,6 +154,57 @@ describe('ProvidersCatalogueTable', () => {
     vi.unstubAllGlobals()
     cleanup()
   })
+
+  it.each(([
+    { type: 'VMWARE', help: ['role', 'credentialId', 'url', 'vmPrefix', 'vmTags', 'notificationEmail', 'cacheRefreshSeconds', 'backingStorageProviderIds'] },
+    { type: 'FLASHCOPY', help: ['role', 'partnerProviderId', 'credentialId', 'url', 'notificationEmail', 'cacheRefreshSeconds'] },
+    { type: 'HITACHI', help: ['role', 'credentialId', 'url', 'notificationEmail', 'cacheRefreshSeconds'] },
+    { type: 'IBM_POWER', help: ['role', 'credentialId', 'url', 'notificationEmail', 'cacheRefreshSeconds', 'backingStorageProviderIds', 'managedSystem'] },
+  ] as const).flatMap(row => (['en', 'sk'] as const).map(language => ({ ...row, language }))))(
+    'shows exactly the $type field help in $language without changing the displayed values', ({ type, help, language }) => {
+      locale.language = language
+      const dictionary: Record<string, string> = language === 'en' ? en : sk
+      const t = (key: string) => dictionary[key] ?? key
+      const provider: ProviderRecord = {
+        ...providerA, name: 'Display provider', type, vmPrefix: 'prod-', vmTags: ['tag-a', 'tag-b'],
+        managedSystem: 'power-system', cacheRefreshSeconds: 120,
+      }
+      const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      render(
+        <QueryClientProvider client={queryClient}>
+          <ConnectionTestProvider manager={new ConnectionTestManager(queryClient, 'test-session')}>
+            <ProvidersCatalogueTable providers={[provider]} allProviders={[provider]} roleFilter="all"
+              onRoleFilterChange={vi.fn()} isLoading={false} error={null} isRetrying={false} onRetry={vi.fn()} />
+          </ConnectionTestProvider>
+        </QueryClientProvider>,
+      )
+      fireEvent.click(screen.getByText('Display provider'))
+      const drawer = screen.getByRole('dialog', { name: t('drawer.providerDetail') })
+      const triggers = within(drawer).queryAllByRole('button', { name: /^(Help:|Nápoveda:)/ })
+      expect(triggers.map(button => button.getAttribute('aria-label')).sort()).toEqual(
+        help.map(field => t(`providers.fieldHelp.${field}.trigger`)).sort(),
+      )
+      const fields = detailSectionsFields(drawer)
+      expect(fields[t('forms.cacheRefreshSeconds')]).toBe('120')
+      expect(fields[t('forms.vmPrefix')]).toBe(type === 'VMWARE' ? 'prod-' : undefined)
+      expect(fields[t('forms.vmTags')]).toBe(type === 'VMWARE' ? 'tag-a, tag-b' : undefined)
+      expect(fields[t('forms.managedSystem')]).toBe(type === 'IBM_POWER' ? 'power-system' : undefined)
+      for (const field of help) {
+        const trigger = within(drawer).getByRole('button', { name: t(`providers.fieldHelp.${field}.trigger`) })
+        expect(trigger.closest('dt')).not.toBeNull()
+        fireEvent.click(trigger)
+        const popover = screen.getByRole('dialog', { name: t(`providers.fieldHelp.${field}.title`) })
+        expect(popover).toHaveTextContent(t(`providers.fieldHelp.${field}.intro`))
+        expect(popover).not.toHaveTextContent(/default|predvolen/i)
+        fireEvent.keyDown(window, { key: 'Escape' })
+        expect(popover).not.toBeInTheDocument()
+        expect(drawer).toBeInTheDocument()
+      }
+      expect(detailSectionsFields(drawer)).toEqual(fields)
+      expect(within(drawer).getByRole('button', { name: t('providers.help.trigger') })).toBeInTheDocument()
+      expect(fetch).not.toHaveBeenCalled()
+    },
+  )
 
   it('keeps provider table chrome visible and skeletonizes only rows while loading', () => {
     vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>(() => undefined)))
@@ -310,7 +377,7 @@ describe('ProvidersCatalogueTable', () => {
     }
     expect(detailSectionsLabels(drawer)).toEqual([
       'Provider ID', 'Type', 'Backing storage', 'Role', 'IP address', 'URL',
-      'Notification email', 'Credential', 'Credential status', 'Description',
+      'Notification email', 'Credential', 'Credential status', 'Cache refresh interval (seconds)', 'VM prefix', 'VM tags', 'Description',
     ])
     expect(detailSectionsFields(drawer)).toMatchObject({ 'Provider ID': 'vmware-vcenter-01', 'Backing storage': 'None', Role: 'Source', 'Credential status': 'Available' })
 
@@ -320,7 +387,7 @@ describe('ProvidersCatalogueTable', () => {
     expect(detailNavigationLabels(storageDrawer)).toEqual(['Overview'])
     expect(detailSectionsLabels(storageDrawer)).toEqual([
       'Provider ID', 'Type', 'Partner FlashSystem provider', 'Role', 'IP address', 'URL',
-      'Notification email', 'Credential', 'Credential status', 'Description',
+      'Notification email', 'Credential', 'Credential status', 'Cache refresh interval (seconds)', 'Description',
     ])
   })
 

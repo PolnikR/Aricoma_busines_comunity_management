@@ -1,4 +1,4 @@
-import type { OrchestrationStateOutput, OrchestratorPushOutput, RecoveryAppRecordOutput, RollbackReportOutput } from '@/generated/query/zod'
+import type { AppOrchestrationStateOutput, OrchestratorPushOutput, RecoveryAppRecordOutput, RollbackReportOutput } from '@/generated/query/zod'
 
 // Rollback report of the delete response, typed by the patched spec.
 export type RollbackReport = RollbackReportOutput
@@ -52,6 +52,7 @@ export interface RecoveryApplicationData {
     source_provider_id: string
     target_provider_id: string
     notificationEmail: string | null
+    dag_template_version?: string | null | undefined
     tiers: Record<string, RecoveryTier>
   }
 }
@@ -87,7 +88,7 @@ export interface RecoveryApplicationApiRecord {
     target_provider_id?: string | null | undefined
     notificationEmail?: string | null | undefined
   }
-  orchestration?: OrchestrationStateOutput | null | undefined
+  orchestration?: AppOrchestrationStateOutput | null | undefined
 }
 
 export interface RecoveryApplicationListItem {
@@ -102,12 +103,14 @@ export interface RecoveryApplicationListItem {
       source_provider_id?: string | null | undefined
       target_provider_id?: string | null | undefined
       notificationEmail?: string | null | undefined
+      dag_template_version?: string | null | undefined
       tiers: Record<string, DraftRecoveryTier>
     }
   }
   airflowRunId?: string | null | undefined
   pushToOrchestrator?: boolean | undefined
   orchestrationProviderId?: string | null | undefined
+  deployedTemplateVersion?: string | null | undefined
   submission?: ApplicationSubmission
   /** Validated GET record before UI mapping; unknown API fields are removed by Zod. */
   rawRecord?: RecoveryAppRecordOutput | undefined
@@ -132,8 +135,8 @@ export interface RecoveryApplicationFormState {
   platform: string
   orchestrationProviderId: string
   targetProviderId: string
-  // Not editable in the builder; kept so a re-save does not clear it (the
-  // backend replaces the whole record).
+  // Optional editable address; the mapper normalizes a cleared value to null.
   notificationEmail: string | null
+  dagTemplateVersion?: string | null | undefined
   tiers: Map<string, DraftRecoveryTier>
 }

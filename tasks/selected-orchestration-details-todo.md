@@ -189,7 +189,7 @@ git diff --check
 ### Task 8: Verify static and focused runtime contracts
 
 - [x] Run V-A, V-G, V-CA, V-CG, V-D, V-H and V-R, recording actual suite/test counts rather than assuming no-test success.
-- [ ] Run V-Q, retaining full ESLint/layout and typecheck results; inspect the production diff for unchanged generated/cache/provider/inventory/Recovery Runs contracts.
+- [x] Run V-Q, retaining full ESLint/layout and typecheck results; inspect the production diff for unchanged generated/cache/provider/inventory/Recovery Runs contracts. Independent checks 2026-10-26/27: typecheck, full lint/layout and candidate-owned diff inspection passed.
 - [x] Compare request evidence to F1: no initial count growth, unchanged identity and disabled gates, no new provider observer or page fan-out.
 
 **Dependencies:** Task 7. **Scope:** Small, evidence updates in the two planning documents; production fixes require rerunning the affected checks.
@@ -202,8 +202,8 @@ git diff --check
 
 ### Task 9: Browser smoke and final acceptance record
 
-- [ ] Smoke both tables: select/switch/close, Overview/Orchestration/Inventory, Push-off stored-run cases, links and navigation destinations; inspect console and endpoint-specific network counts.
-- [ ] Confirm Recovery Runs still uses page-limited visible fan-out and existing history behavior; distinguish shared-cache observer requests from new selected-detail requests.
+- [x] Smoke both tables: select/switch/close, Overview/Orchestration/Inventory, Push-off stored-run cases, links and navigation destinations; inspect console and endpoint-specific network counts. Microsoft Edge + Playwright 11/11 with intercepted HTTP GET (2026-10-26). Evidence: `C:\Users\polnikr\AppData\Local\Temp\abco-p1p2-playwright\candidate5-smoke-results.json`.
+- [x] Confirm Recovery Runs still uses page-limited visible fan-out and existing history behavior; distinguish shared-cache observer requests from new selected-detail requests. Playwright scenario with 16 applications requested latest status for only 10 visible; selected/history hook regressions passed. Evidence: `C:\Users\polnikr\AppData\Local\Temp\abco-p1p2-playwright\candidate5-fanout-results.json`.
 - [x] Record matrix completion, remaining limitations and reviewed diff; use the plan's reverse-order rollback if acceptance fails.
 
 **Dependencies:** Task 8. **Scope:** Small, evidence in the two documents; no visual redesign.
@@ -216,6 +216,6 @@ git diff --check
 
 ### Checkpoint F4 - Acceptance
 
-- [ ] All implementation acceptance criteria in the plan are satisfied with evidence; no additional network fan-out, cache-policy drift or entity contract drift. Any unverified browser step remains explicitly open.
+- [x] All candidate-owned implementation acceptance criteria are satisfied in code review, focused tests, static checks and isolated Playwright browser smoke; no observed additional network fan-out, cache-policy drift or entity contract drift. **Boundary:** real authenticated backend integration remains unverified as an overall release gate, not as an isolated browser smoke result.
 
 Execution status: F0-F3 complete. F4 focused tests, typecheck, feature-layout and diff checks passed. Full npm lint encountered an unrelated temporary QA file; browser smoke is unavailable. The remaining unchecked acceptance items are intentional and are documented in the plan.

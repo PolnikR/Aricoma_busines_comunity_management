@@ -21,7 +21,7 @@ interface SnapshotPolicyModalProps {
 }
 
 const EMPTY_FORM: SnapshotPolicyFormData = {
-  id: '', name: '', description: '', level: '', frequency_value: '1', frequency_unit: 'minutes',
+  id: '', name: '', description: '', level: '', frequency_value: '15', frequency_unit: 'minutes',
   retention_value: '1', retention_unit: 'days', max_snapshots: '', flashcopy_copy_rate: '0', enabled: true,
 }
 
@@ -77,7 +77,11 @@ export function SnapshotPolicyModal({ open, onClose, existingPolicies, policy }:
   }
 
   const handleChange = <K extends keyof SnapshotPolicyFormData>(field: K, value: SnapshotPolicyFormData[K]) => {
-    setFormData(previous => ({ ...previous, [field]: value }))
+    setFormData(previous => ({
+      ...previous,
+      [field]: value,
+      ...(field === 'frequency_unit' && value !== previous.frequency_unit ? { frequency_value: '' } : {}),
+    }))
     if (errors[field]) {
       setErrors(previous => {
         const next = { ...previous }
@@ -100,7 +104,9 @@ export function SnapshotPolicyModal({ open, onClose, existingPolicies, policy }:
     if (!formData.name.trim()) next.name = t('snapshotPolicies.validation.nameRequired')
     if (!formData.description.trim()) next.description = t('snapshotPolicies.validation.descriptionRequired')
     if (!formData.level.trim()) next.level = t('snapshotPolicies.validation.levelRequired')
-    if (!Number.isInteger(frequency) || frequency < 1) next.frequency_value = t('snapshotPolicies.validation.positiveInteger')
+    if (formData.frequency_unit === 'minutes') {
+      if (!Number.isInteger(frequency) || frequency < 15 || frequency % 15 !== 0) next.frequency_value = t('snapshotPolicies.validation.frequencyMinutes')
+    } else if (!Number.isInteger(frequency) || frequency < 1) next.frequency_value = t('snapshotPolicies.validation.positiveInteger')
     if (!Number.isInteger(retention) || retention < 1) next.retention_value = t('snapshotPolicies.validation.positiveInteger')
     if (maximum !== null && (!Number.isInteger(maximum) || maximum < 1)) next.max_snapshots = t('snapshotPolicies.validation.positiveInteger')
     if (!formData.flashcopy_copy_rate.trim() || !Number.isInteger(copyRate) || copyRate < 0 || copyRate > 150) next.flashcopy_copy_rate = t('snapshotPolicies.validation.flashcopyCopyRate')

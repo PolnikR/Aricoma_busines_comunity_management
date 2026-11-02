@@ -180,7 +180,7 @@ export function CleanRoomPoliciesTable({ policies, isLoading, error, isRetrying,
             <DetailOverview>
               <DetailField label={t('details.policyId')} value={selected.id} mono copyValue={selected.id} />
               <DetailField label={t('details.description')} value={selected.description} wide />
-              <DetailField label={t('details.status')} value={t(selected.enabled ? 'cleanRoomPolicies.enabled' : 'cleanRoomPolicies.disabled')} />
+              <DetailField label={t('details.status')} labelHelp={<KeyedHelpPopover helpKey="cleanRoomPolicies.fieldHelp.enabled" sections={[]} />} value={t(selected.enabled ? 'cleanRoomPolicies.enabled' : 'cleanRoomPolicies.disabled')} />
             </DetailOverview>
           </DetailViewSection>
         </DetailView>

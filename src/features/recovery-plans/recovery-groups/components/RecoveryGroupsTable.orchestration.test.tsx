@@ -72,7 +72,7 @@ describe('Group selected orchestration HTTP contract', () => {
     const section = view.section('Orchestration')
     await waitFor(() => { expect(http.params('get_orchestrator_runs')).toHaveLength(1) })
     await within(section).findByText(expected)
-    expect(within(section).getByRole('button', { name: /View recovery runs/ })).toBeInTheDocument()
+    expect(within(section).getByRole('button', { name: /View recovery group runs/ })).toBeInTheDocument()
     await act(async () => { pending.resolve(Response.json({ providers: [provider] })); await pending.promise })
   })
 
@@ -160,7 +160,7 @@ describe('Group selected orchestration HTTP contract', () => {
       { provider_id: 'airflow-01', dag_id: 'dag_run-1', limit: '1', order_by: '-logical_date' },
     ])
     expect(http.params('get_platform_providers')).toHaveLength(1)
-    fireEvent.click(within(section).getByRole('button', { name: /View recovery runs/ }))
+    fireEvent.click(within(section).getByRole('button', { name: /View recovery group runs/ }))
     expect(await screen.findByText('?tab=groups&entityType=group&entityId=group%20%2F%20one')).toBeInTheDocument()
   })
 
@@ -173,7 +173,7 @@ describe('Group selected orchestration HTTP contract', () => {
     const section = view.section('Orchestration')
     await waitFor(() => { expect(view.client.isFetching()).toBe(0) })
     expect(http.params('get_orchestrator_runs')).toEqual([])
-    expect(within(section).queryByRole('button', { name: /View recovery runs/ })).not.toBeInTheDocument()
+    expect(within(section).queryByRole('button', { name: /View recovery group runs/ })).not.toBeInTheDocument()
   })
 
   it.each([{ pushToOrchestrator: false }, { orchestrationProviderId: null }])(

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { LanguageProvider } from '@/contexts/LanguageProvider'
@@ -160,6 +160,18 @@ describe('AppMetadataForm', () => {
   })
 
   describe('target provider', () => {
+    it.each([
+      ['unknown to known', 'source-gone', 'vmware-source', { platform: 'vmware-source' }],
+      ['known to unknown', 'vmware-source', '', { platform: '' }],
+      ['both unknown', 'source-gone', '', { platform: '' }],
+      ['same type with invalid target', 'vmware-source', 'vmware-source-2', { platform: 'vmware-source-2' }],
+    ])('emits raw source intent without changing the controlled target: %s', async (_label, source, nextSource, expected) => {
+      const onMetadataChange = renderForm(source, 'target-gone')
+      fireEvent.change(await screen.findByLabelText('Provider ID *'), { target: { value: nextSource } })
+      expect(onMetadataChange).toHaveBeenCalledExactlyOnceWith(expected)
+      expect(screen.getByLabelText('Target provider ID *')).toHaveValue('target-gone')
+    })
+
     const providers = [
       { id: 'vmware-source', name: 'VMware Source', type: 'VMWARE', role: 'source', credentialStatus: 'ok' },
       { id: 'vmware-source-2', name: 'VMware Source 2', type: 'VMWARE', role: 'source', credentialStatus: 'ok' },
@@ -241,7 +253,7 @@ describe('AppMetadataForm', () => {
 
       await user.selectOptions(await screen.findByLabelText('Provider ID *'), 'power-source')
 
-      expect(onMetadataChange).toHaveBeenLastCalledWith({ platform: 'power-source', targetProviderId: '' })
+      expect(onMetadataChange).toHaveBeenLastCalledWith({ platform: 'power-source' })
       expect(screen.getByLabelText('Provider ID *')).toHaveValue('vmware-source')
       expect(screen.getByLabelText('Target provider ID *')).toHaveValue('vmware-target')
     })
@@ -268,14 +280,14 @@ describe('AppMetadataForm', () => {
       expect([...target.querySelectorAll('option')].map(option => option.value)).toEqual(['', 'power-source', 'power-target'])
     })
 
-    it('clears the target when the source changes to another provider type', async () => {
+    it('reports another source type without deriving a target reset', async () => {
       const user = userEvent.setup()
       const onMetadataChange = renderForm('vmware-source', 'vmware-target')
 
       await user.selectOptions(await screen.findByLabelText('Provider ID *'), 'power-source')
 
-      expect(onMetadataChange).toHaveBeenLastCalledWith({ platform: 'power-source', targetProviderId: '' })
-      expect(screen.getByLabelText('Target provider ID *')).toHaveValue('')
+      expect(onMetadataChange).toHaveBeenLastCalledWith({ platform: 'power-source' })
+      expect(screen.getByLabelText('Target provider ID *')).toHaveValue('vmware-target')
     })
 
     it('keeps the target when the source changes within the same provider type', async () => {
@@ -287,5 +299,57 @@ describe('AppMetadataForm', () => {
       expect(onMetadataChange).toHaveBeenLastCalledWith({ platform: 'vmware-source-2' })
       expect(screen.getByLabelText('Target provider ID *')).toHaveValue('vmware-target')
     })
+  })
+})
+
+
+describe('application email editing', () => {
+  it('keeps all read-only controls locked while technical help remains keyboard accessible', async () => {
+    const user = userEvent.setup()
+    const onMetadataChange = vi.fn()
+    render(<LanguageProvider><AppMetadataForm readOnly helpPlatform="IBM_POWER" onMetadataChange={onMetadataChange} /></LanguageProvider>)
+    const sourceHelp = await screen.findByRole('button', { name: 'About Source HMC' })
+    for (const control of [...screen.getAllByRole('textbox'), ...screen.getAllByRole('combobox')]) expect(control).toBeDisabled()
+    expect(sourceHelp.closest('label')).toBeNull()
+    await user.click(sourceHelp)
+    expect(await screen.findByRole('dialog', { name: 'Source HMC' })).toBeInTheDocument()
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'About Application DAG notifications' }))
+    expect(screen.getByRole('dialog')).toHaveTextContent('There is no fallback')
+    expect(onMetadataChange).not.toHaveBeenCalled()
+  })
+
+  it('replaces an open platform helper when the application context changes', async () => {
+    const user = userEvent.setup()
+    const { rerender } = render(<LanguageProvider><AppMetadataForm helpPlatform="VMWARE" /></LanguageProvider>)
+    await user.click(await screen.findByRole('button', { name: 'About Source vCenter' }))
+    expect(screen.getByRole('dialog')).toHaveTextContent('source provider ID')
+    rerender(<LanguageProvider><AppMetadataForm helpPlatform="IBM_POWER" /></LanguageProvider>)
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'About Source HMC' }))
+    expect(screen.getByRole('dialog')).toHaveTextContent('production LPAR')
+    rerender(<LanguageProvider><AppMetadataForm helpPlatform={undefined} /></LanguageProvider>)
+    expect(screen.getByRole('button', { name: 'About Source compute provider' })).toBeInTheDocument()
+  })
+
+  it('keeps a controlled raw address, reports invalid input and supports clearing', async () => {
+    function EmailHarness() {
+      const [notificationEmail, setEmail] = useState<string | null>('stored@example.test')
+      return <LanguageProvider><AppMetadataForm initialValues={{ fileName: 'app', name: 'App', description: 'Description', environment: 'dev', platform: '', notificationEmail }} onMetadataChange={patch => { if (patch.notificationEmail !== undefined) setEmail(patch.notificationEmail) }} /></LanguageProvider>
+    }
+    const user = userEvent.setup()
+    render(<EmailHarness />)
+    const input = await screen.findByLabelText('Notification email')
+    expect(input).toHaveValue('stored@example.test')
+    expect(input).toHaveAttribute('type', 'email')
+    expect(input).toHaveAttribute('autocomplete', 'email')
+    await user.clear(input)
+    await user.type(input, 'invalid')
+    expect(input).toHaveAttribute('aria-invalid', 'true')
+    expect(input).toHaveAccessibleDescription('Enter a valid email address.')
+    await user.clear(input)
+    expect(input).not.toHaveAttribute('aria-invalid', 'true')
+    expect(input).not.toBeRequired()
   })
 })

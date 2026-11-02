@@ -2,7 +2,19 @@ import { describe, expect, it } from 'vitest'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import type { PlatformProviderRecord } from '@/features/platform-administration/platform-providers/model/platformProviderTypes'
 import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
-import { validateRecoveryApplication } from './validateRecoveryApplication'
+import { validateRecoveryApplication as validate, validateRecoveryApplicationTemplate, type ApplicationValidationOptions } from './validateRecoveryApplication'
+
+function fixtureValue<T>(value: T | undefined): T {
+  if (value === undefined) throw new Error('Expected fixture value')
+  return value
+}
+
+const templateCatalog = { templates: [{ platform: 'vmware', version: 'future-3', default: true, description: 'Default' }], verified: true }
+function validateRecoveryApplication(draft: RecoveryApplicationFormState, providers: ProviderRecord[], platformProviders: PlatformProviderRecord[] = [], options: Partial<ApplicationValidationOptions> = {}) {
+  const source = options.lockedProviders ? options.lockedProviders.sourceProviderId : draft.platform
+  const power = options.lockedProviders ? options.lockedProviders.platform.toUpperCase() === 'IBM_POWER' : source?.startsWith('power')
+  return validate(draft, providers, platformProviders, { templateCatalog, groups: [{ id: 'fixture', providerId: source, resources: [], sourceCategory: 'backup_system_workload', workloadType: power ? 'ibm_power_virtual_machines' : 'vmware_virtual_machines', pushToOrchestrator: true, airflowRunId: 'run' }], ...options })
+}
 
 function provider(id: string, type: ProviderRecord['type'], role: 'source' | 'target'): ProviderRecord {
   return { id, name: id, description: '', type, role, ipAddress: '10.0.0.1', credentialId: 'creds', credentialStatus: 'ok' }
@@ -26,10 +38,52 @@ const formState: RecoveryApplicationFormState = {
   orchestrationProviderId: '',
   targetProviderId: 'vmware-target',
   notificationEmail: null,
-  tiers: new Map(),
+  tiers: new Map([['fixture', { order: 1, description: 'Fixture', recovery_group: { id: 'fixture', name: 'Fixture', vms: [] } }]]),
 }
 
+describe('template submit validation', () => {
+  const templates = [{ platform: 'vmware', version: 'future-3', default: true, description: 'Server default' }]
+  it.each([undefined, { templates: [], verified: true }, { templates, verified: false }])('allows only default Save when catalog is unavailable: %j', catalog => {
+    expect(validateRecoveryApplicationTemplate(formState, catalog)).toBeNull()
+    expect(validateRecoveryApplicationTemplate({ ...formState, pushToOrchestrator: true }, catalog)).not.toBeNull()
+    expect(validateRecoveryApplicationTemplate({ ...formState, dagTemplateVersion: 'future-3' }, catalog)).not.toBeNull()
+  })
+  it('accepts the server default and explicit supported versions after verification', () => {
+    const catalog = { templates, verified: true }
+    expect(validateRecoveryApplicationTemplate({ ...formState, pushToOrchestrator: true }, catalog)).toBeNull()
+    expect(validateRecoveryApplicationTemplate({ ...formState, dagTemplateVersion: 'future-3' }, catalog)).toBeNull()
+    expect(validateRecoveryApplicationTemplate({ ...formState, dagTemplateVersion: 'removed' }, catalog)?.messageKey).toBe('recovery.application.lifecycle.templateUnknown')
+  })
+  it('treats ambiguous defaults as unavailable', () => {
+    const catalog = { templates: [...templates, { platform: 'vmware', version: 'other', default: true, description: 'Another default' }], verified: true }
+    expect(validateRecoveryApplicationTemplate({ ...formState, pushToOrchestrator: true }, catalog)).not.toBeNull()
+  })
+})
+
 describe('validateRecoveryApplication', () => {
+  it.each([false, true])('rejects zero tiers consistently (locked=%s)', locked => {
+    const before = structuredClone(formState)
+    expect(validateRecoveryApplication({ ...formState, tiers: new Map() }, providers, [], {
+      groups: [],
+      lockedProviders: locked ? { platform: 'VMWARE', sourceProviderId: 'vmware-source', targetProviderId: 'vmware-target' } : null,
+    })).toEqual({ field: 'recoveryGroup', messageKey: 'recovery.application.validation.tiersRequired' })
+    expect(formState).toEqual(before)
+  })
+
+  it.each([
+    [{ fileName: '', name: '', description: '', policySetId: '' }, 'fileName', 'recovery.application.validation.fileNameRequired'],
+    [{ name: '', description: '', policySetId: '' }, 'name', 'alerts.pleaseEnterName'],
+    [{ description: '', policySetId: '' }, 'description', 'alerts.pleaseEnterDescription'],
+    [{ policySetId: '' }, 'recoveryGroup', 'recovery.application.validation.recoveryGroupRequired'],
+    [{}, 'recoveryGroup', 'recovery.application.validation.recoveryGroupRequired'],
+  ] as const)('validates Details then Tiers before Policy and Push: %j', (patch, field, messageKey) => {
+    const draft: RecoveryApplicationFormState = {
+      ...formState, pushToOrchestrator: true, orchestrationProviderId: 'gone',
+      tiers: new Map([['database', { order: 1, description: 'Unassigned' }]]), ...patch,
+    }
+    expect(validateRecoveryApplication(draft, providers, [], { groups: [] })).toEqual({ field, messageKey, ...(field === 'recoveryGroup' ? { params: { tier: 'database' } } : {}) })
+  })
+
   it('accepts a target provider of the source type', () => {
     expect(validateRecoveryApplication(formState, providers)).toBeNull()
   })
@@ -117,8 +171,8 @@ describe('validateRecoveryApplication', () => {
 
   describe('recovery groups', () => {
     const groups = [
-      { pushToOrchestrator: true, airflowRunId: 'run-1', id: 'vm_group', sourceCategory: 'backup_system_workload', workloadType: 'vmware_virtual_machines' },
-      { pushToOrchestrator: true, airflowRunId: 'run-2', id: 'lpar_group', sourceCategory: 'backup_system_workload', workloadType: 'ibm_power_virtual_machines' },
+      { pushToOrchestrator: true, airflowRunId: 'run-1', id: 'vm_group', providerId: 'vmware-source', resources: ['db01', 'db 01'], sourceCategory: 'backup_system_workload', workloadType: 'vmware_virtual_machines' },
+      { pushToOrchestrator: true, airflowRunId: 'run-2', id: 'lpar_group', providerId: 'power-hmc', resources: ['db01', 'aix01', 'A', 'lpar.prod_01-a', 'x'.repeat(47), 'bad name', '-lpar', '.lpar', 'lpar/01', 'x'.repeat(48), ''], sourceCategory: 'backup_system_workload', workloadType: 'ibm_power_virtual_machines' },
     ] as const
     const powerProviders = [provider('power-hmc', 'IBM_POWER', 'source')]
 
@@ -133,6 +187,15 @@ describe('validateRecoveryApplication', () => {
         }]]),
       }
     }
+
+    it('does not bypass missing Group checks', () => {
+      const draft = withGroup('gone_group', ['unknown-vm'], { policySetId: 'nonempty-policy-absent-from-query' })
+      expect(validateRecoveryApplication(draft, providers)?.messageKey).toBe('recovery.application.validation.recoveryGroupMissing')
+      expect(validateRecoveryApplication(draft, providers, [], { groups: [] })).toEqual({
+        field: 'recoveryGroup', messageKey: 'recovery.application.validation.recoveryGroupMissing',
+        params: { tier: 'database', group: 'gone_group name' },
+      })
+    })
 
     describe.each(['VMWARE', 'IBM_POWER'] as const)('publication for %s', platform => {
       it.each([
@@ -199,5 +262,68 @@ describe('validateRecoveryApplication', () => {
         params: { tier: 'database', name },
       })
     })
+  })
+})
+
+
+describe('functional consistency rules', () => {
+  const airflow: PlatformProviderRecord[] = [{ id: 'airflow', name: 'Airflow', port: 8080, type: 'AIRFLOW', role: 'source', credentialStatus: 'ok' }]
+  function configuration(power: boolean, version: string | null, push: boolean) {
+    const source = power ? 'power-hmc' : 'vmware-source'
+    const groups = [{ id: 'g', providerId: source, sourceCategory: 'backup_system_workload' as const, workloadType: power ? 'ibm_power_virtual_machines' as const : 'vmware_virtual_machines' as const, pushToOrchestrator: true, airflowRunId: 'run', resources: ['db'] }]
+    const tier = { order: 1, description: 'DB', recovery_group: { id: 'g', name: 'Database group', vms: [{ name: 'db' }] } }
+    const state: RecoveryApplicationFormState = { ...formState, platform: source, targetProviderId: power ? source : 'vmware-target', dagTemplateVersion: version, pushToOrchestrator: push, orchestrationProviderId: 'airflow', tiers: new Map([['first', tier], ['second', { ...tier, order: 2 }]]) }
+    const catalog = { templates: (power ? ['v1', 'v2', 'v3'] : ['v1', 'v2']).map(version => ({ platform: power ? 'ibm_power' : 'vmware', version, default: version === 'v1', description: version })), verified: true }
+    return { state, options: { groups, templateCatalog: catalog } }
+  }
+  describe.each([false, true])('Push=%s', push => {
+    it.each([[false, null], [false, 'v1'], [false, 'v2'], [true, null], [true, 'v1'], [true, 'v2'], [true, 'v3']] as const)('gates duplicates for Power=%s version=%s', (power, version) => {
+      const { state, options } = configuration(power, version, push)
+      for (const locked of [false, true]) {
+        const result = validate(state, providers, airflow, { ...options, lockedProviders: locked ? { platform: power ? 'IBM_POWER' : 'VMWARE', sourceProviderId: state.platform, targetProviderId: state.targetProviderId } : null })
+        expect(result).toEqual(version && version !== 'v1' ? { field: 'workloads', templateDependent: true, messageKey: 'recovery.application.validation.duplicateWorkloadAcrossTiers', params: { name: 'db', tiers: 'first, second' } } : null)
+      }
+    })
+    it('blocks an invalid email before submitting', () => {
+      const { state, options } = configuration(false, null, push)
+      expect(validate({ ...state, notificationEmail: 'invalid' }, providers, airflow, options)).toEqual({ field: 'notificationEmail', messageKey: 'forms.notificationEmailInvalid' })
+    })
+    it.each([false, true])('blocks normalized collisions for Power=%s', power => {
+      const { state, options } = configuration(power, power ? 'v3' : 'v2', push)
+      const original = fixtureValue(state.tiers.get('first'))
+      const group = fixtureValue(original.recovery_group)
+      options.groups[0] = { ...fixtureValue(options.groups[0]), resources: ['db.a', 'db_a'] }
+      state.tiers = new Map([['first', { ...original, recovery_group: { ...group, vms: [{ name: 'db.a' }, { name: 'db_a' }] } }]])
+      expect(validate(state, providers, airflow, options)).toMatchObject({ templateDependent: true, messageKey: 'recovery.application.validation.workloadTaskGroupCollision', params: { tier: 'first', first: 'db.a', second: 'db_a' } })
+      state.tiers = new Map([
+        ['db.one', { ...original, recovery_group: { ...group, vms: [{ name: 'db.a' }] } }],
+        ['db_one', { ...original, recovery_group: { ...group, vms: [{ name: 'db_a' }] } }],
+      ])
+      expect(validate(state, providers, airflow, options)).toMatchObject({ templateDependent: true, messageKey: 'recovery.application.validation.tierTaskGroupCollision', params: { first: 'db.one', second: 'db_one', id: 'tier_01_db_one' } })
+      expect(validate(state, providers, airflow, { ...options, groups: [] })).toMatchObject({ messageKey: 'recovery.application.validation.recoveryGroupMissing' })
+    })
+
+    it('resolves null using the verified server default without changing the draft', () => {
+      const { state, options } = configuration(true, null, push)
+      options.templateCatalog.templates = options.templateCatalog.templates.map(template => ({ ...template, default: template.version === 'v3' }))
+      expect(validate(state, providers, airflow, options)).toMatchObject({ templateDependent: true, messageKey: 'recovery.application.validation.duplicateWorkloadAcrossTiers' })
+      expect(state.dagTemplateVersion).toBeNull()
+    })
+    it('uses the source provider rather than target or embedded group snapshot', () => {
+      const { state, options } = configuration(false, null, push)
+      expect(validate(state, providers, airflow, { ...options, groups: [{ ...fixtureValue(options.groups[0]), providerId: 'vmware-target' }] })).toMatchObject({ messageKey: 'recovery.application.validation.recoveryGroupSourceMismatch', params: { tier: 'first', group: 'Database group', expected: 'vmware-source', actual: 'vmware-target' } })
+    })
+  })
+  it('blocks duplicate LPARs within one tier only for explicit v2', () => {
+    const { state, options } = configuration(true, 'v2', false)
+    state.tiers.delete('second')
+    fixtureValue(fixtureValue(state.tiers.get('first')).recovery_group).vms.push({ name: 'db' })
+    expect(validate(state, providers, airflow, options)).toEqual({ field: 'workloads', templateDependent: true, messageKey: 'recovery.application.validation.duplicateWorkloadWithinTier', params: { name: 'db', tier: 'first' } })
+    expect(validate({ ...state, dagTemplateVersion: null }, providers, airflow, options)).toBeNull()
+    expect(validate({ ...state, dagTemplateVersion: 'v1' }, providers, airflow, options)).toBeNull()
+  })
+  it('rejects a selected workload absent from current query resources', () => {
+    const { state, options } = configuration(false, null, false)
+    expect(validate(state, providers, airflow, { ...options, groups: [{ ...fixtureValue(options.groups[0]), resources: [] }] })).toMatchObject({ messageKey: 'recovery.application.validation.workloadMissing', params: { name: 'db', tier: 'first' } })
   })
 })

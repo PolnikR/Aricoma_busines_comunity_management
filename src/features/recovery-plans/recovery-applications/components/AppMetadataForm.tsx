@@ -4,10 +4,13 @@ import { Field, Input, Select, Textarea } from '@/shared/components/form/FormCon
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import { isValidRecoveryApplicationFileName, isValidRecoveryApplicationName } from '../utils/recoveryApplicationFileName'
 import { getEligibleSourceProviders, getEligibleTargetProviders } from '../utils/eligibleProviders'
-import type { RecoveryApplicationFormState } from '../model/recoveryApplicationTypes'
+import { isValidRecoveryApplicationEmail } from '../utils/recoveryApplicationEmail'
+import type { ApplicationMetadataPatch } from '../model/recoveryApplicationDraft'
+import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
+import { recoveryApplicationHelpKey } from '../helpers/recoveryApplicationFieldHelp'
 
 interface AppMetadataFormProps {
-  onMetadataChange?: (metadata: Partial<RecoveryApplicationFormState>) => void
+  onMetadataChange?: (metadata: ApplicationMetadataPatch) => void
   initialValues?: {
     fileName: string
     name: string
@@ -15,6 +18,7 @@ interface AppMetadataFormProps {
     environment: string
     platform: string
     targetProviderId?: string
+    notificationEmail?: string | null
   }
   providers?: ProviderRecord[]
   providersLoading?: boolean
@@ -24,6 +28,8 @@ interface AppMetadataFormProps {
   // A saved application keeps its providers: both selects are disabled and
   // show the stored providers, even ones no longer eligible or present.
   lockProviders?: boolean
+  readOnly?: boolean
+  helpPlatform?: string | undefined
 }
 
 export function AppMetadataForm({
@@ -35,6 +41,8 @@ export function AppMetadataForm({
   onRetryProviders,
   disableFileName = false,
   lockProviders = false,
+  readOnly = false,
+  helpPlatform,
 }: AppMetadataFormProps) {
   const { t } = useTranslation()
   const [fileName, setFileName] = useState(initialValues?.fileName ?? '')
@@ -45,6 +53,10 @@ export function AppMetadataForm({
   )
   // Source and target follow the parent: it may decline a source change (the
   // builder asks first when recovery groups are assigned).
+  const notificationEmail = initialValues?.notificationEmail ?? ''
+  const emailInvalid = !isValidRecoveryApplicationEmail(notificationEmail)
+  const sourceHelpKey = recoveryApplicationHelpKey('source', helpPlatform)
+  const targetHelpKey = recoveryApplicationHelpKey('target', helpPlatform)
   const platform = initialValues?.platform ?? ''
   const eligibleProviders = lockProviders
     ? providers.filter(provider => provider.id === platform)
@@ -81,12 +93,7 @@ export function AppMetadataForm({
         break
       case 'platform':
         if (lockProviders) break
-        // A target of the old provider type cannot serve the new source.
-        if (providerTypeOf(value) !== providerTypeOf(platform)) {
-          onMetadataChange?.({ platform: value, targetProviderId: '' })
-        } else {
-          onMetadataChange?.({ platform: value })
-        }
+        onMetadataChange?.({ platform: value })
         break
       case 'targetProviderId':
         if (lockProviders) break
@@ -109,7 +116,7 @@ export function AppMetadataForm({
           onChange={e => { handleChange('fileName', e.target.value); }}
           placeholder={t('recovery.application.form.fileNamePlaceholder')}
           invalid={Boolean(fileName) && !isValidRecoveryApplicationFileName(fileName)}
-          disabled={disableFileName}
+          disabled={readOnly || disableFileName}
           required
         />
         {fileName && !isValidRecoveryApplicationFileName(fileName) ? (
@@ -125,6 +132,7 @@ export function AppMetadataForm({
           type="text"
           autoComplete="off"
           value={name}
+          disabled={readOnly}
           onChange={e => { handleChange('name', e.target.value); }}
           placeholder={t('forms.applicationNameExample')}
           invalid={Boolean(name) && !isValidRecoveryApplicationName(name)}
@@ -137,10 +145,23 @@ export function AppMetadataForm({
         ) : null}
       </Field>
 
+      <div>
+        <div className="mb-1.5 flex min-w-0 items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+          <label htmlFor="application-notification-email" className="text-xs font-medium text-text-secondary">{t('forms.notificationEmail')}</label>
+          <KeyedHelpPopover helpKey="recoveryApplications.fieldHelp.email" sections={['effect', 'limitations']} />
+        </div>
+        <Input id="application-notification-email" type="email" autoComplete="email"
+          disabled={readOnly}
+          value={notificationEmail} onChange={event => { onMetadataChange?.({ notificationEmail: event.target.value }) }}
+          invalid={emailInvalid} aria-describedby={emailInvalid ? 'application-notification-email-error' : undefined} />
+        {emailInvalid ? <p id="application-notification-email-error" className="mt-1 text-xs text-red-600" role="alert">{t('forms.notificationEmailInvalid')}</p> : null}
+      </div>
+
       <Field label={t('forms.environment')} htmlFor="application-environment">
         <Select
           id="application-environment"
           value={environment}
+          disabled={readOnly}
           onChange={e => { handleChange('environment', e.target.value); }}
           required
         >
@@ -153,12 +174,16 @@ export function AppMetadataForm({
         </Select>
       </Field>
 
-      <Field label={t('forms.providerId')} htmlFor="application-platform">
+      <div>
+        <div className="mb-1.5 flex min-w-0 items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+          <label htmlFor="application-platform" className="text-xs font-medium text-text-secondary">{t('forms.providerId')}</label>
+          <KeyedHelpPopover key={sourceHelpKey} helpKey={sourceHelpKey} sections={['effect', 'limitations']} />
+        </div>
         <Select
           id="application-platform"
           value={platform}
           onChange={e => { handleChange('platform', e.target.value); }}
-          disabled={lockProviders || providersLoading || providersError !== null}
+          disabled={readOnly || lockProviders || providersLoading || providersError !== null}
           required
         >
           <option value="">
@@ -183,14 +208,18 @@ export function AppMetadataForm({
             ) : null}
           </p>
         ) : null}
-      </Field>
+      </div>
 
-      <Field label={t('forms.targetProviderId')} htmlFor="application-target-provider">
+      <div>
+        <div className="mb-1.5 flex min-w-0 items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+          <label htmlFor="application-target-provider" className="text-xs font-medium text-text-secondary">{t('forms.targetProviderId')}</label>
+          <KeyedHelpPopover key={targetHelpKey} helpKey={targetHelpKey} sections={['effect', 'limitations']} />
+        </div>
         <Select
           id="application-target-provider"
           value={targetProviderId}
           onChange={e => { handleChange('targetProviderId', e.target.value); }}
-          disabled={lockProviders || !platform || providersLoading || providersError !== null}
+          disabled={readOnly || lockProviders || !platform || providersLoading || providersError !== null}
           required
         >
           <option value="">
@@ -205,13 +234,14 @@ export function AppMetadataForm({
             </option>
           ))}
         </Select>
-      </Field>
+      </div>
 
       <Field label={t('forms.applicationDescription')} htmlFor="application-description">
         <Textarea
           id="application-description"
           autoComplete="off"
           value={description}
+          disabled={readOnly}
           onChange={e => { handleChange('description', e.target.value); }}
           placeholder={t('forms.applicationDescriptionExample')}
           rows={3}

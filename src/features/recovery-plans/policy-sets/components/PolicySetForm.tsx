@@ -2,6 +2,7 @@ import type { ChangeEvent, KeyboardEvent } from 'react'
 import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { Button } from '@/shared/components/button/Button'
 import { Field, Input, RadioField, Textarea } from '@/shared/components/form/FormControls'
+import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
 import { useTranslation } from '@/hooks/useTranslation'
 import type { PolicyCatalog, PolicySetResolution } from '@/features/recovery-plans/recovery-policies/catalog/model/policyCatalog'
 
@@ -75,7 +76,10 @@ export function PolicySetForm({
         const errorDetail = extractBackendErrorDetail(source.error)
         return (
           <section key={section.kind} aria-label={label} className="space-y-2">
-            <h3 className="text-xs font-medium text-text-secondary">{label}</h3>
+            <div className="flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+              <h3 className="text-xs font-medium text-text-secondary">{label}</h3>
+              <KeyedHelpPopover helpKey={`policySets.fieldHelp.${section.field}`} sections={[]} />
+            </div>
             {source.status === 'loading' || source.isPaused ? <p className="text-xs text-text-muted" role="status">{t(source.isPaused ? 'policyCatalog.paused' : 'policyCatalog.waiting')}</p> : null}
             {source.isRefreshing ? <p className="text-xs text-text-muted" role="status">{t('policyCatalog.refreshing')}</p> : null}
             {source.status === 'error' || source.status === 'cachedError' ? (

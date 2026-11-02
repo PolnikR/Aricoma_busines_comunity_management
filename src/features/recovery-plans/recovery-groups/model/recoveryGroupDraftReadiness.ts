@@ -4,6 +4,7 @@ import { getRecoveryGroupResourceOption } from '../config/recoveryGroupResourceO
 import { calculateRecoveryGroupStepIndices } from '../utils/calculateRecoveryGroupStepIndices'
 import type { DraftLifecycle, DraftObservation } from './recoveryGroupDraftLifecycle'
 import { getDraftLocks, type DraftResolution } from './resolveRecoveryGroupDraft'
+import { isRecoveryGroupEmailValid } from './recoveryGroupEmail'
 
 export interface ReadinessContext extends DraftObservation {
   step: number
@@ -18,7 +19,7 @@ export function getDraftReadiness(state: DraftLifecycle, resolution: DraftResolu
   const allProviders = context.providers ?? []
   const providers = context.editAuthority ? allProviders : allProviders.filter(provider => provider.role === 'source')
   const detailsValid = Boolean(raw.id && isProgrammaticIdAvailable(raw.id, context.existingIds ?? [], context.editAuthority?.id)
-    && raw.name.trim() && raw.description.trim())
+    && raw.name.trim() && raw.description.trim() && isRecoveryGroupEmailValid(raw.notificationEmail))
   const typeValid = Boolean(raw.sourceCategory && raw.workloadType && raw.resourceType)
   const option = getRecoveryGroupResourceOption(raw.workloadType)
   const providerValid = Boolean(raw.providerId && option && (raw.resourceType === 'volume' ? allProviders : providers)

@@ -12,6 +12,7 @@ const FieldLayoutContext = createContext<'grid' | 'technical' | 'overview'>('gri
 
 interface DetailFieldProps {
   label: string
+  labelHelp?: ReactNode
   // Plain text or any node: badges, tags, DetailFieldLink, formatted values.
   value?: ReactNode | undefined
   // Second, muted line under the value, e.g. an ID behind a name.
@@ -36,7 +37,7 @@ function isEmpty(value: ReactNode) {
 // One label/value pair. In a DetailFieldGroup it is a grid cell with the label above the
 // value; inside a DetailTechnicalGroup it becomes a "label | mono value | copy" row. An empty
 // value shows a muted "Not set" so a missing value never looks like a layout gap.
-export function DetailField({ label, value, secondary, mono = false, emphasis = false, wide = false, copyValue }: DetailFieldProps) {
+export function DetailField({ label, labelHelp, value, secondary, mono = false, emphasis = false, wide = false, copyValue }: DetailFieldProps) {
   const { t } = useTranslation()
   const layout = useContext(FieldLayoutContext)
   const empty = isEmpty(value)
@@ -44,11 +45,16 @@ export function DetailField({ label, value, secondary, mono = false, emphasis = 
   const shown = typeof value === 'boolean' ? String(value) : value
   const content = empty ? <span className="font-outfit text-text-subtle">{t('detailView.notSet')}</span> : shown
   const copy = copyValue && !empty ? <DetailCopyButton value={copyValue} label={label} /> : null
+  const labelContent = labelHelp ? (
+    <span className="inline-flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+      {label}{labelHelp}
+    </span>
+  ) : label
 
   if (layout === 'technical') {
     return (
       <div className="grid grid-cols-[minmax(8rem,12rem)_minmax(0,1fr)_auto] items-baseline gap-x-4 border-t border-border/60 px-4 py-2.5 first:border-t-0 @max-[560px]/detail-content:grid-cols-[minmax(0,1fr)_auto]">
-        <dt className="text-xs text-text-muted @max-[560px]/detail-content:col-span-2">{label}</dt>
+        <dt className="text-xs text-text-muted @max-[560px]/detail-content:col-span-2">{labelContent}</dt>
         <dd className="min-w-0 font-mono text-[12.5px] leading-5 text-text-secondary wrap-anywhere">
           {content}
           {secondary ? <div className="mt-0.5 font-outfit text-xs text-text-muted">{secondary}</div> : null}
@@ -72,7 +78,7 @@ export function DetailField({ label, value, secondary, mono = false, emphasis = 
           footprint === 'full' ? 'col-span-full' : undefined,
         )}
       >
-        <dt className="text-[11.5px] font-medium leading-4 text-text-muted">{label}</dt>
+        <dt className="text-[11.5px] font-medium leading-4 text-text-muted">{labelContent}</dt>
         <dd className="mt-0.5 flex min-w-0 items-start gap-1">
           <div className={cn('min-w-0 text-sm leading-5 text-text-primary wrap-anywhere', emphasis ? 'font-semibold' : undefined, mono && !empty ? 'font-mono text-[12.5px]' : undefined, footprint === 'full' ? 'max-w-[88ch]' : undefined)}>
             {content}
@@ -86,7 +92,7 @@ export function DetailField({ label, value, secondary, mono = false, emphasis = 
 
   return (
     <div className={cn('min-w-0', wide ? 'col-span-full' : undefined)}>
-      <dt className="text-xs leading-4 text-text-muted">{label}</dt>
+      <dt className="text-xs leading-4 text-text-muted">{labelContent}</dt>
       <dd className="mt-1 flex min-w-0 items-start gap-1">
         <div className={cn('min-w-0 text-sm leading-5 text-text-primary wrap-anywhere', emphasis ? 'font-semibold' : undefined, mono && !empty ? 'font-mono text-[12.5px] text-text-secondary' : undefined)}>
           {content}

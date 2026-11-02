@@ -1,5 +1,7 @@
 import { Field, Input, Textarea } from '@/shared/components/form/FormControls'
 import { useTranslation } from '@/hooks/useTranslation'
+import { KeyedHelpPopover } from '@/shared/components/help-popover/KeyedHelpPopover'
+import { isRecoveryGroupEmailValid } from '../model/recoveryGroupEmail'
 import {
   isProgrammaticIdAvailable,
   toProgrammaticId,
@@ -9,16 +11,18 @@ interface RecoveryGroupDetailsStepProps {
   id: string
   name: string
   description: string
+  notificationEmail?: string | null
   existingIds: string[]
   currentId?: string
   disableId?: boolean
-  onChange: (values: { id?: string; name?: string; description?: string }) => void
+  onChange: (values: { id?: string; name?: string; description?: string; notificationEmail?: string }) => void
 }
 
 export function RecoveryGroupDetailsStep({
   id,
   name,
   description,
+  notificationEmail = '',
   existingIds,
   currentId,
   disableId = false,
@@ -79,6 +83,17 @@ export function RecoveryGroupDetailsStep({
           required
         />
       </Field>
+      <div className="block">
+        <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+          <label htmlFor="recovery-group-email" className="text-xs font-medium text-text-secondary">{t('recoveryGroups.notificationEmail')}</label>
+          <KeyedHelpPopover helpKey="recoveryGroups.fieldHelp.email" sections={[]} />
+        </div>
+        <Input id="recovery-group-email" type="text" inputMode="email" autoComplete="email" value={notificationEmail ?? ''}
+          placeholder={t('recoveryGroups.emailInherited')} invalid={!isRecoveryGroupEmailValid(notificationEmail)}
+          aria-describedby={!isRecoveryGroupEmailValid(notificationEmail) ? 'recovery-group-email-error' : undefined}
+          onChange={event => { onChange({ notificationEmail: event.target.value }) }} />
+        {!isRecoveryGroupEmailValid(notificationEmail) ? <p id="recovery-group-email-error" role="alert" className="mt-1 text-xs text-red-600">{t('recoveryGroups.emailInvalid')}</p> : null}
+      </div>
     </div>
   )
 }

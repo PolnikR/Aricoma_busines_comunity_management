@@ -108,44 +108,43 @@ function renderPlatformProviderSections(provider: PlatformProviderRecord, t: Ret
         <DetailField label={t('details.providerId')} value={provider.id} mono copyValue={provider.id} />
         <DetailField label={t('details.type')} value={provider.type} emphasis />
         <DetailField
-          label={t('details.url')}
+          label={t('details.url')} labelHelp={<KeyedHelpPopover helpKey="platformProviders.fieldHelp.url" sections={[]} />}
           value={provider.url ? <DetailFieldLink href={provider.url} external>{provider.url}</DetailFieldLink> : null}
           mono
           wide
         />
         <DetailField label={t('details.description')} value={provider.description} wide />
+        <DetailField label={t('details.notificationEmail')} labelHelp={<KeyedHelpPopover helpKey="platformProviders.fieldHelp.notificationEmail" sections={[]} />} value={provider.notificationEmail} />
+        <DetailField label={t('forms.cacheRefreshSeconds')} labelHelp={<KeyedHelpPopover helpKey="platformProviders.fieldHelp.cacheRefreshSeconds" sections={[]} />} value={provider.cacheRefreshSeconds} />
         {provider.type === 'AIRFLOW' ? (
           <>
-            <DetailField label={t('details.ipAddress')} value={provider.ipAddress} mono copyValue={provider.ipAddress ?? undefined} />
-            <DetailField label={t('details.port')} value={String(provider.port)} mono />
-            <DetailField label={t('details.dagDir')} value={provider.dagDir} mono wide copyValue={provider.dagDir ?? undefined} />
-            <DetailField label={t('details.credential')} value={provider.credentialId} mono />
+            <DetailField label={t('details.ipAddress')} labelHelp={<KeyedHelpPopover helpKey="platformProviders.fieldHelp.ipAddress" sections={[]} />} value={provider.ipAddress} mono copyValue={provider.ipAddress ?? undefined} />
+            <DetailField label={t('details.port')} labelHelp={<KeyedHelpPopover helpKey="platformProviders.fieldHelp.port" sections={[]} />} value={String(provider.port)} mono />
+            <DetailField label={t('details.dagDir')} labelHelp={<KeyedHelpPopover helpKey="platformProviders.fieldHelp.dagDir" sections={[]} />} value={provider.dagDir} mono wide copyValue={provider.dagDir ?? undefined} />
+            <DetailField label={t('details.credential')} labelHelp={<KeyedHelpPopover helpKey="platformProviders.fieldHelp.credentialId" sections={[]} />} value={provider.credentialId} mono />
             {credentialStatus}
-            <DetailField label={t('details.notificationEmail')} value={provider.notificationEmail} />
           </>
         ) : null}
         {provider.type === 'SMTP' ? (
           <>
-            <DetailField label={t('details.ipAddress')} value={provider.ipAddress} mono copyValue={provider.ipAddress ?? undefined} />
-            <DetailField label={t('details.port')} value={String(provider.port)} mono />
-            <DetailField label={t('details.fromEmail')} value={provider.fromEmail} />
-            <DetailField label={t('details.disableSsl')} value={flag(provider.disableSsl)} />
-            <DetailField label={t('details.disableTls')} value={flag(provider.disableTls)} />
+            <DetailField label={t('details.ipAddress')} labelHelp={<KeyedHelpPopover helpKey="platformProviders.fieldHelp.ipAddress" sections={[]} />} value={provider.ipAddress} mono copyValue={provider.ipAddress ?? undefined} />
+            <DetailField label={t('details.port')} labelHelp={<KeyedHelpPopover helpKey="platformProviders.fieldHelp.port" sections={[]} />} value={String(provider.port)} mono />
+            <DetailField label={t('details.fromEmail')} labelHelp={<KeyedHelpPopover helpKey="platformProviders.fieldHelp.fromEmail" sections={[]} />} value={provider.fromEmail} />
+            <DetailField label={t('details.disableSsl')} labelHelp={<KeyedHelpPopover helpKey="platformProviders.fieldHelp.disableSsl" sections={[]} />} value={flag(provider.disableSsl)} />
+            <DetailField label={t('details.disableTls')} labelHelp={<KeyedHelpPopover helpKey="platformProviders.fieldHelp.disableTls" sections={[]} />} value={flag(provider.disableTls)} />
           </>
         ) : null}
         {provider.type === 'BACKEND' ? (
           <>
-            <DetailField label={t('details.notificationEmail')} value={provider.notificationEmail} />
-            <DetailField label={t('details.loggingEnabled')} value={flag(provider.loggingEnabled)} />
-            <DetailField label={t('details.jwtEnabled')} value={flag(provider.jwtEnabled)} />
-            <DetailField label={t('details.swaggerEnabled')} value={flag(provider.swaggerEnabled)} />
+            <DetailField label={t('details.loggingEnabled')} labelHelp={<KeyedHelpPopover helpKey="platformProviders.fieldHelp.loggingEnabled" sections={[]} />} value={flag(provider.loggingEnabled)} />
+            <DetailField label={t('details.jwtEnabled')} labelHelp={<KeyedHelpPopover helpKey="platformProviders.fieldHelp.jwtEnabled" sections={[]} />} value={flag(provider.jwtEnabled)} />
           </>
         ) : null}
         {provider.type === 'KEYCLOAK' ? (
           <>
-            <DetailField label={t('details.realm')} value={provider.realm} />
-            <DetailField label={t('details.clientId')} value={provider.clientId} mono copyValue={provider.clientId ?? undefined} />
-            <DetailField label={t('details.credential')} value={provider.credentialId} mono />
+            <DetailField label={t('details.realm')} labelHelp={<KeyedHelpPopover helpKey="platformProviders.fieldHelp.realm" sections={[]} />} value={provider.realm} />
+            <DetailField label={t('details.clientId')} labelHelp={<KeyedHelpPopover helpKey="platformProviders.fieldHelp.clientId" sections={[]} />} value={provider.clientId} mono copyValue={provider.clientId ?? undefined} />
+            <DetailField label={t('details.credential')} labelHelp={<KeyedHelpPopover helpKey="platformProviders.fieldHelp.credentialId" sections={[]} />} value={provider.credentialId} mono />
             {credentialStatus}
           </>
         ) : null}

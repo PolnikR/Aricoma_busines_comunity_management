@@ -104,6 +104,15 @@ export function PlatformProvidersModal({
     if (!formData.name.trim()) nextErrors.name = t('forms.nameRequired')
     if (!formData.type) nextErrors.type = t('forms.typeRequired')
 
+    const notificationEmail = formData.notificationEmail.trim()
+    if (notificationEmail && !isValidEmail(notificationEmail)) {
+      nextErrors.notificationEmail = t('forms.notificationEmailInvalid')
+    }
+    const cacheRefreshSeconds = Number(formData.cacheRefreshSeconds)
+    if (formData.cacheRefreshSeconds.trim() && (!Number.isInteger(cacheRefreshSeconds) || cacheRefreshSeconds < 1)) {
+      nextErrors.cacheRefreshSeconds = t('forms.cacheRefreshSecondsInvalid')
+    }
+
     if (formData.type === 'AIRFLOW' || formData.type === 'SMTP') {
       const port = Number(formData.port)
       if (formData.port.trim() && (!Number.isInteger(port) || port < 1 || port > 65535)) {
@@ -113,23 +122,12 @@ export function PlatformProvidersModal({
 
     if (formData.type === 'AIRFLOW') {
       if (!formData.dagDir.trim()) nextErrors.dagDir = t('forms.dagDirRequired')
-      const notificationEmail = formData.notificationEmail.trim()
-      if (notificationEmail && !isValidEmail(notificationEmail)) {
-        nextErrors.notificationEmail = t('forms.notificationEmailInvalid')
-      }
     }
 
     if (formData.type === 'SMTP') {
       const fromEmail = formData.fromEmail.trim()
       if (fromEmail && !isValidEmail(fromEmail)) {
         nextErrors.fromEmail = t('forms.notificationEmailInvalid')
-      }
-    }
-
-    if (formData.type === 'BACKEND') {
-      const notificationEmail = formData.notificationEmail.trim()
-      if (notificationEmail && !isValidEmail(notificationEmail)) {
-        nextErrors.notificationEmail = t('forms.notificationEmailInvalid')
       }
     }
 

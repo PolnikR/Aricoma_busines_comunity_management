@@ -6,6 +6,16 @@ import { RecoveryGroupDetailsStep } from './RecoveryGroupDetailsStep'
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
 describe('RecoveryGroupDetailsStep', () => {
+  it('shows an editable email override and its validation error without helpers on identity fields', async () => {
+    const onChange = vi.fn()
+    const { rerender } = render(<RecoveryGroupDetailsStep id="group" name="Group" description="Description" existingIds={[]} notificationEmail="bad" onChange={onChange} />)
+    expect(screen.getByLabelText('Notification email')).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByText('Enter a valid email address.')).toBeInTheDocument()
+    rerender(<RecoveryGroupDetailsStep id="group" name="Group" description="Description" existingIds={[]} notificationEmail="ops@example.com" onChange={onChange} />)
+    await userEvent.setup().clear(screen.getByLabelText('Notification email'))
+    expect(onChange).toHaveBeenLastCalledWith({ notificationEmail: '' })
+    expect(screen.getAllByRole('button')).toHaveLength(1)
+  })
   it('derives a normalized id from the group name', async () => {
     const user = userEvent.setup()
     function Harness() {

@@ -4,12 +4,37 @@ import type { LockedProviders, RecoveryApplicationFormState } from '../model/rec
 import { isValidRecoveryApplicationFileName, isValidRecoveryApplicationName } from './recoveryApplicationFileName'
 import type { RecoveryGroup } from '../../recovery-groups/model/recoveryGroupTypes'
 import { getEligibleTargetProviders, isEligiblePlatformProvider, isEligibleSourceProvider } from './eligibleProviders'
-import { isRecoveryGroupCompatible, isRecoveryGroupEligible } from './recoveryGroupPlatform'
+import { isRecoveryGroupCompatible, isRecoveryGroupSourceCompatible, isRecoveryGroupSourceEligible } from './recoveryGroupPlatform'
+import { isValidRecoveryApplicationEmail } from './recoveryApplicationEmail'
+import { findRecoveryApplicationDagProblem } from './recoveryApplicationDagValidation'
+import type { DagTemplateVersion } from '@/generated/query/zod'
 
 export interface ValidationError {
-  field: 'fileName' | 'name' | 'description' | 'policySet' | 'platform' | 'targetProvider' | 'recoveryGroup'
+  field: 'notificationEmail' | 'workloads' | 'fileName' | 'name' | 'description' | 'policySet' | 'platform' | 'targetProvider' | 'recoveryGroup' | 'dagTemplateVersion'
   messageKey: string
   params?: Record<string, string>
+  templateDependent?: boolean
+}
+
+export interface ApplicationTemplateCatalog {
+  templates: DagTemplateVersion[]
+  verified: boolean
+}
+
+export function validateRecoveryApplicationTemplate(
+  draft: RecoveryApplicationFormState, catalog?: ApplicationTemplateCatalog,
+): ValidationError | null {
+  const version = draft.dagTemplateVersion ?? null
+  const verified = catalog?.verified && catalog.templates.filter(template => template.default).length === 1
+  if (!verified) {
+    return !draft.pushToOrchestrator && version === null ? null : {
+      field: 'dagTemplateVersion', messageKey: 'recovery.application.lifecycle.templateUnverified',
+    }
+  }
+  if (version !== null && !catalog.templates.some(template => template.version === version)) {
+    return { field: 'dagTemplateVersion', messageKey: 'recovery.application.lifecycle.templateUnknown', params: { version } }
+  }
+  return null
 }
 
 // The backend's LPAR_NAME_RE (recovery/recovery.py): each LPAR name becomes part
@@ -44,16 +69,16 @@ export function storedProvidersProblem(locked: LockedProviders, providers: Provi
   return null
 }
 
-export function validateRecoveryApplication(
-  formState: RecoveryApplicationFormState,
-  providers: ProviderRecord[],
-  platformProviders: PlatformProviderRecord[] = [],
-  { lockedProviders = null, groups }: {
-    lockedProviders?: LockedProviders | null
-    // The current recovery groups; the sidebar filter alone does not cover
-    // groups stored on a saved application.
-    groups?: Pick<RecoveryGroup, 'id' | 'sourceCategory' | 'workloadType' | 'pushToOrchestrator' | 'airflowRunId'>[]
-  } = {},
+export type ApplicationValidationGroup = Pick<RecoveryGroup, 'id' | 'providerId' | 'sourceCategory' | 'workloadType' | 'pushToOrchestrator' | 'airflowRunId'> & { readonly resources: readonly string[] }
+
+export interface ApplicationValidationOptions {
+  lockedProviders?: LockedProviders | null
+  templateCatalog?: ApplicationTemplateCatalog
+  groups: readonly ApplicationValidationGroup[]
+}
+
+export function validateRecoveryApplicationDetails(
+  formState: RecoveryApplicationFormState, providers: ProviderRecord[], lockedProviders: LockedProviders | null = null,
 ): ValidationError | null {
   if (!isValidRecoveryApplicationFileName(formState.fileName)) {
     return {
@@ -83,11 +108,8 @@ export function validateRecoveryApplication(
     }
   }
 
-  if (!formState.policySetId.trim()) {
-    return {
-      field: 'policySet',
-      messageKey: 'recovery.application.validation.policySetRequired',
-    }
+  if (!isValidRecoveryApplicationEmail(formState.notificationEmail)) {
+    return { field: 'notificationEmail', messageKey: 'forms.notificationEmailInvalid' }
   }
 
   const lockedProblem = lockedProviders ? storedProvidersProblem(lockedProviders, providers) : null
@@ -113,62 +135,71 @@ export function validateRecoveryApplication(
     }
   }
 
-  if (formState.pushToOrchestrator) {
-    const orchestrationProviderIsAvailable = platformProviders.some(
-      provider => provider.id === formState.orchestrationProviderId && isEligiblePlatformProvider(provider),
-    )
-    if (!orchestrationProviderIsAvailable) {
-      return {
-        field: 'platform',
-        messageKey: 'recovery.application.validation.platformProviderRequired',
-      }
-    }
-  }
+  return null
+}
 
-  if (Array.from(formState.tiers.values()).some(tier => !tier.recovery_group)) {
-    return {
-      field: 'recoveryGroup',
-      messageKey: 'recovery.application.validation.recoveryGroupRequired',
-    }
+export function validateRecoveryApplicationTiers(
+  formState: RecoveryApplicationFormState,
+  platform: string | undefined,
+  sourceProviderId: string | null,
+  groups: readonly ApplicationValidationGroup[],
+  templateCatalog?: ApplicationTemplateCatalog,
+): ValidationError | null {
+  if (formState.tiers.size === 0) {
+    return { field: 'recoveryGroup', messageKey: 'recovery.application.validation.tiersRequired' }
   }
-
-  const platform = lockedProviders?.platform ?? sourceProvider?.type
+  const groupsById = new Map(groups.map(group => [group.id, group]))
   for (const [tierId, tier] of formState.tiers) {
     const group = tier.recovery_group
-    if (!group || !groups) continue
-    const current = groups.find(candidate => candidate.id === group.id)
-    if (!current) {
-      return {
-        field: 'recoveryGroup',
-        messageKey: 'recovery.application.validation.recoveryGroupMissing',
-        params: { tier: tierId, group: group.name },
-      }
-    }
+    if (!group) return { field: 'recoveryGroup', messageKey: 'recovery.application.validation.recoveryGroupRequired', params: { tier: tierId } }
+    const params = { tier: tierId, group: group.name }
+    const current = groupsById.get(group.id)
+    if (!current) return { field: 'recoveryGroup', messageKey: 'recovery.application.validation.recoveryGroupMissing', params }
     if (!isRecoveryGroupCompatible(current, platform)) {
-      return {
-        field: 'recoveryGroup',
-        messageKey: 'recovery.application.validation.recoveryGroupPlatformMismatch',
-        params: { tier: tierId, group: group.name },
-      }
+      return { field: 'recoveryGroup', messageKey: 'recovery.application.validation.recoveryGroupPlatformMismatch', params }
     }
-    if (!isRecoveryGroupEligible(current, platform)) {
-      return {
-        field: 'recoveryGroup',
-        messageKey: 'recovery.application.validation.recoveryGroupNotPublished',
-        params: { tier: tierId, group: group.name },
-      }
+    if (!current.providerId) return { field: 'recoveryGroup', messageKey: 'recovery.application.validation.recoveryGroupSourceMissing', params }
+    if (!isRecoveryGroupSourceCompatible(current, platform, sourceProviderId)) {
+      return { field: 'recoveryGroup', messageKey: 'recovery.application.validation.recoveryGroupSourceMismatch', params: { ...params, expected: sourceProviderId ?? '', actual: current.providerId } }
     }
-    if (platform?.toUpperCase() === 'IBM_POWER') {
-      const invalid = group.vms.find(vm => !LPAR_NAME_RE.test(vm.name))
-      if (invalid) {
-        return {
-          field: 'recoveryGroup',
-          messageKey: 'recovery.application.validation.lparNameInvalid',
-          params: { tier: tierId, name: invalid.name },
-        }
+    if (!isRecoveryGroupSourceEligible(current, platform, sourceProviderId)) {
+      return { field: 'recoveryGroup', messageKey: 'recovery.application.validation.recoveryGroupNotPublished', params }
+    }
+    const resources = new Set(current.resources)
+    for (const vm of group.vms) {
+      if (!resources.has(vm.name)) return { field: 'workloads', messageKey: 'recovery.application.validation.workloadMissing', params: { ...params, name: vm.name } }
+      if (platform?.toUpperCase() === 'IBM_POWER' && !LPAR_NAME_RE.test(vm.name)) {
+        return { field: 'recoveryGroup', messageKey: 'recovery.application.validation.lparNameInvalid', params: { tier: tierId, name: vm.name } }
       }
     }
   }
+  const dagProblem = findRecoveryApplicationDagProblem(formState, platform, templateCatalog)
+  if (dagProblem) return {
+    field: dagProblem.kind === 'tierTaskGroupCollision' ? 'recoveryGroup' : 'workloads',
+    templateDependent: true,
+    messageKey: `recovery.application.validation.${dagProblem.kind}`,
+    params: dagProblem.params,
+  }
+  return null
+}
 
+export function validateRecoveryApplication(
+  formState: RecoveryApplicationFormState,
+  providers: ProviderRecord[],
+  platformProviders: PlatformProviderRecord[],
+  { lockedProviders = null, groups, templateCatalog }: ApplicationValidationOptions,
+): ValidationError | null {
+  const detailsProblem = validateRecoveryApplicationDetails(formState, providers, lockedProviders)
+  if (detailsProblem) return detailsProblem
+  const sourceProvider = providers.find(provider => provider.id === formState.platform)
+  const tierProblem = validateRecoveryApplicationTiers(formState, lockedProviders?.platform ?? sourceProvider?.type,
+    lockedProviders ? lockedProviders.sourceProviderId : formState.platform, groups, templateCatalog)
+  if (tierProblem) return tierProblem
+  if (!formState.policySetId.trim()) return { field: 'policySet', messageKey: 'recovery.application.validation.policySetRequired' }
+  const templateProblem = validateRecoveryApplicationTemplate(formState, templateCatalog)
+  if (templateProblem) return templateProblem
+  if (formState.pushToOrchestrator && !platformProviders.some(provider => provider.id === formState.orchestrationProviderId && isEligiblePlatformProvider(provider))) {
+    return { field: 'platform', messageKey: 'recovery.application.validation.platformProviderRequired' }
+  }
   return null
 }
