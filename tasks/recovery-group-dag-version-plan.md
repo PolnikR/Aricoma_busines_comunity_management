@@ -32,9 +32,9 @@ znamená `src/features/recovery-plans/recovery-applications`. V TODO sú rovnak�
 | Rovnaký súbor, `group_platform`, `resolve_group_template`, `list_group_templates` | BE používa platformy `flashcopy`/`hitachi`. `group_platform` vracia hitachi iba pre HITACHI, inak flashcopy. Resolver zachádza aj s prázdnym stringom ako s defaultom. Tento BE fallback sa nemá kopírovať na FE pri neznámom providerovi. |
 | BE `api/routers/recovery_groups.py`, `get_group_dag_template_versions` (54+) | Voliteľný parameter platform; bez neho vracia všetky platformy. Oprávnenie VIEW_RECOVERY_GROUPS. Neznáma platforma znamená HTTP 400. |
 | BE `recovery/groups.py`, `RecoveryGroup`, `group_template_platform`, `validate_recovery_group` (63, 145–170) | Konfigurované `dag_template_version` je nullable. Platformu určuje `provider_id_volume`, nie compute provider, Airflow provider alebo Metro Mirror auxiliary. Lock sa kontroluje pred verziou, verzie sa kontrolujú pri Save aj Push. |
-| BE `api/routers/recovery_groups.py`, `submit_recovery_group` (68–209) | Pred persistenciou vyhodnotí možnosti push. Save bez push a skipped push majú `pushed=false`, bez nasadenej verzie. Reálny push zapisuje vyriešenú verziu do `orchestration.template_version`. |
+| BE `api/routers/recovery_groups.py`, `submit_recovery_group` (68–209) | Pred persistenciou vyhodnotí možnosti push. Save bez push a skipped push vrátia HTTP 200 s `recovery_groups`, `pushed=false` a bez nasadenej verzie. Úspešný Push vráti HTTP 200 s `recovery_groups` a `orchestrator_push.status=pushed`; `orchestration.pushed=true` a vyriešená `orchestration.template_version` pochádzajú z uloženého BE recordu. |
 | Rovnaký endpoint | Hitachi push je dnes `skipped` s dôvodom `group is not FLASHCOPY-backed`, hoci Hitachi šablóna je v katalógu. Registry položka neznamená dostupnú deployment capability. |
-| Rovnaký endpoint, vetva HTTP 502 (198+) | Bežné zlyhanie prenosu odomkne skupinu. Výnimka: ak už tento request provisionoval Managed Metro Mirror, zlyhanie prenosu necháva persistovaný lock aj template_version. Neslobodno každé HTTP 502 mapovať na odomknutie. |
+| Rovnaký endpoint, vetvy HTTP 502 (161–208) | BE najskôr uloží skupinu. Ak zlyhá Managed Metro Mirror provisioning, BE uloží `pushed=false` a vráti 502. Ak zlyhá prenos DAG cez SFTP, bežnú skupinu odomkne (`pushed=false`, bez `template_version`); ale pri novom Managed Metro Mirror s už dokončeným provisioningom nechá `pushed=true` a `template_version`. HTTP 502 vracia text chyby, nie aktualizovaný `RecoveryGroupsResponse`: FE nesmie odvodzovať lock len zo statusu. |
 | BE `_unlocked_orchestration`, `rollback_group_from_orchestrator` (38+, 283+) | Rollback ok/partial nastaví pushed=false a odstráni template_version, zachová run_id aj konfigurované dag_template_version. Managed ok navyše vyčistí odvodené mená; partial ich môže nechať a FE provisioned lock preto môže zostať. Failed vracia 502, skipped nič neprepisuje. |
 | BE `api/routers/_test_recovery_groups.py` | Existujú testy default/explicit verzie, Save bez push, skipped, obyčajný/managed failure, rollback a kompatibility starého FE body (726–976). Sú prečítané, neboli spustené. |
 | FE `openapi/abco-api.json` | Endpoint `/get_group_dag_template_versions` (2944+), nullable polia RecoveryGroup/record a orchestration sú dostupné. |
@@ -56,10 +56,14 @@ Nedopočítavať v1 ani aktuálny default. Pri pushed=false bude „Nenasadené�
 starý/chybný record niesol zvyškové template_version. Raw JSON môže zachovať prijaté
 polia; prezentačný model nesmie zvyšok prezentovať ako aktívne nasadenie.
 
-BE Managed failure má významný kontraktový limit: pushed=true tu môže znamenať
-ochranný lock po vytvorení objektov aj pri zlyhanom prenose DAG. FE zachová lock
-a serverovú evidenciu verzie, zobrazí chybu push, ale nebude tvrdiť, že overil
-prítomnosť/import DAG v Airflow. BE ani tento existujúci lifecycle sa nemení.
+BE v režime **nový Managed Metro Mirror** pred SFTP Push priamo volá
+`ibm_flashsystem/metro_mirror.py:provision_managed_metro_mirror` (pomocné volumes,
+remote-copy consistency group, relationships, štart replikácie). Až následne
+`submit_recovery_group_dag` prenesie DAG do Airflow. Airflow DAG samostatne
+vytvára **FlashCopy snapshot target volumes**; tie nie sú pomocné Metro Mirror
+volumes. Pri zlyhaní SFTP po provisioningu môže `pushed=true` znamenať ochranný
+lock, nie potvrdený import DAG. FE musí zobraziť chybu Push a rešpektovať
+uložený BE record. BE ani jeho storage/Airflow lifecycle sa nemení.
 
 ## 2. Overený FE stav a medzery
 
@@ -78,8 +82,8 @@ prítomnosť/import DAG v Airflow. BE ani tento existujúci lifecycle sa nemení
 | `RG/components/RecoveryGroupOrchestrationStep.tsx` | Má Push a Airflow selector; nemá volume platformu ani version selector. Nový selector bude v tomto kroku aj pri Push off. |
 | `RG/model/resolveRecoveryGroupDraft.ts`, `getDraftLocks` | Pushed lock aj managedProvisionedLock už existujú. Builder fieldset a reducer ich rešpektujú; nezavádzať paralelný lock mechanizmus. |
 | `RG/hooks/useRecoveryGroups.ts`, `submit` | Pri odpovedi mapuje returnedRecord, pri jeho absencii použije toRecoveryGroup(validated), ktoré dnes kopíruje request push flag. To nesmie slúžiť ako dôkaz deploymentu. |
-| Generated submit/rollback mutation options | OnSuccess invaliduje list. Pri HTTP 502 táto cesta neprebehne a uložený BE stav môže zostať odlišný od FE cache. Potrebné cielené overenie neistého submitu. |
-| `RG/pages/RecoveryGroupBuilderPage.tsx`, `RG/pages/RecoveryGroupEditorPage.tsx` | Volajú hook, držia dirty/error/result dialog. Editor už berie aktuálny group ako authority pre lock, ale inicializuje draft podľa id iba raz. Zachovať draft pri overovaní výsledku, nemaskovať pôvodnú chybu a nespúšťať automatický ďalší POST. |
+| Generated submit/rollback mutation options | Existujúce invalidácie a spracovanie chýb sa nemenia. Tento versioning plán nepridáva GET ani retry po HTTP 502; pri ďalšom bežnom načítaní FE prevezme uložený BE stav. |
+| `RG/pages/RecoveryGroupBuilderPage.tsx`, `RG/pages/RecoveryGroupEditorPage.tsx` | Volajú hook a držia dirty/error/result dialog. Zachovať existujúci úspešný/skipped/failed flow a read-only lock z načítaného BE recordu. Nepridávať nové verifikačné GET, retry state ani mechanizmus obnovovania po 502. |
 | `RG/components/RecoveryGroupsTable.tsx` | Detail Overview a Orchestration neukazujú verzie. Dáta môžu ísť priamo z mapovaného selected group. Netreba query na každý riadok tabuľky. |
 
 ### Hitachi hranica existujúceho FE
@@ -147,7 +151,8 @@ effective draft → volume provider ID → providers[type] → flashcopy | hitac
   → useGetGroupDagTemplateVersions({platform}) → filtrovaný katalóg
   → shared selector + shared validation → readiness.canCreate
   → submit boundary check → validated draft → toRecoveryGroupSubmitPayload
-  → POST → returned record / overenie GET → aktuálna authority/cache → lock a detail
+  → POST HTTP 200 → returned record → existujúci lock a detail
+  → POST HTTP 502 → existujúca FE error cesta (bez nového GET/POST)
 ```
 
 ### Model a roundtrip
@@ -217,33 +222,30 @@ schválenia. Rozhodnutie zaznamenať, neimplementovať potichu alternatívne UX.
 | Udalosť | Očakávaný FE výsledok |
 | --- | --- |
 | Save bez push, legacy/missing version | Payload null, deployed=null, bez locku; ostatné existing validácie ostávajú. |
-| Push success | Konfigurácia podľa draftu, deployed podľa returned record, lock podľa returned pushed=true. |
-| Push skipped | Konfigurácia ostáva, deployed=null, pushed=false; existujúci skipped result dialog ostáva pravdivý. |
-| Bežný push failure po persistencii | Pôvodný error ostane; read-only GET potvrdí uloženú verziu a pushed=false, FE nevyrába úspech. |
-| Managed provision success + DAG transfer failure | Po GET zachovať pushed/provisioned lock podľa BE, mená, CG a verziu; neodomknúť len kvôli HTTP 502. |
+| Push success, HTTP 200 | BE vráti `recovery_groups` a `orchestrator_push.status=pushed`; FE použije vrátený record (`pushed=true`, `template_version`) a existujúci úspešný dialóg. **Bez dodatočného GET.** |
+| Push skipped, HTTP 200 | BE vráti `recovery_groups` a `orchestrator_push.status=skipped`; FE použije `pushed=false`, bez deployed verzie, a existujúci skipped dialóg. **Bez dodatočného GET.** |
+| Managed provisioning failure, HTTP 502 | BE po neúspešnom provisioningu uloží `pushed=false`; FE zobrazí existujúcu chybu Push. **Žiadny nový GET** ani automatický retry. |
+| Bežný DAG/SFTP Push failure, HTTP 502 | BE uloží `pushed=false` a odstráni nasadenú verziu; FE zobrazí existujúcu chybu Push. **Žiadny nový GET** ani automatický retry. |
+| Úspešný Managed provisioning + DAG/SFTP Push failure, HTTP 502 | BE ponechá `pushed=true`, `orchestration.template_version` a provisioned objekty. FE zobrazí chybu a **neodhaduje lock z HTTP 502**; pri ďalšom bežnom načítaní sa prejaví BE lock. Netvrdiť úspešný import DAG do Airflow. **Žiadny nový GET**. |
 | Rollback ok | Konfigurácia ostane; deployed=null. Managed odvodené polia sa vyčistia podľa BE, editovateľnosť určí existujúci resolver. |
 | Rollback partial | Konfigurácia ostane; deployed=null, pushed=false; Managed odvodené objekty môžu naďalej blokovať editáciu. |
 | Rollback failed/skipped | Nepredstierať vymazanie deployed verzie; vychádzať z aktuálneho uloženého stavu. |
 
-Hook `submit` má pri pushed requeste bez returnedRecord najprv overiť konkrétny
-record cez GET. Nepoužiť requestový push flag z fallback `toRecoveryGroup` ako
-autoritu. Pri legacy non-push fallback zachovať konfiguráciu, ale nevytvoriť
-nasadenú verziu. Test dnes výslovne očakávajúci fallback treba spresniť podľa vetvy.
+Pri **HTTP 200** (Save, Push success aj Push skipped) FE použije vrátený
+`recovery_groups` record; **nevykoná ďalší GET** a neodvodí `pushed` ani
+`template_version` z requestu. Ak by HTTP 200 výnimočne neobsahovalo cieľový
+record, ide o porušenie očakávaného kontraktu: nepredstierať úspešný Push a
+nepridávať kvôli tomu bežný extra GET. Legacy non-push fallback nesmie vytvoriť
+nasadenú verziu.
 
-Pre HTTP 502, network timeout a iný neistý výsledok po odoslaní Push vykonať iba
-read-only overenie serverového recordu. Počas overovania zakázať opakovaný submit,
-zachovať editovaný draft a pôvodný error. Hook môže vystaviť malé lokálne
-`isVerifyingSubmission`, `verificationError`, `retryVerification`; nie nový
-všeobecný save-completion framework. GET úspech aktualizuje authoritative raw
-groups cache; chrániť zápis pred starším in-flight GET pre rovnaký generated key.
-GET failure neoznačí skupinu za odomknutú a ponúkne retry overenia bez ďalšieho POST.
-
-Editor nesmie pri tomto retry nahradiť existujúci builder full-page errorom a tým
-zahodiť draft. Neprepisovať raw draft iba preto, že prišli nové query dáta;
-aktualizovať authority pre lock existujúcou cestou `initialData`/`getDraftLocks`.
-Pri Create po neistom uloženom push zabezpečiť rovnakú ochranu: už potvrdený
-pushed record nesmie ďalej fungovať ako neuzamknutý nový formulár. Nesnažiť sa
-domyslieť lock z chybovej anglickej vety alebo statusu result dialógu.
+Pri **HTTP 502** alebo prerušení spojenia FE ponechá **doterajšiu error vetvu**:
+zobrazí chybu, nepovažuje Push za úspešný a **nevykonáva žiadny dodatočný GET,
+automatický POST retry, polling ani cache reconciliation**. Chybová odpoveď BE
+neobsahuje uložený record, preto FE nesmie iba zo statusu 502 odvodiť
+`orchestration.pushed` ani `template_version`. Stav sa prevezme z BE pri
+**nasledujúcom bežnom načítaní skupiny** cez už existujúci flow. T8/T9 nemajú
+zaviesť nový lifecycle alebo mechanizmus čakania; ide iba o doplnenie verzií
+DAG do existujúceho úspešného flow a zachovanie regresného správania chýb.
 
 ## 6. Detail a lokalizácie
 
@@ -271,7 +273,7 @@ ak nestratia platnosť. Každá úloha má cielené testy a samostatný commit.
 F1: T1 wire roundtrip → T2 draft lifecycle → CP1
 F2: T3 shared selector → T4 shared validation → T5 group context/readiness → CP2
 F3: T6 locales → T7 builder orchestration → CP3
-F4: T8 authoritative submit → T9 pages/reconciliation → CP4
+F4: T8 version-aware submit → T9 existing page behavior/regressions → CP4
 F5: T10 detail → T11 real-client lifecycle integration/browser → CP5
 ```
 
@@ -303,7 +305,7 @@ typecheck, testy a API kontroly. Browser QA používa izolované prostredie a mo
 | Katalóg chybný alebo z iného providera | Filter platformy, unique default, generated key, žiadne placeholder dáta z inej platformy. |
 | Stará deployed verzia po rollbacku | Aktívna verzia iba pri pushed=true; žiadne odvodzovanie z run_id ani configured version. |
 | Pushed vs provisioned lock | Zachovať getDraftLocks a obidva guards. Partial rollback sa nemusí stať editovateľným. |
-| 502 a stale authoritative cache | Read-only verify, pôvodný error/draft ostávajú, zákaz opakovaného POST do overenia. |
+| 502 po neúspešnom Push | Zachovať doterajšie zobrazenie chyby. Nepridávať GET, retry, polling ani cache synchronizáciu; status 502 neurčuje lock. Pri bežnom ďalšom načítaní rozhodne BE record. |
 | Shared refactor zmení Apps | Zachovať app adapter a API; explicitné regresie default/unknown/outage/help/id. |
 | Generated drift / cudzie zmeny | Aktuálny klient stačí; žiadne manuálne generated úpravy. Rozpracované zmeny od ďalších sessions zachovať. |
 
