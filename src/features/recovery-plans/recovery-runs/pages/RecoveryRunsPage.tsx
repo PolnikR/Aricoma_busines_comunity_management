@@ -65,7 +65,7 @@ export function RecoveryRunsPage() {
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
       <TableToolbar
         title={t('pages.recoveryRuns.title')}
-        description={t('pages.recoveryRuns.description')}
+        description={`${t('pages.recoveryRuns.description')} ${t('recoveryRuns.inventoryDescription')}`}
         isFetching={isFetching || latestRunsFetching}
         onRefresh={() => {
           refetch()

@@ -28,4 +28,26 @@ describe('InventoryShell', () => {
     expect(root).toHaveClass('flex', 'flex-1', 'flex-col', 'gap-4')
     expect(root).not.toHaveClass('lg:min-h-0')
   })
+
+  it('leaves the visible title to the page header and keeps the inventory name for assistive tech', () => {
+    render(
+      <InventoryShell inventoryTitle="Inventory records" inventoryDescription="Browse every record">
+        <div>Rows</div>
+      </InventoryShell>,
+    )
+
+    expect(screen.getByRole('region', { name: 'Inventory records' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Inventory records' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Browse every record')).not.toBeInTheDocument()
+  })
+
+  it('still shows the tabs row when tabs are given', () => {
+    render(
+      <InventoryShell inventoryTitle="Inventory records" tabs={<div role="tablist" aria-label="Record types" />}>
+        <div>Rows</div>
+      </InventoryShell>,
+    )
+
+    expect(screen.getByRole('tablist', { name: 'Record types' })).toBeInTheDocument()
+  })
 })

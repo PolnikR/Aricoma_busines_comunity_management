@@ -129,9 +129,10 @@ describe('RecoveryRunsPage', () => {
     renderPage()
 
     expect(screen.getByRole('heading', { level: 1, name: 'Recovery runs' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 2, name: 'Orchestrated entities' })).toBeInTheDocument()
-    expect(screen.getByText('Latest run per orchestrated entity. Entities never pushed to orchestration aren\'t queried.')).toBeInTheDocument()
-    expect(screen.getAllByText('Execution history and status of recovery runs.')).toHaveLength(1)
+    expect(screen.getByRole('region', { name: 'Orchestrated entities' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { level: 2, name: 'Orchestrated entities' })).not.toBeInTheDocument()
+    // The scope note moved from the inventory header into the single page description.
+    expect(screen.getAllByText('Execution history and status of recovery runs. Latest run per orchestrated entity. Entities never pushed to orchestration aren\'t queried.')).toHaveLength(1)
     expect(screen.queryByText(/^Showing \d+ orchestrated entities/)).not.toBeInTheDocument()
     expect(screen.getByText('Finance Recovery')).toBeInTheDocument()
     expect(screen.getByText('Billing Group')).toBeInTheDocument()

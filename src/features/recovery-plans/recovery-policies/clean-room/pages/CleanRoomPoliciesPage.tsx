@@ -33,7 +33,7 @@ export function CleanRoomPoliciesPage() {
         onTabChange={(tab) => { void navigate(getRecoveryPolicyPath(tab)) }}
         tabsAriaLabel={t('recoveryPolicies.tabs.label')}
         title={t('recoveryPolicies.title')}
-        description={t('recoveryPolicies.description')}
+        description={`${t('recoveryPolicies.description')} ${t('pages.cleanRoomPolicies.inventoryDescription')}`}
         isFetching={isFetching}
         onRefresh={() => { void postDelete.refresh() }}
         actions={<Button size="sm" variant="outline" onClick={() => { setIsCreateModalOpen(true) }}>{t('pages.cleanRoomPolicies.addButton')}</Button>}

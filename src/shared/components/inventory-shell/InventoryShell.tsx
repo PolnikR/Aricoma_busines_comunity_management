@@ -23,7 +23,6 @@ interface InventoryShellProps {
 export function InventoryShell({
   metrics,
   inventoryTitle,
-  inventoryDescription,
   tabs,
   notice,
   compactSpacing = false,
@@ -40,27 +39,12 @@ export function InventoryShell({
       aria-label={inventoryTitle}
     >
       <Card className={cn('relative flex flex-1 flex-col overflow-hidden p-0 sm:p-0 lg:min-h-0', compactSpacing && 'lg:!p-0')}>
-        {(Boolean(inventoryTitle) || Boolean(inventoryDescription) || Boolean(tabs)) && (
-          <div className={cn('flex shrink-0 items-center justify-end gap-2 border-b border-border px-4 py-2.5', compactSpacing && 'lg:py-0.5')}>
-            {(Boolean(inventoryTitle) || Boolean(inventoryDescription)) && (
-              <div className="mr-auto">
-                {inventoryTitle && (
-                  <h2 className="text-sm font-semibold text-text-primary">
-                    {inventoryTitle}
-                  </h2>
-                )}
-
-                {inventoryDescription && (
-                  <div className="text-xs text-text-muted">
-                    {inventoryDescription}
-                  </div>
-                )}
-              </div>
-            )}
-
+        {/* The page header already names the page; the inventory title only labels the region. */}
+        {tabs ? (
+          <div className={cn('flex shrink-0 items-center gap-2 border-b border-border px-4 py-2.5', compactSpacing && 'lg:py-0.5')}>
             {tabs}
           </div>
-        )}
+        ) : null}
 
         <div className={cn('flex flex-1 flex-col overflow-hidden bg-surface-subtle p-3 lg:min-h-0', compactSpacing && 'lg:p-0')}>
           {children}

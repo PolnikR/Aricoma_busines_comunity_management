@@ -51,6 +51,8 @@ describe('AuditPage', () => {
     expect(await screen.findByRole('heading', { name: 'Access logs' })).toBeInTheDocument()
     expect(await screen.findByRole('row', { name: 'GET /api/access-logs' })).toBeInTheDocument()
     expect(fetchAccessLogsMock).toHaveBeenCalledWith({ lines: 200 })
+    // The log window note lives in the page description now that the inventory header is gone.
+    expect(screen.getByText(/Last 200 lines of the platform access log\.$/)).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /Filters/ }))
     await user.clear(screen.getByLabelText('Status'))

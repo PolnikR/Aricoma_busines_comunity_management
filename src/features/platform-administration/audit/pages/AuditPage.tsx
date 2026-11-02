@@ -21,7 +21,8 @@ export function AuditPage() {
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0 lg:overflow-hidden">
       <TableToolbar
         title={t('audit.accessLogs.page.title')}
-        description={t('audit.accessLogs.page.description')}
+        description={`${t('audit.accessLogs.page.description')} ${t('audit.accessLogs.inventory.description')
+          .replace('{lines}', String(normalizeAccessLogFilters(filters).lines))}`}
         isFetching={isFetching}
         onRefresh={() => { void refetch() }}
         refreshLabel={t('common.refresh')}

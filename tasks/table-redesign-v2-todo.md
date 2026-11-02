@@ -32,10 +32,17 @@ Spoločné pravidlo pre každú úlohu: focused `npm exec vitest run <testy úlo
 
 **Popis:** `InventoryShell` prestane vykresľovať `inventoryTitle` a `inventoryDescription`. `inventoryTitle` ostane ako `aria-label` sekcie a riadok so `tabs` ostane.
 
+**Rozhodnutie (2026-11-02, variant A):** popis v `InventoryShell` je na väčšine stránok duplikát. Tam, kde nesie vlastnú informáciu, sa veta pripojila k popisu stránky z existujúcich prekladov, bez nových kľúčov:
+- Recovery runs: rozsah „latest run per orchestrated entity“,
+- Audit: „Last {lines} lines …“,
+- Clean room policies: popis pravidiel.
+
+Discovery settings sa nemení, lebo popis stránky už vymenúva všetky sekcie. Záložky sú teraz zarovnané vľavo.
+
 **Akceptačné kritériá:**
-- [ ] Na 11 stránkach s `inventoryTitle` nie je pod hlavičkou stránky druhý nadpis ani popis.
-- [ ] Sekcia má stále prístupné meno z `inventoryTitle`. Stránky s `tabs` zobrazujú záložky v rovnakom riadku ako dnes.
-- [ ] Na stránkach so záložkami je jasné, ktorá sekcia je aktívna. Ak nie, ponechať titulok len pri `tabs` a zapísať rozhodnutie do plánu.
+- [x] Na 11 stránkach s `inventoryTitle` nie je pod hlavičkou stránky druhý nadpis ani popis.
+- [x] Sekcia má stále prístupné meno z `inventoryTitle`. Stránky s `tabs` zobrazujú záložky v samostatnom riadku.
+- [x] Na stránkach so záložkami je jasné, ktorá sekcia je aktívna (aktívna záložka). Titulok sa neponecháva.
 
 **Overenie:**
 - [ ] `npm exec vitest run src/shared/components/inventory-shell/InventoryShell.test.tsx src/features/discovery-inventory/resources/components/ResourceInventoryPanel.test.tsx`
