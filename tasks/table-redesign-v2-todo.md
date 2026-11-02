@@ -1,0 +1,200 @@
+# Redizajn tabuliek v2 (variant B): úlohy
+
+Plán: [table-redesign-v2-plan.md](table-redesign-v2-plan.md).
+Stav: implementácia nezačala.
+
+Spoločné pravidlo pre každú úlohu: focused `npm exec vitest run <testy úlohy>`, `npm exec eslint -- <zmenené súbory> --max-warnings 0`, `git diff --check` a atomický commit vlastných overených zmien. Testy chránia správanie, nie CSS triedy.
+
+## Fáza 1: Rozloženie stránky
+
+### T1: Karta tabuľky siaha po spodok stránky
+
+**Popis:** Zistiť, prečo `DataTableSurface` na Platform providers pri 4 záznamoch nesiaha po spodok obsahu, hoci route má `contentScroll: 'contained'`, a opraviť to v shared vrstve. Ak je príčina v `AppShell`, najprv navrhnúť opravu a počkať na schválenie.
+
+**Akceptačné kritériá:**
+- [ ] Na šírke ≥1024 px pri krátkom zozname spodná hrana karty lícuje so spodkom obsahu stránky a stránkovanie je pripnuté dole.
+- [ ] Pri dlhom zozname sa scrolluje len telo tabuľky a hlavička stĺpcov ostáva viditeľná. Existuje len jeden vertikálny scroll owner.
+- [ ] Pri 1280×600 je stránkovanie dosiahnuteľné. Na mobile (<1024 px) sa stránka scrolluje ako dnes.
+
+**Overenie:**
+- [ ] `npm exec vitest run src/shared/components/inventory-shell/InventoryShell.test.tsx src/shared/components/data-table/DataTableSurface.test.tsx src/shared/components/page/ContainedViewportFrame.test.tsx`
+- [ ] Prehliadač: Platform providers (4 riadky), Policy sets, Resources, pri 1920×1080 a 1280×600.
+
+**Závislosti:** žiadne.
+**Súbory (S–M):** `InventoryShell.tsx`, `DataTableSurface.tsx` a ich testy; podľa diagnózy `ContainedViewportFrame.tsx` alebo `AppShell.tsx`.
+
+### T2: Jedna hlavička na stránke
+
+**Popis:** `InventoryShell` prestane vykresľovať `inventoryTitle` a `inventoryDescription`. `inventoryTitle` ostane ako `aria-label` sekcie a riadok so `tabs` ostane.
+
+**Akceptačné kritériá:**
+- [ ] Na 11 stránkach s `inventoryTitle` nie je pod hlavičkou stránky druhý nadpis ani popis.
+- [ ] Sekcia má stále prístupné meno z `inventoryTitle`. Stránky s `tabs` zobrazujú záložky v rovnakom riadku ako dnes.
+- [ ] Na stránkach so záložkami je jasné, ktorá sekcia je aktívna. Ak nie, ponechať titulok len pri `tabs` a zapísať rozhodnutie do plánu.
+
+**Overenie:**
+- [ ] `npm exec vitest run src/shared/components/inventory-shell/InventoryShell.test.tsx src/features/discovery-inventory/resources/components/ResourceInventoryPanel.test.tsx`
+- [ ] Prehliadač: Platform providers, Credentials, Identity & Access (so záložkami), Recovery runs (so záložkami).
+
+**Závislosti:** žiadne.
+**Súbory (S, 2):** `src/shared/components/inventory-shell/InventoryShell.tsx`, `InventoryShell.test.tsx`.
+
+### Checkpoint 1: Rozloženie
+- [ ] `npm run typecheck` a `npm run lint` bez chýb.
+- [ ] Používateľ v prehliadači potvrdí jednu hlavičku a kartu tabuľky na celú výšku (Platform providers, Policy sets, Identity & Access).
+
+## Fáza 2: Shared vzhľad (prenesie sa na všetky tabuľky)
+
+### T3: Vzhľad `DataTable`
+
+**Popis:** Nová predvolená typografia a stavy podľa prototypu:
+- hlavička stĺpcov: 12 px, medium, `text-text-muted`, bez kapitálok, pozadie `surface-subtle`,
+- výška riadkov podľa hustoty: compact ≈56 px, comfortable ≈72 px, cez padding, nie pevnú výšku,
+- hover `surface-subtle`, výber `accent-soft` s ľavým pruhom, viditeľný focus,
+- skeleton s rovnakými rozmermi.
+
+**Akceptačné kritériá:**
+- [ ] Nový vzhľad sa uplatní na `layout="scroll"` aj `"fit"` a zalamovanie textu vo `fit` funguje ďalej.
+- [ ] Kliknutie, Enter/Space na riadku, `aria-selected` a `hideInCompact` sa správajú ako doteraz.
+- [ ] Súbory s vlastným `headerCellClassName`/`cellClassName` sú skontrolované a výsledok je zapísaný.
+
+**Overenie:** `npm exec vitest run src/shared/components/data-table/DataTable.test.tsx src/shared/components/data-table/DataTableSkeleton.test.tsx`
+**Závislosti:** CP1.
+**Súbory (S–M, 4):** `DataTable.tsx`, `DataTable.test.tsx`, `DataTableSkeleton.tsx`, `DataTableSkeleton.test.tsx`.
+
+### T4: Výplň prázdneho miesta pod riadkami
+
+**Popis:** `DataTable` vloží za tabuľku výplň s jemnými čiarami v rozostupe nominálnej výšky riadku podľa hustoty. Scroll oblasť `DataTableSurface` sa stane flex stĺpcom, aby sa výplň natiahla.
+
+**Akceptačné kritériá:**
+- [ ] Pri krátkom zozname v `DataTableSurface` siahajú čiary po pätičku. Pri plnej strane výplň nemá výšku a nevytvára scroll navyše.
+- [ ] Výplň je `aria-hidden`, nezobrazuje sa pri loading ani pri prázdnom stave a mimo flex rodiča má nulovú výšku.
+- [ ] Čiary sú čitateľné vo svetlej aj tmavej téme a nepôsobia ako reálne riadky.
+
+**Overenie:** `npm exec vitest run src/shared/components/data-table/DataTable.test.tsx src/shared/components/data-table/DataTableSurface.test.tsx`
+**Závislosti:** T1, T3.
+**Súbory (S–M, 4):** `DataTable.tsx`, `DataTableSurface.tsx` a ich testy.
+
+### T5: Toolbar tabuľky
+
+**Popis:**
+- vyhľadávanie s tlačidlom na vymazanie,
+- `RowDensityToggle` ako dve ikonové tlačidlá s prístupnými menami a tooltipom (doterajšie texty ostanú ako mená),
+- `segments` ako chips s voliteľným `count`.
+
+**Akceptačné kritériá:**
+- [ ] Tlačidlo na vymazanie sa zobrazí len pri neprázdnom hľadaní, vyprázdni ho a vráti fokus do poľa.
+- [ ] Prepínač hustoty má `aria-pressed`, prístupné mená „comfortable“/„compact“ (z props) a funguje klávesnicou.
+- [ ] `Segment.count` je voliteľný a existujúci volajúci bez neho fungujú bez zmeny.
+
+**Overenie:** `npm exec vitest run src/shared/components/data-table/DataTableToolbar.test.tsx`
+**Závislosti:** CP1.
+**Súbory (M, 4):** `DataTableToolbar.tsx`, `DataTableToolbar.test.tsx`, `src/shared/components/table/RowDensityToggle.tsx`, `src/shared/icons/Icons.tsx` (ikony hustoty).
+
+### T6: Pätička a stránkovanie
+
+**Popis:** Pätička na pozadí `surface-subtle` s kompaktnými 32 px tlačidlami. Aktuálna strana má obrys, nie plnú výplň. Text „Showing x–y of z“ ostáva.
+
+**Akceptačné kritériá:**
+- [ ] `aria-current="page"`, disabled stav predchádzajúcej/ďalšej strany a skeleton pri načítaní fungujú ako doteraz.
+- [ ] Všetci volajúci `Pagination` mimo `DataTablePagination` sú skontrolovaní.
+- [ ] Na mobile ostáva „Page x of y“.
+
+**Overenie:** `npm exec vitest run src/shared/components/data-table/DataTablePagination.test.tsx`
+**Závislosti:** CP1.
+**Súbory (S, 2–3):** `DataTablePagination.tsx`, `DataTablePagination.test.tsx`, `src/shared/components/pagination/Pagination.tsx`.
+
+### T7: Hlavička stránky
+
+**Popis:** `TableToolbar`: Refresh ako ikonové tlačidlo s prístupným menom, ktoré sa počas načítania točí (nahrádza text „Updating“), a voliteľný `count` vedľa nadpisu.
+
+**Akceptačné kritériá:**
+- [ ] Refresh má prístupné meno z `refreshLabel` alebo `common.refresh` a počas `isFetching` oznamuje stav (`aria-busy` alebo skrytý text).
+- [ ] `count` sa zobrazí len, keď je zadaný. Volajúci bez neho sa nemenia.
+- [ ] `PageHeader` ostáva kompatibilný s 13 priamymi volajúcimi.
+
+**Overenie:** `npm exec vitest run src/shared/components/table/TableToolbar.test.tsx src/shared/components/page/PageHeader.test.tsx`
+**Závislosti:** CP1.
+**Súbory (S–M, 3–4):** `TableToolbar.tsx`, `TableToolbar.test.tsx`, prípadne `PageHeader.tsx` a `PageHeader.test.tsx`.
+
+### Checkpoint 2: Shared vzhľad
+- [ ] `npm run typecheck`, `npm run lint` a `npm test` bez chýb.
+- [ ] Používateľ v prehliadači skontroluje vo svetlej aj tmavej téme: Platform providers, Providers, Credentials, Policy sets, Recovery groups, Recovery runs, Resources, Audit a jednu tabuľku s `layout="fit"`.
+
+## Fáza 3: Zdieľané bunky a vzor na Platform providers
+
+### T8: Bunka entity a farebné tóny
+
+**Popis:**
+- tokeny `--app-tone-1..4` (svetlé aj tmavé) v `src/index.css`,
+- `EntityCell`: štvorec s iniciálami v tóne, názov a ID monospace písmom,
+- `ToneBadge`: štítok s bodkou v tóne.
+
+**Akceptačné kritériá:**
+- [ ] Iniciály sa odvodzujú z názvu a pre čítačku sú skryté. Názov a ID sa skrátia s `title`.
+- [ ] Kontrast textu tónov voči pozadiu je aspoň 4.5:1 v oboch témach.
+- [ ] Komponenty sa exportujú z `@/shared/components/data-table`.
+
+**Overenie:** `npm exec vitest run src/shared/components/data-table/cells`
+**Závislosti:** CP2.
+**Súbory (M, 5):** `src/index.css`, `cells/EntityCell.tsx`, `cells/ToneBadge.tsx`, `cells/cells.test.tsx`, `data-table/index.ts`.
+
+### T9: Kopírovateľný kód v bunke
+
+**Popis:** `CopyableCode`: monospace hodnota skrátená s `title` a `DetailCopyButton`, ktorý sa zobrazí pri hoveri alebo fokuse riadku. Klik na kopírovanie nespustí klik na riadok.
+
+**Akceptačné kritériá:**
+- [ ] Kopírovanie zapíše hodnotu do schránky a potvrdí ju („Copied“). Chyba schránky nič nerozbije.
+- [ ] Klik ani Enter na tlačidle neotvorí detail riadku.
+- [ ] Tlačidlo je dosiahnuteľné klávesnicou aj bez hoveru.
+
+**Overenie:** `npm exec vitest run src/shared/components/data-table/cells`
+**Závislosti:** CP2.
+**Súbory (S, 3):** `cells/CopyableCode.tsx`, `cells/cells.test.tsx`, `data-table/index.ts`.
+
+### T10: Platform providers podľa prototypu
+
+**Popis:**
+- stĺpce v poradí Provider (`EntityCell`) | Type (`ToneBadge`, AIRFLOW/SMTP/BACKEND/KEYCLOAK → tóny 1–4) | URL (`CopyableCode`) | Description | JSON (ikonové ghost tlačidlo),
+- „Add provider“ ako primárne tlačidlo,
+- počet záznamov v hlavičke.
+
+**Akceptačné kritériá:**
+- [ ] JSON tlačidlo otvorí `JsonViewerModal` a neotvorí detail. Klik na riadok otvorí `DetailView` ako doteraz.
+- [ ] Neznámy typ dostane neutrálny štítok a stránka nespadne.
+- [ ] Vyhľadávanie podľa názvu, ID a typu funguje ďalej.
+
+**Overenie:** `npm exec vitest run src/features/platform-administration/platform-providers`
+**Závislosti:** T7, T8, T9.
+**Súbory (S, 3):** `PlatformProvidersTable.tsx`, `PlatformProvidersTable.test.tsx`, `PlatformProvidersPage.tsx`.
+
+### T11 (voliteľné): Filter podľa typu na Platform providers
+
+**Popis:** Chips „All / Airflow / SMTP / Backend / Keycloak“ s počtami cez `segments` a `useTableState({ predicate })`. Zobrazia sa len typy, ktoré majú záznamy.
+
+**Akceptačné kritériá:**
+- [ ] Filter sa kombinuje s vyhľadávaním a pri zmene sa vráti na prvú stranu.
+- [ ] Počty sa rátajú z celého zoznamu, nie z výsledku vyhľadávania.
+- [ ] Texty chips sú preložené (en/sk/cs).
+
+**Overenie:** `npm exec vitest run src/features/platform-administration/platform-providers`
+**Závislosti:** T5, T10.
+**Súbory (M, 5):** `PlatformProvidersTable.tsx`, `PlatformProvidersTable.test.tsx`, `src/locales/en.json`, `sk.json`, `cs.json`.
+
+### T12: Odstrániť nepoužívaný `inventoryDescription`
+
+**Popis:** Po T2 sa `inventoryDescription` nikde nezobrazuje. Treba odstrániť prop, odovzdávanie v 11 volajúcich a prekladové kľúče, ktoré už nič nepoužíva. Ide o mechanickú zmenu a je to jediná úloha nad 5 súborov.
+
+**Akceptačné kritériá:**
+- [ ] `InventoryShellProps` nemá `inventoryDescription` a typecheck prejde.
+- [ ] Odstránené sú len prekladové kľúče bez ďalšieho použitia (overené vyhľadaním).
+- [ ] Prekladové testy v `src/locales` prejdú.
+
+**Overenie:** `npm run typecheck`, `npm exec vitest run src/locales src/shared/components/inventory-shell`
+**Závislosti:** T2.
+**Súbory (L, mechanicky):** `InventoryShell.tsx`, 11 stránok s `inventoryTitle`, `src/locales/{en,sk,cs}.json`.
+
+### Checkpoint 3: Hotovo
+- [ ] `npm run typecheck`, `npm run lint` a `npm test` bez chýb.
+- [ ] Používateľ porovná Platform providers s prototypom vo svetlej aj tmavej téme, pri 3/4/viac záznamoch a na mobile.
+- [ ] Pripravené na review a rozhodnutie, či nasleduje plán pre nové bunky na ďalších stránkach.
