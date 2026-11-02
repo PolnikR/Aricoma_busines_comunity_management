@@ -64,7 +64,7 @@ export function InventoryShell({
 
         <div className={cn(
           'flex flex-1 flex-col overflow-hidden bg-surface-subtle p-3 lg:min-h-0 group-has-[[data-table-surface]]/inventory:bg-transparent group-has-[[data-table-surface]]/inventory:p-0',
-          tabs && '[&_[data-table-surface]]:rounded-t-none [&_[data-table-surface]]:border-t-0',
+          tabs ? '[&_[data-table-surface]]:rounded-t-none [&_[data-table-surface]]:border-t-0' : undefined,
           compactSpacing && 'lg:p-0',
         )}>
           {children}
