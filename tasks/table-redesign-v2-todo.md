@@ -63,6 +63,19 @@ Discovery settings sa nemení, lebo popis stránky už vymenúva všetky sekcie.
 **Overenie:** `npm exec vitest run` nad `InventoryShell`, `data-table` a 16 konzumentmi (43 súborov, 361 testov); headless Chrome na piatich stránkach.
 **Súbory (S, 3):** `InventoryShell.tsx`, `DataTableSurface.tsx`, `DataTableSurface.test.tsx`.
 
+### T2c: Záložky ako prvý riadok karty tabuľky (variant 1 z prototypu https://claude.ai/artifact/714nihWpzHcrdzpFXZthHu)
+
+**Popis:** Keď `InventoryShell` obsahuje `DataTableSurface`, riadok s `tabs` dostane horný okraj, zaoblenie a pozadie karty a `DataTableSurface` pod ním stratí horný okraj a zaoblenie. Záložky a tabuľka tak tvoria jednu kartu. Obsah bez vlastnej karty (konfigurácia Discovery settings) sa nemení. Riešené len cez CSS v `InventoryShell`, bez zmeny rozhrania a stránok.
+
+**Akceptačné kritériá:**
+- [x] Recovery runs a Recovery policies: spodok riadku so záložkami je zároveň vrch karty tabuľky, ľavý a pravý okraj lícujú s nadpisom (headless Chrome 1600×900).
+- [x] Discovery settings (formulár) a Policy sets (bez záložiek) sa nezmenili.
+- [x] Mobil 390×844: stránka sa do šírky nerozťahuje a záložky sa posúvajú v riadku.
+
+**Nerozhodnuté:** počty v záložkách a väčšie písmo záložiek z prototypu (stránky dnes posielajú `compact`). Záložka History v Discovery settings (obsahuje `DataTableSurface`) nebola v prehliadači overená.
+
+**Súbory (S, 1):** `InventoryShell.tsx`.
+
 ### Checkpoint 1: Rozloženie
 - [ ] `npm run typecheck` a `npm run lint` bez chýb.
 - [ ] Používateľ v prehliadači potvrdí jednu hlavičku a kartu tabuľky na celú výšku (Platform providers, Policy sets, Identity & Access).

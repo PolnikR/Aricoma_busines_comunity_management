@@ -47,14 +47,26 @@ export function InventoryShell({
         'has-[[data-table-surface]]:overflow-visible has-[[data-table-surface]]:p-0 has-[[data-table-surface]]:rounded-none has-[[data-table-surface]]:border-0 has-[[data-table-surface]]:bg-transparent has-[[data-table-surface]]:shadow-none',
         compactSpacing && 'lg:!p-0',
       )}>
-        {/* The page header already names the page; the inventory title only labels the region. */}
+        {/*
+          The page header already names the page; the inventory title only labels the region.
+          Next to a table surface the tabs become that card's first row: they take its top edge
+          and the surface below gives up its own.
+        */}
         {tabs ? (
-          <div className={cn('flex shrink-0 items-center gap-2 border-b border-border px-4 py-2.5 group-has-[[data-table-surface]]/inventory:border-b-0 group-has-[[data-table-surface]]/inventory:px-0 group-has-[[data-table-surface]]/inventory:pt-0', compactSpacing && 'lg:py-0.5')}>
+          <div className={cn(
+            'flex shrink-0 items-center gap-2 border-b border-border px-4 py-2.5',
+            'group-has-[[data-table-surface]]/inventory:rounded-t-[20px] group-has-[[data-table-surface]]/inventory:border group-has-[[data-table-surface]]/inventory:bg-surface group-has-[[data-table-surface]]/inventory:px-2 group-has-[[data-table-surface]]/inventory:py-0',
+            compactSpacing && 'lg:py-0.5',
+          )}>
             {tabs}
           </div>
         ) : null}
 
-        <div className={cn('flex flex-1 flex-col overflow-hidden bg-surface-subtle p-3 lg:min-h-0 group-has-[[data-table-surface]]/inventory:bg-transparent group-has-[[data-table-surface]]/inventory:p-0', compactSpacing && 'lg:p-0')}>
+        <div className={cn(
+          'flex flex-1 flex-col overflow-hidden bg-surface-subtle p-3 lg:min-h-0 group-has-[[data-table-surface]]/inventory:bg-transparent group-has-[[data-table-surface]]/inventory:p-0',
+          tabs && '[&_[data-table-surface]]:rounded-t-none [&_[data-table-surface]]:border-t-0',
+          compactSpacing && 'lg:p-0',
+        )}>
           {children}
         </div>
       </Card>
