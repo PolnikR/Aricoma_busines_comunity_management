@@ -48,29 +48,6 @@ describe('TableToolbar', () => {
     expect(screen.getByText('Updating')).toBeInTheDocument()
   })
 
-  it('shows Refresh as an icon button named by its label', () => {
-    render(<TableToolbar title="Title" description="Description" onRefresh={vi.fn()} refreshLabel="Reload list" />)
-
-    const refreshBtn = screen.getByRole('button', { name: 'Reload list' })
-    expect(refreshBtn).toHaveAttribute('title', 'Reload list')
-    expect(refreshBtn).toHaveTextContent('')
-    expect(refreshBtn).not.toHaveAttribute('aria-busy')
-  })
-
-  it('marks Refresh busy and announces Updating while fetching', () => {
-    render(<TableToolbar title="Title" description="Description" isFetching onRefresh={vi.fn()} />)
-
-    expect(screen.getByRole('button', { name: 'Refresh' })).toHaveAttribute('aria-busy', 'true')
-    expect(screen.getByText('Updating')).toHaveAttribute('aria-live', 'polite')
-  })
-
-  it('shows a record count next to the page title when given', () => {
-    render(<TableToolbar title="Platform providers" description="Description" count={4} />)
-
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Platform providers4')
-    expect(screen.getByText('4')).toBeInTheDocument()
-  })
-
   it('renders custom actions when provided', () => {
     render(
       <TableToolbar

@@ -123,6 +123,10 @@ Discovery settings sa nemení, lebo popis stránky už vymenúva všetky sekcie.
 **Závislosti:** T1, T3.
 **Súbory (S–M, 4):** `DataTable.tsx`, `DataTableSurface.tsx` a ich testy.
 
+### T5–T7: VRÁTENÉ (2026-11-03)
+
+T5 (`783ad979`), T6 (`307eafd1`) a T7 (`3fffab24`) boli zapracované a prešli Checkpointom 2 (celá test suite 3400/3400). Na žiadosť používateľa („nepáči sa mi to“) boli vrátené cez `git revert`. Toolbar, stránkovanie a hlavička stránky sú v stave pred T5. Fáza 3 (T8–T12) sa nezačala.
+
 ### T5: Toolbar tabuľky
 
 **Popis:**
@@ -130,16 +134,10 @@ Discovery settings sa nemení, lebo popis stránky už vymenúva všetky sekcie.
 - `RowDensityToggle` ako dve ikonové tlačidlá s prístupnými menami a tooltipom (doterajšie texty ostanú ako mená),
 - `segments` ako chips s voliteľným `count`.
 
-**Výsledok (2026-11-03):**
-- Vyhľadávanie má vlastné tlačidlo ✕ (`common.clearSearch` v en/sk/cs) a natívne ✕ prehliadača je skryté.
-- Prepínač hustoty má ikony `DensityComfortableIcon`/`DensityCompactIcon`, prístupné meno z props a tooltip s veľkým začiatočným písmenom.
-- `Segment.count` je voliteľný. Rýchle filtre **neboli** prestylované na chips, ostal segmentový ovládač, aby sa nemenili stránky, ktoré ho dnes používajú.
-- Headless Chrome (Platform providers, :5174, testovacie `/api` dáta): ✕ sa zobrazí po zadaní textu a tlačidlá hustoty sú 36 px ikony.
-
 **Akceptačné kritériá:**
-- [x] Tlačidlo na vymazanie sa zobrazí len pri neprázdnom hľadaní, vyprázdni ho a vráti fokus do poľa.
-- [x] Prepínač hustoty má `aria-pressed`, prístupné mená „comfortable“/„compact“ (z props) a funguje klávesnicou (natívne `<button>`).
-- [x] `Segment.count` je voliteľný a existujúci volajúci bez neho fungujú bez zmeny.
+- [ ] Tlačidlo na vymazanie sa zobrazí len pri neprázdnom hľadaní, vyprázdni ho a vráti fokus do poľa.
+- [ ] Prepínač hustoty má `aria-pressed`, prístupné mená „comfortable“/„compact“ (z props) a funguje klávesnicou.
+- [ ] `Segment.count` je voliteľný a existujúci volajúci bez neho fungujú bez zmeny.
 
 **Overenie:** `npm exec vitest run src/shared/components/data-table/DataTableToolbar.test.tsx`
 **Závislosti:** CP1.
@@ -149,12 +147,10 @@ Discovery settings sa nemení, lebo popis stránky už vymenúva všetky sekcie.
 
 **Popis:** Pätička na pozadí `surface-subtle` s kompaktnými 32 px tlačidlami. Aktuálna strana má obrys, nie plnú výplň. Text „Showing x–y of z“ ostáva.
 
-**Výsledok (2026-11-03):** headless Chrome (Platform providers, 25 testovacích záznamov, 3 strany): tlačidlá majú 32 px, aktuálna strana má biely obrys a `aria-current="page"`, predchádzajúca strana je na prvej strane `disabled` a pätička je `surface-subtle`. Výber „Rows“ ostal 36 px (`h-9`), nemenil sa.
-
 **Akceptačné kritériá:**
-- [x] `aria-current="page"`, disabled stav predchádzajúcej/ďalšej strany a skeleton pri načítaní fungujú ako doteraz (logika sa nemenila, testy `data-table` prechádzajú).
-- [x] Všetci volajúci `Pagination` mimo `DataTablePagination` sú skontrolovaní: jediný je `RecoveryGroupReplicationChain`, ktorý dostane rovnaký vzhľad a jeho testy prechádzajú.
-- [x] Na mobile ostáva „Page x of y“ (označenie `sm:hidden` sa nemenilo).
+- [ ] `aria-current="page"`, disabled stav predchádzajúcej/ďalšej strany a skeleton pri načítaní fungujú ako doteraz.
+- [ ] Všetci volajúci `Pagination` mimo `DataTablePagination` sú skontrolovaní.
+- [ ] Na mobile ostáva „Page x of y“.
 
 **Overenie:** `npm exec vitest run src/shared/components/data-table/DataTablePagination.test.tsx`
 **Závislosti:** CP1.
@@ -164,16 +160,10 @@ Discovery settings sa nemení, lebo popis stránky už vymenúva všetky sekcie.
 
 **Popis:** `TableToolbar`: Refresh ako ikonové tlačidlo s prístupným menom, ktoré sa počas načítania točí (nahrádza text „Updating“), a voliteľný `count` vedľa nadpisu.
 
-**Výsledok (2026-11-03):**
-- Refresh je 36×36 px ikonové tlačidlo (`size="sm"`, `w-9 px-0!`), počas načítania má `aria-busy` a ikona sa točí.
-- „Updating“ ostáva ako skrytý text s `aria-live="polite"`, zámerne bez `role="status"`, aby nekolidoval so stavom načítania tabuľky (test Recovery groups ho hľadá ako jediný).
-- Stránky bez `onRefresh` ukazujú pri načítaní viditeľný indikátor ako doteraz.
-- `PageHeader` sa nemenil.
-
 **Akceptačné kritériá:**
-- [x] Refresh má prístupné meno z `refreshLabel` alebo `common.refresh` a počas `isFetching` oznamuje stav (`aria-busy` aj skrytý text).
-- [x] `count` sa zobrazí len, keď je zadaný. Volajúci bez neho sa nemenia.
-- [x] `PageHeader` ostáva kompatibilný s 13 priamymi volajúcimi (nezmenený).
+- [ ] Refresh má prístupné meno z `refreshLabel` alebo `common.refresh` a počas `isFetching` oznamuje stav (`aria-busy` alebo skrytý text).
+- [ ] `count` sa zobrazí len, keď je zadaný. Volajúci bez neho sa nemenia.
+- [ ] `PageHeader` ostáva kompatibilný s 13 priamymi volajúcimi.
 
 **Overenie:** `npm exec vitest run src/shared/components/table/TableToolbar.test.tsx src/shared/components/page/PageHeader.test.tsx`
 **Závislosti:** CP1.

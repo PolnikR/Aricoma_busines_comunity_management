@@ -260,22 +260,6 @@ export function ShieldIcon(props: IconProps) {
   )
 }
 
-export function DensityComfortableIcon(props: IconProps) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
-      <path d="M3.5 5h13M3.5 10h13M3.5 15h13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  )
-}
-
-export function DensityCompactIcon(props: IconProps) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
-      <path d="M3.5 4h13M3.5 8h13M3.5 12h13M3.5 16h13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  )
-}
-
 export function CloseIcon(props: IconProps) {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
