@@ -10,7 +10,9 @@ describe('ResourceViewportFrame', () => {
       </ResourceViewportFrame>,
     )
 
-    const frame = screen.getByText('Resources content').parentElement
+    const content = screen.getByText('Resources content').parentElement
+    expect(content).toHaveClass('flex', 'min-w-0', 'flex-1', 'lg:min-h-0')
+    const frame = content?.parentElement
     expect(frame).not.toBeNull()
     expect(frame).toHaveClass('flex', 'min-h-full', 'lg:h-full', 'lg:min-h-0', 'lg:overflow-y-auto')
   })
@@ -23,8 +25,11 @@ describe('ResourceViewportFrame', () => {
       </ResourceViewportFrame>,
     )
 
-    const frame = screen.getByText('Resources header').parentElement
+    const content = screen.getByText('Resources header').parentElement
+    const frame = content?.parentElement
     expect(frame).toContainElement(screen.getByText('Resources primary surface'))
     expect(frame).not.toHaveClass('overflow-y-auto')
+    expect(content).not.toHaveClass('overflow-y-auto')
+    expect(content).not.toHaveClass('lg:overflow-y-auto')
   })
 })

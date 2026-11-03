@@ -263,7 +263,8 @@ describe('ResourcesIsePage', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(screen.queryByRole('tab', { name: /Source/ })).not.toBeInTheDocument()
     const showTags = screen.getByRole('button', { name: 'Show all 5 provider tags' })
-    expect(showTags).toHaveTextContent('+3')
+    expect(within(summary).getAllByRole('region', { name: 'Tags' }).map(tag => tag.textContent)).toEqual(['Production'])
+    expect(showTags).toHaveTextContent('+4')
     fireEvent.click(showTags)
     expect(within(screen.getByRole('dialog', { name: 'Provider tags (5)' })).getAllByRole('listitem').map(item => item.textContent)).toEqual(tags)
     expect(vmwareResourceInventorySpy).toHaveBeenLastCalledWith({
@@ -350,9 +351,14 @@ describe('ResourcesIsePage', () => {
 
     expect(screen.queryByText('OTHER-01')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /^Filters/ }))
-    expect(screen.getByLabelText('Tag')).toHaveValue('recovery')
-    expect(screen.getByRole('option', { name: 'recovery' })).toBeInTheDocument()
-    expect(screen.getByRole('option', { name: 'server-tag' })).toBeInTheDocument()
+    const tagDropdown = screen.getByRole('button', { name: 'Tag' })
+    expect(tagDropdown).toBeDisabled()
+    expect(tagDropdown).toHaveTextContent('recovery')
+    expect(tagDropdown).not.toHaveTextContent('server-tag')
+    expect(fetchMock.mock.calls.map(([url]) => url)).toContain('/api/tags?provider_id=vmware-target-01')
+    fireEvent.click(tagDropdown)
+    expect(tagDropdown).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByRole('group', { name: 'Tag' })).not.toBeInTheDocument()
   })
 
   it.each(['failure', 'empty'] as const)('keeps configured recovery selected when the target /tags response is %s', async (tagsResponse) => {
@@ -397,8 +403,13 @@ describe('ResourcesIsePage', () => {
     })
 
     fireEvent.click(screen.getByRole('button', { name: /^Filters/ }))
-    expect(screen.getByLabelText('Tag')).toHaveValue('recovery')
-    expect(screen.getByRole('option', { name: 'recovery' })).toBeInTheDocument()
+    const tagDropdown = screen.getByRole('button', { name: 'Tag' })
+    expect(tagDropdown).toBeDisabled()
+    expect(tagDropdown).toHaveTextContent('recovery')
+    expect(fetchMock.mock.calls.map(([url]) => url)).toContain('/api/tags?provider_id=vmware-target-01')
+    fireEvent.click(tagDropdown)
+    expect(tagDropdown).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByRole('group', { name: 'Tag' })).not.toBeInTheDocument()
   })
 
   it('scopes provider defaults, URL filters, tags, and inventory to the selected target VMware provider', () => {

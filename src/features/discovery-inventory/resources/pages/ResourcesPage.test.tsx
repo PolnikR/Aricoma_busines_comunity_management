@@ -255,7 +255,8 @@ describe('ResourcesPage', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(screen.queryByRole('tab', { name: /Target/ })).not.toBeInTheDocument()
     const showTags = screen.getByRole('button', { name: 'Show all 5 provider tags' })
-    expect(showTags).toHaveTextContent('+3')
+    expect(within(summary).getAllByRole('region', { name: 'Tags' }).map(tag => tag.textContent)).toEqual(['Production'])
+    expect(showTags).toHaveTextContent('+4')
     fireEvent.click(showTags)
     expect(within(screen.getByRole('dialog', { name: 'Provider tags (5)' })).getAllByRole('listitem').map(item => item.textContent)).toEqual(tags)
     expect(vmwareResourceInventorySpy).toHaveBeenLastCalledWith({
