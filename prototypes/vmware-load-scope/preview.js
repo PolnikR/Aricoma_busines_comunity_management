@@ -8,17 +8,58 @@ let provider = 'vm-01'
 let powerOnly = false
 let previewState = 'success'
 let refreshTimer
-function render() {
-  const scoped = provider === 'vm-01'
-  $('#scope-prefix').textContent = scoped ? 'TEST-' : 'Any'
-  $('#scope-tag').textContent = scoped ? 'ABC Orchestrator' : 'Any'
+const providerScopes = {
+  'vm-01': { prefix: 'TEST-', tags: ['ABC Orchestrator'] },
+  'vm-04': { prefix: 'PROD-', tags: [] },
+  'vm-05': { prefix: '', tags: ['Production'] },
+  'vm-06': { prefix: 'TEST-', tags: ['ABC Orchestrator', 'WEB', 'Production', 'Critical', 'Backup'] },
+  'vm-07': { prefix: '', tags: ['Storage replication and business continuity', 'Finance', 'Backup'] },
+}
+function renderProviderScope() {
+  const scope = providerScopes[provider] ?? { prefix: '', tags: [] }
+  $('.provider-scope').hidden = !scope.prefix && scope.tags.length === 0
+  $('#scope-prefix-field').hidden = !scope.prefix
+  $('#scope-tags-field').hidden = scope.tags.length === 0
+  $('#scope-prefix').textContent = scope.prefix
   $('.provider-scope').setAttribute('aria-label', `Loading conditions for ${provider}`)
-  const source = scoped ? records : records.map(row => ({ ...row, name: row.name.replace('TEST-', 'PROD-') }))
+  const visibleCount = Math.min(scope.tags.length, innerWidth >= 1100 ? 2 : 1)
+  $('#scope-tags').replaceChildren(...scope.tags.slice(0, visibleCount).map(tag => {
+    const chip = document.createElement('code'); chip.className = 'scope-tag'; chip.textContent = tag; chip.title = tag; return chip
+  }))
+  const remaining = scope.tags.length - visibleCount
+  $('#more-tags').hidden = remaining === 0
+  $('#more-tags').textContent = `+${remaining}`
+  $('#more-tags').setAttribute('aria-label', `Show all ${scope.tags.length} provider tags; ${remaining} more not displayed`)
+  $('#tag-popover-title').textContent = `Tags for ${provider} (${scope.tags.length})`
+  $('#all-scope-tags').replaceChildren(...scope.tags.map(tag => { const item = document.createElement('li'); item.textContent = tag; return item }))
+  if ($('#tag-popover').matches(':popover-open')) $('#tag-popover').hidePopover()
+  $('#provider-conditions').hidden = !scope.prefix && scope.tags.length === 0
+  $('#conditions-title').textContent = `Provider loading scope · ${provider}`
+  $('#dialog-prefix-field').hidden = !scope.prefix
+  $('#dialog-prefix').textContent = scope.prefix
+  $('#dialog-tags-field').hidden = scope.tags.length === 0
+  $('#dialog-tags').textContent = scope.tags.join(', ')
+  return scope
+}
+window.addEventListener('resize', renderProviderScope)
+$('#tag-popover').addEventListener('beforetoggle', event => {
+  if (event.newState !== 'open') return
+  const anchor = $('#more-tags').getBoundingClientRect()
+  const width = Math.min(300, document.documentElement.clientWidth - 24)
+  $('#tag-popover').style.top = `${anchor.bottom + 8}px`
+  $('#tag-popover').style.width = `${width}px`
+  $('#tag-popover').style.left = `${Math.max(12, Math.min(anchor.right - width, document.documentElement.clientWidth - width - 12))}px`
+  $('#tag-popover').style.right = 'auto'
+  $('#tag-popover').style.maxHeight = `${Math.max(100, innerHeight - anchor.bottom - 24)}px`
+})
+function render() {
+  const scope = renderProviderScope()
+  const source = records.map(row => ({ ...row, name: row.name.replace('TEST-', scope.prefix || 'VM-') }))
   const query = $('#search').value.trim().toLowerCase()
   const visible = source.filter(row => (!powerOnly || row.on) && `${row.name} ${row.os} ACMTHCICLUSTER`.toLowerCase().includes(query))
   $('#rows').replaceChildren(...visible.map(row => {
     const tr = document.createElement('tr')
-    const cells = [row.name, row.os, 'ACMTHCICLUSTER', scoped ? 'ABC Orchestrator' : 'Production', row.compute, 'Connected', row.on ? 'On' : 'Off']
+    const cells = [row.name, row.os, 'ACMTHCICLUSTER', scope.tags[0] || 'Production', row.compute, 'Connected', row.on ? 'On' : 'Off']
     cells.forEach((value, index) => {
       const td = document.createElement('td')
       if (index === 3) { const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = value; td.append(tag) }
@@ -28,7 +69,6 @@ function render() {
     })
     return tr
   }))
-  $('#provider-conditions').hidden = !scoped
   $('#active-filter').hidden = !powerOnly
   $('#filter-count').hidden = !powerOnly
   $('#rows').hidden = previewState !== 'success'

@@ -34,8 +34,8 @@
       <div class="provider-scope" role="group" aria-label="Loading conditions for vm-01">
         <svg class="icon" aria-hidden="true"><use href="#lock"/></svg>
         <dl>
-          <div><dt>Name prefix</dt><dd><code id="scope-prefix">TEST-</code></dd></div>
-          <div><dt>Tag</dt><dd><code id="scope-tag">ABC Orchestrator</code></dd></div>
+          <div id="scope-prefix-field"><dt>Name prefix</dt><dd><code id="scope-prefix"></code></dd></div>
+          <div id="scope-tags-field"><dt>Tags</dt><dd class="scope-tag-values"><span id="scope-tags"></span><button id="more-tags" type="button" popovertarget="tag-popover" hidden></button></dd></div>
         </dl>
       </div>
       </div>
@@ -53,10 +53,11 @@
       </div>
       <footer class="pagination"><span id="result" role="status" aria-live="polite"></span><span class="metrics-note">Preview data · 10 rows per page</span></footer>
     </section>
-    <p class="design-rationale">Up to four providers on the left. Loading conditions for the selected provider on the right, in the same row.</p>
+    <p class="design-rationale">Try vm-01: prefix + tag; vm-03: no conditions; vm-04: prefix only; vm-05: tag only; vm-06: five tags.</p>
   </main>
+  <div id="tag-popover" popover aria-labelledby="tag-popover-title"><h2 id="tag-popover-title">Provider tags</h2><ul id="all-scope-tags"></ul></div>
   <aside class="prototype-switcher" aria-label="Prototype controls"><label for="state">State</label><select id="state"><option value="success">Loaded</option><option value="loading">Loading</option><option value="error">Error</option><option value="empty">Empty</option></select><label for="provider-count">Providers</label><select id="provider-count"><option value="2">2 providers</option><option value="4">4 providers</option><option value="10" selected>10 providers</option></select></aside>
-  <dialog id="filter-dialog" aria-labelledby="filter-title"><form id="filter-form"><header><div><p class="eyebrow">Within loaded inventory</p><h2 id="filter-title">Filters</h2></div><button id="cancel-filter" type="button" aria-label="Close table filters">×</button></header><section id="provider-conditions" aria-labelledby="conditions-title"><h3 id="conditions-title">Provider loading scope · vm-01</h3><p>Configured on the provider. Both conditions apply.</p><dl><div><dt>Name starts with</dt><dd><code>TEST-</code></dd></div><div><dt>Tag</dt><dd><code>ABC Orchestrator</code></dd></div></dl><p class="explanation"><svg class="icon" aria-hidden="true"><use href="#lock"/></svg>Read-only here. Clearing table filters preserves these conditions.</p></section><h3>Within loaded inventory</h3><label class="checkbox"><input id="power" type="checkbox">Powered on only</label><footer><button id="clear-filters" type="button">Clear table filters</button><button class="primary" type="submit">Apply</button></footer></form></dialog>
+  <dialog id="filter-dialog" aria-labelledby="filter-title"><form id="filter-form"><header><div><p class="eyebrow">Within loaded inventory</p><h2 id="filter-title">Filters</h2></div><button id="cancel-filter" type="button" aria-label="Close table filters">×</button></header><section id="provider-conditions" aria-labelledby="conditions-title"><h3 id="conditions-title">Provider loading scope · vm-01</h3><p>Configured on the provider. Read-only in this preview.</p><dl><div id="dialog-prefix-field"><dt>Name starts with</dt><dd><code id="dialog-prefix"></code></dd></div><div id="dialog-tags-field"><dt>Tags</dt><dd id="dialog-tags"></dd></div></dl><p class="explanation"><svg class="icon" aria-hidden="true"><use href="#lock"/></svg>Read-only here. Clearing table filters preserves these conditions.</p></section><h3>Within loaded inventory</h3><label class="checkbox"><input id="power" type="checkbox">Powered on only</label><footer><button id="clear-filters" type="button">Clear table filters</button><button class="primary" type="submit">Apply</button></footer></form></dialog>
   <svg class="sr-only" aria-hidden="true"><defs><symbol id="lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></symbol><symbol id="search-icon" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 5 5"/></symbol><symbol id="filter-icon" viewBox="0 0 24 24"><path d="M3 4h18l-7 8v8l-4-2v-6Z"/></symbol></defs></svg>
 </body>
 </html>
