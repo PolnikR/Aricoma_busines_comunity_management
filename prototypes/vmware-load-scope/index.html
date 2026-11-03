@@ -14,6 +14,7 @@
     <header class="page-heading"><div><p class="eyebrow">Discovery &amp; inventory / Resources</p><h1>Virtual machines</h1><p>VMware inventory, health and placement overview.</p></div><button id="reload" type="button">↻ Refresh preview</button></header>
     <div class="metrics" aria-label="Loaded inventory metrics"><span><strong id="total">6</strong> Discovered VMs</span><span><strong id="powered">4</strong> Powered on</span><span><strong>1</strong> Cluster</span><span><strong id="memory">48 GB</strong> Allocated memory</span><span class="metrics-note">Within provider scope</span></div>
     <section class="inventory" aria-label="Resource inventory">
+      <div class="provider-navigation-row">
       <nav class="provider-nav" aria-label="Inventory providers">
         <button id="previous-provider" class="provider-scroll previous" type="button" aria-label="Previous provider tabs" disabled hidden>‹</button>
         <div class="view-nav" role="tablist" aria-label="VMware providers">
@@ -30,6 +31,7 @@
         </div>
         <button id="next-provider" class="provider-scroll next" type="button" aria-label="Next provider tabs" hidden>›</button>
       </nav>
+      </div>
       <div class="toolbar">
         <div class="search"><label for="search">Search loaded VMs</label><div class="search-control"><svg class="icon" aria-hidden="true"><use href="#search-icon"/></svg><input id="search" type="search" placeholder="Name, operating system or cluster…" autocomplete="off"></div></div>
         <fieldset class="density"><legend class="sr-only">Row density</legend><button id="comfortable" aria-pressed="false" type="button">Comfortable</button><button id="compact" aria-pressed="true" type="button">Compact</button></fieldset>
@@ -44,7 +46,7 @@
       </div>
       <footer class="pagination"><span id="result" role="status" aria-live="polite"></span><span class="metrics-note">Preview data · 10 rows per page</span></footer>
     </section>
-    <p class="design-rationale">Provider navigation restored from spike: one row, overflow arrows, horizontal scrolling and keyboard navigation. Filter placement is deferred.</p>
+    <p class="design-rationale">Up to four providers at a time. Scroll to the next providers; the navigation no longer spans the whole table. Filter placement is deferred.</p>
   </main>
   <aside class="prototype-switcher" aria-label="Prototype controls"><label for="state">State</label><select id="state"><option value="success">Loaded</option><option value="loading">Loading</option><option value="error">Error</option><option value="empty">Empty</option></select><label for="provider-count">Providers</label><select id="provider-count"><option value="2">2 providers</option><option value="4">4 providers</option><option value="10" selected>10 providers</option></select></aside>
   <dialog id="filter-dialog" aria-labelledby="filter-title"><form id="filter-form"><header><div><p class="eyebrow">Within loaded inventory</p><h2 id="filter-title">Filters</h2></div><button id="cancel-filter" type="button" aria-label="Close table filters">×</button></header><section id="provider-conditions" aria-labelledby="conditions-title"><h3 id="conditions-title">Provider loading scope · vm-01</h3><p>Configured on the provider. Both conditions apply.</p><dl><div><dt>Name starts with</dt><dd><code>TEST-</code></dd></div><div><dt>Tag</dt><dd><code>ABC Orchestrator</code></dd></div></dl><p class="explanation"><svg class="icon" aria-hidden="true"><use href="#lock"/></svg>Read-only here. Clearing table filters preserves these conditions.</p></section><h3>Within loaded inventory</h3><label class="checkbox"><input id="power" type="checkbox">Powered on only</label><footer><button id="clear-filters" type="button">Clear table filters</button><button class="primary" type="submit">Apply</button></footer></form></dialog>

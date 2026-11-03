@@ -68,6 +68,7 @@ providerTabs.forEach(button => {
   })
 })
 function updateProviderScroll() {
+  $('.provider-nav').style.setProperty('--visible-providers', Math.min(4, providerTabs.filter(tab => !tab.hidden).length))
   const max = Math.max(0, providerList.scrollWidth - providerList.clientWidth)
   $('#previous-provider').hidden = max <= 1
   $('#next-provider').hidden = max <= 1
@@ -75,7 +76,12 @@ function updateProviderScroll() {
   $('#next-provider').disabled = providerList.scrollLeft >= max - 1
 }
 for (const [id, direction] of [['previous-provider', -1], ['next-provider', 1]]) {
-  $(`#${id}`).addEventListener('click', () => providerList.scrollBy({ left: direction * Math.max(160, providerList.clientWidth * 0.8), behavior: 'smooth' }))
+  $(`#${id}`).addEventListener('click', () => {
+    const stride = providerTabs[0].getBoundingClientRect().width + 4
+    const visibleCount = Math.max(1, Math.floor((providerList.clientWidth + 4) / stride))
+    const nextIndex = Math.round(providerList.scrollLeft / stride) + direction * visibleCount
+    providerList.scrollTo({ left: Math.max(0, nextIndex * stride), behavior: 'smooth' })
+  })
 }
 providerList.addEventListener('scroll', updateProviderScroll, { passive: true })
 new ResizeObserver(updateProviderScroll).observe(providerList)
