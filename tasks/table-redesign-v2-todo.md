@@ -653,3 +653,150 @@ Pri vývoji QA sa pôvodná požiadavka na stále viditeľné Save opravila na s
 ### Commity fázy 5
 
 T20 d9ee4fde; T21 ad139c36; T22 3e610f84; T23 c30ff931; T24 5148738a; T25 6ef80b26; T26 b36ad491; T27 f9f32f1c; T28 038be82a; T29 9e0e2021; doplnok source Retry 8d74eeac. T30 obsahuje finálne QA skripty a tento report; hash je v Git histórii. Po Retry doplnku znovu prešli focused ESLint, komponentový test aj `npm.cmd run typecheck`. Predexistujúci routeContract snapshot nebol zahrnutý. Worktree zostáva na pôvodnej vetve test; bez push/merge. Ľudská vizuálna akceptácia v CP11 zostáva otvorená.
+
+## Fáza 6: Provider lišta a viac tagov — T31–T41
+
+Plán: fáza 6 v table-redesign-v2-plan.md. **Stav: nezačaté.** Používateľ potvrdil OR: VM má aspoň jeden zo zvolených tagov. Schválenie OR nie je pokyn na implementáciu celého plánu. Predchádzajúce checkboxy sa nemenia. Každý krok končí focused overením, diff check a atomickým commitom vlastných zmien; dokumentačný záznam je spoločný plán/todo.
+
+### T31: Overiť úplnosť inventory kontraktu
+
+**Popis:** Zaznamenať potvrdené OR a overiť úplnosť odpovede bez singular tag, backend aplikovanie provider konfigurácie, význam metriky a dopad na všetky volania resolvera. Najskôr uzavrieť dátové riziko; neliečiť ho len novou UI prezentáciou.
+**Akceptačné kritériá:**
+- [ ] Rozhodnutie OR je zaznamenané; testovacia matica zahŕňa VM s prvým tagom, iba druhým tagom, oboma a žiadnym, s/bez prefixu.
+- [ ] Zdroj/kontrakt alebo overiteľná fixture potvrdzuje kompletný response pre provider/prefix bez tag a prípustný objem. Mock vytvorený podľa želaného správania nie je dôkazom backend kontraktu. Samotná existencia endpointu nestačí; zdokumentovať prípadné server pagination/limity a vlastné provider filtre backendu.
+- [ ] Pri nepotvrdení úplnosti vznikne konkrétna API/backend závislosť a samostatný rozpad pred T33; bez tichého prechodu na neúplný inventár či iba prvý tag.
+**Overenie:** baseline `npm.cmd exec -- vitest run src/features/discovery-inventory/resources/helpers/vmwareProviderFilter.test.ts src/features/discovery-inventory/resources/helpers/filterVirtualMachines.test.ts src/features/discovery-inventory/resources/model/inventoryQueries.test.ts --maxWorkers=2`; read-only kontrola OpenAPI/aktuálnych generated kontraktov a query implementácie, dôkazy zapísať do plánu. Žiadne živé mutácie.
+**Závislosti:** T30.
+**Súbory (S, 2):** existujúci plan/todo, aktualizácia kontraktového záznamu. Žiadny produkčný kód.
+
+### T32: Zachovať celú normalizovanú množinu provider tagov
+
+**Popis:** Upraviť existujúci resolver tak, aby filters.tags obsahovalo všetky platné unikátne tagy v stabilnom poradí. Singular tag ostane iba výslovne zdokumentovaný kompatibilný alias prvého tagu pre auditovaných konzumentov; nové UI ho nepoužije.
+**Akceptačné kritériá:**
+- [ ] Trim prefixu/tagov, vynechanie prázdnych a presných duplicít; bez zmeny case. Žiadny prefix/tag znamená isFixed=false.
+- [ ] Fixed provider scope má prednosť pred URL/session a prenáša celé pole. Prefix-only/tag-only a existujúce single-tag prípady zostávajú správne.
+- [ ] Regresný test s VM iba s druhým tagom nezmizne vinou skrátenia poľa; nejde o tichú zmenu významu editable table filtrov.
+**Overenie:** `npm.cmd exec -- vitest run src/features/discovery-inventory/resources/helpers/vmwareProviderFilter.test.ts src/features/discovery-inventory/resources/helpers/resolveVmwareInitialFilters.test.ts src/features/discovery-inventory/resources/hooks/useVirtualMachineSearchParams.test.tsx src/features/discovery-inventory/resources/helpers/filterVirtualMachines.test.ts --maxWorkers=2`; focused ESLint.
+**Závislosti:** T31.
+**Súbory (M, 4):** helpers/vmwareProviderFilter.ts a jeho test; helpers/resolveVmwareInitialFilters.test.ts; hooks/useVirtualMachineSearchParams.test.tsx v resource feature. Existujúci filterVirtualMachines test môže zostať read-only overením; ak vyžaduje zmenu, je piaty súbor.
+
+### T33: Zosúladiť načítanie, OR výsledok a metriky
+
+**Popis:** Po potvrdení T31 použiť existujúci single-tag server search pre jednu hodnotu; pre viac hodnôt úplný prefixový response a lokálny provider OR scope. Zaviesť malý feature helper pre OR predicate a odvodené scoped dáta. Scope aplikovať pred metrikami/filter options a až potom editable filtrami a pagination.
+**Akceptačné kritériá:**
+- [ ] Requests neobsahujú CSV/JSON v string tag. VM iba s druhým tagom aj s oboma tagmi je vo výsledku presne raz, VM bez ktoréhokoľvek z nich nie; prefix zostáva súčasťou existujúceho request kontraktu.
+- [ ] Total, metriky a filter options patria celému provider scope, nie iba prvej stránke ani nezúženému response. Query cache zostáva validovaný wire response; role/provider/live refresh/placeholder dáta sa nemiešajú.
+- [ ] Background prefetch neoreže vmTags na prvý tag. Obe prefetch cesty a live refresh používajú rovnakú požiadavku a následný provider scope ako foreground.
+**Overenie:** `npm.cmd exec -- vitest run src/features/discovery-inventory/resources/helpers/applyVmwareProviderTagScope.test.ts src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.test.tsx src/features/discovery-inventory/resources/pages/ResourcesBackgroundPrefetch.integration.test.tsx src/features/discovery-inventory/resources/pages/ResourcesPrefetch.integration.test.tsx src/features/discovery-inventory/resources/hooks/useInitialResourcePrefetch.test.tsx src/features/discovery-inventory/resources/hooks/useVmwareResourceInventory.test.tsx --maxWorkers=2`; focused lint. Overiť cached refresh aj zmenu tagov pri rovnakom prefixe.
+**Závislosti:** T32 a kladný gate T31. Ak je potrebná zmena hook/model/API vrstvy nad rámec piatich súborov, najprv samostatný task, nie zväčšenie tohto kroku.
+**Súbory (M, 5):** nový helpers/applyVmwareProviderTagScope.ts a test; components/vmware/VmwareResourcesPage.tsx a test; pages/ResourcesBackgroundPrefetch.integration.test.tsx. Ostatné uvedené testy sú regresie existujúcich ciest.
+
+### Checkpoint 12: Dátová pravdivosť
+- [ ] Kompletný response je doložený alebo je menovite zapísaná blokujúca API závislosť.
+- [ ] Potvrdené OR, všetky tagy, metriky a prefetch tvoria jeden overený kontrakt.
+- [ ] Žiadny UI krok neprezentuje nepoužité configured tagy ako aplikované načítanie.
+
+### T34: Zachovať kontrakt dotknutých recovery-group konzumentov
+
+**Popis:** Auditovať a podľa spoločného OR kontraktu upraviť ďalšie použitia resolvera v recovery-group vyhľadávaní a provider kartách. Zachovať rovnaký inventár pre rovnaký provider scope; nevytvárať nový builder UI redesign.
+**Akceptačné kritériá:**
+- [ ] VMware hook nepresadí iba prvý tag ani neumožní rozšíriť pevný scope používateľským search. Zdrojové resource names aj metadata pochádzajú z rovnakého OR výsledku.
+- [ ] Provider karty ukazujú správny normalizovaný počet ďalších tagov; Power ostáva bez VMware tag filtrov.
+- [ ] Bez prefixu/tagov aj single-tag prípady zachovajú pôvodné správanie; žiadne generated/API/CRUD zmeny.
+**Overenie:** `npm.cmd exec -- vitest run src/features/recovery-plans/recovery-groups/hooks/useRecoveryGroupResourceInventory.test.tsx src/features/recovery-plans/recovery-groups/helpers/providerScopeDisplay.test.ts src/features/recovery-plans/recovery-groups/helpers/recoveryGroupSearchMode.test.ts --maxWorkers=2`; focused lint.
+**Závislosti:** T33.
+**Súbory (M, 4):** recovery-groups/hooks/useRecoveryGroupResourceInventory.ts a test; helpers/providerScopeDisplay.ts a nový providerScopeDisplay.test.ts. Použiť existujúci tag predicate z T33, nepridávať druhú OR implementáciu.
+
+### T35: Opt-in limit štyroch položiek v shared Tabs
+
+**Popis:** Rozšíriť existujúci Tabs opt-in parametrom maxVisibleItems a rozmerom slotu cez lokálnu CSS premennú. Ostatní konzumenti zostávajú pri súčasnom defaulte.
+**Akceptačné kritériá:**
+- [ ] Na širokom okne štyri celé položky a žiadna piata; pri 1/2/3 položkách sa viewport zúži. Šípky sú mimo slotov a zobrazia sa iba pri overflow.
+- [ ] Limitovaný režim posúva celé viditeľné sloty; disabled okraje, Home/End, ArrowLeft/ArrowRight, wrap-around, touch/wheel a dosunutie active tab fungujú aj po resize.
+- [ ] Default Tabs a embedded navigation scope zostanú funkčné pre Identity/Recovery; bez novej masky alebo kreslenia ďalšieho dividera.
+**Overenie:** `npm.cmd exec -- vitest run src/shared/components/tabs/Tabs.test.tsx src/shared/components/inventory-shell/InventoryViewFrame.test.tsx src/features/platform-administration/identity-access/components/IdentityAccessNavigation.test.tsx src/features/recovery-plans/recovery-policies/components/RecoveryPolicyPageShell.test.tsx --maxWorkers=2`; reálne rozmerové assertions v T41, nie unit kópia class stringu.
+**Závislosti:** T30; nezávislé od T31 dátového gate.
+**Súbory (S, 2):** shared/components/tabs/Tabs.tsx a Tabs.test.tsx.
+
+### T36: Vlastný +N trigger existujúceho HelpPopover
+
+**Popis:** Doplniť iba voliteľný triggerContent do overeného shared popoveru. Default help ikona a súčasná prístupnosť ostávajú zachované; +N využije rovnaký portal a umiestnenie.
+**Akceptačné kritériá:**
+- [ ] Vlastný textový trigger má meno, aria-expanded a aria-controls a funguje klikom, klávesnicou a na touch.
+- [ ] Plný zoznam nie je tooltip dostupný len hoverom; Escape/outside click/focus return fungujú a umiestnenie rešpektuje obe hranice clientWidth a dostupnú výšku.
+- [ ] Existujúci help trigger a default ikonka sa nemenia. Žiadna nová popover knižnica ani druhý kopírovaný positioning systém.
+**Overenie:** `npm.cmd exec -- vitest run src/shared/components/help-popover/HelpPopover.test.tsx src/shared/components/help-popover/KeyedHelpPopover.test.tsx --maxWorkers=2`; focused lint; portal/klávesnica aj v T41.
+**Závislosti:** T30; nezávislé od T35.
+**Súbory (S, 2):** shared/components/help-popover/HelpPopover.tsx a test.
+
+### Checkpoint 13: Kompatibilné shared rozhrania
+- [ ] Dotknutí dátoví konzumenti nepoužívajú rozporuplný scope.
+- [ ] Opt-in Tabs a vlastný popover trigger prešli default regresiami.
+- [ ] npm.cmd run typecheck PASS; fokus a scoped navigation sú zachované.
+
+### T37: Podmienky bez placeholderov a viac tagov
+
+**Popis:** Upraviť existujúci VmwareProviderFilterSummary na celý normalizovaný scope; použije +N popover z T36.
+**Akceptačné kritériá:**
+- [ ] None → null bez labelov/zámku/rezervy; prefix-only a tag-only zobrazia iba nastavenú položku. Žiadne Any ani pomlčky.
+- [ ] Pri piatich tagoch desktop ukáže dva a +3, úzky režim jeden a +4; panel obsahuje všetkých päť plných názvov. Počet sa počíta po normalizácii, nevznikajú duplicitné focusable triggery.
+- [ ] Zmena providera zatvorí starý panel; resize nestratí logický focus. Dlhé hodnoty sú dostupné klávesnicou aj čítačke; nejde o editable chips.
+**Overenie:** `npm.cmd exec -- vitest run src/features/discovery-inventory/resources/components/vmware/VmwareProviderFilterSummary.test.tsx --maxWorkers=2`; fixtures none/prefix/tag/both/duplicates/long/5 tags; focused lint.
+**Závislosti:** T32, T33, T36.
+**Súbory (S, 2):** components/vmware/VmwareProviderFilterSummary.tsx a test.
+
+### T38: Jedna resource navigačná kompozícia
+
+**Popis:** V resource feature vytvoriť ResourceViewNavigation skladajúci shared Tabs vľavo a summary napravo. Je to prezentačná hranica spoločná source/target, bez fetch a vlastnej query logiky.
+**Akceptačné kritériá:**
+- [ ] Široký desktop zachová štyri sloty vľavo a pravý summary v tom istom páse. Pri chýbajúcom scope sa pravé miesto neuplatní. Nevznikne ďalší riadok/divider/rám.
+- [ ] Menšie šírky zachovajú posúvanie a čitateľné hodnoty/popover; bez horizontálneho scrollu dokumentu, kruhového resize prepočtu alebo skrývania navigácie.
+- [ ] Summary patrí vybranému VMware providerovi, nie poslednému response. Flash/Power, provider-list error a no-provider nekreslia falošné VMware podmienky.
+**Overenie:** `npm.cmd exec -- vitest run src/features/discovery-inventory/resources/components/ResourceViewNavigation.test.tsx src/features/discovery-inventory/resources/components/ResourceInventoryShell.test.tsx --maxWorkers=2`; browser geometry v T41.
+**Závislosti:** T35, T37.
+**Súbory (S, 2):** nový components/ResourceViewNavigation.tsx a test.
+
+### T39: Zapojiť source aj target routes
+
+**Popis:** Nahradiť duplicitné Tabs markup v ResourcesPage/ResourcesIsePage spoločným ResourceViewNavigation. Oba ďalej používajú InventoryViewFrame cez existujúci shell tabs slot.
+**Akceptačné kritériá:**
+- [ ] Oba routes majú rovnakú navigáciu; zachované poradie a provider badge, active fallback a všetky resource typy.
+- [ ] Deep link/browser back/session/query role isolation ostávajú; provider switching počas loading/error/cached refresh ukazuje podmienky zvoleného providera.
+- [ ] Šípky nespúšťajú výber providera alebo inventory request; skutočný výber nemení density či provider konfiguráciu. Bez duplicitnej summary nad tabuľkou.
+**Overenie:** `npm.cmd exec -- vitest run src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx src/features/discovery-inventory/resources-ise/pages/ResourcesIsePage.test.tsx src/features/discovery-inventory/resources/hooks/useResourceTabSearchParam.test.tsx src/features/discovery-inventory/resources/pages/ResourcesBackgroundPrefetch.integration.test.tsx --maxWorkers=2`; focused lint.
+**Závislosti:** T34, T38.
+**Súbory (M, 4):** pages/ResourcesPage.tsx a test; resources-ise/pages/ResourcesIsePage.tsx a test.
+
+### Checkpoint 14: Jeden pripojený resource view
+- [ ] Obe roly sú zapojené cez jeden komponent; shared frame zostal jediný.
+- [ ] Prefix/tag/none/multi zodpovedajú vybranému providerovi aj v request stavoch.
+- [ ] Focused regresie a npm.cmd run typecheck PASS; ostatné inventory stránky sa vizuálne nezmenili.
+
+### T40: Preklady a odstránenie neúčinného renderu
+
+**Popis:** Doplniť SK/CS/EN texty pre prefix, tags, +N, názov celého zoznamu a prístupné názvy. Odstrániť pôvodné odovzdávanie summary cez ignorované inventoryDescription vo VmwareResourcesPage.
+**Akceptačné kritériá:**
+- [ ] Všetky tri locale majú rovnaké nové kľúče a správne interpolované počty; hodnoty tagov sa neprekladajú.
+- [ ] Summary sa renderuje iba raz v navigácii. Odstránené vlastné nepoužité importy; bez plošného odstraňovania legacy shell props u iných feature stránok.
+- [ ] Žiadne Any, duplicitný provider filter count, extra scope tlačidlo ani nový standalone frame; existujúce zamykanie filter controls sa bez ďalšej požiadavky nemení.
+**Overenie:** `npm.cmd exec -- vitest run src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.test.tsx src/features/discovery-inventory/resources/components/vmware/VmwareProviderFilterSummary.test.tsx --maxWorkers=2`; parser a key/content assertions pre tri JSON locale; focused lint.
+**Závislosti:** T39.
+**Súbory (M, 5):** locales/sk.json, cs.json, en.json; components/vmware/VmwareResourcesPage.tsx a test.
+
+### T41: Browser matica a finálny audit
+
+**Popis:** Rozšíriť existujúcu resource CDP kontrolu o štyri sloty a podmienky. Zachovať obidve shared/regresné sady bez kopírovania celého QA transportu alebo použitia živých mutácií.
+**Akceptačné kritériá:**
+- [ ] Dokončené prípady pre 0/1/2/4/5/10 providerov, none/prefix/tag/both, 1/2/5/long tags, všetky typy a source/target; request payload/VM iba s druhým tagom/metriky overujú OR. Mocks nefalšujú podporu poľa tag v API.
+- [ ] Obe témy, 320/768/1024/1440, 1280×600 a emulácia 125 %; presné štyri desktop sloty, užší pás než karta, pravý summary bez ďalšieho desktop riadka, null bez rezervy, obe hranice popovera, klávesnica, touch/wheel a zachovaný dátový scroll.
+- [ ] Report uvádza úspešne dokončené behy, PNG a limity; bez runtime výnimiek, neočakávaných endpointov alebo živých zápisov. Zdrojový audit potvrdí opt-in shared zmenu, tenké resource wrappery a jediný frame.
+**Overenie:** `node scripts/qa/inventory-view-table-browser.mjs`; `node scripts/qa/shared-inventory-view-browser.mjs --geometry-only` a `--interactions-only` ako oddelené dokončené scope; `node --check` oboch skriptov; focused ESLint; `npm.cmd run typecheck`; `git diff --check`. Vitest opakovať len pri nových zmenách/zisteniach, nie plnú suite/build.
+**Závislosti:** T40.
+**Súbory (M, 4):** oba existujúce scripts/qa inventory skripty; tento todo a plan. Dôkazy PNG mimo produkčného zdroja.
+
+### Checkpoint 15: Pripravené na odovzdanie
+- [ ] T31–T41 overené a commitnuté; OR výsledok, metriky, cache a zobrazenie sú konzistentné.
+- [ ] Staré historické checkboxy ani používateľské akceptácie sa automaticky neuzatvorili; nesúvisiaci routeContract snapshot nie je commitnutý.
+- [ ] Report obsahuje presné focused príkazy, browser výsledky a stav plnej suite/build.
+- [ ] Používateľ schválil tento implementačný plán.
+- [ ] Používateľ vizuálne akceptoval produkčný výsledok. Agent tieto dve ľudské položky nezaškrtáva.

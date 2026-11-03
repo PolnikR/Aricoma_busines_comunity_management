@@ -1,6 +1,6 @@
 # Implementačný plán: Redizajn tabuliek v2 (variant B)
 
-Dátum pôvodného plánu: 2026-11-02. Aktualizácia: 2026-11-03. Stav: fáza T13–T19 je implementovaná pre Resources. Nadväzujúca fáza T20–T30 plánuje spoločné shared rámovanie pre všetkých konzumentov inventory view vrátane Identity & access; táto fáza zatiaľ nebola implementovaná. Výsledky skorších úloh a nové úlohy sú v todo súbore.
+Dátum pôvodného plánu: 2026-11-02. Aktualizácia: 2026-11-03. Stav: T13–T30 sú implementované v automaticky overenom rozsahu; historické ľudské akceptácie zostávajú otvorené. Nová fáza T31–T41 plánuje provider lištu a podmienky podľa HTML prototypu. Implementácia fázy 6 nezačala. Výsledky a úlohy sú v todo dokumente.
 Úlohy a checkpointy: [table-redesign-v2-todo.md](table-redesign-v2-todo.md).
 Vizuálny vzor: prototyp https://claude.ai/artifact/SSm6HEN89RW3LJJ2PqdtmU (Platform providers).
 
@@ -279,3 +279,79 @@ V T20/T21 sa pripravia kontrakty bez zmeny existujúceho defaultu mimo nového f
 ### Podmienky odovzdania
 
 T20–T30 boli vykonané po pokyne používateľa `executing-plans inline` z 2026-11-03. Stav krokov, focused overenie, browser dôkazy a commity sú v [todo a výsledkovom reporte fázy 5](table-redesign-v2-todo.md). Zdrojová inventúra potvrdila jednu shared implementáciu view frame a viewportu; Resources a Identity nemajú vlastnú kópiu. Každá položka matice musí byť overená alebo výslovne uvedená ako blokovaná s dôvodom. Ľudskú vizuálnu akceptáciu v CP11 agent neuzatvára.
+
+## Fáza 6: Štyria provideri a podmienky načítania v jednej lište (T31–T41)
+
+Dátum: 2026-11-03. **Stav: plán pripravený, implementácia nezačatá.** Ide o pokračovanie tohto plánu podľa pokynu používateľa; nesúvisiace tasks/plan.md a tasks/todo.md sa nemenia. Otvorené historické úlohy a ľudské akceptácie zostávajú zachované.
+
+### Východisko a požadovaný výsledok
+
+Vizuálny zdroj: prototypes/vmware-load-scope/index.html a README.md, posledná revízia prototypu 7c73d521. Vývoj rozhodnutí je v commitoch de17dcba (spike scroll), c270fbeb (štyri položky), 93bb0abe (podmienky napravo), 7c73d521 (vynechanie prázdnych hodnôt a viac tagov). Prototyp je referenciou vzhľadu, nie zdrojom produkčných fixtures alebo novej backend logiky.
+
+- Vľavo najviac štyri provider záložky na širokom okne; navigácia sa neroztiahne na celú tabuľku. Pri menej provideroch sa zúži. Na menšom okne sa zmestí menej položiek.
+- Zachovať spike ovládanie: overflow šípky, disabled okraje, horizontálny wheel/touch, Home/End, ArrowLeft/ArrowRight, wrap-around, roving focus a dosunutie aktívnej položky. V limitovanom režime šípka posúva celé viditeľné položky, nie pôvodných 80 %.
+- Napravo v tom istom páse Name prefix a Tags vybraného VMware providera. Chýbajúci prefix alebo tag nemá label ani placeholder. Ak chýbajú obe hodnoty, blok vrátane zámku úplne zmizne.
+- Pri viacerých tagoch dva na širokom okne, jeden na úzkom a +N pre zvyšok. Rozbalenie ukáže všetky plné názvy. Bez odstraňovacích krížikov, nového toolbar tlačidla alebo ďalšieho desktop riadka.
+- Jeden shared obvod, divider a tieň z fázy 5. Lišta sa nezabuduje do dátovej tabuľky; toolbar, dátový viewport a pagination zostávajú samostatné.
+
+### Overené zdroje a dôležitý rozdiel oproti prototypu
+
+Pri plánovaní bol najprv použitý CodeGraph. Jeho výsledok pre shared Tabs nezodpovedal aktuálnemu worktree (chýbal appearance/context), preto sa hranice a súbory overili aj aktuálnym zdrojom vo worktree test.
+
+- Shared InventoryViewFrame poskytuje už hotový tabs slot s jedinou deliacou čiarou. ResourceInventoryShell je tenký adaptér InventoryShell.
+- ResourcesPage a ResourcesIsePage dnes duplikujú zostavenie Tabs. Shared Tabs už má scrollControls a klávesnicu; nemá limit štyroch položiek.
+- VmwareProviderFilterSummary existuje, ale VmwareResourcesPage ho odovzdáva cez inventoryDescription, ktoré súčasný InventoryShell vizuálne nepoužíva. Treba ho presunúť do skutočnej navigačnej kompozície.
+- ProviderRecord.vmTags je pole. resolveVmwareProviderFilter však vyberá iba prvý neprázdny tag; rovnaké obmedzenie má background prefetch vo VmwareResourcesPage.
+- VmSearchFilter v generated Zod má iba jeden string tag, nie pole. getServerSideTagFilter už vracia tag iba pre jednu hodnotu. applyFiltersAndPagination pri poli používa OR cez some().
+- Query cache drží validovanú wire odpoveď. Pri lokálnom filtrovaní viacerých tagov musia metriky a filter options vychádzať z pevného provider scope, nie z neobmedzeného inventára alebo iba zo zobrazenej stránky.
+- Resolver používajú aj recovery-group hook a provider karty. Zmena jeho kontraktu nesmie tento dopad prehliadnuť.
+- Shared HelpPopover už rieši portal, clamp cez clientWidth, scroll/resize, Escape, outside click a focus. Pre +N stačí kompatibilný vlastný obsah triggera; nevytvárať druhý všeobecný popover systém.
+
+### Rozhodnutia o implementácii
+
+1. V shared Tabs zaviesť opt-in limit počtu položiek, napr. maxVisibleItems. Default ostatných konzumentov sa nezmení. V limitovanom režime použiť jednotnú šírku položky a súčet štyroch slotov + medzier; šípky sú mimo viewportu. Dlhé názvy majú dostupný plný aria-label/title, nie masku vonkajšieho rámika.
+2. ResourceViewNavigation v resource feature skladá ľavé Tabs a pravý VmwareProviderFilterSummary. Oba resource routes používajú tú istú kompozíciu. Shared shell ani DataTableSurface nemajú poznať providera, tagy alebo rolu.
+3. Podmienky získavať z rovnakého normalizovaného kontraktu ako inventory query: trim, odstránenie prázdnych hodnôt, stabilné poradie a deduplikácia tagov. Nezobrazovať surové vmTags ako aplikované podmienky, ak sa do výsledku preniesol iba prvý tag.
+4. Zachovať case-sensitive hodnoty tagov; nenormalizovať veľkosť písmen. Prefix je doslovná hodnota name_prefix, nie nový regex alebo skutočná hviezdička pridávaná do requestu.
+5. Existujúci singular tag alias možno dočasne zachovať pre kompatibilitu, ale nové UI a efektívne filtrovanie používajú celé pole. Každý zostávajúci singular konzument musí byť menovite auditovaný.
+6. Predpokladaná cesta pre viac tagov: načítať kompletný inventár podľa providera/prefixu bez singular tag a aplikovať zvolenú tag logiku lokálne. To je dovolené až po T31 potvrdení úplnosti odpovede a výkonových limitov. Jeden tag si zachová server-side optimalizáciu. Neposielať CSV do string tag a neupravovať generated súbory ručne.
+7. Ak T31 nepotvrdí úplný inventár alebo backend sám aplikuje iné provider pravidlá, najprv doplniť samostatný API/backend plán a závislosť. Nie je prípustné potichu načítať čiastočné dáta alebo tvrdiť, že všetky tagy fungujú.
+8. Sidebar +N ukazuje celý zoznam cez existujúci HelpPopover s voliteľným triggerContent. Predvolený help trigger aj ostatné použitia ostanú funkčné. Pri zmene providera sa starý zoznam zatvorí. Pri resize/scroll sa panel drží v použiteľnom viewporte, nezakrýva ho frame clipping.
+9. Pre FlashSystem a IBM Power zostane navigácia funkčná, ale nevykreslia sa im falošné VMware tag podmienky. Source a target majú izolovaný URL/session/query scope.
+10. HTML lokálne vyhľadávanie je iba prototypová interakcia. Táto fáza automaticky neodomyká produkčné search/filter controls, nemení CRUD, hustotu, hlavičky ani predchádzajúce revertované T5–T7.
+
+### Potvrdené OR a zostávajúci dátový gate
+
+**Používateľ potvrdil OR (2026-11-03):** VM musí mať aspoň jeden zo zvolených tagov. Prefix sa kombinuje s touto tag podmienkou. Toto rozhodnutie je schválené; implementačný plán ešte nie. UI nesmie tvrdiť účinnosť celej množiny, pokiaľ query cesta nezodpovedá potvrdenému kontraktu.
+
+T31 ďalej overí, či POST /vms/search bez tag vracia kompletný inventár pre prefix, či backend uplatňuje provider konfiguráciu sám, a aký objem dát je prípustný. Schéma jedného tagu sama tieto odpovede nedokazuje.
+
+### Poradie a checkpointy
+
+T31 kontrakt → T32 normalizácia → T33 efektívny inventory scope → CP12.
+T34 dotknutí konzumenti; T35 opt-in Tabs; T36 vlastný popover trigger → CP13.
+T37 summary → T38 resource kompozícia → T39 oba routes → CP14.
+T40 preklady/odstránenie starej summary cesty → T41 browser regresia → CP15.
+
+T35/T36 sa dajú pripravovať nezávisle od dátového rozhodnutia; aktivácia multi-tag UI závisí od T31–T34. Úpravy rovnakých shared súborov musia byť postupné. Nie je potrebné delegovanie agentom. Detailné task listy, závislosti a presné focused príkazy sú vo fáze 6 todo dokumentu.
+
+### Overenie a limity rozsahu
+
+- Každý krok: focused testy pre priamo dotknuté kontrakty, focused ESLint zmenených TS/TSX, git diff --check, atomický commit len vlastných súborov. Nepridávať class-string mirror testy.
+- Typecheck po shared kontraktoch a po finálnej integrácii. Plná suite, full lint ani build nie sú automatický krok; balík build spúšťa aj celú suite, preto ho nenahrádzať za focused overenie.
+- Browser: source/target, VMware/Flash/Power, 0/1/2/4/5/10 providerov, none/prefix/tag/both, 1/2/5/dlhé tagy, success/loading/empty/fatal/cached error/retry, zmena providera pri otvorenom popoveri, šípky/klávesnica/wheel/touch a dlhá tabuľka. Obe témy; 320/768/1024/1440 a krátke 1280×600, emulácia 125 %.
+- Screenshoty cez captureBeyondViewport:false, aby Chrome neresetoval interný scroll. Iba izolované lokálne fixtures; bez zápisov do backendu.
+- Súčasťou browser kontroly je, že pri žiadnych podmienkach nevznikne ani prázdny rezervovaný blok, +N neprekročí viewport, nevznikne desktop riadok navyše a na širokom okne zostávajú štyri celé providery.
+- Human acceptance z predchádzajúcich fáz zostáva otvorená. OR bolo potvrdené používateľom. Schválenie celého plánu a produkčného výsledku sa nezaznamená za používateľa.
+
+| Riziko | Dopad | Opatrenie |
+|---|---|---|
+| Zobrazených päť tagov, request použije iba prvý | Vysoký | Dátový gate T31; query/result/UI assertions z rovnakého kontraktu |
+| Server bez tag nevracia celý inventár | Vysoký | Overiť kontrakt/fixture; pri obmedzení samostatný API plán pred aktiváciou |
+| Nesprávne metriky po lokálnom filtrovaní | Vysoký | Scope pred metrics/options/pagination; test VM iba s druhým tagom |
+| Foreground a prefetch majú odlišný scope/cache | Vysoký | Overiť oba prefetch vstupy a live refresh, nemiešať role/providera |
+| Zmena shared Tabs ovplyvní Identity/Recovery | Stredný | Opt-in prop, default regresie, bez globálnej CSS zmeny |
+| Popover odíde vľavo mimo mobil | Stredný | Obe horizontálne hranice podľa clientWidth, resize/scroll/focus browser QA |
+| Pravé tagy vytlačia navigáciu alebo ďalší riadok | Stredný | Limit pravej šírky, +N, responsive sloty, bez masky obvodu |
+
+Implementácia tejto fázy nezačala. Plán obsahuje gate, ktorý sa musí uzavrieť pred aktiváciou viacerých aplikovaných tagov.
