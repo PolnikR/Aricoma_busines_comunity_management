@@ -24,16 +24,16 @@ function UsageSource({ source, query }: UsageSourceProps) {
   const SourceIcon = source === 'groups' ? LayersIcon : GridIcon
   const columns: ColumnDef<ReferenceConsumer>[] = [
     { id: 'id', header: t('policyReferences.columns.id'), cell: consumer => (
-      <span className="font-mono text-xs text-text-primary wrap-anywhere">{consumer.id}</span>
-    ), cellClassName: 'w-2/5' },
+      <span className="font-mono text-xs text-text-secondary wrap-anywhere">{consumer.id}</span>
+    ), cellClassName: 'w-1/3' },
     { id: 'name', header: t('policyReferences.columns.name'), cell: consumer => (
-      <span className="font-semibold text-text-primary wrap-anywhere">{consumer.name}</span>
-    ), cellClassName: 'w-2/5' },
-    { id: 'open-detail', header: t('policyReferences.columns.openDetail'), cell: consumer => (
-      <Link className="inline-flex min-h-9 items-center gap-2 whitespace-nowrap rounded-lg border border-border bg-surface px-3 text-sm font-medium text-text-secondary hover:bg-accent-soft hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+      <span className="font-medium text-text-primary wrap-anywhere">{consumer.name}</span>
+    ), cellClassName: 'w-1/2' },
+    { id: 'open-detail', header: t('policyReferences.columns.openDetail'), align: 'right', cell: consumer => (
+      <Link className="inline-flex min-h-8 items-center gap-1.5 whitespace-nowrap rounded px-1 text-xs font-medium text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
         to={{ pathname: path, search: new URLSearchParams({ detail: consumer.id }).toString() }}
         aria-label={t('policyReferences.openDetail', { name: consumer.name })}>
-        {t('policyReferences.columns.openDetail')}<ExternalLinkIcon className="h-4 w-4 shrink-0 text-accent" />
+        {t('policyReferences.columns.openDetail')}<ExternalLinkIcon className="h-3.5 w-3.5 shrink-0" />
       </Link>
     ) },
   ]
@@ -48,36 +48,39 @@ function UsageSource({ source, query }: UsageSourceProps) {
     </div>
   ) : null
   const toolbar = (
-    <header className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 border-b border-border px-4 py-2">
+    <header className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 border-b border-border px-4 py-3">
       <SourceIcon className="h-4 w-4 shrink-0 text-text-muted" />
-      <h4 className="min-w-0 flex-1 text-sm font-semibold text-text-primary wrap-anywhere">{label}</h4>
-      {query.data !== undefined ? <span className="rounded-full bg-surface-muted px-2 py-0.5 text-xs font-semibold text-text-primary">{query.data.length}</span> : null}
+      <h4 className="min-w-0 text-sm font-semibold text-text-primary wrap-anywhere">{label}</h4>
+      {query.data !== undefined ? <span className="text-xs tabular-nums text-text-secondary">({query.data.length})</span> : null}
       {query.isPaused ? <p role="status" className="w-full text-xs text-text-muted">{t('policyReferences.usedIn.paused')}</p>
         : query.isFetching && query.data !== undefined ? <p role="status" className="w-full text-xs text-text-muted">{t('policyReferences.usedIn.refreshing')}</p> : null}
     </header>
   )
   return (
-    <DataTableSurface ariaLabel={label} toolbar={toolbar}>
-      <div className={`h-full min-h-0 overflow-hidden ${query.isError && query.data !== undefined ? 'grid grid-rows-[minmax(0,1fr)_minmax(5.25rem,1fr)]' : 'flex flex-col'}`}>
-        {query.isError && query.data !== undefined ? (
-          <div tabIndex={0} className="custom-scrollbar min-h-0 touch-auto overflow-auto overscroll-contain focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus">
-            {errorContent}
+    <div className="flex min-h-0 flex-col [&>section]:rounded-lg [&>section]:shadow-none">
+      <DataTableSurface ariaLabel={label} toolbar={toolbar}>
+        <div className={`h-full min-h-0 overflow-hidden ${query.isError && query.data !== undefined ? 'grid grid-rows-[minmax(0,1fr)_minmax(5.25rem,1fr)]' : 'flex flex-col'}`}>
+          {query.isError && query.data !== undefined ? (
+            <div tabIndex={0} className="custom-scrollbar min-h-0 touch-auto overflow-auto overscroll-contain focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus">
+              {errorContent}
+            </div>
+          ) : null}
+          <div className="min-h-0 flex-1">
+            <DataTable columns={columns} rows={query.data ?? []} rowKey={consumer => consumer.id}
+              density="compact" layout="scroll" minWidthClassName="w-144 min-w-full" fillHeight
+              headerCellClassName="whitespace-nowrap px-4 py-2 text-left text-[11px] font-medium text-text-secondary"
+              cellClassName="px-4 py-2 text-sm text-text-secondary align-middle"
+              ariaLabel={query.isLoading ? t('policyReferences.usedIn.loading') : label}
+              isLoading={query.isLoading} loadingRowCount={3}
+              emptyContent={query.isError && query.data === undefined ? errorContent
+                : query.isSuccess && !query.isFetching && !query.isPaused ? (
+                  <p className="text-sm text-text-muted">{t('policyReferences.usedIn.sourceEmpty', { source: label })}</p>
+                ) : <span />}
+            />
           </div>
-        ) : null}
-        <div className="min-h-0 flex-1">
-          <DataTable columns={columns} rows={query.data ?? []} rowKey={consumer => consumer.id}
-            density="compact" layout="scroll" minWidthClassName="w-144 min-w-full" fillHeight
-            headerCellClassName="whitespace-nowrap px-2 @min-[80rem]/data-table:px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-text-secondary"
-            ariaLabel={query.isLoading ? t('policyReferences.usedIn.loading') : label}
-            isLoading={query.isLoading} loadingRowCount={3}
-            emptyContent={query.isError && query.data === undefined ? errorContent
-              : query.isSuccess && !query.isFetching && !query.isPaused ? (
-                <p className="text-sm text-text-muted">{t('policyReferences.usedIn.sourceEmpty', { source: label })}</p>
-              ) : <span />}
-          />
         </div>
-      </div>
-    </DataTableSurface>
+      </DataTableSurface>
+    </div>
   )
 }
 
@@ -94,7 +97,7 @@ export function PolicySetUsage({ policySetId }: { policySetId: string }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
       {isUnused ? <p role="status" className="shrink-0 text-sm text-text-muted">{t('policyReferences.usedIn.empty')}</p> : null}
-      <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_minmax(0,1fr)] gap-2">
+      <div className="grid min-h-0 flex-1 auto-rows-[minmax(0,max-content)] content-start gap-5">
         <UsageSource source="groups" query={groups} />
         <UsageSource source="applications" query={applications} />
       </div>
