@@ -13,6 +13,7 @@ import {
   getServerSideTagFilter,
 } from '../../helpers/filterVirtualMachines'
 import { mapInventoryToVirtualMachines } from '../../helpers/mapInventoryToVirtualMachines'
+import { applyVmwareProviderTagScope } from '../../helpers/applyVmwareProviderTagScope'
 import { useVirtualMachineSearchParams } from '../../hooks/useVirtualMachineSearchParams'
 import type { VirtualMachineFilterOptions, VirtualMachineFilters, VirtualMachinePageSize } from '../../types/virtualMachineTypes'
 import { getProvidersByTypeAndRole } from '@/features/providers-connectors/providers/utils/providerFilters'
@@ -106,15 +107,16 @@ export function VmwareResourcesPage(props: VmwareResourcesPageProps) {
   const handleForceRefresh = () => { void forceRefresh().catch(() => undefined) }
 
   const allData = useMemo(
-    () => inventory ? mapInventoryToVirtualMachines(inventory) : null,
-    [inventory],
+    () => inventory ? mapInventoryToVirtualMachines(applyVmwareProviderTagScope(inventory, resolvedProviderFilter.filters.tags)) : null,
+    [inventory, resolvedProviderFilter.filters.tags],
   )
   const data = allData ? applyFiltersAndPagination(allData, query) : null
+  const isProviderScopeEmpty = isEmpty || (isSuccess && !isPlaceholderData && !isFetching && !isDebouncing && allData?.virtualMachines.length === 0)
 
   const backgroundProviderId = backgroundPrefetchProvider?.id
   const backgroundDeleted = useProviderInventoryDeleted(backgroundProviderId)
   const backgroundPrefix = backgroundPrefetchProvider?.vmPrefix ?? null
-  const backgroundTag = backgroundPrefetchProvider?.vmTags?.map(tag => tag.trim()).find(Boolean) ?? ''
+  const backgroundTags = backgroundPrefetchProvider?.vmTags
   const canPrefetch = role === 'source' && inventoryEnabled && !providersPending && !providersError
     && isSuccess && Boolean(inventory) && !isPlaceholderData && !isDebouncing && !isFetching && !isForceRefreshing
     && backgroundPrefetchProvider?.type === 'VMWARE' && backgroundPrefetchProvider.role !== 'target'
@@ -127,7 +129,7 @@ export function VmwareResourcesPage(props: VmwareResourcesPageProps) {
       if (disposed) return
       // Switching provider tabs clears URL filters; restore the destination's own scope.
       const filters = resolveVmwareInitialFilters({
-        id: backgroundProviderId, role: 'source', vmPrefix: backgroundPrefix, vmTags: backgroundTag ? [backgroundTag] : [],
+        id: backgroundProviderId, role: 'source', vmPrefix: backgroundPrefix, vmTags: backgroundTags ?? [],
       }, new URLSearchParams(), readProviderFilterSnapshot({ role: 'source', resourceTab: 'vmware', providerId: backgroundProviderId }))
       const tag = getServerSideTagFilter(filters.tags)
       const options = vmwareInventoryQuery({ providerId: backgroundProviderId, namePrefix: filters.search, ...(tag ? { tag } : {}) })
@@ -142,7 +144,7 @@ export function VmwareResourcesPage(props: VmwareResourcesPageProps) {
       if (idle) window.cancelIdleCallback(id)
       else window.clearTimeout(id)
     }
-  }, [queryClient, canPrefetch, backgroundProviderId, backgroundPrefix, backgroundTag, backgroundDeleted])
+  }, [queryClient, canPrefetch, backgroundProviderId, backgroundPrefix, backgroundTags, backgroundDeleted])
 
   useEffect(() => {
     if (!isFetching && data && data.page !== query.page) updateQuery({ page: data.page })
@@ -245,7 +247,7 @@ export function VmwareResourcesPage(props: VmwareResourcesPageProps) {
               setDrawerOpen(true)
             }}
           />
-        ) : isEmpty ? (
+        ) : isProviderScopeEmpty ? (
           <div className="p-4">
             <EmptyState
               title={t('pages.virtualMachines.empty.title')}

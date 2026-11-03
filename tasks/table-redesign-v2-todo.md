@@ -695,6 +695,8 @@ Plán: fáza 6 v table-redesign-v2-plan.md. **Stav: prebieha inline podľa pokyn
 **Závislosti:** T32 a kladný gate T31. Ak je potrebná zmena hook/model/API vrstvy nad rámec piatich súborov, najprv samostatný task, nie zväčšenie tohto kroku.
 **Súbory (M, 5):** nový helpers/applyVmwareProviderTagScope.ts a test; components/vmware/VmwareResourcesPage.tsx a test; pages/ResourcesBackgroundPrefetch.integration.test.tsx. Ostatné uvedené testy sú regresie existujúcich ciest.
 
+**Priebeh (2026-11-03):** Provider OR sa aplikuje na DiscoveryInventory pred metrikami/options/pagination. Background prefetch pouziva vsetky tagy. RED provider-scope a prefetch regresie; parent fresh focused6suborov/125testov PASS; focused ESLint PASS; nezavislyreviewclean. Raw cache zachovana; settled empty scope ma EmptyState.
+
 ### Checkpoint 12: Dátová pravdivosť
 - [ ] Kompletný response je doložený alebo je menovite zapísaná blokujúca API závislosť.
 - [ ] Potvrdené OR, všetky tagy, metriky a prefetch tvoria jeden overený kontrakt.
@@ -800,7 +802,7 @@ Plán: fáza 6 v table-redesign-v2-plan.md. **Stav: prebieha inline podľa pokyn
 - [ ] Summary sa renderuje iba raz v navigácii. Odstránené vlastné nepoužité importy; bez plošného odstraňovania legacy shell props u iných feature stránok.
 - [ ] Žiadne Any, duplicitný provider filter count, extra scope tlačidlo ani nový standalone frame; existujúce zamykanie filter controls sa bez ďalšej požiadavky nemení.
 **Overenie:** `npm.cmd exec -- vitest run src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.test.tsx src/features/discovery-inventory/resources/components/vmware/VmwareProviderFilterSummary.test.tsx --maxWorkers=2`; parser a key/content assertions pre tri JSON locale; focused lint.
-**Závislosti:** T39.
+**Závislosti:** T40a (preklady) pred T37/T38; T40b (starý render) po T39. Celá T40 sa uzavrie po oboch krokoch.
 **Súbory (M, 5):** locales/sk.json, cs.json, en.json; components/vmware/VmwareResourcesPage.tsx a test.
 
 ### T41: Browser matica a finálny audit

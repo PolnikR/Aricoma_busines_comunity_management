@@ -44,6 +44,18 @@ function json(body: unknown, status = 200) {
 
 function inventory(name: string) { return { count: 1, vms: [{ name, tags: ['prod', 'first-tag'] }] } }
 
+function taggedInventory(prefix: string) {
+  return {
+    count: 4,
+    vms: [
+      { moId: 'first', name: `${prefix}-FIRST`, tags: ['prod'], memory_gb: 4 },
+      { moId: 'second', name: `${prefix}-SECOND`, tags: ['dr'], memory_gb: 4 },
+      { moId: 'both', name: `${prefix}-BOTH`, tags: ['prod', 'dr'], memory_gb: 4 },
+      { moId: 'outside', name: `${prefix}-OUTSIDE`, tags: ['backup'], memory_gb: 1000 },
+    ],
+  }
+}
+
 function wrapper({ children }: PropsWithChildren) {
   return <StrictMode><QueryClientProvider client={client}><MemoryRouter initialEntries={[initialEntry]}>{children}</MemoryRouter></QueryClientProvider></StrictMode>
 }
@@ -93,6 +105,70 @@ beforeEach(() => {
 afterEach(() => { cleanup(); client.clear(); vi.unstubAllGlobals(); vi.restoreAllMocks() })
 
 describe('Resources background VMware prefetch', () => {
+  it.each(['dashboard', 'background'])('applies the full provider OR scope to %s prefetch and live refresh without narrowing wire cache', async mode => {
+    const id = mode === 'dashboard' ? 'vm-2' : 'vm-10'
+    availableProviders = providers.map(provider => provider.id === id
+      ? { ...provider, vmPrefix: 'SCOPE', vmTags: [' prod ', 'dr'] } : provider)
+    if (mode === 'dashboard') firstResponse = () => Promise.resolve(json(taggedInventory('SCOPE')))
+    else secondResponse = () => Promise.resolve(json(taggedInventory('SCOPE')))
+    await prepareDashboard()
+    render(<ResourcesPage />, { wrapper })
+    if (mode === 'background') {
+      await screen.findByText('FIRST')
+      await idle()
+      await waitFor(() => { expect(client.isFetching()).toBe(0) })
+      expect(inventoryCalls(id)).toHaveLength(1)
+      expect(inventoryCalls(id)[0]?.[1]?.body).toBe('{"name_prefix":"SCOPE"}')
+      fireEvent.click(screen.getByRole('tab', { name: 'VMware VMs · VMware 10' }))
+    }
+
+    expect(await screen.findByText('SCOPE-SECOND')).toBeVisible()
+    expect(screen.getByText('SCOPE-FIRST')).toBeVisible()
+    expect(screen.getAllByText('SCOPE-BOTH')).toHaveLength(1)
+    expect(screen.queryByText('SCOPE-OUTSIDE')).not.toBeInTheDocument()
+    expect(screen.getByText('12 GB')).toBeVisible()
+    expect(inventoryCalls(id)).toHaveLength(1)
+    expect(inventoryCalls(id)[0]?.[1]?.body).toBe('{"name_prefix":"SCOPE"}')
+    const queryKey = vmwareInventoryQuery({ providerId: id, namePrefix: 'SCOPE' }).queryKey
+    expect(client.getQueryData(queryKey)).toMatchObject({ count: 4, vms: [
+      { name: 'SCOPE-FIRST' }, { name: 'SCOPE-SECOND' }, { name: 'SCOPE-BOTH' }, { name: 'SCOPE-OUTSIDE' },
+    ] })
+
+    if (mode === 'dashboard') firstResponse = () => Promise.resolve(json(taggedInventory('SCOPE-LIVE')))
+    else secondResponse = () => Promise.resolve(json(taggedInventory('SCOPE-LIVE')))
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }))
+
+    expect(await screen.findByText('SCOPE-LIVE-SECOND')).toBeVisible()
+    expect(screen.getAllByText('SCOPE-LIVE-BOTH')).toHaveLength(1)
+    expect(screen.queryByText('SCOPE-LIVE-OUTSIDE')).not.toBeInTheDocument()
+    expect(screen.getByText('12 GB')).toBeVisible()
+    expect(inventoryCalls(id)).toHaveLength(2)
+    expect(inventoryCalls(id)[1]?.[1]?.body).toBe('{"name_prefix":"SCOPE","force_refresh":true}')
+    expect(client.getQueryData(queryKey)).toMatchObject({ count: 4, vms: [
+      { name: 'SCOPE-LIVE-FIRST' }, { name: 'SCOPE-LIVE-SECOND' }, { name: 'SCOPE-LIVE-BOTH' }, { name: 'SCOPE-LIVE-OUTSIDE' },
+    ] })
+  })
+
+  it('recomputes changed provider tags at the same prefix from the existing cached response', async () => {
+    availableProviders = providers.map(provider => provider.id === 'vm-2'
+      ? { ...provider, vmPrefix: 'SCOPE', vmTags: ['prod', 'dr'] } : provider)
+    firstResponse = () => Promise.resolve(json(taggedInventory('SCOPE')))
+    await prepareDashboard()
+    render(<ResourcesPage />, { wrapper })
+    await screen.findByText('SCOPE-SECOND')
+
+    availableProviders = availableProviders.map(provider => provider.id === 'vm-2'
+      ? { ...provider, vmTags: ['dr', 'backup'] } : provider)
+    await act(async () => { await client.invalidateQueries({ queryKey: ['/get_providers'] }) })
+
+    expect(await screen.findByText('SCOPE-OUTSIDE')).toBeVisible()
+    expect(screen.getByText('SCOPE-SECOND')).toBeVisible()
+    expect(screen.getAllByText('SCOPE-BOTH')).toHaveLength(1)
+    expect(screen.queryByText('SCOPE-FIRST')).not.toBeInTheDocument()
+    expect(screen.getByText('1,008 GB')).toBeVisible()
+    expect(inventoryCalls('vm-2')).toHaveLength(1)
+  })
+
   it('discards a pending background HTTP response after delete/recreate even when abort is ignored', async () => {
     let finishOld!: (response: Response) => void
     const pending = new Promise<Response>(resolve => { finishOld = resolve })
