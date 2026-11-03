@@ -1,0 +1,169 @@
+<!doctype html>
+<!-- Standalone design prototype: Used in icon and tables. Sample data only; no API or persistence. Open this file directly. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Policy Set · Used in — HTML prototype</title>
+  <style>
+    :root { color-scheme: light; --page:#f7f9fc; --surface:#fff; --subtle:#fbfdff; --hover:#f1f6fb; --text:#17233d; --secondary:#3b4763; --muted:#61718b; --border:#dbe7f2; --border-strong:#c8d7e7; --accent:#086da4; --accent-soft:#e8f6fd; --danger:#b42318; --danger-soft:#fff4f2; --radius:8px; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--page); color:var(--text); font:14px/1.5 Arial,sans-serif; }
+    button,select { font:inherit; }
+    button,a,select { -webkit-tap-highlight-color:transparent; }
+    button,a { touch-action:manipulation; }
+    button { cursor:pointer; }
+    button:focus-visible,a:focus-visible,select:focus-visible { outline:3px solid var(--accent); outline-offset:3px; }
+    button:disabled { cursor:default; opacity:.55; }
+    svg { width:20px; height:20px; flex-shrink:0; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; vertical-align:middle; }
+    .symbols,[hidden] { display:none !important; }
+    .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; border:0; }
+    .workspace { padding:40px; }
+    .workspace h1 { margin:0 0 24px; font-size:24px; }
+    .background-table { height:480px; border:1px solid var(--border); border-radius:16px; background:repeating-linear-gradient(var(--surface) 0 55px,var(--border) 55px 56px); }
+    .background-head { padding:20px; font-weight:600; color:var(--secondary); }
+    .preview-bar { position:fixed; z-index:3; top:16px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:16px; padding:8px 12px; background:var(--surface); border:1px solid var(--border-strong); border-radius:var(--radius); box-shadow:0 2px 8px #17233d12; white-space:nowrap; }
+    .preview-label { color:var(--muted); font-size:12px; }
+    .preview-bar select { color:var(--secondary); background:var(--surface); border:1px solid var(--border-strong); border-radius:4px; padding:4px 28px 4px 8px; }
+    .overlay { position:fixed; inset:0; display:grid; place-items:center; padding:80px 24px 24px; background:#17233d40; }
+    .detail { width:min(1100px,100%); height:min(780px,100%); min-height:0; display:flex; flex-direction:column; overflow:hidden; border:1px solid var(--border); border-radius:16px; background:var(--surface); box-shadow:0 12px 40px #17233d14; }
+    .detail-header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:20px 24px; border-bottom:1px solid var(--border); }
+    .eyebrow { margin:0 0 4px; color:var(--muted); font-size:12px; }
+    .detail-header h1 { margin:0; font-size:20px; line-height:1.4; }
+    .header-actions { display:flex; gap:8px; }
+    .icon-button { display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; color:var(--muted); border:0; border-radius:var(--radius); background:transparent; }
+    .icon-button:hover { color:var(--text); background:var(--hover); }
+    .detail-body { display:flex; min-height:0; flex:1; }
+    .section-nav { width:208px; flex-shrink:0; padding:16px 12px; border-right:1px solid var(--border); }
+    .nav-button { display:flex; align-items:center; gap:12px; width:100%; min-height:44px; margin-bottom:4px; padding:12px; text-align:left; color:var(--secondary); background:transparent; border:0; border-radius:var(--radius); }
+    .nav-button svg { width:16px; height:16px; }
+    .nav-button:hover { background:var(--hover); }
+    .nav-button[aria-current="page"] { background:var(--accent-soft); color:var(--accent); font-weight:600; }
+    .content { min-width:0; flex:1; padding:28px 32px; overflow:auto; scrollbar-gutter:stable; }
+    .content h2 { margin:0; font-size:18px; line-height:1.5; }
+    .intro { margin:8px 0 28px; color:var(--muted); max-width:56ch; }
+    .usage-section + .usage-section { margin-top:28px; }
+    .section-title { display:flex; align-items:center; gap:8px; margin:0 0 12px; }
+    .section-title svg { width:18px; height:18px; color:var(--muted); }
+    .section-title h3 { margin:0; font-size:14px; font-weight:600; }
+    .count { margin-left:4px; min-width:24px; padding:0 8px; text-align:center; border:1px solid var(--border); border-radius:12px; background:var(--subtle); color:var(--secondary); font-size:12px; font-weight:400; }
+    .table-frame { overflow:auto; border:1px solid var(--border); border-radius:var(--radius); }
+    table { width:100%; border-collapse:collapse; text-align:left; table-layout:fixed; }
+    th { padding:10px 16px; background:var(--subtle); color:var(--muted); font-size:11px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; }
+    th:nth-child(1) { width:44%; } th:nth-child(2) { width:auto; } th:nth-child(3) { width:100px; text-align:right; }
+    td { padding:14px 16px; border-top:1px solid var(--border); overflow-wrap:anywhere; vertical-align:middle; }
+    tbody tr:hover { background:var(--subtle); }
+    .name-link { font-weight:600; color:var(--accent); text-decoration:none; }
+    .name-link:hover { text-decoration:underline; text-underline-offset:3px; }
+    .id { color:var(--muted); font:12px/1.6 Consolas,monospace; }
+    .mobile-id { display:none; margin-top:4px; }
+    .action-cell { text-align:right; }
+    .open-link { display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:32px; padding:4px 8px; border:1px solid var(--border); border-radius:6px; color:var(--secondary); text-decoration:none; white-space:nowrap; font-size:12px; }
+    .open-link svg { width:14px; height:14px; }
+    .open-link:hover { color:var(--accent); background:var(--accent-soft); border-color:var(--border-strong); }
+    .detail-footer { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 24px; border-top:1px solid var(--border); }
+    .button { min-height:36px; display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:8px 16px; border:1px solid var(--border-strong); border-radius:var(--radius); background:var(--surface); color:var(--secondary); font-weight:600; }
+    .button:hover { background:var(--hover); }
+    .primary { color:white; background:var(--accent); border-color:var(--accent); }
+    .primary:hover { background:#075c8a; }
+    .danger { color:var(--danger); border-color:#f4c7c3; font-weight:400; }
+    .empty { padding:28px 20px; color:var(--muted); text-align:center; }
+    .empty strong { display:block; margin-bottom:4px; color:var(--secondary); font-weight:500; }
+    .error { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; padding:16px; margin-bottom:12px; border:1px solid #f4c7c3; border-radius:var(--radius); background:var(--danger-soft); }
+    .error strong { display:block; font-weight:600; color:var(--danger); }
+    .error p { margin:4px 0 0; color:var(--secondary); font-size:12px; }
+    .skeleton { display:block; height:12px; width:80%; border-radius:4px; background:var(--hover); animation:pulse 1.4s ease-in-out infinite alternate; }
+    @keyframes pulse { to { opacity:.4; } }
+    .overview-fields { margin-top:24px; display:grid; gap:24px; }
+    .overview-fields dt { color:var(--muted); font-size:12px; margin-bottom:4px; }
+    .overview-fields dd { margin:0; color:var(--secondary); }
+    .entity-dialog { width:min(480px,calc(100% - 32px)); padding:24px; border:1px solid var(--border); border-radius:12px; color:var(--text); }
+    .entity-dialog::backdrop { background:#17233d55; }
+    .entity-dialog h2 { margin:0 0 16px; font-size:18px; }
+    .entity-dialog p { overflow-wrap:anywhere; }
+    .entity-dialog .button { margin-top:16px; }
+    .reopen { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); }
+    @media(max-width:767px) {
+      .overlay { padding:72px 12px 12px; }
+      .detail-header { padding:16px; }
+      .detail-body { flex-direction:column; }
+      .section-nav { width:100%; display:flex; gap:8px; padding:8px 12px; border-right:0; border-bottom:1px solid var(--border); }
+      .nav-button { width:auto; margin:0; padding:8px 12px; }
+      .content { padding:20px 16px; }
+      .intro { margin-bottom:24px; }
+      th,td { padding:12px; }
+      .table-frame table { min-width:0; }
+      th:nth-child(1) { width:auto; } th:nth-child(3) { width:72px; }
+      .id-column,.open-label { display:none; }
+      .mobile-id { display:block; }
+      .detail-footer { padding:12px 16px; }
+      .preview-bar { gap:8px; top:12px; padding:8px; }
+      .preview-label { max-width:132px; overflow:hidden; text-overflow:ellipsis; }
+    }
+    @media(prefers-reduced-motion:reduce) { .skeleton { animation:none; } }
+  </style>
+</head>
+<body>
+  <svg class="symbols" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+    <symbol id="network" viewBox="0 0 20 20"><path d="M8.333 2.5h3.334v3.333H8.333V2.5ZM2.5 14.167h3.333V17.5H2.5v-3.333ZM14.167 14.167H17.5V17.5h-3.333v-3.333ZM10 5.833V10M4.167 14.167V10h11.666v4.167"/></symbol>
+    <symbol id="grid" viewBox="0 0 20 20"><path d="M4.167 4.167h4.166v4.166H4.167V4.167ZM11.667 4.167h4.166v4.166h-4.166V4.167ZM4.167 11.667h4.166v4.166H4.167v-4.166ZM11.667 11.667h4.166v4.166h-4.166v-4.166Z"/></symbol>
+    <symbol id="layers" viewBox="0 0 20 20"><path d="m10 2.5 7.5 3.75L10 10 2.5 6.25 10 2.5Zm-7.5 7.5 7.5 3.75L17.5 10M2.5 13.75 10 17.5l7.5-3.75"/></symbol>
+    <symbol id="open" viewBox="0 0 20 20"><path d="M8.333 5H5a1.667 1.667 0 0 0-1.667 1.667v8.333A1.667 1.667 0 0 0 5 16.667h8.333A1.667 1.667 0 0 0 15 15v-3.333M11.667 3.333H16.667V8.333M16.667 3.333 9.167 10.833"/></symbol>
+    <symbol id="close" viewBox="0 0 20 20"><path d="m5 5 10 10M15 5 5 15"/></symbol>
+  </defs></svg>
+  <div class="workspace" aria-hidden="true"><h1>Policy sets</h1><div class="background-table"><div class="background-head">Name　　　　　　　　 Description　　　　　　　　 Policies</div></div></div>
+  <div class="preview-bar"><span class="preview-label">HTML prototype · sample data</span><label class="sr-only" for="preview-state">Preview state</label><select id="preview-state"><option value="ready">Ready</option><option value="loading">Loading</option><option value="empty">Empty</option><option value="error">Partial error</option></select></div>
+  <div class="overlay" id="overlay">
+    <main class="detail" aria-labelledby="detail-title">
+      <header class="detail-header"><div><p class="eyebrow">Policy set</p><h1 id="detail-title">Test_set</h1></div><div class="header-actions"><button class="icon-button" aria-label="Close preview" id="close-preview"><svg aria-hidden="true"><use href="#close"/></svg></button></div></header>
+      <div class="detail-body">
+        <nav class="section-nav" aria-label="Policy set sections">
+          <button class="nav-button" data-tab="overview" aria-controls="overview"><svg aria-hidden="true"><use href="#grid"/></svg>Overview</button>
+          <button class="nav-button" data-tab="used-in" aria-controls="used-in" aria-current="page"><svg aria-hidden="true"><use href="#network"/></svg>Used in</button>
+        </nav>
+        <div class="content">
+          <section id="overview" aria-labelledby="overview-title" hidden><h2 id="overview-title">Overview</h2><dl class="overview-fields"><div><dt>Policy Set ID</dt><dd class="id">test_set</dd></div><div><dt>Description</dt><dd>Shared recovery policies for business applications.</dd></div><div><dt>Snapshot Policy</dt><dd>Critical — 15 min</dd></div><div><dt>Recovery App Policy</dt><dd>Daily recovery test</dd></div><div><dt>Clean Room Policy</dt><dd>Enforce clean target</dd></div></dl></section>
+          <section id="used-in" aria-labelledby="used-in-title"><h2 id="used-in-title">Used in</h2><p class="intro">Recovery groups and applications that reference this policy set.</p><div id="usage-content" aria-live="polite"></div></section>
+        </div>
+      </div>
+      <footer class="detail-footer"><button class="button danger" id="delete-preview">Delete</button><button class="button primary" id="edit-preview">Edit</button></footer>
+    </main>
+  </div>
+  <button class="button primary reopen" id="reopen" hidden>Reopen preview</button>
+  <dialog class="entity-dialog" id="entity-dialog" aria-labelledby="entity-title"><form method="dialog"><p class="eyebrow" id="entity-kind"></p><h2 id="entity-title"></h2><p id="entity-description"></p><p class="id" id="entity-id"></p><button class="button primary">Close</button></form></dialog>
+  <script>
+    const sampleGroups = [{name:'Production databases',id:'rg-prod-databases'},{name:'Application servers',id:'rg-application-servers'}];
+    const sampleApps = [{name:'Finance recovery',id:'finance-recovery'},{name:'Customer portal — production',id:'customer-portal-prod'}];
+    const usage = document.querySelector('#usage-content');
+    const state = document.querySelector('#preview-state');
+    const entityDialog = document.querySelector('#entity-dialog');
+    const icon = name => `<svg aria-hidden="true"><use href="#${name}"/></svg>`;
+    function section(title, rows, symbol, mode) {
+      const key = symbol === 'layers' ? 'group' : 'application';
+      const heading = `<div class="section-title">${icon(symbol)}<h3>${title}</h3>${mode === 'ready' ? `<span class="count" aria-label="${rows.length} records">${rows.length}</span>` : ''}</div>`;
+      const error = mode === 'error' ? '<div class="error" role="alert"><div><strong>Recovery groups could not be loaded</strong><p>Usage could not be verified. Try loading this list again.</p></div><button class="button" data-retry>Retry</button></div>' : '';
+      let body = '';
+      if (mode === 'empty') body = `<tr><td colspan="3" class="empty"><strong>No ${title.toLowerCase()} use this policy set</strong>References will appear here when the policy set is assigned.</td></tr>`;
+      if (mode === 'loading') body = [1,2].map(() => '<tr><td><span class="skeleton"></span></td><td class="id-column"><span class="skeleton"></span></td><td><span class="skeleton"></span></td></tr>').join('');
+      if (mode === 'ready') body = rows.map((row,index) => `<tr><td><a class="name-link" href="#${key}-${index}" data-kind="${key}" data-index="${index}">${row.name}</a><span class="id mobile-id">${row.id}</span></td><td class="id id-column">${row.id}</td><td class="action-cell"><a class="open-link" href="#${key}-${index}" data-kind="${key}" data-index="${index}" aria-label="Open detail: ${row.name}"><span class="open-label">Open</span>${icon('open')}</a></td></tr>`).join('');
+      const table = mode === 'error' ? '' : `<div class="table-frame" ${mode === 'loading' ? 'aria-busy="true"' : ''}><table><caption class="sr-only">${title} using Test_set</caption><thead><tr><th scope="col">Name</th><th class="id-column" scope="col">ID</th><th scope="col">Detail</th></tr></thead><tbody>${body}</tbody></table></div>`;
+      return `<section class="usage-section" aria-label="${title}">${heading}${mode === 'loading' ? '<p class="sr-only" role="status">Loading '+title.toLowerCase()+'</p>' : ''}${error}${table}</section>`;
+    }
+    function render() { const mode = state.value; usage.innerHTML = section('Recovery Groups',sampleGroups,'layers',mode === 'error' ? 'error' : mode) + section('Recovery Applications',sampleApps,'grid',mode === 'error' ? 'ready' : mode); }
+    function showEntity(kind,title,description,id='') { document.querySelector('#entity-kind').textContent=kind; document.querySelector('#entity-title').textContent=title; document.querySelector('#entity-description').textContent=description; document.querySelector('#entity-id').textContent=id; entityDialog.showModal(); }
+    state.addEventListener('change',render);
+    usage.addEventListener('click',event => {
+      const retry=event.target.closest('[data-retry]'); if(retry) { state.value='ready'; render(); return; }
+      const link=event.target.closest('[data-kind]'); if(!link) return; event.preventDefault();
+      const row=(link.dataset.kind === 'group' ? sampleGroups : sampleApps)[Number(link.dataset.index)];
+      showEntity(link.dataset.kind === 'group' ? 'Recovery group' : 'Recovery application',row.name,'Read-only sample detail. This HTML prototype does not connect to the application.',row.id);
+    });
+    document.querySelectorAll('[data-tab]').forEach(button => button.addEventListener('click',() => { document.querySelectorAll('[data-tab]').forEach(tab => tab.removeAttribute('aria-current')); button.setAttribute('aria-current','page'); document.querySelector('#overview').hidden=button.dataset.tab !== 'overview'; document.querySelector('#used-in').hidden=button.dataset.tab !== 'used-in'; }));
+    document.querySelector('#close-preview').addEventListener('click',() => { document.querySelector('#overlay').hidden=true; document.querySelector('#reopen').hidden=false; document.querySelector('#reopen').focus(); });
+    document.querySelector('#reopen').addEventListener('click',() => { document.querySelector('#overlay').hidden=false; document.querySelector('#reopen').hidden=true; document.querySelector('#close-preview').focus(); });
+    document.querySelector('#delete-preview').addEventListener('click',() => showEntity('Preview only','This policy set is in use','The displayed groups and applications reference Test_set. This preview does not delete any data.'));
+    document.querySelector('#edit-preview').addEventListener('click',() => showEntity('Preview only','Edit Test_set','The existing Edit action would open the policy set form. This file previews the Used in layout only.'));
+    render();
+  </script>
+</body>
+</html>
