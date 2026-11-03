@@ -327,13 +327,15 @@ Východisko a rozhodnutia sú vo [fáze 4 plánu](table-redesign-v2-plan.md#fáz
 **Popis:** Doplniť iba chýbajúce behaviorálne integrácie, ktoré chránia zodpovednosti view/table a migráciu troch resource typov na oboch routes. Existujúce CSS assertions upraviť iba tam, kde sa zámerne zmenil vlastník rámika.
 
 **Akceptačné kritériá:**
-- [ ] Výber view zachová dnešný URL/provider scope a správanie filtrov/pagination; naviazané query/cache/prefetch mechanizmy sa nemenia a správne sa zobrazí VMware, FlashSystem alebo Power obsah.
-- [ ] Pri chybe inventára je možné zmeniť dostupný view a použiť retry; pri cached dátach zostávajú údaje aj príslušné stránkovanie. Loading a empty nevytvárajú ďalší view rámik.
-- [ ] Klávesnicová navigácia a dostupné mená odlišujú navigáciu view od tlačidiel a hlavičiek tabuľky; prípadné existujúce ID asociácie zostávajú platné a unikátne.
+- [x] Výber view zachová dnešný URL/provider scope a správanie filtrov/pagination; naviazané query/cache/prefetch mechanizmy sa nemenia a správne sa zobrazí VMware, FlashSystem alebo Power obsah.
+- [x] Pri chybe inventára je možné zmeniť dostupný view a použiť retry; pri cached dátach zostávajú údaje aj príslušné stránkovanie. Loading a empty nevytvárajú ďalší view rámik.
+- [x] Klávesnicová navigácia a dostupné mená odlišujú navigáciu view od tlačidiel a hlavičiek tabuľky; prípadné existujúce ID asociácie zostávajú platné a unikátne.
 
 **Overenie:** `npm.cmd exec vitest run src/features/discovery-inventory/resources/components/ResourceInventoryShell.test.tsx src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.test.tsx src/features/discovery-inventory/resources/components/flash-system/FlashSystemInventoryView.test.tsx src/features/discovery-inventory/resources/components/ibm-power/PowerInventoryView.test.tsx src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx src/features/discovery-inventory/resources-ise/pages/ResourcesIsePage.test.tsx src/features/discovery-inventory/resources/pages/ResourcesBackgroundPrefetch.integration.test.tsx`.
 **Závislosti:** T16.
 **Súbory (M, najviac 4):** testy `ResourceInventoryShell`, `VmwareResourcesPage`, `FlashSystemInventoryView`, `PowerInventoryView`. Ostatné uvedené existujúce testy spustiť ako regresiu; ak zlyhanie preukáže ďalšiu zmenu kontraktu, najprv rozčleniť krok a doplniť plán.
+
+**Priebeh (2026-11-03):** integracny test zachovania view/navigacie cez loading, fatal error, retry, cached error a empty; focused Vitest 7 suborov / 74 testov PASS, focused ESLint PASS.
 
 ### Checkpoint 5: View a tabuľka fungujú spolu
 - [ ] T16/T17 majú výsledky focused testov a browser kontrolu jednej karty v úspešnom aj chybovom stave.
