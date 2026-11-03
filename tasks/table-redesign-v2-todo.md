@@ -443,6 +443,8 @@ Rozsah, matica stránok a rozhodnutia: [fáza 5 plánu](table-redesign-v2-plan.m
 **Závislosti:** hotové T13–T19.
 **Súbory (M, 5):** nový `src/shared/components/inventory-shell/InventoryCompositionContext.ts`, `src/shared/components/data-table/DataTableSurface.tsx`, `DataTableSkeleton.tsx`, `src/shared/components/inventory-shell/InventoryPanel.tsx`, `DataTableSurface.test.tsx`.
 
+**Priebeh (2026-11-03):** Implementovane. Focused Vitest 3 subory / 14 testov PASS; focused ESLint PASS. Kontrola standalone/embedded dedenia, override a loading statusu.
+
 ### T21: Jediná shared implementácia view frame
 
 **Popis:** Vytvoriť shared `InventoryViewFrame` podľa hotovej resource karty a pripraviť scoped prezentáciu hlavnej navigácie. Frame poskytuje embedded scope obsahu a oddelený navigation scope iba tabs slotu.

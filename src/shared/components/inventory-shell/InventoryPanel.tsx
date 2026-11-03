@@ -4,6 +4,7 @@ import {
   type DataTableRequestError,
 } from '@/shared/components/data-table'
 import { DataTableSurface } from '@/shared/components/data-table/DataTableSurface'
+import { useInventoryFrame } from './InventoryCompositionContext'
 
 interface InventoryPanelProps {
   ariaLabel: string
@@ -22,8 +23,9 @@ export function InventoryPanel({
   pagination,
   error,
   hasCachedData = false,
-  frame = 'standalone',
+  frame: frameOverride,
 }: InventoryPanelProps) {
+  const frame = useInventoryFrame(frameOverride)
   return (
     <DataTableSurface
       ariaLabel={ariaLabel}

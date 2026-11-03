@@ -1,5 +1,6 @@
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/components/table/Table'
 import { cn } from '@/shared/utils/cn'
+import { useInventoryFrame } from '../inventory-shell/InventoryCompositionContext'
 
 interface DataTableSkeletonProps {
   columnCount: number
@@ -26,8 +27,9 @@ export function DataTableSkeleton({
   showPagination = true,
   layout = 'scroll',
   className,
-  frame = 'standalone',
+  frame: frameOverride,
 }: DataTableSkeletonProps) {
+  const frame = useInventoryFrame(frameOverride)
   const columns = Array.from({ length: Math.max(1, columnCount) })
   const rows = Array.from({ length: Math.max(1, rowCount) })
 

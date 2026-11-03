@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/shared/utils/cn'
+import { useInventoryFrame } from '../inventory-shell/InventoryCompositionContext'
 
 interface DataTableSurfaceProps {
   ariaLabel: string
@@ -9,7 +10,8 @@ interface DataTableSurfaceProps {
   frame?: 'standalone' | 'embedded'
 }
 
-export function DataTableSurface({ ariaLabel, toolbar, children, pagination, frame = 'standalone' }: DataTableSurfaceProps) {
+export function DataTableSurface({ ariaLabel, toolbar, children, pagination, frame: frameOverride }: DataTableSurfaceProps) {
+  const frame = useInventoryFrame(frameOverride)
   return (
     <section
       className={cn(
