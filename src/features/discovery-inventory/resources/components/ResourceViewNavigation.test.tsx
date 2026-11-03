@@ -57,9 +57,11 @@ describe('ResourceViewNavigation', () => {
   it('keeps full tab names and keyboard navigation with a provider scope at 320px', () => {
     window.innerWidth = 320
     const onChange = vi.fn()
+    const [selectedItem, nextItem] = items
+    if (!selectedItem || !nextItem) throw new Error('Expected two provider navigation fixtures')
     render(<ResourceViewNavigation items={items} labels={labels} value="vmware:vcenter-01" onChange={onChange} selectedProvider={{ ...provider, vmPrefix: 'production-', vmTags: tags }} />)
 
-    const selected = screen.getByRole('tab', { name: items[0].label })
+    const selected = screen.getByRole('tab', { name: selectedItem.label })
     expect(selected).toHaveAttribute('aria-selected', 'true')
     expect(selected).toHaveTextContent('vm-01')
     expect(within(summary()).getByRole('region', { name: 'Name prefix' })).toHaveTextContent('production-')
@@ -68,7 +70,7 @@ describe('ResourceViewNavigation', () => {
 
     fireEvent.keyDown(selected, { key: 'ArrowRight' })
     expect(onChange).toHaveBeenLastCalledWith('vmware:vcenter-02')
-    expect(screen.getByRole('tab', { name: items[1].label })).toHaveFocus()
+    expect(screen.getByRole('tab', { name: nextItem.label })).toHaveFocus()
   })
 
   it('renders fallback navigation without an invented badge or provider conditions', () => {

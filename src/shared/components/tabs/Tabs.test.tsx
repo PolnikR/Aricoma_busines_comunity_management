@@ -183,7 +183,7 @@ describe('Tabs', () => {
     render(
       <div style={{ '--tab-control-width': '1.75rem' } as CSSProperties}>
         <Tabs items={overflowItems} value="tab-0" onChange={vi.fn()} ariaLabel="Sources"
-          maxVisibleItems={maxVisibleItems} scrollControls={{ previousLabel: 'Previous', nextLabel: 'Next' }} />
+          {...(maxVisibleItems === undefined ? {} : { maxVisibleItems })} scrollControls={{ previousLabel: 'Previous', nextLabel: 'Next' }} />
       </div>,
     )
     const tabList = screen.getByRole('tablist')
