@@ -301,9 +301,11 @@ Východisko a rozhodnutia sú vo [fáze 4 plánu](table-redesign-v2-plan.md#fáz
 **Priebeh (2026-11-03):** implementovane; focused Vitest 2 subory / 9 testov PASS, focused ESLint PASS. Skutocne rohy loading stavu overi T19.
 
 ### Checkpoint 4: Kompozičné kontrakty pripravené
-- [ ] Cielené kontroly T13–T15 prešli; defaulty shared komponentov sa nezmenili.
-- [ ] `npm.cmd run typecheck` overil existujúcich konzumentov nových voliteľných props.
-- [ ] Zmeny sú atomicky commitnuté; aktualizovaný stav plánu je pripravený na kontrolu pred migráciou view.
+- [x] Cielené kontroly T13–T15 prešli; defaulty shared komponentov sa nezmenili.
+- [x] `npm.cmd run typecheck` overil existujúcich konzumentov nových voliteľných props.
+- [x] Zmeny sú atomicky commitnuté; aktualizovaný stav plánu je pripravený na kontrolu pred migráciou view.
+
+**Overenie CP4:** `npm.cmd run typecheck` PASS (exit 0).
 
 ### T16: Jedna karta vlastnená resource view
 
@@ -317,6 +319,8 @@ Východisko a rozhodnutia sú vo [fáze 4 plánu](table-redesign-v2-plan.md#fáz
 **Overenie:** `npm.cmd exec vitest run src/features/discovery-inventory/resources/components/ResourceInventoryShell.test.tsx src/features/discovery-inventory/resources/components/ResourceInventoryPanel.test.tsx src/features/discovery-inventory/resources/components/ResourceInventoryStates.test.tsx src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.test.tsx`; Chrome: normálny stav → loading → error → retry v rovnakom rámci.
 **Závislosti:** T13, T14, T15, CP4.
 **Súbory (M, 5):** `src/features/discovery-inventory/resources/components/ResourceInventoryShell.tsx`, `ResourceInventoryPanel.tsx`, `ResourceInventoryStates.tsx`, `ResourceInventoryPanel.test.tsx`, `ResourceInventoryStates.test.tsx`. Zachovať rozhranie existujúcich stránok; ak treba rozšíriť kontrakt shellu, rozdeliť krok pred prekročením tohto rozsahu.
+
+**Priebeh (2026-11-03):** kod implementovany; focused Vitest 4 subory / 20 testov PASS, focused ESLint PASS. Browser kriterium vsetkych stavov ostava na T19.
 
 ### T17: Prechody medzi view a request stavmi
 
