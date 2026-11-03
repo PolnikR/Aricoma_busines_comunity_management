@@ -562,6 +562,8 @@ Rozsah, matica stránok a rozhodnutia: [fáza 5 plánu](table-redesign-v2-plan.m
 **Závislosti:** T23, CP9.
 **Súbory (M, 4):** `src/features/recovery-plans/recovery-applications/pages/RecoveryApplicationsListPage.tsx`, `RecoveryApplicationsListPage.test.tsx`, `src/features/recovery-plans/recovery-groups/pages/RecoveryGroupsListPage.tsx`, `RecoveryGroupsListPage.test.tsx`.
 
+**Priebeh (2026-11-03):** Implementovane. Focused Vitest 4 subory / 88 testov PASS; focused ESLint PASS. Vsetky produkcne zmeny preverene npm.cmd run typecheck PASS.
+
 ### T29: Policy sets a Audit
 
 **Popis:** Dokončiť zvyšné priame konzumenty InventoryShell zapojením spoločného viewportu. Audit overí dedenie aj cez `InventoryPanel`, Policy sets cez priamy `DataTableSurface`.

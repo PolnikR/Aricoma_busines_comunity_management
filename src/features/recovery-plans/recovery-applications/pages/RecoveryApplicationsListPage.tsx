@@ -1,3 +1,4 @@
+import { InventoryViewportFrame } from '@/shared/components/page/InventoryViewportFrame'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { resolveUserFacingErrorMessage } from '@/shared/api/apiErrorMessage'
@@ -43,7 +44,7 @@ export function RecoveryApplicationsListPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
+    <InventoryViewportFrame>
       <TableToolbar
         title={t('pages.recovery.title')}
         description={t('pages.recovery.description')}
@@ -81,6 +82,6 @@ export function RecoveryApplicationsListPage() {
           onRetry={() => { void refetch() }}
         />
       </InventoryShell>
-    </div>
+    </InventoryViewportFrame>
   )
 }
