@@ -48,7 +48,7 @@ export function DataTablePagination({
 
   return (
     <div
-      className="flex shrink-0 flex-col gap-4 border-t border-border bg-surface px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+      className="flex shrink-0 flex-col gap-4 border-t border-border bg-surface-subtle px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
       aria-busy={isLoading ? true : undefined}
     >
       <div className="flex flex-wrap items-center gap-3 text-sm text-text-muted">

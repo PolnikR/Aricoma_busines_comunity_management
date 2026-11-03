@@ -149,10 +149,12 @@ Discovery settings sa nemení, lebo popis stránky už vymenúva všetky sekcie.
 
 **Popis:** Pätička na pozadí `surface-subtle` s kompaktnými 32 px tlačidlami. Aktuálna strana má obrys, nie plnú výplň. Text „Showing x–y of z“ ostáva.
 
+**Výsledok (2026-11-03):** headless Chrome (Platform providers, 25 testovacích záznamov, 3 strany): tlačidlá majú 32 px, aktuálna strana má biely obrys a `aria-current="page"`, predchádzajúca strana je na prvej strane `disabled` a pätička je `surface-subtle`. Výber „Rows“ ostal 36 px (`h-9`), nemenil sa.
+
 **Akceptačné kritériá:**
-- [ ] `aria-current="page"`, disabled stav predchádzajúcej/ďalšej strany a skeleton pri načítaní fungujú ako doteraz.
-- [ ] Všetci volajúci `Pagination` mimo `DataTablePagination` sú skontrolovaní.
-- [ ] Na mobile ostáva „Page x of y“.
+- [x] `aria-current="page"`, disabled stav predchádzajúcej/ďalšej strany a skeleton pri načítaní fungujú ako doteraz (logika sa nemenila, testy `data-table` prechádzajú).
+- [x] Všetci volajúci `Pagination` mimo `DataTablePagination` sú skontrolovaní: jediný je `RecoveryGroupReplicationChain`, ktorý dostane rovnaký vzhľad a jeho testy prechádzajú.
+- [x] Na mobile ostáva „Page x of y“ (označenie `sm:hidden` sa nemenilo).
 
 **Overenie:** `npm exec vitest run src/shared/components/data-table/DataTablePagination.test.tsx`
 **Závislosti:** CP1.

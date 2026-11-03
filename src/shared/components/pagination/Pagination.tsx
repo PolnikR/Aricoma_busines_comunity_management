@@ -45,8 +45,8 @@ export function Pagination({
 
   return (
     <nav className="flex items-center justify-between gap-2 sm:justify-end" aria-label={ariaLabel}>
-      <button type="button" className="flex size-9 items-center justify-center rounded-xl border border-border-strong bg-surface text-text-muted shadow-sm transition hover:bg-accent-soft hover:text-accent disabled:cursor-not-allowed disabled:opacity-40" disabled={disabled || isLoading || page <= 1} aria-label={previousPageLabel} onClick={() => { onPageChange(page - 1) }}>
-        <ChevronLeftIcon className="size-5" />
+      <button type="button" className="flex size-8 items-center justify-center rounded-lg border border-border bg-surface text-text-muted transition hover:bg-surface-muted hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-40" disabled={disabled || isLoading || page <= 1} aria-label={previousPageLabel} onClick={() => { onPageChange(page - 1) }}>
+        <ChevronLeftIcon className="size-4" />
       </button>
       <span className="text-sm font-medium text-text-muted sm:hidden">
         {isLoading ? pageOfLabel.split(/(\{page\}|\{pageCount\})/).map((part, index) => (
@@ -58,20 +58,20 @@ export function Pagination({
       <ul className="hidden items-center gap-1 sm:flex">
         {isLoading ? Array.from({ length: 4 }, (_, index) => (
           <li key={index}>
-            <span className="block size-9 animate-pulse rounded-xl bg-surface-muted" aria-hidden="true" />
+            <span className="block size-8 animate-pulse rounded-lg bg-surface-muted" aria-hidden="true" />
           </li>
         )) : getPageItems(page, pageCount).map((item) => (
           <li key={item}>
             {typeof item === 'number' ? (
-              <button type="button" className={`flex size-9 items-center justify-center rounded-xl text-sm font-medium transition ${item === page ? 'bg-accent text-white shadow-sm' : 'text-text-muted hover:bg-accent-soft hover:text-accent'}`} aria-label={pageLabel.replace('{number}', String(item))} aria-current={item === page ? 'page' : undefined} disabled={disabled} onClick={() => { onPageChange(item) }}>
+              <button type="button" className={`flex size-8 items-center justify-center rounded-lg border text-sm tabular-nums transition ${item === page ? 'border-border-strong bg-surface font-semibold text-text-primary shadow-sm' : 'border-transparent font-medium text-text-muted hover:bg-surface-muted hover:text-text-primary'}`} aria-label={pageLabel.replace('{number}', String(item))} aria-current={item === page ? 'page' : undefined} disabled={disabled} onClick={() => { onPageChange(item) }}>
                 {item}
               </button>
-            ) : <span className="flex size-10 items-center justify-center text-sm text-text-subtle" aria-hidden="true">...</span>}
+            ) : <span className="flex size-8 items-center justify-center text-sm text-text-subtle" aria-hidden="true">...</span>}
           </li>
         ))}
       </ul>
-      <button type="button" className="flex size-9 items-center justify-center rounded-xl border border-border-strong bg-surface text-text-muted shadow-sm transition hover:bg-accent-soft hover:text-accent disabled:cursor-not-allowed disabled:opacity-40" disabled={disabled || isLoading || page >= pageCount} aria-label={nextPageLabel} onClick={() => { onPageChange(page + 1) }}>
-        <ChevronRightIcon className="size-5" />
+      <button type="button" className="flex size-8 items-center justify-center rounded-lg border border-border bg-surface text-text-muted transition hover:bg-surface-muted hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-40" disabled={disabled || isLoading || page >= pageCount} aria-label={nextPageLabel} onClick={() => { onPageChange(page + 1) }}>
+        <ChevronRightIcon className="size-4" />
       </button>
     </nav>
   )
