@@ -51,6 +51,32 @@ const navItem = (dialog: HTMLElement, name: string) =>
   within(within(dialog).getByRole('navigation', { name: 'Sections' })).getByRole('button', { name })
 
 describe('DetailView dialog', () => {
+  it('limits fill layout to the active opt-in section and keeps flow as the default', async () => {
+    const user = userEvent.setup()
+    const { dialog } = renderView({ children: [
+      <DetailViewSection key="overview" id="overview" title="Overview"><p>Overview content</p></DetailViewSection>,
+      <DetailViewSection key="usage" id="usage" title="Used in" layout="fill"><Inventory /></DetailViewSection>,
+    ] })
+    const overview = within(dialog).getByRole('region', { name: 'Overview' })
+    expect(overview).toHaveClass('overflow-y-auto', 'px-(--detail-gutter)', 'py-6')
+    expect(overview).not.toHaveClass('overflow-hidden', 'flex-col')
+    expect(screen.queryByRole('button', { name: 'Expand inventory' })).not.toBeInTheDocument()
+
+    await user.click(navItem(dialog, 'Used in'))
+    const region = within(dialog).getByRole('region', { name: 'Used in' })
+    expect(region).toHaveClass('flex', 'flex-col', 'min-h-0', 'flex-1', 'overflow-hidden', 'py-3')
+    expect(region).not.toHaveClass('overflow-y-auto')
+    expect(within(region).getByRole('heading', { name: 'Used in' }).closest('header')).toHaveClass('shrink-0', 'mb-2')
+    const expand = within(region).getByRole('button', { name: 'Expand inventory' })
+    expect(expand.parentElement).toHaveClass('flex-1', 'min-h-0', 'overflow-hidden')
+    await user.click(expand)
+    await user.click(navItem(dialog, 'Overview'))
+    expect(screen.queryByRole('button', { name: 'Inventory expanded' })).not.toBeInTheDocument()
+    expect(within(dialog).getByRole('region', { name: 'Overview' })).toHaveClass('overflow-y-auto')
+    await user.click(navItem(dialog, 'Used in'))
+    expect(within(dialog).getByRole('button', { name: 'Expand inventory' })).toBeVisible()
+  })
+
   it('renders nothing while closed', () => {
     render(<DetailView open={false} onClose={vi.fn()} title="X" ariaLabel="Detail" closeLabel="Close"><DetailViewSection id="a" title="A">a</DetailViewSection></DetailView>)
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()

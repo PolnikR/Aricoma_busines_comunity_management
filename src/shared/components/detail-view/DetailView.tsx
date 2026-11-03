@@ -54,10 +54,12 @@ interface DetailViewSectionProps {
   secondary?: boolean | undefined
   // Drop the content padding for content that brings its own (inventories, edge-to-edge tables).
   flush?: boolean | undefined
+  // Fill the available section height; children provide their own scrolling surface.
+  layout?: 'flow' | 'fill' | undefined
   children?: ReactNode | undefined
 }
 
-const SectionContext = createContext<{ headingId: string; flush: boolean }>({ headingId: '', flush: false })
+const SectionContext = createContext<{ headingId: string; flush: boolean; fill: boolean }>({ headingId: '', flush: false, fill: false })
 
 // Elements hidden by CSS (e.g. `hidden sm:inline-flex` content) are not tabbable, so the
 // focus trap must skip them too. jsdom has no checkVisibility and keeps them.
@@ -71,17 +73,17 @@ const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select
 // (and any data it fetches) mounts only while the section is shown. Children are arbitrary
 // React content: field groups, status blocks, tables, inventories, loading or error states.
 export function DetailViewSection({ title, description, aside, children }: DetailViewSectionProps) {
-  const { headingId, flush } = useContext(SectionContext)
+  const { headingId, flush, fill } = useContext(SectionContext)
   return (
     <>
-      <header className={cn('flex items-start gap-4', flush ? 'px-(--detail-gutter) pt-6 pb-4' : 'mb-6')}>
+      <header className={cn('flex items-start gap-4', fill ? 'shrink-0' : undefined, flush ? 'px-(--detail-gutter) pt-6 pb-4' : fill ? 'mb-2' : 'mb-6')}>
         <div className="min-w-0 flex-1">
           <h3 id={headingId} className="text-base font-semibold leading-6 text-text-primary">{title}</h3>
           {description ? <p className="mt-0.5 text-[13px] text-text-muted">{description}</p> : null}
         </div>
         {aside ? <div className="flex shrink-0 items-center gap-2">{aside}</div> : null}
       </header>
-      <div className="flex flex-col gap-7">{children}</div>
+      <div className={cn('flex flex-col gap-7', fill ? 'min-h-0 flex-1 overflow-hidden' : undefined)}>{children}</div>
     </>
   )
 }
@@ -284,11 +286,12 @@ export function DetailView({ open, onClose, title, entityLabel, statuses = [], m
               role="region"
               aria-labelledby={headingId}
               className={cn(
-                'custom-scrollbar min-h-0 min-w-0 flex-1 overflow-y-auto @container/detail-content',
-                active.props.flush ? 'pb-6' : 'px-(--detail-gutter) py-6',
+                'min-h-0 min-w-0 flex-1 @container/detail-content',
+                active.props.layout === 'fill' ? 'flex flex-col overflow-hidden' : 'custom-scrollbar overflow-y-auto',
+                active.props.flush ? 'pb-6' : active.props.layout === 'fill' ? 'px-(--detail-gutter) py-3' : 'px-(--detail-gutter) py-6',
               )}
             >
-              <SectionContext.Provider value={{ headingId, flush: Boolean(active.props.flush) }}>
+              <SectionContext.Provider value={{ headingId, flush: Boolean(active.props.flush), fill: active.props.layout === 'fill' }}>
                 {active}
               </SectionContext.Provider>
             </div>

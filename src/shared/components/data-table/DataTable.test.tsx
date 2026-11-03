@@ -42,7 +42,42 @@ describe('DataTable', () => {
 
     const wrapper = screen.getByLabelText('Scroll table')
     expect(wrapper).toHaveClass('overflow-x-auto')
+    expect(wrapper).toHaveClass('touch-pan-x', 'overscroll-x-contain')
+    expect(wrapper).not.toHaveClass('h-full', 'overflow-auto')
     expect(wrapper).toHaveAttribute('tabindex', '0')
+  })
+
+  it('opts into a full-height viewport that permits scrolling in both axes', () => {
+    render(<DataTable columns={columns} rows={rows} rowKey={row => row.id} ariaLabel="Usage table" fillHeight />)
+
+    const wrapper = screen.getByLabelText('Usage table')
+    expect(wrapper).toHaveClass('h-full', 'min-h-0', 'overflow-auto', 'touch-auto', 'overscroll-contain')
+    expect(wrapper).not.toHaveClass('touch-pan-x', 'overflow-x-auto')
+    expect(wrapper).toHaveAttribute('tabindex', '0')
+    expect(within(wrapper).getByRole('columnheader', { name: 'Name' }).closest('thead')).toHaveClass('sticky', 'top-0')
+    expect(within(wrapper).getByRole('cell', { name: 'A very long resource name' })).toBeVisible()
+  })
+
+  it('preserves loading and empty states in a full-height viewport', () => {
+    const { rerender } = render(
+      <DataTable columns={columns} rows={[]} rowKey={row => row.id} ariaLabel="Usage table" fillHeight isLoading loadingRowCount={2} />,
+    )
+    const loading = screen.getByRole('status', { name: 'Usage table' })
+    expect(loading).toHaveClass('h-full', 'overflow-auto')
+    expect(loading).toHaveAttribute('aria-busy', 'true')
+    expect(loading).not.toHaveAttribute('tabindex')
+    expect(loading.querySelectorAll('tbody tr')).toHaveLength(2)
+
+    rerender(<DataTable columns={columns} rows={[]} rowKey={row => row.id} ariaLabel="Usage table" fillHeight emptyContent="No usage" />)
+    expect(screen.getByLabelText('Usage table')).toHaveAttribute('tabindex', '0')
+    expect(screen.getByRole('cell', { name: 'No usage' })).toHaveAttribute('colspan', '2')
+  })
+
+  it('keeps a full-height viewport keyboard focusable when columns fit the width', () => {
+    render(<DataTable columns={columns} rows={rows} rowKey={row => row.id} ariaLabel="Fit usage table" layout="fit" fillHeight />)
+    const wrapper = screen.getByLabelText('Fit usage table')
+    expect(wrapper).toHaveAttribute('tabindex', '0')
+    expect(within(wrapper).getByRole('table')).toHaveClass('w-full', 'table-fixed')
   })
 
   it('keeps real headers visible and skeletonizes only body values while loading', () => {

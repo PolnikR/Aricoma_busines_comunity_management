@@ -26,6 +26,7 @@ interface DataTableProps<T> {
   selectedRowKey?: string | null
   minWidthClassName?: string
   layout?: 'scroll' | 'fit'
+  fillHeight?: boolean
   emptyContent?: ReactNode
   ariaLabel?: string
   headerCellClassName?: string
@@ -45,6 +46,7 @@ export function DataTable<T>({
   selectedRowKey = null,
   minWidthClassName = 'min-w-full',
   layout = 'scroll',
+  fillHeight = false,
   emptyContent,
   ariaLabel = 'Data table',
   headerCellClassName,
@@ -65,10 +67,12 @@ export function DataTable<T>({
 
   return (
     <div
-      className={isFitLayout
-        ? '@container/data-table w-full min-w-0 overflow-x-hidden'
-        : '@container/data-table custom-scrollbar w-full min-w-0 touch-pan-x overflow-x-auto overscroll-x-contain'}
-      tabIndex={isFitLayout || isLoading ? undefined : 0}
+      className={fillHeight
+        ? '@container/data-table custom-scrollbar h-full min-h-0 w-full min-w-0 touch-auto overflow-auto overscroll-contain'
+        : isFitLayout
+          ? '@container/data-table w-full min-w-0 overflow-x-hidden'
+          : '@container/data-table custom-scrollbar w-full min-w-0 touch-pan-x overflow-x-auto overscroll-x-contain'}
+      tabIndex={(isFitLayout && !fillHeight) || isLoading ? undefined : 0}
       role={isLoading ? 'status' : undefined}
       aria-busy={isLoading ? true : undefined}
       aria-label={ariaLabel}
