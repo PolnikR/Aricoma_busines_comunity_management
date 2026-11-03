@@ -769,6 +769,8 @@ Plán: fáza 6 v table-redesign-v2-plan.md. **Stav: prebieha inline podľa pokyn
 **Závislosti:** T32, T33, T36.
 **Súbory (S, 2):** components/vmware/VmwareProviderFilterSummary.tsx a test.
 
+**Priebeh (2026-11-03):** Summary bez Any/null rezervy, literal prefix, vsetky normalizovane tagy a jeden responsive+N cez sharedHelpPopover. Parent fresh15testov PASS, focused ESLint PASS, nezavislyreviewclean. Provider change zatvara panel, resizefocus/externalfocus/longvalue keyboard regions overene. Realna geometria zostavaT41.
+
 ### T38: Jedna resource navigačná kompozícia
 
 **Popis:** V resource feature vytvoriť ResourceViewNavigation skladajúci shared Tabs vľavo a summary napravo. Je to prezentačná hranica spoločná source/target, bez fetch a vlastnej query logiky.
