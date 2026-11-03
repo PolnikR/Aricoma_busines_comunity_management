@@ -720,6 +720,8 @@ Plán: fáza 6 v table-redesign-v2-plan.md. **Stav: prebieha inline podľa pokyn
 **Závislosti:** T30; nezávislé od T31 dátového gate.
 **Súbory (S, 2):** shared/components/tabs/Tabs.tsx a Tabs.test.tsx.
 
+**Priebeh (2026-11-03):** Implementovane opt-in4 sloty, zachovane defaulty/context. Parent fresh Vitest shared regresie 6 suborov/51 testov PASS (T35 samostatne4/18), focused ESLint PASS, read-only review clean. Presna browser geometria zostava T41. Ruling: 4x160px bez medzery=640px plni poziadavku; prototyp652px nie je pixelovy kontrakt.
+
 ### T36: Vlastný +N trigger existujúceho HelpPopover
 
 **Popis:** Doplniť iba voliteľný triggerContent do overeného shared popoveru. Default help ikona a súčasná prístupnosť ostávajú zachované; +N využije rovnaký portal a umiestnenie.
