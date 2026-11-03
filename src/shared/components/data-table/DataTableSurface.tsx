@@ -15,7 +15,7 @@ export function DataTableSurface({ ariaLabel, toolbar, children, pagination }: D
       data-table-surface=""
     >
       {toolbar}
-      <div className="custom-scrollbar flex min-h-0 flex-col overflow-y-auto">{children}</div>
+      <div className="custom-scrollbar min-h-0 overflow-y-auto">{children}</div>
       {pagination}
     </section>
   )

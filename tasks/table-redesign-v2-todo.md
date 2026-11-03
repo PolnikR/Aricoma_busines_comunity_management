@@ -106,7 +106,9 @@ Discovery settings sa nemení, lebo popis stránky už vymenúva všetky sekcie.
 **Závislosti:** CP1.
 **Súbory (S–M, 4):** `DataTable.tsx`, `DataTable.test.tsx`, `DataTableSkeleton.tsx`, `DataTableSkeleton.test.tsx`.
 
-### T4: Výplň prázdneho miesta pod riadkami
+### T4: Výplň prázdneho miesta pod riadkami (ZRUŠENÉ)
+
+**Stav (2026-11-03):** zapracované v `73b1b452`, potom na žiadosť používateľa odstránené („je to hnusné, odstráň to“). Pod krátkou tabuľkou ostáva prázdna biela plocha karty. Kritériá nižšie sú len historický záznam.
 
 **Popis:** `DataTable` vloží za tabuľku výplň s jemnými čiarami. Scroll oblasť `DataTableSurface` sa stane flex stĺpcom, aby sa výplň natiahla.
 
