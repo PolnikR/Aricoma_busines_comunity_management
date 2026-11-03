@@ -733,6 +733,8 @@ Plán: fáza 6 v table-redesign-v2-plan.md. **Stav: prebieha inline podľa pokyn
 **Závislosti:** T30; nezávislé od T35.
 **Súbory (S, 2):** shared/components/help-popover/HelpPopover.tsx a test.
 
+**Priebeh (2026-11-03):** Implementovany kompatibilny triggerContent pre existujuci HelpPopover. RED5 novych pripadov, GREEN33testov; parent shared regresie spolu51 PASS, focused ESLint PASS, read-only review clean. Default helpicon/focus/portal zachovane.
+
 ### Checkpoint 13: Kompatibilné shared rozhrania
 - [ ] Dotknutí dátoví konzumenti nepoužívajú rozporuplný scope.
 - [ ] Opt-in Tabs a vlastný popover trigger prešli default regresiami.

@@ -5,6 +5,7 @@ import { CloseIcon, HelpIcon } from '@/shared/icons/Icons'
 
 interface HelpPopoverProps {
   triggerLabel: string
+  triggerContent?: ReactNode
   title: string
   closeLabel: string
   // `wide` fits content such as tables or relationship rows; the default stays compact.
@@ -68,7 +69,7 @@ interface Placement {
 // close button the panel does not reopen from focus already on the trigger; focus
 // has to leave and return, or the pointer has to re-enter. A pointer down outside
 // closes it and leaves focus where it lands.
-export function HelpPopover({ triggerLabel, title, closeLabel, width = 'default', children }: HelpPopoverProps) {
+export function HelpPopover({ triggerLabel, triggerContent, title, closeLabel, width = 'default', children }: HelpPopoverProps) {
   const [open, setOpen] = useState(false)
   const [placement, setPlacement] = useState<Placement>({ top: 0, left: 0, maxHeight: 0, placed: false })
   const rootRef = useRef<HTMLSpanElement>(null)
@@ -243,9 +244,9 @@ export function HelpPopover({ triggerLabel, title, closeLabel, width = 'default'
           dismissed.current = false
           setOpen(true)
         }}
-        className="flex size-8 items-center justify-center rounded-lg text-text-muted transition hover:bg-surface-hover hover:text-text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15 aria-expanded:bg-accent-soft aria-expanded:text-accent"
+        className={`flex ${triggerContent === undefined ? 'size-8' : 'min-h-8 min-w-8 px-1 text-xs font-medium'} items-center justify-center rounded-lg text-text-muted transition hover:bg-surface-hover hover:text-text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15 aria-expanded:bg-accent-soft aria-expanded:text-accent`}
       >
-        <HelpIcon className="size-4" />
+        {triggerContent === undefined ? <HelpIcon className="size-4" /> : triggerContent}
       </button>
       {open ? createPortal(
         <div
