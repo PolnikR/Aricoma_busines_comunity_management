@@ -714,6 +714,8 @@ Plán: fáza 6 v table-redesign-v2-plan.md. **Stav: prebieha inline podľa pokyn
 **Súbory (M, 4):** recovery-groups/hooks/useRecoveryGroupResourceInventory.ts a test; helpers/providerScopeDisplay.ts a nový providerScopeDisplay.test.ts. Použiť existujúci tag predicate z T33, nepridávať druhú OR implementáciu.
 
 
+**Priebeh (2026-11-03):** Recovery group pouziva vsetky OR tagy pred resourceNames aj metadata; single-tag request optimalizacia zachovana. Karty pocitaju normalizovane unikatne tagy. Parent fresh3subory/50testov PASS, focused ESLint PASS, nezavislyreviewclean; raw cache a Power prefix-only zachovane. T34b builder prefetch nasleduje osobitne.
+
 ### T34b: Zosúladiť samostatné builder prednačítanie
 
 **Popis:** Source audit našiel ďalší singular-tag prefetch v RecoveryGroupBuilder.tsx:128–150. Oddelený krok drží T34 pod limitom piatich súborov.

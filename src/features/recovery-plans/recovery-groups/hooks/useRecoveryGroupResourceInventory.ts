@@ -16,6 +16,8 @@ import type {
   PowerPartitionResource,
 } from '@/features/discovery-inventory/resources/model/discoveryTypes'
 import { resolveVmwareProviderFilter } from '@/features/discovery-inventory/resources/helpers/vmwareProviderFilter'
+import { applyVmwareProviderTagScope } from '@/features/discovery-inventory/resources/helpers/applyVmwareProviderTagScope'
+import { getServerSideTagFilter } from '@/features/discovery-inventory/resources/helpers/filterVirtualMachines'
 import { getRecoveryGroupSearchMode } from '../helpers/recoveryGroupSearchMode'
 import type {
   RecoveryGroupProviderScope,
@@ -120,8 +122,11 @@ export function useRecoveryGroupResourceInventory(
   const isVmware = workloadType === 'vmware_virtual_machines'
   const isPower = workloadType === 'ibm_power_virtual_machines'
   const isScopeKnown = (!isVmware && !isPower) || providerScope !== undefined
-  // Same normalization as the Resources page: trimmed prefix, first non-empty tag.
+  // Same normalization and OR tag scope as the Resources page.
   const vmwareFilter = resolveVmwareProviderFilter(isVmware ? providerScope : null)
+  const vmwareTag = getServerSideTagFilter(vmwareFilter.filters.tags)
+  // Keep the selected data stable when an equivalent scope array is recreated.
+  const vmwareTagsKey = JSON.stringify(vmwareFilter.filters.tags)
   // The Power inventory has no tags, so only the name prefix is enforced there.
   const powerPrefix = isPower ? providerScope?.vmPrefix?.trim() ?? '' : ''
   // The provider scope wins: a user search can never replace or widen it.
@@ -130,7 +135,7 @@ export function useRecoveryGroupResourceInventory(
     ...(isVmware && providerId ? { providerId } : {}),
     ...(vmwareFilter.prefix ? { namePrefix: vmwareFilter.prefix } : {}),
     ...(usesServerSearch && vmwareNamePrefix !== undefined ? { namePrefix: vmwareNamePrefix } : {}),
-    ...(vmwareFilter.tag ? { tag: vmwareFilter.tag } : {}),
+    ...(vmwareTag ? { tag: vmwareTag } : {}),
     enabled: enabled && isVmware && isScopeKnown,
   })
   const definition = useMemo(
@@ -166,8 +171,12 @@ export function useRecoveryGroupResourceInventory(
     enabled: enabled && definition !== null && isScopeKnown,
   })
   const vmwareData = useMemo(
-    () => vmwareQuery.data ? selectFn(vmwareQuery.data) : undefined,
-    [selectFn, vmwareQuery.data],
+    () => {
+      if (!vmwareQuery.data) return undefined
+      const tags = JSON.parse(vmwareTagsKey) as string[]
+      return selectFn(applyVmwareProviderTagScope(vmwareQuery.data, tags))
+    },
+    [selectFn, vmwareQuery.data, vmwareTagsKey],
   )
 
   if (isVmware) {
