@@ -26,7 +26,6 @@ import { VirtualMachineDetailPanel } from './VirtualMachineDetailPanel'
 import { VirtualMachineMetrics } from './VirtualMachineMetrics'
 import { VirtualMachinesTable, type TableDensity } from './VirtualMachinesTable'
 import { VirtualMachinesToolbar } from './VirtualMachinesToolbar'
-import { VmwareProviderFilterSummary } from './VmwareProviderFilterSummary'
 import type { VmwareProviderFilter } from '../../helpers/vmwareProviderFilter'
 import { resolveVmwareInitialFilters } from '../../helpers/resolveVmwareInitialFilters'
 import { readProviderFilterSnapshot } from '../../state/providerFilterSession'
@@ -274,14 +273,6 @@ export function VmwareResourcesPage(props: VmwareResourcesPageProps) {
       <ResourceInventoryShell
         metrics={metrics}
         inventoryTitle={t('pages.virtualMachines.inventory.title')}
-        inventoryDescription={resolvedProviderFilter.isFixed ? (
-          <VmwareProviderFilterSummary
-            filter={resolvedProviderFilter}
-            label={t('pages.virtualMachines.inventory.providerFilter')}
-            nameLabel={t('pages.virtualMachines.inventory.vmName')}
-            tagLabel={t('pages.virtualMachines.inventory.vmTag')}
-          />
-        ) : t('pages.virtualMachines.inventory.description')}
         tabs={tabs}
         notice={notice}
       >

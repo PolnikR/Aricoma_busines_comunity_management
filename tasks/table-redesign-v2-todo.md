@@ -817,6 +817,8 @@ Plán: fáza 6 v table-redesign-v2-plan.md. **Stav: prebieha inline podľa pokyn
 
 **Priebeh T40a (2026-11-03):** 4 nove kluce v EN/SK/CS pripravene pred UI konzumentmi. JSON parse/unikatnost/count interpolacia/help.close PASS; parent obsahoveassertions PASS, nezavislyreviewclean. T40b odstranenie stareho renderu zostava po T39.
 
+**Priebeh (2026-11-03):** T40a tri locale doplnene; T40b odstraneny obsolete import a ignored inventoryDescription. Parent fresh2subory/30testov PASS; focused ESLint a nezavislyreviewclean. Actual OR/metrics/lockedcontrols zachovane, summary iba v ResourceViewNavigation.
+
 ### T41: Browser matica a finálny audit
 
 **Popis:** Rozšíriť existujúcu resource CDP kontrolu o štyri sloty a podmienky. Zachovať obidve shared/regresné sady bez kopírovania celého QA transportu alebo použitia živých mutácií.
