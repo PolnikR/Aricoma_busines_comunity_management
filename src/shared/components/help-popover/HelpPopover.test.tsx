@@ -1,5 +1,6 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import type { ReactNode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { DetailView, DetailViewSection } from '@/shared/components/detail-view'
 import { HelpPopover } from './HelpPopover'
@@ -11,11 +12,11 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-function renderHelp(width?: 'default' | 'wide') {
+function renderHelp(width?: 'default' | 'wide', triggerContent?: ReactNode) {
   return render(
     <>
       <button type="button">Before</button>
-      <HelpPopover triggerLabel="Recovery group help" title="How a recovery group works" closeLabel="Close help" {...(width ? { width } : {})}>
+      <HelpPopover triggerLabel="Recovery group help" title="How a recovery group works" closeLabel="Close help" triggerContent={triggerContent} {...(width ? { width } : {})}>
         <p>Resources recovered together.</p>
       </HelpPopover>
       <button type="button">Outside</button>
@@ -60,6 +61,49 @@ describe('HelpPopover', () => {
     renderHelp()
     expect(trigger()).toHaveAttribute('aria-expanded', 'false')
     expect(trigger()).toHaveAttribute('aria-haspopup', 'dialog')
+    expect(panel()).not.toBeInTheDocument()
+  })
+
+  it.each(['+3', '+125'])('renders a custom count trigger (%s) with an accessible portaled dialog', (count) => {
+    const { container } = renderHelp(undefined, <span>{count}</span>)
+    expect(trigger()).toHaveTextContent(count)
+    expect(trigger()).toHaveAttribute('aria-expanded', 'false')
+    expect(trigger()).toHaveAttribute('aria-haspopup', 'dialog')
+
+    fireEvent.click(trigger())
+
+    const dialog = panel()
+    expect(dialog).toHaveTextContent('Resources recovered together.')
+    expect(container).not.toContainElement(dialog)
+    expect(trigger()).toHaveAttribute('aria-expanded', 'true')
+    expect(trigger()).toHaveAttribute('aria-controls', dialog?.id)
+  })
+
+  it('routes keyboard focus through a custom trigger and returns it on Escape', async () => {
+    const user = userEvent.setup()
+    renderHelp(undefined, '+3')
+    screen.getByRole('button', { name: 'Before' }).focus()
+
+    await user.tab()
+    expect(trigger()).toHaveTextContent('+3')
+    expect(panel()).toBeInTheDocument()
+    await user.tab()
+    expect(panel()).toHaveFocus()
+    await user.keyboard('{Escape}')
+
+    expect(panel()).not.toBeInTheDocument()
+    expect(trigger()).toHaveFocus()
+    expect(trigger()).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  it('opens a custom trigger on touch and closes on an outside pointer down', async () => {
+    const user = userEvent.setup()
+    renderHelp(undefined, '+3')
+    expect(trigger()).toHaveTextContent('+3')
+
+    await user.pointer([{ keys: '[TouchA>]', target: trigger() }, { keys: '[/TouchA]' }])
+    expect(panel()).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Outside' }))
     expect(panel()).not.toBeInTheDocument()
   })
 
@@ -359,6 +403,18 @@ describe('HelpPopover', () => {
       fireEvent.click(trigger())
       // right edge 792 would sit under the 15 px scrollbar: left = 785 - 8 - 300, not 800 - 8 - 300
       expect(panel()).toHaveStyle({ left: '477px' })
+    })
+
+    it('keeps a custom trigger panel within both usable width boundaries and available height', () => {
+      layout({ left: 760, top: 300 }, 785)
+      renderHelp(undefined, '+3')
+      expect(trigger()).toHaveTextContent('+3')
+      fireEvent.click(trigger())
+      expect(panel()).toHaveStyle({ left: '477px', top: '8px', maxHeight: '284px' })
+
+      triggerBox = { left: 0, top: 300 }
+      fireEvent.resize(window)
+      expect(panel()).toHaveStyle({ left: '8px', top: '8px', maxHeight: '284px' })
     })
 
     it.each(['panel', 'content'])('keeps its height constraint untouched when the %s scrolls', (target) => {

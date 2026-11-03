@@ -172,7 +172,8 @@ describe('useRecoveryGroupResourceInventory', () => {
     ['no scope', null, { providerId: 'vmware-1' }],
     ['a name prefix', { vmPrefix: ' TEST- ' }, { providerId: 'vmware-1', namePrefix: 'TEST-' }],
     ['a tag', { vmTags: [' WEB '] }, { providerId: 'vmware-1', tag: 'WEB' }],
-    ['a prefix and tags', { vmPrefix: ' TEST- ', vmTags: [' ', ' WEB ', 'DB'] }, { providerId: 'vmware-1', namePrefix: 'TEST-', tag: 'WEB' }],
+    ['a prefix and tags', { vmPrefix: ' TEST- ', vmTags: [' ', ' WEB ', 'DB'] }, { providerId: 'vmware-1', namePrefix: 'TEST-' }],
+    ['duplicate tags', { vmTags: [' WEB ', 'WEB', ' '] }, { providerId: 'vmware-1', tag: 'WEB' }],
   ] as const)('requests VMware inventory with the provider scope for %s on the canonical key', async (
     _,
     providerScope,
@@ -189,6 +190,52 @@ describe('useRecoveryGroupResourceInventory', () => {
     expect(fetchVmwareInventory).toHaveBeenCalledTimes(1)
     expect(fetchVmwareInventory).toHaveBeenCalledWith(expectedSearch)
     expect(queryClient.getQueryData(vmwareInventoryQuery(expectedSearch).queryKey)).toBeDefined()
+  })
+
+  it('uses all provider tags as OR for names and metadata while preserving the raw shared cache', async () => {
+    const queryClient = createQueryClient()
+    const queryKey = vmwareInventoryQuery({ providerId: 'vmware-1' }).queryKey
+    const wireInventory = parseWireResponse(VmsResponse, {
+      count: 6,
+      vms: [
+        { name: 'WEB-01', tags: ['WEB'], guest_os: 'Ubuntu' },
+        { name: 'DB-01', tags: ['DB'], guest_os: 'Debian' },
+        { name: 'BOTH-01', tags: ['WEB', 'DB'], guest_os: 'Windows' },
+        { name: 'OTHER-01', tags: ['OTHER'], guest_os: 'AIX' },
+        { name: 'UNTAGGED-01', tags: [], guest_os: 'SUSE' },
+        { name: 'LOWERCASE-01', tags: ['web'], guest_os: 'SUSE' },
+      ],
+    })
+    queryClient.setQueryData(queryKey, wireInventory)
+    const { result, rerender } = renderHook(
+      ({ tags }: { tags: string[] }) => useRecoveryGroupResourceInventory('vmware_virtual_machines', 'vmware-1', {
+        providerScope: { vmTags: tags },
+        vmwareNamePrefix: 'OTHER-',
+      }),
+      { wrapper: createWrapper(queryClient), initialProps: { tags: [' WEB ', 'DB', 'WEB', ' '] } },
+    )
+
+    await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
+    expect(result.current.data).toEqual({
+      resourceNames: ['WEB-01', 'DB-01', 'BOTH-01'],
+      vmMetadataByName: {
+        'WEB-01': { os: 'Ubuntu' },
+        'DB-01': { os: 'Debian' },
+        'BOTH-01': { os: 'Windows' },
+      },
+    })
+    const initialData = result.current.data
+
+    rerender({ tags: ['WEB', 'DB'] })
+
+    expect(result.current.data).toBe(initialData)
+
+    rerender({ tags: ['DB', 'OTHER'] })
+
+    expect(result.current.data?.resourceNames).toEqual(['DB-01', 'BOTH-01', 'OTHER-01'])
+    expect(Object.keys(result.current.data?.vmMetadataByName ?? {})).toEqual(['DB-01', 'BOTH-01', 'OTHER-01'])
+    expect(queryClient.getQueryData(queryKey)).toBe(wireInventory)
+    expect(fetchVmwareInventory).not.toHaveBeenCalled()
   })
 
   it.each([
@@ -232,6 +279,8 @@ describe('useRecoveryGroupResourceInventory', () => {
       ['a fixed prefix', { vmPrefix: 'TEST-' }, { providerId: 'vmware-1', namePrefix: 'TEST-' }],
       ['a fixed tag only', { vmPrefix: null, vmTags: ['WEB'] }, { providerId: 'vmware-1', tag: 'WEB' }],
       ['a fixed prefix and tag', { vmPrefix: 'TEST-', vmTags: ['WEB'] }, { providerId: 'vmware-1', namePrefix: 'TEST-', tag: 'WEB' }],
+      ['fixed multiple tags', { vmTags: ['WEB', 'DB'] }, { providerId: 'vmware-1' }],
+      ['a fixed prefix and multiple tags', { vmPrefix: 'TEST-', vmTags: ['WEB', 'DB'] }, { providerId: 'vmware-1', namePrefix: 'TEST-' }],
     ] as const)('never sends the user search for %s', async (_, providerScope, expectedSearch) => {
       const { result, rerender } = renderVmware(providerScope)
       await waitFor(() => { expect(result.current.isSuccess).toBe(true) }, { timeout: 1_000 })
@@ -303,7 +352,7 @@ describe('useRecoveryGroupResourceInventory', () => {
 
     it('keeps only partitions whose name starts with the trimmed prefix, metadata included', async () => {
       const queryClient = createQueryClient()
-      const { result } = renderPower({ vmPrefix: ' TEST- ' }, queryClient)
+      const { result } = renderPower({ vmPrefix: ' TEST- ', vmTags: ['WEB', 'DB'] }, queryClient)
 
       await waitFor(() => { expect(result.current.isSuccess).toBe(true) })
       expect(result.current.data?.resourceNames).toEqual(['TEST-AIX-01', 'TEST-AIX-02'])
@@ -312,6 +361,7 @@ describe('useRecoveryGroupResourceInventory', () => {
         'TEST-AIX-02': { os: 'AIX' },
       })
       expect(fetchPowerInventory).toHaveBeenCalledWith('power-1')
+      expect(fetchVmwareInventory).not.toHaveBeenCalled()
       expect(queryClient.getQueryData(powerInventoryQuery('power-1').queryKey)).toBeDefined()
     })
 

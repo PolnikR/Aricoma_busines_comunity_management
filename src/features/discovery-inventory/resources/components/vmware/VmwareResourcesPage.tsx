@@ -13,6 +13,7 @@ import {
   getServerSideTagFilter,
 } from '../../helpers/filterVirtualMachines'
 import { mapInventoryToVirtualMachines } from '../../helpers/mapInventoryToVirtualMachines'
+import { applyVmwareProviderTagScope } from '../../helpers/applyVmwareProviderTagScope'
 import { useVirtualMachineSearchParams } from '../../hooks/useVirtualMachineSearchParams'
 import type { VirtualMachineFilterOptions, VirtualMachineFilters, VirtualMachinePageSize } from '../../types/virtualMachineTypes'
 import { getProvidersByTypeAndRole } from '@/features/providers-connectors/providers/utils/providerFilters'
@@ -25,7 +26,6 @@ import { VirtualMachineDetailPanel } from './VirtualMachineDetailPanel'
 import { VirtualMachineMetrics } from './VirtualMachineMetrics'
 import { VirtualMachinesTable, type TableDensity } from './VirtualMachinesTable'
 import { VirtualMachinesToolbar } from './VirtualMachinesToolbar'
-import { VmwareProviderFilterSummary } from './VmwareProviderFilterSummary'
 import type { VmwareProviderFilter } from '../../helpers/vmwareProviderFilter'
 import { resolveVmwareInitialFilters } from '../../helpers/resolveVmwareInitialFilters'
 import { readProviderFilterSnapshot } from '../../state/providerFilterSession'
@@ -106,15 +106,16 @@ export function VmwareResourcesPage(props: VmwareResourcesPageProps) {
   const handleForceRefresh = () => { void forceRefresh().catch(() => undefined) }
 
   const allData = useMemo(
-    () => inventory ? mapInventoryToVirtualMachines(inventory) : null,
-    [inventory],
+    () => inventory ? mapInventoryToVirtualMachines(applyVmwareProviderTagScope(inventory, resolvedProviderFilter.filters.tags)) : null,
+    [inventory, resolvedProviderFilter.filters.tags],
   )
   const data = allData ? applyFiltersAndPagination(allData, query) : null
+  const isProviderScopeEmpty = isEmpty || (isSuccess && !isPlaceholderData && !isFetching && !isDebouncing && allData?.virtualMachines.length === 0)
 
   const backgroundProviderId = backgroundPrefetchProvider?.id
   const backgroundDeleted = useProviderInventoryDeleted(backgroundProviderId)
   const backgroundPrefix = backgroundPrefetchProvider?.vmPrefix ?? null
-  const backgroundTag = backgroundPrefetchProvider?.vmTags?.map(tag => tag.trim()).find(Boolean) ?? ''
+  const backgroundTags = backgroundPrefetchProvider?.vmTags
   const canPrefetch = role === 'source' && inventoryEnabled && !providersPending && !providersError
     && isSuccess && Boolean(inventory) && !isPlaceholderData && !isDebouncing && !isFetching && !isForceRefreshing
     && backgroundPrefetchProvider?.type === 'VMWARE' && backgroundPrefetchProvider.role !== 'target'
@@ -127,7 +128,7 @@ export function VmwareResourcesPage(props: VmwareResourcesPageProps) {
       if (disposed) return
       // Switching provider tabs clears URL filters; restore the destination's own scope.
       const filters = resolveVmwareInitialFilters({
-        id: backgroundProviderId, role: 'source', vmPrefix: backgroundPrefix, vmTags: backgroundTag ? [backgroundTag] : [],
+        id: backgroundProviderId, role: 'source', vmPrefix: backgroundPrefix, vmTags: backgroundTags ?? [],
       }, new URLSearchParams(), readProviderFilterSnapshot({ role: 'source', resourceTab: 'vmware', providerId: backgroundProviderId }))
       const tag = getServerSideTagFilter(filters.tags)
       const options = vmwareInventoryQuery({ providerId: backgroundProviderId, namePrefix: filters.search, ...(tag ? { tag } : {}) })
@@ -142,7 +143,7 @@ export function VmwareResourcesPage(props: VmwareResourcesPageProps) {
       if (idle) window.cancelIdleCallback(id)
       else window.clearTimeout(id)
     }
-  }, [queryClient, canPrefetch, backgroundProviderId, backgroundPrefix, backgroundTag, backgroundDeleted])
+  }, [queryClient, canPrefetch, backgroundProviderId, backgroundPrefix, backgroundTags, backgroundDeleted])
 
   useEffect(() => {
     if (!isFetching && data && data.page !== query.page) updateQuery({ page: data.page })
@@ -245,7 +246,7 @@ export function VmwareResourcesPage(props: VmwareResourcesPageProps) {
               setDrawerOpen(true)
             }}
           />
-        ) : isEmpty ? (
+        ) : isProviderScopeEmpty ? (
           <div className="p-4">
             <EmptyState
               title={t('pages.virtualMachines.empty.title')}
@@ -272,14 +273,6 @@ export function VmwareResourcesPage(props: VmwareResourcesPageProps) {
       <ResourceInventoryShell
         metrics={metrics}
         inventoryTitle={t('pages.virtualMachines.inventory.title')}
-        inventoryDescription={resolvedProviderFilter.isFixed ? (
-          <VmwareProviderFilterSummary
-            filter={resolvedProviderFilter}
-            label={t('pages.virtualMachines.inventory.providerFilter')}
-            nameLabel={t('pages.virtualMachines.inventory.vmName')}
-            tagLabel={t('pages.virtualMachines.inventory.vmTag')}
-          />
-        ) : t('pages.virtualMachines.inventory.description')}
         tabs={tabs}
         notice={notice}
       >

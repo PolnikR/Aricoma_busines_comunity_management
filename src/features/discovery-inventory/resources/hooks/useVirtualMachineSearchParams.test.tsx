@@ -10,7 +10,7 @@ const sourceProvider: VirtualMachineProviderScope = {
   id: 'provider-1',
   role: 'source',
   vmPrefix: ' provider-prefix- ',
-  vmTags: ['provider-tag', 'ignored-tag'],
+  vmTags: [' provider-tag ', '', 'second-tag', 'provider-tag'],
 }
 
 const editableProvider: VirtualMachineProviderScope = {
@@ -108,9 +108,9 @@ describe('useVirtualMachineSearchParams', () => {
     const observations: { isInitialized: boolean; query: string }[] = []
     render(<VirtualMachineSearchParamsState provider={sourceProvider} observations={observations} />, { wrapper: wrapperFor() })
 
-    expect(observations[0]).toEqual({ isInitialized: true, query: 'provider-prefix-:provider-tag' })
+    expect(observations[0]).toEqual({ isInitialized: true, query: 'provider-prefix-:provider-tag,second-tag' })
     expect(screen.getByTestId('vmware-initialized')).toHaveTextContent('true')
-    expect(screen.getByTestId('vmware-query')).toHaveTextContent('provider-prefix-:provider-tag:1')
+    expect(screen.getByTestId('vmware-query')).toHaveTextContent('provider-prefix-:provider-tag,second-tag:1')
     expect(screen.getByTestId('vmware-location')).toBeEmptyDOMElement()
   })
 
@@ -145,17 +145,17 @@ describe('useVirtualMachineSearchParams', () => {
       { wrapper: wrapperFor('/?search=url-&powerState=poweredOff&tags=url-tag&untagged=true') },
     )
 
-    await waitFor(() => { expect(screen.getByTestId('vmware-query')).toHaveTextContent('provider-prefix-:provider-tag:1') })
+    await waitFor(() => { expect(screen.getByTestId('vmware-query')).toHaveTextContent('provider-prefix-:provider-tag,second-tag:1') })
     await waitFor(() => {
       expect(screen.getByTestId('vmware-location')).not.toHaveTextContent('search=url-')
       expect(screen.getByTestId('vmware-location')).not.toHaveTextContent('tags=url-tag')
     })
 
     fireEvent.click(screen.getByRole('button', { name: 'Use custom filters' }))
-    expect(screen.getByTestId('vmware-query')).toHaveTextContent('provider-prefix-:provider-tag:1')
+    expect(screen.getByTestId('vmware-query')).toHaveTextContent('provider-prefix-:provider-tag,second-tag:1')
 
     fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }))
-    expect(screen.getByTestId('vmware-query')).toHaveTextContent('provider-prefix-:provider-tag:1')
+    expect(screen.getByTestId('vmware-query')).toHaveTextContent('provider-prefix-:provider-tag,second-tag:1')
   })
 
   it('restores each provider snapshot when switching away and remounting', async () => {

@@ -12,6 +12,7 @@ interface SettingsSectionCardProps {
   className?: string
   contentClassName?: string
   showHeader?: boolean
+  frame?: 'standalone' | 'embedded'
 }
 
 export function SettingsSectionCard({
@@ -24,6 +25,7 @@ export function SettingsSectionCard({
   className,
   contentClassName,
   showHeader = true,
+  frame = 'standalone',
 }: SettingsSectionCardProps) {
   const headingId = useId()
 
@@ -31,7 +33,7 @@ export function SettingsSectionCard({
     <section
       aria-labelledby={showHeader ? headingId : undefined}
       className={cn(
-        'overflow-hidden rounded-[20px] border border-border bg-surface shadow-[0_14px_35px_-28px_rgba(37,72,112,0.45)]',
+        frame === 'standalone' && 'overflow-hidden rounded-[20px] border border-border bg-surface shadow-[0_14px_35px_-28px_rgba(37,72,112,0.45)]',
         className,
       )}
     >

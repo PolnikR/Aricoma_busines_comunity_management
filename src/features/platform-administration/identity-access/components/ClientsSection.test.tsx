@@ -88,10 +88,10 @@ describe('ClientsSection', () => {
     render(<ClientsSection />)
 
     expect(useGetIdentityClients).toHaveBeenCalledWith()
-    expect(screen.getAllByRole('columnheader').map(header => header.textContent)).toEqual(['Client', 'Protocol', 'Type', 'Status'])
+    expect(screen.getAllByRole('columnheader').map(header => header.textContent)).toEqual(['Display name', 'Protocol', 'Type', 'Status'])
     const backendRow = within(screen.getByRole('row', { name: 'Open client abco-be' }))
     expect(backendRow.getByText('ABCO Backend')).toBeInTheDocument()
-    expect(backendRow.getByText('abco-be')).toBeInTheDocument()
+    expect(backendRow.queryByText('abco-be')).not.toBeInTheDocument()
     expect(backendRow.getByText('openid-connect')).toBeInTheDocument()
     expect(backendRow.getByText('Confidential')).toBeInTheDocument()
     expect(backendRow.getByText('Enabled')).toBeInTheDocument()
@@ -156,7 +156,7 @@ describe('ClientsSection', () => {
     const { container } = render(<ClientsSection />)
 
     expect(screen.getByRole('searchbox', { name: 'Search clients' })).toBeInTheDocument()
-    expect(screen.getByRole('columnheader', { name: 'Client' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Display name' })).toBeInTheDocument()
     expect(container.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0)
     expect(screen.queryByText('No clients found')).not.toBeInTheDocument()
   })

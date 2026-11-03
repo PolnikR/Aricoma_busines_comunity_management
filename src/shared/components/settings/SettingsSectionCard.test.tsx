@@ -3,9 +3,10 @@ import { describe, expect, it } from 'vitest'
 import { SettingsSectionCard } from './SettingsSectionCard'
 
 describe('SettingsSectionCard', () => {
-  it('renders a labelled section with its icon, description, action, and content', () => {
+  it.each(['standalone', 'embedded'] as const)('renders a labelled section with its icon, description, action, and content (%s)', (frame) => {
     render(
       <SettingsSectionCard
+        frame={frame}
         icon={<span data-testid="section-icon">icon</span>}
         title="Discovery schedule"
         description="Choose when discovery should run."

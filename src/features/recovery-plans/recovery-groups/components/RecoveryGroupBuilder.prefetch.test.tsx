@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { STANDARD_QUERY_OPTIONS } from '@/shared/query/cachePolicy'
 import { invalidateProviderMutation } from '@/shared/query/providerMutationInvalidation'
@@ -7,6 +7,7 @@ import { getGetProvidersQueryKey } from '@/generated/query/providers/providers.g
 import { emptyPowerResponse, emptyVolumesResponse } from '@/features/discovery-inventory/resources/test/discoveryFetch'
 import { vmwareInventoryQuery } from '@/features/discovery-inventory/resources/model/inventoryQueries'
 import type { RecoveryGroup } from '../model/recoveryGroupTypes'
+import { useRecoveryGroupResourceInventory } from '../hooks/useRecoveryGroupResourceInventory'
 import { RecoveryGroupBuilder } from './RecoveryGroupBuilder'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
@@ -39,6 +40,52 @@ beforeEach(() => {
 afterEach(() => { cleanup(); client.clear(); vi.unstubAllGlobals() })
 
 describe('RecoveryGroupBuilder inventory prefetch', () => {
+  it('prefetches all tag candidates on the shared prefix key and leaves raw cache intact for Resources', async () => {
+    const providerScope = { vmPrefix: ' APP ', vmTags: [' prod ', '', 'dev', 'prod'] }
+    client.setQueryData(getGetProvidersQueryKey({ role: 'all' }), {
+      providers: providers.map(provider => provider.id === 'compute' ? { ...provider, ...providerScope } : provider),
+    })
+    const inventory = { count: 3, vms: [
+      { name: 'APP-01', tags: ['prod'] },
+      { name: 'APP-02', tags: ['dev'] },
+      { name: 'APP-03', tags: ['other'] },
+    ] }
+    fetchMock.mockResolvedValue(Response.json(inventory))
+    show()
+    fireEvent.click(screen.getByRole('button', { name: 'Provider' }))
+    await waitFor(() => { expect(client.isFetching()).toBe(0) })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(fetchMock).toHaveBeenCalledWith('/api/vms/search?provider_id=compute', expect.objectContaining({ body: '{"name_prefix":"APP"}' }))
+
+    const queryKey = vmwareInventoryQuery({ providerId: 'compute', namePrefix: 'APP' }).queryKey
+    expect(client.getQueryData(queryKey)).toMatchObject(inventory)
+    const { result, rerender } = renderHook(
+      () => useRecoveryGroupResourceInventory('vmware_virtual_machines', 'compute', { providerScope: { ...providerScope, vmTags: [...providerScope.vmTags] } }),
+      { wrapper: ({ children }) => <QueryClientProvider client={client}>{children}</QueryClientProvider> },
+    )
+    await waitFor(() => { expect(result.current.data?.resourceNames).toEqual(['APP-01', 'APP-02']) })
+    rerender()
+    fireEvent.click(screen.getByRole('button', { name: 'Details' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Provider' }))
+    await act(async () => { await Promise.resolve() })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(client.getQueryData(queryKey)).toMatchObject(inventory)
+    expect(client.getQueryData(vmwareInventoryQuery({ providerId: 'compute', namePrefix: 'APP', tag: 'prod' }).queryKey)).toBeUndefined()
+  })
+
+  it.each([
+    { vmTags: [], body: '{"name_prefix":"APP"}' },
+    { vmTags: [' ', ' prod ', 'prod'], body: '{"tag":"prod","name_prefix":"APP"}' },
+  ])('preserves prefix-only and normalized single-tag prefetch for $vmTags', async ({ vmTags, body }) => {
+    client.setQueryData(getGetProvidersQueryKey({ role: 'all' }), {
+      providers: providers.map(provider => provider.id === 'compute' ? { ...provider, vmTags } : provider),
+    })
+    show()
+    fireEvent.click(screen.getByRole('button', { name: 'Provider' }))
+    await waitFor(() => { expect(fetchMock).toHaveBeenCalledTimes(1) })
+    expect(fetchMock).toHaveBeenCalledWith('/api/vms/search?provider_id=compute', expect.objectContaining({ body }))
+  })
+
   it('discards a pending Provider-step response after delete/recreate without replacing the new prefetch', async () => {
     let finishOld!: (response: Response) => void
     const pending = new Promise<Response>(resolve => { finishOld = resolve })

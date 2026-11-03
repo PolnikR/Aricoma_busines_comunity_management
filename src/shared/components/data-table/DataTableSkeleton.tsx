@@ -1,5 +1,6 @@
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/components/table/Table'
 import { cn } from '@/shared/utils/cn'
+import { useInventoryFrame } from '../inventory-shell/InventoryCompositionContext'
 
 interface DataTableSkeletonProps {
   columnCount: number
@@ -9,6 +10,7 @@ interface DataTableSkeletonProps {
   showPagination?: boolean
   layout?: 'scroll' | 'fit'
   className?: string
+  frame?: 'standalone' | 'embedded'
 }
 
 const widths = ['w-24', 'w-16', 'w-20', 'w-28', 'w-14']
@@ -25,13 +27,20 @@ export function DataTableSkeleton({
   showPagination = true,
   layout = 'scroll',
   className,
+  frame: frameOverride,
 }: DataTableSkeletonProps) {
+  const frame = useInventoryFrame(frameOverride)
   const columns = Array.from({ length: Math.max(1, columnCount) })
   const rows = Array.from({ length: Math.max(1, rowCount) })
 
   return (
     <section
-      className={cn('flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-sm', className)}
+      className={cn(
+        'flex min-w-0 flex-col',
+        frame === 'standalone' && 'overflow-hidden rounded-2xl border border-border bg-surface shadow-sm',
+        frame === 'embedded' && '[&>*]:bg-transparent',
+        className,
+      )}
       role="status"
       aria-busy="true"
       aria-label={ariaLabel}

@@ -6,6 +6,9 @@ import { VmwareResourcesPage } from './VmwareResourcesPage'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import type { VirtualMachine } from '../../types/virtualMachineTypes'
 import { STANDARD_QUERY_OPTIONS } from '@/shared/query/cachePolicy'
+import type { DiscoveryInventory } from '../../model/discoveryTypes'
+import { resolveVmwareProviderFilter } from '../../helpers/vmwareProviderFilter'
+import { resolveVmwareInitialFilters, type VirtualMachineProviderScope } from '../../helpers/resolveVmwareInitialFilters'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
@@ -20,7 +23,8 @@ const vm: VirtualMachine = {
   diskCount: 1, diskCapacityGb: 20, vdisks: [], snapshotCount: 0, toolsStatus: 'ok', tags: [],
 }
 
-let inventory: { reportedCount: number; virtualMachines: VirtualMachine[] }
+const discoveredVm = { ...vm, primaryDatastore: vm.datastore, disks: [] }
+let inventory: DiscoveryInventory
 let inventoryBackgroundFetching = false
 let inventoryError = false
 let inventoryReadiness = { isSuccess: true, isPlaceholderData: false, isDebouncing: false }
@@ -37,8 +41,9 @@ function renderWithQueryClient(ui: ReactNode) {
 }
 
 vi.mock('../../hooks/useVirtualMachineSearchParams', () => ({
-  useVirtualMachineSearchParams: () => ({
-    query: { page: 1, pageSize: 10, search: '', powerState: '', connectionState: '', cluster: '', tags: [], untagged: false },
+  useVirtualMachineSearchParams: (scope: VirtualMachineProviderScope) => ({
+    query: { page: 1, pageSize: 10, ...resolveVmwareInitialFilters(scope, new URLSearchParams()) },
+    providerFilter: resolveVmwareProviderFilter(scope),
     updateQuery: vi.fn(), updateFilters: vi.fn(), isInitialized: true,
   }),
 }))
@@ -63,18 +68,6 @@ vi.mock('@/features/discovery-inventory/resources/hooks/useVmwareResourceInvento
   }),
 }))
 vi.mock('../../hooks/useVmwareTags', () => ({ useTags: () => ({ data: [] }) }))
-vi.mock('../../helpers/mapInventoryToVirtualMachines', () => ({
-  mapInventoryToVirtualMachines: () => ({
-    virtualMachines: inventory.virtualMachines,
-    items: inventory.virtualMachines,
-    total: inventory.virtualMachines.length,
-    page: 1,
-    pageSize: 10,
-    pageCount: 1,
-    metrics: { total: inventory.virtualMachines.length, poweredOn: 0, clusters: 0, totalCpu: 0, totalMemoryGb: 0 },
-    filterOptions: { clusters: [], powerStates: [], connectionStates: [] },
-  }),
-}))
 vi.mock('./VirtualMachinesTable', () => ({
   VirtualMachinesTable: ({ virtualMachines, onSelect, isLoading }: { virtualMachines: VirtualMachine[]; onSelect: (vm: VirtualMachine) => void; isLoading?: boolean }) => (
     <div data-testid="vm-table" data-loading={String(isLoading ?? false)}>
@@ -96,7 +89,7 @@ const props = {
 
 beforeEach(() => {
   inventoryReadiness = { isSuccess: true, isPlaceholderData: false, isDebouncing: false }
-  inventory = { reportedCount: 1, virtualMachines: [vm] }
+  inventory = { reportedCount: 1, virtualMachines: [discoveredVm] }
   inventoryBackgroundFetching = false
   inventoryError = false
   forceRefreshError = null
@@ -111,6 +104,37 @@ afterEach(() => {
 })
 
 describe('VmwareResourcesPage', () => {
+  it('shows an empty inventory when the response has no provider tag matches', () => {
+    renderWithQueryClient(<VmwareResourcesPage {...props} providers={[{ ...provider, vmTags: ['prod', 'dr'] }]} />)
+
+    expect(screen.getByText('pages.virtualMachines.empty.title')).toBeInTheDocument()
+    expect(screen.queryByTestId('vm-table')).not.toBeInTheDocument()
+  })
+
+  it('scopes metrics to every provider OR match before pagination and reapplies changed tags to cached inventory', () => {
+    const scopedProvider = { ...provider, vmPrefix: 'VM', vmTags: ['prod', 'dr'] }
+    inventory = {
+      reportedCount: 13,
+      virtualMachines: [
+        ...Array.from({ length: 11 }, (_, index) => ({ ...discoveredVm, id: `dr-${String(index)}`, tags: ['dr'] })),
+        { ...discoveredVm, id: 'both', tags: ['prod', 'dr'] },
+        { ...discoveredVm, id: 'excluded', tags: ['other'], memoryGb: 1000 },
+      ],
+    }
+    const view = renderWithQueryClient(<VmwareResourcesPage {...props} providers={[scopedProvider]} />)
+
+    expect(screen.getByText('48 GB')).toBeInTheDocument()
+    expect(screen.getByTestId('vm-table').querySelectorAll('button')).toHaveLength(10)
+    expect(screen.queryByRole('button', { name: 'Select excluded' })).not.toBeInTheDocument()
+
+    view.rerender(<VmwareResourcesPage {...props} providers={[{ ...scopedProvider, vmTags: ['prod', 'other'] }]} />)
+
+    expect(screen.getByRole('button', { name: 'Select both' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Select excluded' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Select dr-0' })).not.toBeInTheDocument()
+    expect(screen.getByText('1,004 GB')).toBeInTheDocument()
+  })
+
   it('passes background fetching to the table without replacing the inventory shell', () => {
     inventoryBackgroundFetching = true
 

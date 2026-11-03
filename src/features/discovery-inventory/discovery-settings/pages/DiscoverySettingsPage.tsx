@@ -1,3 +1,4 @@
+import { InventoryViewportFrame } from '@/shared/components/page/InventoryViewportFrame'
 import { useState } from 'react'
 import { resolveUserFacingErrorMessage } from '@/shared/api/apiErrorMessage'
 import { Alert } from '@/shared/components/alert/Alert'
@@ -76,7 +77,7 @@ export function DiscoverySettingsPage() {
       ariaLabel={t('pages.discoverySettings.tabs.ariaLabel')}
       indicator="inset"
       compact
-      className="w-full shrink-0 border-b-0 bg-surface px-0 sm:w-auto"
+      className="w-full shrink-0 sm:w-auto"
     />
   )
 
@@ -158,7 +159,7 @@ export function DiscoverySettingsPage() {
   )
 
   return (
-    <div className="flex min-h-full flex-col lg:h-full lg:min-h-0 lg:overflow-hidden">
+    <InventoryViewportFrame>
       <PageHeader
         title={t('pages.discoverySettings.title')}
         description={t('pages.discoverySettings.description')}
@@ -173,6 +174,7 @@ export function DiscoverySettingsPage() {
         {tab === 'configuration' ? (
           <div role="tabpanel" aria-label={t('pages.discoverySettings.tabs.configuration')}>
             <SettingsSectionCard
+              frame="embedded"
               icon={<SettingsIcon className="size-5" />}
               title={t('pages.discoverySettings.cache.title')}
               description={t('pages.discoverySettings.cache.description')}
@@ -373,6 +375,6 @@ export function DiscoverySettingsPage() {
         ) : null}
         </div>
       </InventoryShell>
-    </div>
+    </InventoryViewportFrame>
   )
 }

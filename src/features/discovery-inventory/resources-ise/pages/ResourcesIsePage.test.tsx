@@ -217,6 +217,95 @@ beforeEach(() => {
 })
 
 describe('ResourcesIsePage', () => {
+  it.each(['loading', 'error', 'cached refresh'] as const)('updates the target provider scope during %s without changing the active query', (state) => {
+    window.innerWidth = 1440
+    useRealVmwareToolbar = true
+    const tags = ['Production', 'Managed', 'Recovery', 'Critical', 'Europe']
+    const nextProvider: ProviderRecord = {
+      ...vmwareTargetProvider, id: 'vmware-target-02', name: 'VMware 02', credentialStatus: 'missing',
+      vmPrefix: ' NEXT-* ', vmTags: [...tags, ' Production ', ''],
+    }
+    providersQuery = {
+      ...providersQuery,
+      data: [
+        { ...vmwareTargetProvider, vmTags: tags },
+        nextProvider,
+        { ...vmwareTargetProvider, id: 'source-01', name: 'Source', role: 'source', vmPrefix: 'WRONG-ROLE-' },
+      ],
+    }
+    virtualMachineQuery = { ...virtualMachineQuery, search: 'raw-url-prefix', tags: ['raw-url-tag'] }
+    selectedProviderId = vmwareTargetProvider.id
+    const view = render(<ResourcesIsePage />)
+    fireEvent.click(screen.getByRole('button', { name: 'comfortable' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Show all 5 provider tags' }))
+    expect(screen.getByRole('dialog', { name: 'Provider tags (5)' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('tab', { name: /^VMware VMs.*VMware 02$/ }))
+    expect(setResourceSource).toHaveBeenLastCalledWith({ resourceTab: 'vmware', providerId: 'vmware-target-02' })
+    selectedProviderId = 'vmware-target-02'
+    inventoryQuery = {
+      ...inventoryQuery,
+      ...(state === 'loading' ? { data: undefined, isInitialLoading: true, isEmpty: false } : {}),
+      ...(state === 'error' ? { data: undefined, error: new Error('offline'), isError: true } : {}),
+      ...(state === 'cached refresh' ? { isFetching: true, isBackgroundFetching: true } : {}),
+    }
+    view.rerender(<ResourcesIsePage />)
+
+    const summary = screen.getByRole('group', { name: 'Provider filter' })
+    expect(screen.getAllByRole('group', { name: 'Provider filter' })).toHaveLength(1)
+    expect(summary).toHaveAttribute('data-provider-scope', 'vmware-target-02')
+    expect(within(summary).getByRole('region', { name: 'Name prefix' })).toHaveTextContent('NEXT-*')
+    expect(summary).not.toHaveTextContent('TARGET-')
+    expect(summary).not.toHaveTextContent('WRONG-ROLE-')
+    expect(summary).not.toHaveTextContent('raw-url-prefix')
+    expect(summary).not.toHaveTextContent('Any')
+    expect(screen.getByRole('region', { name: 'Inventory records' })).toContainElement(summary)
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: /Source/ })).not.toBeInTheDocument()
+    const showTags = screen.getByRole('button', { name: 'Show all 5 provider tags' })
+    expect(showTags).toHaveTextContent('+3')
+    fireEvent.click(showTags)
+    expect(within(screen.getByRole('dialog', { name: 'Provider tags (5)' })).getAllByRole('listitem').map(item => item.textContent)).toEqual(tags)
+    expect(vmwareResourceInventorySpy).toHaveBeenLastCalledWith({
+      providerId: 'vmware-target-02', namePrefix: 'raw-url-prefix', tag: 'raw-url-tag', enabled: true,
+    })
+    expect(updateFilters).not.toHaveBeenCalled()
+    expect(updateQuery).not.toHaveBeenCalled()
+    if (state === 'loading') {
+      inventoryQuery = { ...inventoryQuery, data: { reportedCount: 0, virtualMachines: [] }, isInitialLoading: false }
+      view.rerender(<ResourcesIsePage />)
+    }
+    expect(screen.getByRole('button', { name: 'comfortable' })).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('leaves the target scope blank when VMware has no configured conditions', () => {
+    providersQuery = { ...providersQuery, data: [{ ...vmwareTargetProvider, vmPrefix: ' ', vmTags: ['', ' '] }] }
+    render(<ResourcesIsePage />)
+    expect(screen.getByRole('tab', { name: 'VMware VMs' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.queryByRole('group', { name: 'Provider filter' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Show all .* provider tags/ })).not.toBeInTheDocument()
+  })
+
+  it.each([
+    { tab: 'flashsystem' as const, type: 'FLASHCOPY' as const, label: 'FlashSystem Volumes' },
+    { tab: 'ibm-power' as const, type: 'IBM_POWER' as const, label: 'IBM Power Partitions' },
+  ])('clears VMware scope when the target switches to $tab', ({ tab, type, label }) => {
+    const otherProvider: ProviderRecord = { ...flashTargetProvider, type, vmPrefix: 'FAKE-', vmTags: ['fake-tag'] }
+    providersQuery = { ...providersQuery, data: [vmwareTargetProvider, otherProvider] }
+    const view = render(<MemoryRouter><ResourcesIsePage /></MemoryRouter>)
+    expect(screen.getByRole('group', { name: 'Provider filter' })).toHaveTextContent('TARGET-')
+
+    fireEvent.click(screen.getByRole('tab', { name: label }))
+    expect(setResourceSource).toHaveBeenLastCalledWith({ resourceTab: tab, providerId: otherProvider.id })
+    resourceTab = tab
+    selectedProviderId = otherProvider.id
+    view.rerender(<MemoryRouter><ResourcesIsePage /></MemoryRouter>)
+
+    expect(screen.getByRole('tab', { name: label })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.queryByRole('group', { name: 'Provider filter' })).not.toBeInTheDocument()
+    expect(screen.queryByText('FAKE-')).not.toBeInTheDocument()
+  })
+
   it('keeps a configured tag missing from the target tags endpoint selected for canonical tag inventory', async () => {
     useRealVmwareResourceInventory = true
     useRealVirtualMachineSearchParams = true

@@ -23,6 +23,7 @@ describe('CleanRoomPoliciesPage', () => {
     render(<MemoryRouter><CleanRoomPoliciesPage /></MemoryRouter>)
     expect(screen.getByRole('tab', { name: 'Clean Room Policies' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByText('Clean room policy catalogue')).toBeInTheDocument()
+    expect(screen.getByText('Manage policies that govern snapshots and application recovery. Manage target conflict handling rules used during isolated recovery.')).toBeInTheDocument()
   })
 
   it('opens create and refreshes from the shared toolbar', async () => {

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import { InventoryShell } from '@/shared/components/inventory-shell/InventoryShell'
+import { ResourceInventoryShell } from './ResourceInventoryShell'
 import { ResourceInventoryPanel } from './ResourceInventoryPanel'
 
 describe('ResourceInventoryPanel', () => {
@@ -64,10 +64,8 @@ describe('ResourceInventoryPanel', () => {
       'grid',
       'grid-rows-[auto_minmax(0,1fr)_auto]',
       'min-h-0',
-      'overflow-hidden',
-      'rounded-[20px]',
     )
-    expect(panel).not.toHaveClass('rounded-2xl')
+    expect(panel).not.toHaveClass('border', 'shadow-sm', 'overflow-hidden')
     const dataRegion = panel.querySelector('.overflow-y-auto')
     expect(dataRegion).toHaveClass('custom-scrollbar', 'min-h-0', 'overflow-y-auto')
     expect(dataRegion).toContainElement(screen.getByText('Inventory rows'))
@@ -77,7 +75,7 @@ describe('ResourceInventoryPanel', () => {
 
   it('keeps metrics and notices outside the primary inventory surface', () => {
     render(
-      <InventoryShell
+      <ResourceInventoryShell
         metrics={<div>Resource metrics</div>}
         notice={<div>Resource notice</div>}
         inventoryTitle="Resource inventory"
@@ -88,7 +86,7 @@ describe('ResourceInventoryPanel', () => {
         >
           <div>Inventory rows</div>
         </ResourceInventoryPanel>
-      </InventoryShell>,
+      </ResourceInventoryShell>,
     )
 
     const surface = screen.getByRole('region', { name: 'Resource inventory' })

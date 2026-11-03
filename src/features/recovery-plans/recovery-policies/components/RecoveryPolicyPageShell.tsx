@@ -1,3 +1,4 @@
+import { InventoryViewportFrame } from '@/shared/components/page/InventoryViewportFrame'
 import type { ReactNode } from 'react'
 import { InventoryShell } from '@/shared/components/inventory-shell/InventoryShell'
 import { Tabs } from '@/shared/components/tabs/Tabs'
@@ -35,7 +36,7 @@ export function RecoveryPolicyPageShell({
   children,
 }: RecoveryPolicyPageShellProps) {
   return (
-    <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
+    <InventoryViewportFrame>
       <TableToolbar
         title={title}
         description={description}
@@ -55,12 +56,12 @@ export function RecoveryPolicyPageShell({
             ariaLabel={tabsAriaLabel}
             indicator="inset"
             compact
-            className="w-full shrink-0 border-b-0 bg-surface px-0 sm:w-auto"
+            className="w-full shrink-0 sm:w-auto"
           />
         )}
       >
         {children}
       </InventoryShell>
-    </div>
+    </InventoryViewportFrame>
   )
 }

@@ -8,9 +8,12 @@ const saved = {
 }
 
 describe('resolveVmwareInitialFilters', () => {
-  it('enforces fixed scope ahead of URL and saved filters', () => {
-    expect(resolveVmwareInitialFilters({ id: 'vm', vmPrefix: ' fixed ', vmTags: ['', ' prod '] }, new URLSearchParams('search=url'), saved))
-      .toEqual({ search: 'fixed', tags: ['prod'], powerState: '', connectionState: '', cluster: '', untagged: false })
+  it.each(['source', 'target'] as const)('enforces the entire fixed %s scope ahead of URL and saved filters', (role) => {
+    expect(resolveVmwareInitialFilters(
+      { id: 'vm', role, vmPrefix: ' fixed ', vmTags: ['', ' prod ', ' db ', 'prod'] },
+      new URLSearchParams(`search=url&tags=url-tag&untagged=true&vmwareActiveProvider=${role}:vm`),
+      saved,
+    )).toEqual({ search: 'fixed', tags: ['prod', 'db'], powerState: '', connectionState: '', cluster: '', untagged: false })
   })
 
   it('restores the supplied snapshot on a bare target URL without narrowing multiple tags', () => {

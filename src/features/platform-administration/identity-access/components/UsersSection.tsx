@@ -75,14 +75,10 @@ export function UsersSection() {
     {
       id: 'user',
       header: t('identity.users.columns.user'),
-      cell: user => (
-        <>
-          <span className="block font-semibold text-text-primary">{user.user}</span>
-          {user.email ? <span className="mt-0.5 block text-[11px] text-text-subtle">{user.email}</span> : null}
-        </>
-      ),
+      cell: user => <span className="font-semibold text-text-primary">{user.user}</span>,
     },
     { id: 'username', header: t('identity.users.columns.username'), cell: user => user.username },
+    { id: 'email', header: t('identity.users.fields.email'), cell: user => (user.email ?? '') || '—' },
     { id: 'roles', header: t('identity.users.columns.roles'), cell: user => (user.roles.length > 0 ? String(user.roles.length) : '—') },
     { id: 'status', header: t('identity.users.columns.status'), cell: user => <UserStatusBadge status={user.status} /> },
     { id: 'activeSessionStart', header: t('identity.users.columns.activeSessionStart'), cell: user => formatDateTime(user.activeSessionStart, { language }) },

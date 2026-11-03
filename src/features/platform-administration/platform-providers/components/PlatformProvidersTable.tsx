@@ -49,12 +49,7 @@ function getColumns(
     {
       id: 'name',
       header: t('tables.provider.name'),
-      cell: provider => (
-        <>
-          <span className="block font-semibold text-text-primary">{provider.name}</span>
-          <span className="mt-0.5 block font-mono text-[11px] text-text-subtle">{provider.id}</span>
-        </>
-      ),
+      cell: provider => <span className="block max-w-64 truncate font-semibold text-text-primary" title={provider.name}>{provider.name}</span>,
     },
     {
       id: 'description',
@@ -74,6 +69,11 @@ function getColumns(
           {provider.url ?? '-'}
         </span>
       ),
+    },
+    {
+      id: 'credential',
+      header: t('tables.provider.credential'),
+      cell: provider => <CredentialStatusBadge status={provider.credentialStatus} />,
     },
     {
       id: 'json',

@@ -1,3 +1,4 @@
+import { InventoryViewportFrame } from '@/shared/components/page/InventoryViewportFrame'
 import { useState } from 'react'
 import { usePostDeleteRefresh } from '../../hooks/usePostDeleteRefresh'
 import { Button } from '@/shared/components/button/Button'
@@ -18,7 +19,7 @@ export function PolicySetsPage() {
   const postDelete = usePostDeleteRefresh(() => refetch({ cancelRefetch: false, throwOnError: false }))
 
   return (
-    <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
+    <InventoryViewportFrame>
       <TableToolbar
         title={t('pages.policySets.title')}
         description={t('pages.policySets.description')}
@@ -52,6 +53,6 @@ export function PolicySetsPage() {
         onClose={() => { setIsCreateModalOpen(false) }}
         existingPolicySets={policySets}
       />
-    </div>
+    </InventoryViewportFrame>
   )
 }

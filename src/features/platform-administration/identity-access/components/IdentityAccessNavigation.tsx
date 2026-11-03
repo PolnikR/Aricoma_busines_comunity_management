@@ -32,7 +32,7 @@ export function IdentityAccessNavigation({
         ariaLabel={t('identity.navigation.sections.ariaLabel', { group: activeGroupLabel })}
         indicator="inset"
         compact
-        className="w-full shrink-0 border-b-0 bg-surface px-0 sm:w-auto"
+        className="w-full shrink-0 sm:w-auto"
         scrollControls={{
           previousLabel: t('identity.navigation.scroll.previous', { group: activeGroupLabel }),
           nextLabel: t('identity.navigation.scroll.next', { group: activeGroupLabel }),

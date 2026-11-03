@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { applyFiltersAndPagination, getServerSideTagFilter } from './filterVirtualMachines'
+import { resolveVmwareProviderFilter } from './vmwareProviderFilter'
 import type { AllVirtualMachinesData } from './mapInventoryToVirtualMachines'
 import type { VirtualMachine, VirtualMachinesQuery } from '../types/virtualMachineTypes'
 
@@ -55,6 +56,14 @@ function query(overrides: Partial<VirtualMachinesQuery> = {}): VirtualMachinesQu
 }
 
 describe('applyFiltersAndPagination', () => {
+  it('retains a VM matching only the second tag of a normalized fixed provider scope', () => {
+    const providerFilter = resolveVmwareProviderFilter({ vmTags: [' prod ', '', ' test ', 'prod'] })
+    const result = applyFiltersAndPagination(data, query(providerFilter.filters))
+
+    expect(getServerSideTagFilter(providerFilter.filters.tags)).toBeUndefined()
+    expect(result.items.map(item => item.name)).toEqual(['DB-01', 'DB-02'])
+  })
+
   it('ignores the legacy search term after inventory retrieval', () => {
     const result = applyFiltersAndPagination(data, query({ search: 'db', tags: ['prod'] }))
     expect(result.items.map(item => item.name)).toEqual(['DB-01'])

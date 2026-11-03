@@ -18,11 +18,10 @@ export function getProviderScopeDisplay(provider: ProviderScopeSource): Provider
   const filter = resolveVmwareProviderFilter(provider)
   // IBM Power inventory has no tags, so only the name prefix is enforced there.
   const showTag = provider.type === 'VMWARE' && Boolean(filter.tag)
-  const configuredTagCount = provider.vmTags?.filter(tag => tag.trim()).length ?? 0
   const display = {
     prefix: filter.prefix,
     tag: showTag ? filter.tag : '',
-    additionalTagCount: showTag ? configuredTagCount - 1 : 0,
+    additionalTagCount: showTag ? filter.filters.tags.length - 1 : 0,
   }
   return display.prefix || display.tag ? display : null
 }

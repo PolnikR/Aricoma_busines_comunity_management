@@ -4,6 +4,7 @@ import {
   type DataTableRequestError,
 } from '@/shared/components/data-table'
 import { DataTableSurface } from '@/shared/components/data-table/DataTableSurface'
+import { useInventoryFrame } from './InventoryCompositionContext'
 
 interface InventoryPanelProps {
   ariaLabel: string
@@ -12,6 +13,7 @@ interface InventoryPanelProps {
   pagination?: ReactNode
   error?: DataTableRequestError | null
   hasCachedData?: boolean
+  frame?: 'standalone' | 'embedded'
 }
 
 export function InventoryPanel({
@@ -21,10 +23,13 @@ export function InventoryPanel({
   pagination,
   error,
   hasCachedData = false,
+  frame: frameOverride,
 }: InventoryPanelProps) {
+  const frame = useInventoryFrame(frameOverride)
   return (
     <DataTableSurface
       ariaLabel={ariaLabel}
+      frame={frame}
       toolbar={toolbar}
       pagination={(!error || hasCachedData) && pagination}
     >

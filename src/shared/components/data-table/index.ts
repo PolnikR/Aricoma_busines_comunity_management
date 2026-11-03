@@ -1,4 +1,4 @@
-export { DataTable } from './DataTable'
+export { DataTable, DATA_TABLE_HEADER_TEXT } from './DataTable'
 export type { ColumnDef, TableDensity } from './DataTable'
 export { DataTableSkeleton, SkeletonBlock } from './DataTableSkeleton'
 export { DataTableToolbar } from './DataTableToolbar'

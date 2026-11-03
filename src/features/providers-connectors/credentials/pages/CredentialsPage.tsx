@@ -1,3 +1,4 @@
+import { InventoryViewportFrame } from '@/shared/components/page/InventoryViewportFrame'
 import { useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
 import { InventoryShell } from '@/shared/components/inventory-shell/InventoryShell'
@@ -16,7 +17,7 @@ export function CredentialsPage() {
   })
 
   return (
-    <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
+    <InventoryViewportFrame>
       <TableToolbar
         title={t('credentials.page.title')}
         description={t('credentials.page.description')}
@@ -45,6 +46,6 @@ export function CredentialsPage() {
         existingCredentials={data}
         onClose={() => { setCreateOpen(false) }}
       />
-    </div>
+    </InventoryViewportFrame>
   )
 }

@@ -5,6 +5,7 @@ import { useGetGroupDagTemplateVersions } from '@/generated/query/recovery-group
 import { resolveRecoveryGroupDagPlatform } from '../model/recoveryGroupDagTemplate'
 import { flashSystemInventoryQuery, powerInventoryQuery, vdisksByVmQuery, vmwareInventoryQuery } from '@/features/discovery-inventory/resources/model/inventoryQueries'
 import { resolveVmwareProviderFilter } from '@/features/discovery-inventory/resources/helpers/vmwareProviderFilter'
+import { getServerSideTagFilter } from '@/features/discovery-inventory/resources/helpers/filterVirtualMachines'
 import { Alert } from '@/shared/components/alert/Alert'
 import { Button } from '@/shared/components/button/Button'
 import { Spinner } from '@/shared/components/spinner/Spinner'
@@ -132,7 +133,9 @@ export function RecoveryGroupBuilder({
   const { detailsValid, topologyValid, typeValid, resourcesValid, storageValid, policySetValid,
     baseValid, downstreamValid, canContinue, canCreate, readyForPrefetch, storageProviderValid, pushedLock, readOnly } = readiness
   const { providerId: inventoryProviderId, workloadType, resources: selectedResourceNames, relatedVolumeProviderId } = request.selectionDraft
-  const { prefix: inventoryPrefix, tag: inventoryTag } = resolveVmwareProviderFilter(selectedProviderScope)
+  const inventoryFilter = resolveVmwareProviderFilter(selectedProviderScope)
+  const inventoryPrefix = inventoryFilter.prefix
+  const inventoryTag = getServerSideTagFilter(inventoryFilter.filters.tags)
   const inventoryScopeKnown = selectedProvider !== undefined
 
   useEffect(() => {

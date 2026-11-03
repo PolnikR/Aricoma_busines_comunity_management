@@ -1,6 +1,7 @@
 import { useTranslation } from '@/hooks/useTranslation'
 import { Button } from '@/shared/components/button/Button'
 import { InventoryShell } from '@/shared/components/inventory-shell/InventoryShell'
+import { InventoryViewportFrame } from '@/shared/components/page/InventoryViewportFrame'
 import { PageHeader } from '@/shared/components/page/PageHeader'
 import { UsersSection } from '../components/UsersSection'
 import { RealmRolesSection } from '../components/RealmRolesSection'
@@ -91,7 +92,7 @@ export function IdentityAccessPage() {
   const { sectionId, groupId, entityId, tabId, setSectionId, setSectionTab, setEntityId, setTabId } = useIdentityAccessSection()
 
   return (
-    <div className="flex min-h-full min-w-0 flex-col overflow-hidden lg:h-full lg:min-h-0">
+    <InventoryViewportFrame>
       <PageHeader
         title={t('identity.page.title')}
         description={t('identity.page.description')}
@@ -125,6 +126,6 @@ export function IdentityAccessPage() {
           />
         </div>
       </InventoryShell>
-    </div>
+    </InventoryViewportFrame>
   )
 }

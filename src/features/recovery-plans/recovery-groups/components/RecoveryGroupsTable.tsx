@@ -185,10 +185,7 @@ export function RecoveryGroupsTable({
       id: 'name',
       header: t('tables.recoveryGroups.group'),
       cell: group => (
-        <>
-          <span className="block font-semibold text-text-primary">{group.name}</span>
-          <span className="mt-0.5 block text-[11px] text-text-subtle">{group.description}</span>
-        </>
+        <span className="block max-w-64 truncate font-semibold text-text-primary" title={group.name}>{group.name}</span>
       ),
     },
     {

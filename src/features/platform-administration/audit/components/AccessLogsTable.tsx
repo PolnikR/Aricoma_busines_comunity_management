@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import {
+  DATA_TABLE_HEADER_TEXT,
   DataTable,
   DataTablePagination,
   StateCell,
@@ -163,7 +164,7 @@ export function AccessLogsTable({ filters, density, toolbar, resetKey = 0 }: Acc
           onRowClick={(row) => { setSelection({ dataUpdatedAt, row }) }}
           selectedRowKey={selectedRow?.key ?? null}
           emptyContent={t('audit.accessLogs.table.empty')}
-          headerCellClassName="whitespace-nowrap px-2 @min-[80rem]/data-table:px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-text-subtle"
+          headerCellClassName={`whitespace-nowrap px-2 @min-[80rem]/data-table:px-3 py-2.5 text-left ${DATA_TABLE_HEADER_TEXT}`}
           cellClassName={`px-2 @min-[80rem]/data-table:px-3 ${density === 'compact' ? 'py-1.5' : 'py-2.5'} text-[12px] @min-[80rem]/data-table:text-[13px] text-text-secondary align-top`}
         />
       </InventoryPanel>

@@ -97,10 +97,7 @@ function getBaseColumns(t: ReturnType<typeof useTranslation>['t'], providers?: {
     id: 'name',
     header: t('tables.recovery.application'),
     cell: (app) => (
-      <>
-        <span className="block font-semibold text-text-primary">{app.data.application.name}</span>
-        <span className="mt-0.5 block text-[11px] text-text-subtle">{app.data.application.description}</span>
-      </>
+      <span className="block max-w-64 truncate font-semibold text-text-primary" title={app.data.application.name}>{app.data.application.name}</span>
     ),
   },
   {

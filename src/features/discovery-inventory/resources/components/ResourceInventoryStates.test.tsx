@@ -12,18 +12,14 @@ describe('ResourceInventoryLoading', () => {
     expect(loadingRegion).toHaveClass(
       'flex-1',
       'min-h-0',
-      'overflow-hidden',
-      '!rounded-[20px]',
-      'border',
-      'border-border',
-      'bg-surface',
-      'shadow-sm',
     )
+    expect(loadingRegion).not.toHaveClass('border', 'shadow-sm', 'overflow-hidden')
+    expect(loadingRegion).toHaveAttribute('aria-busy', 'true')
     expect(table).toHaveClass('w-full', 'table-fixed')
     expect(table.parentElement).toHaveClass('min-h-0', 'overflow-hidden')
   })
 
-  it('uses the canonical primary-surface geometry for empty and fatal states', () => {
+  it('fills the view content area for empty and fatal states without another card', () => {
     render(<ResourceInventoryState><div>Inventory state</div></ResourceInventoryState>)
 
     const state = screen.getByText('Inventory state').closest('section')
@@ -31,15 +27,10 @@ describe('ResourceInventoryLoading', () => {
       'flex-1',
       'min-w-0',
       'min-h-0',
-      'grid',
-      'grid-rows-[auto_minmax(0,1fr)_auto]',
-      'overflow-hidden',
-      'rounded-[20px]',
-      'border',
-      'border-border',
-      'bg-surface',
-      'shadow-sm',
+      'flex',
+      'items-center',
+      'justify-center',
     )
-    expect(state).not.toHaveClass('rounded-2xl')
+    expect(state).not.toHaveClass('border', 'shadow-sm', 'overflow-hidden')
   })
 })

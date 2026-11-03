@@ -1,12 +1,12 @@
 import { useMemo } from 'react'
-import { Tabs } from '@/shared/components/tabs/Tabs'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useGetProviders } from '@/generated/query/providers/providers.gen'
 import { selectProviders } from '@/features/providers-connectors/providers/model/selectProviders'
+import { ResourceViewNavigation } from '@/features/discovery-inventory/resources/components/ResourceViewNavigation'
 import { FlashSystemResourcesPage } from '@/features/discovery-inventory/resources/components/flash-system/FlashSystemResourcesPage'
 import { IbmPowerResourcesPage } from '@/features/discovery-inventory/resources/components/ibm-power/IbmPowerResourcesPage'
 import type { SourceResourcesPageProps } from '@/features/discovery-inventory/resources/components/SourceResourcesPageProps'
-import { buildResourceTargetTabs, formatResourceProviderId, resolveActiveResourceTab } from '@/features/discovery-inventory/resources/helpers/buildResourceSourceTabs'
+import { buildResourceTargetTabs, resolveActiveResourceTab } from '@/features/discovery-inventory/resources/helpers/buildResourceSourceTabs'
 import { VmwareResourcesPage } from '@/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage'
 import { useResourceTabSearchParam } from '@/features/discovery-inventory/resources/hooks/useResourceTabSearchParam'
 
@@ -34,17 +34,10 @@ export function ResourcesIsePage() {
   const effectiveActiveTab = resolveActiveResourceTab(roleTabs, resourceTab, providerId, providersSuccess)
 
   const tabs = (
-    <Tabs
-      items={visibleRoleTabs.map((tab) => ({
-        ...tab,
-        accessibleLabel: tab.label,
-        label: (
-          <span className="inline-flex items-center gap-2">
-            <span>{resourceTabLabels[tab.resourceTab]}</span>
-            {tab.providerId ? <span className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-[11px] text-text-muted">{formatResourceProviderId(tab.resourceTab, tab.providerId)}</span> : null}
-          </span>
-        ),
-      }))}
+    <ResourceViewNavigation
+      items={visibleRoleTabs}
+      labels={resourceTabLabels}
+      selectedProvider={providers.find(provider => provider.id === effectiveActiveTab?.providerId) ?? null}
       value={effectiveActiveTab?.value ?? 'vmware:none'}
       onChange={(value) => {
         const nextTab = visibleRoleTabs.find(tab => tab.value === value)
@@ -52,14 +45,6 @@ export function ResourcesIsePage() {
           setResourceSource({ resourceTab: nextTab.resourceTab, providerId: nextTab.providerId })
         }
       }}
-      ariaLabel={t('pages.virtualMachines.tabs.label')}
-      indicator="inset"
-      compact
-      scrollControls={{
-        previousLabel: t('pages.virtualMachines.tabs.previous'),
-        nextLabel: t('pages.virtualMachines.tabs.next'),
-      }}
-      className="w-full shrink-0 border-b-0 bg-surface px-0 sm:w-auto"
     />
   )
   const rolePageProps: SourceResourcesPageProps = {

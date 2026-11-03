@@ -1,4 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+import { useState } from 'react'
+import type { CSSProperties } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Tabs } from './Tabs'
 
@@ -21,22 +23,28 @@ describe('Tabs', () => {
     vi.restoreAllMocks()
   })
 
-  it('exposes the selected tab and changes it on click', () => {
+  it.each(['default', 'embedded'] as const)('exposes the selected tab and changes it on click (%s)', (appearance) => {
     const onChange = vi.fn()
-    render(<Tabs items={items} value="overview" onChange={onChange} ariaLabel="Sections" />)
+    render(<Tabs items={items} value="overview" onChange={onChange} ariaLabel="Sections" appearance={appearance} />)
 
     expect(screen.getByRole('tab', { name: 'Overview' })).toHaveAttribute('aria-selected', 'true')
     fireEvent.click(screen.getByRole('tab', { name: 'Details' }))
     expect(onChange).toHaveBeenCalledWith('details')
   })
 
-  it('supports arrow-key navigation', () => {
+  it.each(['default', 'embedded'] as const)('supports keyboard navigation (%s)', (appearance) => {
     const onChange = vi.fn()
-    render(<Tabs items={items} value="overview" onChange={onChange} ariaLabel="Sections" />)
+    render(<Tabs items={items} value="overview" onChange={onChange} ariaLabel="Sections" appearance={appearance} />)
 
     fireEvent.keyDown(screen.getByRole('tab', { name: 'Overview' }), { key: 'ArrowRight' })
     expect(onChange).toHaveBeenCalledWith('details')
     expect(screen.getByRole('tab', { name: 'Details' })).toHaveFocus()
+    fireEvent.keyDown(screen.getByRole('tab', { name: 'Details' }), { key: 'ArrowLeft' })
+    expect(onChange).toHaveBeenLastCalledWith('overview')
+    fireEvent.keyDown(screen.getByRole('tab', { name: 'Overview' }), { key: 'End' })
+    expect(onChange).toHaveBeenLastCalledWith('details')
+    fireEvent.keyDown(screen.getByRole('tab', { name: 'Details' }), { key: 'Home' })
+    expect(onChange).toHaveBeenLastCalledWith('overview')
   })
 
   it('uses an inset selected indicator when explicitly configured', () => {
@@ -142,5 +150,112 @@ describe('Tabs', () => {
 
     expect(screen.queryByRole('button', { name: 'Previous source tabs' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Next source tabs' })).not.toBeInTheDocument()
+  })
+
+  it('pages by whole visible slots in limited mode, including after resize', () => {
+    render(
+      <Tabs items={overflowItems} value="tab-0" onChange={vi.fn()} ariaLabel="Sources"
+        maxVisibleItems={4} scrollControls={{ previousLabel: 'Previous', nextLabel: 'Next' }} />,
+    )
+    const tabList = screen.getByRole('tablist')
+    let viewportWidth = 640
+    Object.defineProperties(tabList, {
+      clientWidth: { configurable: true, get: () => viewportWidth },
+      scrollWidth: { configurable: true, value: 1600 },
+    })
+    Object.defineProperty(screen.getAllByRole('tab')[0], 'offsetWidth', { configurable: true, value: 160 })
+    const scrollBy = vi.fn()
+    Object.defineProperty(tabList, 'scrollBy', { configurable: true, value: scrollBy })
+    fireEvent(window, new Event('resize'))
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+    expect(scrollBy).toHaveBeenLastCalledWith({ left: 640, behavior: 'smooth' })
+
+    const revealSelected = vi.fn()
+    Object.defineProperty(screen.getAllByRole('tab')[0], 'scrollIntoView', { configurable: true, value: revealSelected })
+    viewportWidth = 350
+    fireEvent(window, new Event('resize'))
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+    expect(scrollBy).toHaveBeenLastCalledWith({ left: 320, behavior: 'smooth' })
+    expect(revealSelected).toHaveBeenCalledWith({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
+  })
+
+  it('reveals the selected natural-width tab after resizing without assigning slot widths', () => {
+    render(<Tabs items={overflowItems} value="tab-1" onChange={vi.fn()} ariaLabel="Sources"
+      scrollControls={{ previousLabel: 'Previous', nextLabel: 'Next' }} />)
+    const selected = screen.getByRole('tab', { selected: true })
+    const reveal = vi.fn()
+    Object.defineProperty(selected, 'scrollIntoView', { configurable: true, value: reveal })
+    fireEvent(window, new Event('resize'))
+    expect(reveal).toHaveBeenCalledWith({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
+    expect(selected.style.width).toBe('')
+    expect(screen.getByRole('tablist').parentElement?.style.width).toBe('')
+  })
+
+  it.each([undefined, 4])('uses custom control widths only when maxVisibleItems is set (%s)', (maxVisibleItems) => {
+    render(
+      <div style={{ '--tab-control-width': '1.75rem' } as CSSProperties}>
+        <Tabs items={overflowItems} value="tab-0" onChange={vi.fn()} ariaLabel="Sources"
+          {...(maxVisibleItems === undefined ? {} : { maxVisibleItems })} scrollControls={{ previousLabel: 'Previous', nextLabel: 'Next' }} />
+      </div>,
+    )
+    const tabList = screen.getByRole('tablist')
+    Object.defineProperties(tabList, {
+      clientWidth: { configurable: true, value: 320 },
+      scrollWidth: { configurable: true, value: 800 },
+    })
+    fireEvent(window, new Event('resize'))
+
+    const previous = screen.getByRole('button', { name: 'Previous' })
+    const next = screen.getByRole('button', { name: 'Next' })
+    if (maxVisibleItems === undefined) {
+      expect(previous.style.width).toBe('')
+      expect(next.style.width).toBe('')
+      expect(tabList.parentElement?.style.width).toBe('')
+    } else {
+      expect(previous.style.width).toBe('var(--tab-control-width, 2.25rem)')
+      expect(next.style.width).toBe('var(--tab-control-width, 2.25rem)')
+      expect(tabList.parentElement?.style.width).toBe('calc(calc(4 * var(--tab-slot-width, 10rem)) + 2 * var(--tab-control-width, 2.25rem))')
+    }
+  })
+
+  it('preserves selection, roving focus and keyboard wrapping in limited mode', () => {
+    function ControlledTabs() {
+      const [value, setValue] = useState('tab-0')
+      return <Tabs items={overflowItems} value={value} onChange={setValue} ariaLabel="Sources"
+        maxVisibleItems={4} scrollControls={{ previousLabel: 'Previous', nextLabel: 'Next' }} />
+    }
+    render(<ControlledTabs />)
+    const first = screen.getByRole('tab', { name: 'Tab 1' })
+    const last = screen.getByRole('tab', { name: 'Tab 10' })
+    for (const [from, key, target] of [
+      [first, 'ArrowLeft', last], [last, 'ArrowRight', first],
+      [first, 'End', last], [last, 'Home', first],
+    ] as const) {
+      fireEvent.keyDown(from, { key })
+      expect(target).toHaveFocus()
+      expect(target).toHaveAttribute('aria-selected', 'true')
+      expect(target).toHaveAttribute('tabindex', '0')
+      expect(screen.getAllByRole('tab').filter(tab => tab.tabIndex === 0)).toEqual([target])
+    }
+  })
+
+  it('removes limited-mode controls when all tabs fit without reserving arrow space', () => {
+    render(
+      <Tabs items={overflowItems.slice(0, 4)} value="tab-0" onChange={vi.fn()} ariaLabel="Sources"
+        maxVisibleItems={4} scrollControls={{ previousLabel: 'Previous', nextLabel: 'Next' }} />,
+    )
+    const tabList = screen.getByRole('tablist')
+    let availableWidth = 500
+    Object.defineProperty(tabList.parentElement, 'clientWidth', { configurable: true, get: () => availableWidth })
+    Object.defineProperties(tabList, {
+      clientWidth: { configurable: true, get: () => availableWidth - 72 },
+      scrollWidth: { configurable: true, value: 640 },
+    })
+    Object.defineProperty(screen.getAllByRole('tab')[0], 'offsetWidth', { configurable: true, value: 160 })
+    fireEvent(window, new Event('resize'))
+    expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument()
+    availableWidth = 640
+    fireEvent(window, new Event('resize'))
+    expect(screen.queryByRole('button', { name: 'Next' })).not.toBeInTheDocument()
   })
 })

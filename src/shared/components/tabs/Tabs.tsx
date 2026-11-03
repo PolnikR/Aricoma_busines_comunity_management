@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { KeyboardEvent, ReactNode } from 'react'
 import { cn } from '@/shared/utils/cn'
 import { ChevronLeftIcon, ChevronRightIcon } from '@/shared/icons/Icons'
+import { useInventoryNavigation } from '../inventory-shell/InventoryCompositionContext'
 
 export interface TabItem<T extends string> {
   value: T
@@ -16,6 +17,8 @@ interface TabsProps<T extends string> {
   ariaLabel: string
   indicator?: 'edge' | 'inset'
   compact?: boolean
+  maxVisibleItems?: number
+  appearance?: 'default' | 'embedded'
   className?: string
   scrollControls?: {
     previousLabel: string
@@ -30,11 +33,17 @@ export function Tabs<T extends string>({
   ariaLabel,
   indicator = 'edge',
   compact = false,
+  maxVisibleItems,
+  appearance: appearanceOverride,
   className,
   scrollControls,
 }: TabsProps<T>) {
+  const appearance = useInventoryNavigation(appearanceOverride)
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
   const tabListRef = useRef<HTMLDivElement>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
+  const visibleSlots = maxVisibleItems === undefined ? undefined : Math.max(1, Math.floor(maxVisibleItems))
+  const viewportWidth = visibleSlots === undefined ? undefined : `calc(${String(Math.min(items.length, visibleSlots))} * var(--tab-slot-width, 10rem))`
   const [isOverflowing, setIsOverflowing] = useState(false)
   const [canScrollPrevious, setCanScrollPrevious] = useState(false)
   const [canScrollNext, setCanScrollNext] = useState(false)
@@ -44,10 +53,25 @@ export function Tabs<T extends string>({
     if (!tabList || !scrollControls) return
 
     const maxScrollLeft = Math.max(0, tabList.scrollWidth - tabList.clientWidth)
-    setIsOverflowing(maxScrollLeft > 1)
+    // Measure against the space without controls so their own width cannot keep
+    // them visible after a resize when every tab would otherwise fit.
+    const slotWidth = tabRefs.current[0]?.offsetWidth ?? 0
+    const wrapperWidth = wrapperRef.current?.clientWidth ?? 0
+    const availableWidth = visibleSlots !== undefined && slotWidth > 0
+      ? Math.min(wrapperWidth > 0 ? wrapperWidth : tabList.clientWidth, visibleSlots * slotWidth)
+      : tabList.clientWidth
+    setIsOverflowing(tabList.scrollWidth > availableWidth + 1)
     setCanScrollPrevious(tabList.scrollLeft > 1)
     setCanScrollNext(tabList.scrollLeft < maxScrollLeft - 1)
-  }, [scrollControls])
+  }, [scrollControls, visibleSlots])
+
+  const revealSelectedTab = useCallback(() => {
+    const selectedIndex = items.findIndex(item => item.value === value)
+    const selectedTab = tabRefs.current[selectedIndex]
+    if (selectedTab && typeof selectedTab.scrollIntoView === 'function') {
+      selectedTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
+    }
+  }, [items, value])
 
   useEffect(() => {
     if (!scrollControls) return
@@ -56,29 +80,29 @@ export function Tabs<T extends string>({
     if (!tabList) return
 
     updateScrollState()
-    window.addEventListener('resize', updateScrollState)
+    const handleResize = () => {
+      updateScrollState()
+      revealSelectedTab()
+    }
+    window.addEventListener('resize', handleResize)
     const resizeObserver = typeof ResizeObserver === 'undefined'
       ? null
-      : new ResizeObserver(updateScrollState)
+      : new ResizeObserver(handleResize)
     resizeObserver?.observe(tabList)
+    if (wrapperRef.current) resizeObserver?.observe(wrapperRef.current)
 
     return () => {
-      window.removeEventListener('resize', updateScrollState)
+      window.removeEventListener('resize', handleResize)
       resizeObserver?.disconnect()
     }
-  }, [items.length, scrollControls, updateScrollState])
+  }, [items.length, scrollControls, updateScrollState, visibleSlots, revealSelectedTab])
 
   useEffect(() => {
     if (!scrollControls) return
 
-    const selectedIndex = items.findIndex(item => item.value === value)
-    const selectedTab = tabRefs.current[selectedIndex]
-    const scrollableTab = selectedTab as Omit<HTMLButtonElement, 'scrollIntoView'> & {
-      scrollIntoView?: (options?: ScrollIntoViewOptions) => void
-    } | null
-    scrollableTab?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
+    revealSelectedTab()
     updateScrollState()
-  }, [items, scrollControls, updateScrollState, value])
+  }, [revealSelectedTab, scrollControls, updateScrollState])
 
   const activate = (index: number) => {
     const item = items[index]
@@ -106,10 +130,19 @@ export function Tabs<T extends string>({
     <div
       ref={tabListRef}
       className={cn(
-        'flex gap-1 overflow-x-auto border-b border-border px-3',
+        'flex gap-1 overflow-x-auto',
+        appearance === 'embedded' ? 'px-0' : 'border-b border-border px-3',
         scrollControls && 'no-scrollbar min-w-0 flex-1 touch-pan-x overscroll-x-contain scroll-smooth',
         className,
       )}
+      style={visibleSlots === undefined ? undefined : {
+        width: viewportWidth,
+        maxWidth: '100%',
+        flex: '0 1 auto',
+        gap: 0,
+        paddingInline: 0,
+        borderBottomWidth: scrollControls ? 0 : undefined,
+      }}
       role="tablist"
       aria-label={ariaLabel}
       onScroll={updateScrollState}
@@ -128,6 +161,7 @@ export function Tabs<T extends string>({
             onClick={() => { onChange(item.value) }}
             onKeyDown={(event) => { handleKeyDown(event, index) }}
             title={typeof item.label === 'string' ? item.label : undefined}
+            style={visibleSlots === undefined ? undefined : { width: 'var(--tab-slot-width, 10rem)', maxWidth: 'none' }}
             className={`max-w-64 shrink-0 overflow-hidden whitespace-nowrap border-b-2 text-ellipsis font-medium transition ${compact ? 'px-3 py-2.5 text-xs' : 'px-4 py-3.5 text-sm'} ${
               isSelected
                 ? indicator === 'inset'
@@ -149,20 +183,30 @@ export function Tabs<T extends string>({
     const element = tabListRef.current
     if (!element) return
 
+    const measuredWidth = tabRefs.current[0]?.offsetWidth ?? 0
+    const slotWidth = measuredWidth > 0 ? measuredWidth : element.clientWidth
+    const pageWidth = visibleSlots === undefined
+      ? Math.max(160, element.clientWidth * 0.8)
+      : Math.max(1, Math.floor(element.clientWidth / slotWidth)) * slotWidth
     element.scrollBy({
-      left: direction * Math.max(160, element.clientWidth * 0.8),
+      left: direction * pageWidth,
       behavior: 'smooth',
     })
   }
 
   return (
-    <div className="flex min-w-0 items-stretch border-b border-border bg-surface">
+    <div ref={wrapperRef} className={cn('flex min-w-0 items-stretch', appearance === 'default' && 'border-b border-border bg-surface')}
+      style={visibleSlots === undefined ? undefined : {
+        width: isOverflowing ? `calc(${viewportWidth ?? '0px'} + 2 * var(--tab-control-width, 2.25rem))` : viewportWidth,
+        maxWidth: '100%',
+      }}>
       {isOverflowing ? (
         <button
           type="button"
           aria-label={scrollControls.previousLabel}
           disabled={!canScrollPrevious}
           onClick={() => { scroll(-1) }}
+          style={visibleSlots === undefined ? undefined : { width: 'var(--tab-control-width, 2.25rem)' }}
           className="flex w-9 shrink-0 items-center justify-center border-r border-border text-text-muted transition hover:bg-surface-muted hover:text-accent disabled:cursor-default disabled:opacity-35 disabled:hover:bg-transparent disabled:hover:text-text-muted"
         >
           <ChevronLeftIcon className="size-4" />
@@ -175,6 +219,7 @@ export function Tabs<T extends string>({
           aria-label={scrollControls.nextLabel}
           disabled={!canScrollNext}
           onClick={() => { scroll(1) }}
+          style={visibleSlots === undefined ? undefined : { width: 'var(--tab-control-width, 2.25rem)' }}
           className="flex w-9 shrink-0 items-center justify-center border-l border-border text-text-muted transition hover:bg-surface-muted hover:text-accent disabled:cursor-default disabled:opacity-35 disabled:hover:bg-transparent disabled:hover:text-text-muted"
         >
           <ChevronRightIcon className="size-4" />
