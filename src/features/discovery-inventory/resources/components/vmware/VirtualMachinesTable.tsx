@@ -1,4 +1,4 @@
-import { DataTable } from '@/shared/components/data-table'
+import { DATA_TABLE_HEADER_TEXT, DataTable } from '@/shared/components/data-table'
 import type { TableDensity } from '@/shared/components/data-table'
 import { useTranslation } from '@/hooks/useTranslation'
 import { createVmwareColumns } from '../../config/vmwareColumns'
@@ -34,7 +34,7 @@ export function VirtualMachinesTable({ virtualMachines, selectedId, density, onS
         onRowClick={onSelect}
         minWidthClassName="min-w-260"
         ariaLabel={isLoading ? t('pages.virtualMachines.loading') : t('vm.tableLabel')}
-        headerCellClassName="whitespace-nowrap px-2 @min-[80rem]/vm-table:px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-text-subtle"
+        headerCellClassName={`whitespace-nowrap px-2 @min-[80rem]/vm-table:px-3 py-2.5 text-left ${DATA_TABLE_HEADER_TEXT}`}
         cellClassName={`px-2 @min-[80rem]/vm-table:px-3 ${density === 'compact' ? 'py-1.5' : 'py-2.5'} text-[12px] @min-[80rem]/vm-table:text-[13px] text-text-secondary align-top`}
       />
     </div>

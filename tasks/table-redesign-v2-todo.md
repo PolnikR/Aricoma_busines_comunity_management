@@ -90,10 +90,17 @@ Discovery settings sa nemení, lebo popis stránky už vymenúva všetky sekcie.
 - hover `surface-subtle`, výber `accent-soft` s ľavým pruhom, viditeľný focus,
 - skeleton s rovnakými rozmermi.
 
+**Výsledok (2026-11-03):**
+- Hlavička stĺpcov: `text-xs font-medium text-text-secondary/80`, bez kapitálok. Konštanta `DATA_TABLE_HEADER_TEXT` je exportovaná. `text-text-muted` z prototypu má pri 12 px kontrast len ≈3,9:1, preto sa použila sekundárna farba na 80 % (≈5,6:1).
+- Riadky: minimálna výška `h-14`/`h-[72px]` na `tr`, padding `py-2`/`py-3`. Hover je `surface-subtle`, výber ostáva `accent-soft` s ľavým pruhom.
+- Override súbory `VirtualMachinesTable`, `AccessLogsTable` a `BackingStorageInfo` mali skopírovaný starý štýl hlavičky. Teraz používajú `DATA_TABLE_HEADER_TEXT`, ich odsadenia a `align-top` ostali.
+- `DataTableSkeleton` sa nemenil: prvý stĺpec už má ≈56 px.
+- Headless Chrome (dev server :5174, `/api` zachytené testovacími dátami, lebo backend vracal 502): hlavička 12 px/500/bez transformácie, riadky 56 px (compact) a 72 px (comfortable).
+
 **Akceptačné kritériá:**
-- [ ] Nový vzhľad sa uplatní na `layout="scroll"` aj `"fit"` a zalamovanie textu vo `fit` funguje ďalej.
-- [ ] Kliknutie, Enter/Space na riadku, `aria-selected` a `hideInCompact` sa správajú ako doteraz.
-- [ ] Súbory s vlastným `headerCellClassName`/`cellClassName` sú skontrolované a výsledok je zapísaný.
+- [x] Nový vzhľad sa uplatní na `layout="scroll"` aj `"fit"` a zalamovanie textu vo `fit` funguje ďalej (výška `tr` je minimum).
+- [x] Kliknutie, Enter/Space na riadku, `aria-selected` a `hideInCompact` sa správajú ako doteraz (logika riadkov sa nemenila, `DataTable.test.tsx` prechádza).
+- [x] Súbory s vlastným `headerCellClassName`/`cellClassName` sú skontrolované a výsledok je zapísaný.
 
 **Overenie:** `npm exec vitest run src/shared/components/data-table/DataTable.test.tsx src/shared/components/data-table/DataTableSkeleton.test.tsx`
 **Závislosti:** CP1.

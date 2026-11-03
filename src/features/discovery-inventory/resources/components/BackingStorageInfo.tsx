@@ -2,6 +2,7 @@ import { useId } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { formatStartTime } from '@/shared/utils/dateFormat'
 import {
+  DATA_TABLE_HEADER_TEXT,
   DataTable,
   DataTableRequestState,
   SkeletonBlock,
@@ -11,7 +12,7 @@ import { DetailField, DetailOverview } from '@/shared/components/detail-view'
 import type { ProviderRecord } from '@/features/providers-connectors/providers/model/providerTypes'
 import type { StorageVolume, StorageVolumeMapping } from '../model/vmStorageVolumesTypes'
 
-const headerCell = 'whitespace-nowrap px-2 @min-[80rem]/backing-storage:px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-text-subtle'
+const headerCell = `whitespace-nowrap px-2 @min-[80rem]/backing-storage:px-3 py-2.5 text-left ${DATA_TABLE_HEADER_TEXT}`
 const cell = 'px-2 @min-[80rem]/backing-storage:px-3 py-2.5 text-[12px] @min-[80rem]/backing-storage:text-[13px] text-text-secondary align-top'
 const prefix = 'resources.backingStorage'
 
