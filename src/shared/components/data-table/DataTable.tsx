@@ -57,9 +57,7 @@ export function DataTable<T>({
   loadingRowCount = 6,
 }: DataTableProps<T>) {
   const visibleColumns = columns.filter((column) => !(density === 'compact' && column.hideInCompact))
-  const rowPad = density === 'compact' ? 'py-2' : 'py-3'
-  // Row heights are minimums (a table row grows with wrapped content), so fit layouts still wrap.
-  const rowHeight = density === 'compact' ? 'h-14' : 'h-[72px]'
+  const rowPad = density === 'compact' ? 'py-1.5' : 'py-2.5'
   const isFitLayout = layout === 'fit'
   const headerCell = headerCellClassName ?? (isFitLayout
     ? `whitespace-normal break-words px-2 @min-[80rem]/data-table:px-3 py-2.5 text-left ${DATA_TABLE_HEADER_TEXT}`
@@ -92,7 +90,7 @@ export function DataTable<T>({
         <TableBody className="divide-y divide-border" aria-hidden={isLoading ? true : undefined}>
           {isLoading ? (
             Array.from({ length: Math.max(1, loadingRowCount) }, (_, rowIndex) => (
-              <TableRow key={rowIndex} className={`${rowHeight} bg-surface`}>
+              <TableRow key={rowIndex} className="bg-surface">
                 {visibleColumns.map((column, columnIndex) => (
                   <TableCell
                     key={column.id}
@@ -111,7 +109,7 @@ export function DataTable<T>({
               return (
                 <TableRow
                   key={key}
-                  className={`${rowHeight} outline-none transition-colors ${isInteractive ? 'cursor-pointer focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus' : ''} ${isSelected ? 'bg-accent-soft shadow-[inset_3px_0_0_var(--color-accent)]' : 'bg-surface hover:bg-surface-subtle'}`}
+                  className={`outline-none transition-colors ${isInteractive ? 'cursor-pointer focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus' : ''} ${isSelected ? 'bg-accent-soft shadow-[inset_3px_0_0_var(--color-accent)]' : 'bg-surface hover:bg-surface-subtle'}`}
                   tabIndex={isInteractive ? 0 : undefined}
                   aria-label={rowAriaLabel?.(row)}
                   aria-selected={isInteractive ? isSelected : undefined}
