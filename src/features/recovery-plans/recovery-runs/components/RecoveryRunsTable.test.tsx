@@ -181,12 +181,16 @@ describe('RecoveryRunsTable', () => {
   })
 
   it('shows supported backend detail in the retryable load state', () => {
+    const onRetry = vi.fn()
     const error = new Error('Fetch runs request failed with status 503', {
       cause: new OrvalApiError(503, 'Unavailable', { detail: 'Orchestrator is unavailable.' }),
     })
-    render(<RecoveryRunsTable {...tableStateProps} rows={[]} total={0} showEntityType={false} isLoading={false} error={error} isRetrying={false} onRetry={vi.fn()} onSelectEntity={vi.fn()} selectedEntityKey={null} />)
+    render(<RecoveryRunsTable {...tableStateProps} rows={[]} total={0} showEntityType={false} isLoading={false} error={error} isRetrying={false} onRetry={onRetry} onSelectEntity={vi.fn()} selectedEntityKey={null} />)
     expect(screen.getByRole('alert')).toHaveTextContent('Orchestrator is unavailable.')
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
+    expect(onRetry).toHaveBeenCalledTimes(1)
+    expect(onRetry).toHaveBeenCalledWith()
   })
 
   it('keeps the filtered-empty table mounted when cached entities exist and refresh fails', () => {

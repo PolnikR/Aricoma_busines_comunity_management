@@ -175,7 +175,7 @@ export function RecoveryRunsTable({
             ...(errorDetail ? { description: errorDetail } : {}),
             retryLabel: t('buttons.retry'),
             isRetrying,
-            onRetry,
+            onRetry: () => { onRetry() },
           } : null}
         >
           <DataTable
