@@ -682,6 +682,8 @@ Plán: fáza 6 v table-redesign-v2-plan.md. **Stav: prebieha inline podľa pokyn
 **Závislosti:** T31.
 **Súbory (M, 4):** helpers/vmwareProviderFilter.ts a jeho test; helpers/resolveVmwareInitialFilters.test.ts; hooks/useVirtualMachineSearchParams.test.tsx v resource feature. Existujúci filterVirtualMachines test môže zostať read-only overením; ak vyžaduje zmenu, je piaty súbor.
 
+**Priebeh (2026-11-03):** Implementovana cela normalizovana mnozina filters.tags (trim/dedupe, case-sensitive, stabilne poradie), singular alias zachovany. RED7 pripadov; parent fresh Vitest4subory/26testov PASS, focused ESLint PASS, read-only review clean. Pevny provider scope nad URL/session overeny.
+
 ### T33: Zosúladiť načítanie, OR výsledok a metriky
 
 **Popis:** Po potvrdení T31 použiť existujúci single-tag server search pre jednu hodnotu; pre viac hodnôt úplný prefixový response a lokálny provider OR scope. Zaviesť malý feature helper pre OR predicate a odvodené scoped dáta. Scope aplikovať pred metrikami/filter options a až potom editable filtrami a pagination.

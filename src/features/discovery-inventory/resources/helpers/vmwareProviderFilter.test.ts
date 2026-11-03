@@ -2,12 +2,15 @@ import { describe, expect, it } from 'vitest'
 import { resolveVmwareProviderFilter } from './vmwareProviderFilter'
 
 describe('resolveVmwareProviderFilter', () => {
-  it('normalizes a prefix and the first non-empty tag into a fixed filter', () => {
-    expect(resolveVmwareProviderFilter({ vmPrefix: ' prod- ', vmTags: [' ', ' ABCO-managed '] })).toEqual({
+  it('normalizes every provider tag, preserving order and case while removing empty and exact duplicate tags', () => {
+    expect(resolveVmwareProviderFilter({
+      vmPrefix: ' prod- ',
+      vmTags: [' ', ' ABCO-managed ', ' database ', 'ABCO-managed', '', 'abco-managed', 'database '],
+    })).toEqual({
       isFixed: true,
       prefix: 'prod-',
       tag: 'ABCO-managed',
-      filters: { search: 'prod-', tags: ['ABCO-managed'] },
+      filters: { search: 'prod-', tags: ['ABCO-managed', 'database', 'abco-managed'] },
     })
   })
 
@@ -26,6 +29,15 @@ describe('resolveVmwareProviderFilter', () => {
       prefix: '',
       tag: 'ABCO-managed',
       filters: { search: '', tags: ['ABCO-managed'] },
+    })
+  })
+
+  it('keeps all normalized tags in a tag-only fixed scope', () => {
+    expect(resolveVmwareProviderFilter({ vmTags: [' ', ' prod ', 'db', 'prod'] })).toEqual({
+      isFixed: true,
+      prefix: '',
+      tag: 'prod',
+      filters: { search: '', tags: ['prod', 'db'] },
     })
   })
 
