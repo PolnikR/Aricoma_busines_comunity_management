@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { useState } from 'react'
+import type { CSSProperties } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Tabs } from './Tabs'
 
@@ -176,6 +177,33 @@ describe('Tabs', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Next' }))
     expect(scrollBy).toHaveBeenLastCalledWith({ left: 320, behavior: 'smooth' })
     expect(revealSelected).toHaveBeenCalledWith({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
+  })
+
+  it.each([undefined, 4])('uses custom control widths only when maxVisibleItems is set (%s)', (maxVisibleItems) => {
+    render(
+      <div style={{ '--tab-control-width': '1.75rem' } as CSSProperties}>
+        <Tabs items={overflowItems} value="tab-0" onChange={vi.fn()} ariaLabel="Sources"
+          maxVisibleItems={maxVisibleItems} scrollControls={{ previousLabel: 'Previous', nextLabel: 'Next' }} />
+      </div>,
+    )
+    const tabList = screen.getByRole('tablist')
+    Object.defineProperties(tabList, {
+      clientWidth: { configurable: true, value: 320 },
+      scrollWidth: { configurable: true, value: 800 },
+    })
+    fireEvent(window, new Event('resize'))
+
+    const previous = screen.getByRole('button', { name: 'Previous' })
+    const next = screen.getByRole('button', { name: 'Next' })
+    if (maxVisibleItems === undefined) {
+      expect(previous.style.width).toBe('')
+      expect(next.style.width).toBe('')
+      expect(tabList.parentElement?.style.width).toBe('')
+    } else {
+      expect(previous.style.width).toBe('var(--tab-control-width, 2.25rem)')
+      expect(next.style.width).toBe('var(--tab-control-width, 2.25rem)')
+      expect(tabList.parentElement?.style.width).toBe('calc(calc(4 * var(--tab-slot-width, 10rem)) + 2 * var(--tab-control-width, 2.25rem))')
+    }
   })
 
   it('preserves selection, roving focus and keyboard wrapping in limited mode', () => {

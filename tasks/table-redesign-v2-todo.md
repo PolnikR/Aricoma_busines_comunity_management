@@ -841,6 +841,8 @@ Plán: fáza 6 v table-redesign-v2-plan.md. **Stav: prebieha inline podľa pokyn
 **Závislosti:** T41a, výsledná geometria sa akceptuje až po oboch krokoch.
 **Súbory (S, 2):** shared/components/tabs/Tabs.tsx a Tabs.test.tsx.
 
+**Priebeh (2026-11-03):** Opt-in --tab-control-width applies to botharrows andwrapper, default2.25rem preserved. Resource mobile28pxarrows+80pxslot actualChromePASS allshortbadges. Parentfresh6files49testsPASS; ownedlint/reviewclean. Finalfullbrowserregressions remainT41.
+
 ### T41: Browser matica a finálny audit
 
 **Popis:** Rozšíriť existujúcu resource CDP kontrolu o štyri sloty a podmienky. Zachovať obidve shared/regresné sady bez kopírovania celého QA transportu alebo použitia živých mutácií.

@@ -197,7 +197,7 @@ export function Tabs<T extends string>({
   return (
     <div ref={wrapperRef} className={cn('flex min-w-0 items-stretch', appearance === 'default' && 'border-b border-border bg-surface')}
       style={visibleSlots === undefined ? undefined : {
-        width: isOverflowing ? `calc(${viewportWidth ?? '0px'} + 4.5rem)` : viewportWidth,
+        width: isOverflowing ? `calc(${viewportWidth ?? '0px'} + 2 * var(--tab-control-width, 2.25rem))` : viewportWidth,
         maxWidth: '100%',
       }}>
       {isOverflowing ? (
@@ -206,6 +206,7 @@ export function Tabs<T extends string>({
           aria-label={scrollControls.previousLabel}
           disabled={!canScrollPrevious}
           onClick={() => { scroll(-1) }}
+          style={visibleSlots === undefined ? undefined : { width: 'var(--tab-control-width, 2.25rem)' }}
           className="flex w-9 shrink-0 items-center justify-center border-r border-border text-text-muted transition hover:bg-surface-muted hover:text-accent disabled:cursor-default disabled:opacity-35 disabled:hover:bg-transparent disabled:hover:text-text-muted"
         >
           <ChevronLeftIcon className="size-4" />
@@ -218,6 +219,7 @@ export function Tabs<T extends string>({
           aria-label={scrollControls.nextLabel}
           disabled={!canScrollNext}
           onClick={() => { scroll(1) }}
+          style={visibleSlots === undefined ? undefined : { width: 'var(--tab-control-width, 2.25rem)' }}
           className="flex w-9 shrink-0 items-center justify-center border-l border-border text-text-muted transition hover:bg-surface-muted hover:text-accent disabled:cursor-default disabled:opacity-35 disabled:hover:bg-transparent disabled:hover:text-text-muted"
         >
           <ChevronRightIcon className="size-4" />
