@@ -375,3 +375,19 @@ Ruling T39 (2026-11-03): integration test lookup for SECOND now matches both the
 Ruling T41a (2026-11-03): real Chrome320 evidence shows zero-width prefix/tag values and35px provider viewport. Add a four-file responsive follow-up before final T41: ResourceViewNavigation(.test).tsx and VmwareProviderFilterSummary(.test).tsx. Keep one band; below640 use provider badge with full accessible tab label, compact metadata labels visually hidden but accessible, positive focusable value widths and one complete provider slot. Four desktop slots and >=1100 two-tag threshold unchanged. No frame masking or descendant overrides. Cost if wrong: responsive layout rework. Evidence %TEMP%/abco-phase6-early-20261103.
 
 Ruling T41b: a4rem slot clips Flash/Power badges after shared24px horizontalpadding. Split2file sharedTabs CSScontrolwidth follow-up, keeping T41a4files. Resource mobile uses5rem slot/1.75remcontrols (56px both),40%summary/gap4; default2.25remcontrols unchanged. Cost ifwrong: shared opt-in sizing regression; focused defaulttests and browsergate required.
+
+### Rozhodnutia počas realizácie a cena prípadnej chyby
+
+- Použiť existujúci linked worktree a vetvu test; staging/commity riadi parent. Cena omylu: konflikt pri inom súbežnom zápise do indexu.
+- Windows natívne ekvivalenty pre scratch workflow namiesto bash skriptov s anglickými headingmi. Cena omylu: chýbajúci požadovaný krok; briefy sa porovnávali s existujúcim todo.
+- T35/T36 boli na začiatku paralelné, pretože vlastnili oddelené dvojice súborov; ďalšie implementácie boli sekvenčné. Cena omylu: konflikt zdieľaného stavu; parent serializoval commity a spoločné regresie prešli.
+- Jeden existujúci prefix/no-tag request plus lokálny OR, bez N-request fan-out. Cena omylu pri veľkom nasadení: objem a čas prenosu; produkčné maximum a deployed backend parity nie sú doložené, pri prekročení limitu treba server multi-tag kontrakt.
+- Štyri sloty znamenajú merané celé položky, nie pixelový prototyp 652 px (desktop sloty 4×160 alebo 4×144). Cena omylu: požiadavka na následné doladenie rozstupov.
+- Samostatný T34b pre ďalší builder prefetch. Cena omylu: zbytočné rozdelenie práce; udržal file budget a jednotný scope.
+- T40 preklady pripravené pred UI, cleanup po route integrácii. Cena omylu: dočasne nepoužité locale kľúče; po dokončení ich UI používa.
+- Piaty T39 súbor zúžil iba kolíznu SECOND test assertion na tabuľku. Cena omylu: prepracovanie selektora, bez zmeny významu pôvodnej kontroly.
+- T41a doplnil mobilný kompaktný pás z reálneho zero-width nálezu. Cena omylu: responsive rework; desktop a mobile sa merali v Chrome.
+- T41b oddelil opt-in šírku šípok, aby 5rem slot zachoval celý Flash/Power badge. Cena omylu: shared sizing regresia; default testy a shared browser matica prešli.
+- Finálne default Resources overenie obsahuje pôvodných 64 aj všetky nové phase6 prípady; neduplikuje sa ďalším celým phase6-only behom. Cena omylu: prehliadnutý prípad; počet aj obsah kontroluje finálny read-only review. Prerušené behy sa nepovažujú za úspešné.
+
+Ruling T41c: classic scrollbar at320x844 leaves305px usable; existing bodymin320 createsdocumentoverflow. Diagnostic CSSbodymin0 proves scroll305==client305 but tabviewport73.81<80; bodymin0+resourcecontrols24 proves81.81px whole slot and25pxvalues. Add2sourcefile T41c (index.css min-w-0, mobile resourcecontrol1.5rem), no overflowmask. Costifwrong: minimum-width regression otherfeatures; verifyshared minimum-width geometry and AppShellfocusedtests. Evidence%TEMP%/abco-phase6-classic-forced-diagnostic-20261103, diagnosticDOMpatchesnotproductionPASS.

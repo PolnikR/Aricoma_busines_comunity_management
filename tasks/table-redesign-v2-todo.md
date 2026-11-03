@@ -843,6 +843,17 @@ Plán: fáza 6 v table-redesign-v2-plan.md. **Stav: prebieha inline podľa pokyn
 
 **Priebeh (2026-11-03):** Opt-in --tab-control-width applies to botharrows andwrapper, default2.25rem preserved. Resource mobile28pxarrows+80pxslot actualChromePASS allshortbadges. Parentfresh6files49testsPASS; ownedlint/reviewclean. Finalfullbrowserregressions remainT41.
 
+### T41c: Zohľadniť šírku klasického scrollbaru
+
+**Popis:** Reálny Windows Chrome pri 320 × 844 px má 305 px použiteľnej šírky. Body min-w-80 vynucuje 320 px a vytvára vodorovný scroll dokumentu. Zmeniť body na min-w-0 a iba mobilné resource šípky na 1.5rem, aby pri 305 px ostal celý 5rem provider slot.
+**Akceptačné kritériá:**
+- [ ] Pri klasickom scrollbare je document scrollWidth rovné clientWidth, bez masky alebo overflow-x-hidden.
+- [ ] Pri 305 px použiteľnej šírky sa zmestí celý 80 px slot, 24 px šípky a nenulové prefix/tag hodnoty; desktop default sa nemení.
+- [ ] Globálny min-width fix prejde focused AppShell/shared testami a minimálnou browser maticou ostatných view.
+**Overenie:** ResourceViewNavigation, Tabs, AppShell a InventoryViewFrame focused testy; typecheck; focused TSX ESLint a CSS parser; reálny forced-classic browser probe a shared minimum-width geometria.
+**Závislosti:** T41a/T41b a nameraný T41 classic-scrollbar RED.
+**Súbory (S, 2):** src/index.css; ResourceViewNavigation.tsx. Žiadne skrývanie overflow alebo nové frame pravidlá.
+
 ### T41: Browser matica a finálny audit
 
 **Popis:** Rozšíriť existujúcu resource CDP kontrolu o štyri sloty a podmienky. Zachovať obidve shared/regresné sady bez kopírovania celého QA transportu alebo použitia živých mutácií.
@@ -866,3 +877,30 @@ Plán: fáza 6 v table-redesign-v2-plan.md. **Stav: prebieha inline podľa pokyn
 Parent fresh verification after T39/T40b: the exact T39 four-file command above passed 69 tests; exact T40 two-file command passed 30 tests; `npm.cmd run typecheck` passed after integration (exit 0). T39 independent spec/quality review and T40b cleanup review both approve, no required findings. T39 commit 40b728e6; T40b commit 11f08238. Browser T41 remains in progress; these unit results are not a browser geometry claim. Raw cache immutability is covered by focused query/component tests; browser will prove the full intercepted wire response and scoped rows/metrics, without adding a production introspection seam.
 
 T41a/T41b integration typecheck initially found strict test-fixture typing errors (two unchecked array accesses, one explicit undefined optional prop). Corrected only these test fixtures, without suppressions or assertion removal. Parent fresh `npm.cmd exec -- vitest run src/features/discovery-inventory/resources/components/ResourceViewNavigation.test.tsx src/shared/components/tabs/Tabs.test.tsx src/features/discovery-inventory/resources/components/vmware/VmwareProviderFilterSummary.test.tsx --maxWorkers=2`: 3 files / 42 tests PASS. Owned ESLint, independent scoped re-review and parent fresh `npm.cmd run typecheck` PASS. Production behavior unchanged.
+
+Shared browser regression after phase6 source freeze: `node scripts/qa/shared-inventory-view-browser.mjs --geometry-only` PASS, 96 records, completed=true, %TEMP%/abco-phase6-shared-geometry-final/results.json. `node scripts/qa/shared-inventory-view-browser.mjs --interactions-only` PASS, 88 records, completed=true, %TEMP%/abco-phase6-shared-interactions-final/results.json. Both have zero runtime exceptions, unexpected endpoints/origins, failed assets, and navigation diagnostics. Four standalone records overlap, so this is 180 unique shared cases, not 184 unique cases. Dedicated Chrome/CDP9358 with a disposable profile; local fixtures only. Resource-specific T41 remains open until its complete run. Initial shared launch failed before connecting CDP9358; subsequent completed runs above are the evidence, not that startup attempt.
+
+### Fáza 6 — focused overenie implementácie
+
+Presné cesty a príkazy sú pri jednotlivých T31–T41 vyššie. Parent vykonal fresh overenie každého kroku pred commitom; počty sa nesčítavajú na unikátne testy, pretože regresné súbory sa opakujú.
+
+| Krok | Súbory | Testy | Výsledok |
+|---|---:|---:|---|
+| T31 baseline | 3 | 13 | PASS |
+| T32 normalizácia | 4 | 26 | PASS |
+| T33 scope/metriky/prefetch | 6 | 125 | PASS |
+| T34 recovery konzumenti | 3 | 50 | PASS |
+| T34b builder prefetch | 2 | 46 | PASS |
+| T35/T36 shared regresie | 6 | 51 | PASS |
+| T37 summary | 1 | 15 | PASS |
+| T38 navigačná kompozícia | 2 | 14 | PASS |
+| T39 source/target routes | 4 | 69 | PASS |
+| T40 cleanup + summary | 2 | 30 | PASS |
+| T41a/T41b responsive + shared regresie | 6 | 49 | PASS |
+| T41a/T41b strict fixture oprava | 3 | 42 | PASS |
+
+Focused ESLint pre všetky zmenené TS/TSX súbory prešiel pri krokoch. `npm.cmd run typecheck` prešiel po shared kontraktoch, integrácii aj po oprave strict test fixtures. Finálne QA skripty a ich lint sú ešte predmetom T41; plná suite, full lint a production build sa podľa AGENTS.md nespúšťajú.
+
+T41 QA diagnostic record: the initial 320px zero-width layout was a real product defect, fixed by d0adf183/5aec8c70. Later partial resource runs exposed harness issues: URL readiness before the new selected-provider DOM, DOM.focus on an inactive test page (document.hasFocus=false), and cached-refresh Retry notice located before the inventory frame. Native keyboard/focus assertions remain; the harness waits for current selected DOM and genuine page focus and scopes Retry to the actual alert. These failed/aborted attempts are not reported as completed passes. The final default resource command will include both the old matrix and every new phase6 scenario; its single completed run is the acceptance evidence, without requiring another duplicate full phase6-only replay.
+
+T41c actual product verification: focused resource `--phase6-only --quick` completed 20 records after the real two-line source correction, %TEMP%/abco-phase6-classic-product-green-20261103/results.json. Both source and target with forced classic scrollbar at 320×844: innerWidth320 / clientWidth305 / scrollWidth305 / body min-width0; tab viewport81.8125≥80px slot; 24px controls; 25px prefix/tag value regions; +4 panel bounds and native keyboard PASS. This uses compiled production CSS, unlike the earlier diagnostic DOM patches. Focused four-file Vitest33 PASS, owned ESLint/PostCSS parse/typecheck PASS, independent scoped and whole-branch source review clean. Shared36 and full Resources166 remain T41 acceptance gates; no claim that those pending runs passed.

@@ -24,7 +24,7 @@ export function ResourceViewNavigation({ items, labels, value, onChange, selecte
   const providerFilter = vmwareProvider ? resolveVmwareProviderFilter(vmwareProvider) : null
 
   return (
-    <div className="flex min-w-0 items-center gap-1 [--tab-control-width:1.75rem] [--tab-slot-width:5rem] sm:gap-3 sm:[--tab-control-width:2.25rem] sm:[--tab-slot-width:9rem] 2xl:[--tab-slot-width:10rem]">
+    <div className="flex min-w-0 items-center gap-1 [--tab-control-width:1.5rem] [--tab-slot-width:5rem] sm:gap-3 sm:[--tab-control-width:2.25rem] sm:[--tab-slot-width:9rem] 2xl:[--tab-slot-width:10rem]">
       <div className="min-w-0 flex-initial">
         <Tabs
           items={items.map(tab => ({

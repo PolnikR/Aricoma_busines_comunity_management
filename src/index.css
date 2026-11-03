@@ -262,7 +262,7 @@
   }
 
   body {
-    @apply relative z-1 min-w-80 bg-page font-normal font-outfit text-text-primary antialiased;
+    @apply relative z-1 min-w-0 bg-page font-normal font-outfit text-text-primary antialiased;
     background-image:
       radial-gradient(circle at 12% 8%, var(--app-page-glow-primary), transparent 30rem),
       radial-gradient(circle at 88% 82%, var(--app-page-glow-secondary), transparent 28rem);
