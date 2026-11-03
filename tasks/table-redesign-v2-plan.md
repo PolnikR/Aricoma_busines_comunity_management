@@ -278,4 +278,4 @@ V T20/T21 sa pripravia kontrakty bez zmeny existujúceho defaultu mimo nového f
 
 ### Podmienky odovzdania
 
-T20–T30 sú plán, všetky nové úlohy ostávajú nezaškrtnuté. Implementácia začne až po pokyne používateľa. Po dokončení musí zdrojová inventúra preukázať jednu shared implementáciu view frame a viewportu; Resources a Identity nemajú vlastnú kópiu. Každá položka matice musí byť overená alebo výslovne uvedená ako blokovaná s dôvodom. Nepovažovať novú fázu za hotovú, ak rovnaký defekt ostane na inom konzumentovi spoločného shellu.
+T20–T30 boli vykonané po pokyne používateľa `executing-plans inline` z 2026-11-03. Stav krokov, focused overenie, browser dôkazy a commity sú v [todo a výsledkovom reporte fázy 5](table-redesign-v2-todo.md). Zdrojová inventúra potvrdila jednu shared implementáciu view frame a viewportu; Resources a Identity nemajú vlastnú kópiu. Každá položka matice musí byť overená alebo výslovne uvedená ako blokovaná s dôvodom. Ľudskú vizuálnu akceptáciu v CP11 agent neuzatvára.

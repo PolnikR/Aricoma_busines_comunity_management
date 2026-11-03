@@ -430,15 +430,15 @@ Kompletná test suite, full lint a production build neboli spustené podľa doho
 
 ## Fáza 5: Jedno shared inventory view pre všetkých konzumentov
 
-Rozsah, matica stránok a rozhodnutia: [fáza 5 plánu](table-redesign-v2-plan.md#fáza-5-spoločné-shared-view-pre-všetky-inventory-stránky-t20t30). T20–T30 sú nové nezačaté úlohy. Nadväzujú na overené Resources a odstránia rozdvojenie rámovania oproti Identity a ostatným inventory stránkam. Pri každom kroku focused ESLint, `git diff --check`, záznam výsledkov a atomický commit len vlastných zmien. Historické CP1–CP6 sa týmto neuzatvárajú.
+Rozsah, matica stránok a rozhodnutia: [fáza 5 plánu](table-redesign-v2-plan.md#fáza-5-spoločné-shared-view-pre-všetky-inventory-stránky-t20t30). T20–T30 boli spustené pokynom používateľa executing-plans inline. Nadväzujú na overené Resources a odstránia rozdvojenie rámovania oproti Identity a ostatným inventory stránkam. Pri každom kroku focused ESLint, `git diff --check`, záznam výsledkov a atomický commit len vlastných zmien. Historické CP1–CP6 sa týmto neuzatvárajú.
 
 ### T20: Scoped dedenie rámovania panelov
 
 **Popis:** Zaviesť malý shared kontext frame/navigation kompozície a resolver rámika v paneli/skeletone. Default mimo view zostane standalone; zatiaľ bez aktivácie v existujúcom shelli.
 **Akceptačné kritériá:**
-- [ ] `DataTableSurface`, `DataTableSkeleton` a `InventoryPanel` rešpektujú poradie explicitný frame → nearest scope → standalone mimo scope; `InventoryPanel` neprepisuje chýbajúci prop pevným defaultom.
-- [ ] Dedenie funguje aj cez obyčajný vnorený feature wrapper, explicitný standalone override ostane platný a nemení query ani stav tabuľky.
-- [ ] Context modul obsahuje iba kompozičné hodnoty/hooky bez feature importov, dátového modelu, DOM detekcie a barrel cyklu.
+- [x] `DataTableSurface`, `DataTableSkeleton` a `InventoryPanel` rešpektujú poradie explicitný frame → nearest scope → standalone mimo scope; `InventoryPanel` neprepisuje chýbajúci prop pevným defaultom.
+- [x] Dedenie funguje aj cez obyčajný vnorený feature wrapper, explicitný standalone override ostane platný a nemení query ani stav tabuľky.
+- [x] Context modul obsahuje iba kompozičné hodnoty/hooky bez feature importov, dátového modelu, DOM detekcie a barrel cyklu.
 **Overenie:** `npm.cmd exec -- vitest run src/shared/components/data-table/DataTableSurface.test.tsx src/shared/components/data-table/DataTableSkeleton.test.tsx src/features/discovery-inventory/resources/components/ResourceInventoryPanel.test.tsx --maxWorkers=2`; doplniť focused integračný prípad v Surface teste pre implicitný/explicitný frame a loading status.
 **Závislosti:** hotové T13–T19.
 **Súbory (M, 5):** nový `src/shared/components/inventory-shell/InventoryCompositionContext.ts`, `src/shared/components/data-table/DataTableSurface.tsx`, `DataTableSkeleton.tsx`, `src/shared/components/inventory-shell/InventoryPanel.tsx`, `DataTableSurface.test.tsx`.
@@ -449,9 +449,9 @@ Rozsah, matica stránok a rozhodnutia: [fáza 5 plánu](table-redesign-v2-plan.m
 
 **Popis:** Vytvoriť shared `InventoryViewFrame` podľa hotovej resource karty a pripraviť scoped prezentáciu hlavnej navigácie. Frame poskytuje embedded scope obsahu a oddelený navigation scope iba tabs slotu.
 **Akceptačné kritériá:**
-- [ ] Jeden shared komponent vlastní rámik, pozadie, polomer, tieň, `data-inventory-view` a jednu deliacu čiaru; nevykonáva fetch ani nerozhoduje o provideroch/view modeloch.
-- [ ] `Tabs` dedí embedded vzhľad iba v hlavnom navigation slote; vlastný explicitný appearance a vnútorné detailové tabs zachovajú svoju prezentáciu a klávesnicové správanie.
-- [ ] Loading/error/empty obsah má ten istý pomenovaný view región, bez masky/orezania vonkajších rohov; frame umožní zachovať existujúci lower-bound kontrakt shellu.
+- [x] Jeden shared komponent vlastní rámik, pozadie, polomer, tieň, `data-inventory-view` a jednu deliacu čiaru; nevykonáva fetch ani nerozhoduje o provideroch/view modeloch.
+- [x] `Tabs` dedí embedded vzhľad iba v hlavnom navigation slote; vlastný explicitný appearance a vnútorné detailové tabs zachovajú svoju prezentáciu a klávesnicové správanie.
+- [x] Loading/error/empty obsah má ten istý pomenovaný view región, bez masky/orezania vonkajších rohov; frame umožní zachovať existujúci lower-bound kontrakt shellu.
 **Overenie:** `npm.cmd exec -- vitest run src/shared/components/inventory-shell/InventoryViewFrame.test.tsx src/shared/components/tabs/Tabs.test.tsx src/shared/components/data-table/DataTableSurface.test.tsx --maxWorkers=2` (prvý test je nový); overiť reálnu kompozíciu s panelom cez wrapper a nezávislosť navigation/content scope.
 **Závislosti:** T20.
 **Súbory (M, 4):** nový `src/shared/components/inventory-shell/InventoryViewFrame.tsx`, nový `InventoryViewFrame.test.tsx`, `src/shared/components/tabs/Tabs.tsx`, `Tabs.test.tsx`.
@@ -459,18 +459,18 @@ Rozsah, matica stránok a rozhodnutia: [fáza 5 plánu](table-redesign-v2-plan.m
 **Priebeh (2026-11-03):** Implementovane. Focused Vitest 3 subory / 14 testov PASS; focused ESLint PASS. Navigacny scope oddeleny od content scope.
 
 ### Checkpoint 7: Shared kontrakty pripravené
-- [ ] T20/T21 overené bez aktivácie nového defaultu vo všetkých stránkach; pôvodný samostatný panel funguje mimo scope.
-- [ ] Frame a navigation scope sú nezávislé, explicitné override sú otestované a shared rámik má jediný zdroj CSS.
-- [ ] Žiadna tabuľka nepotrebuje poznať konkrétnu feature stránku alebo čítať DOM svojich potomkov.
+- [x] T20/T21 overené bez aktivácie nového defaultu vo všetkých stránkach; pôvodný samostatný panel funguje mimo scope.
+- [x] Frame a navigation scope sú nezávislé, explicitné override sú otestované a shared rámik má jediný zdroj CSS.
+- [x] Žiadna tabuľka nepotrebuje poznať konkrétnu feature stránku alebo čítať DOM svojich potomkov.
 
 ### T22: Resources ako prvý konzument shared frame a viewportu
 
 **Popis:** Presunúť overený resource viewport s gutterom do shared `InventoryViewportFrame` a resource kartu skladať cez shared `InventoryViewFrame`. Aktualizovať QA marker; zachovať už dodaný vzhľad pred aktiváciou ostatných konzumentov.
 **Akceptačné kritériá:**
-- [ ] `ResourceInventoryShell` už nekopíruje CSS rámika; resource metriky, notice, tabs a všetky stavy sa skladajú cez nový shared frame.
-- [ ] `ResourceViewportFrame` je tenký obal shared viewportu; nadpis a karta majú spoločné zarovnanie a overený priestor pre tieň.
-- [ ] Existujúca 64-prípadová resource QA používa `data-inventory-view` a zachová výsledky vrátane rohov, tieňa, krátkeho okna a standalone fallbackov.
-**Overenie:** `npm.cmd exec -- vitest run src/shared/components/page/ContainedViewportFrame.test.tsx src/features/discovery-inventory/resources/components/ResourceInventoryShell.test.tsx src/features/discovery-inventory/resources/components/ResourceInventoryPanel.test.tsx --maxWorkers=2` (viewport test je nový); `node scripts/qa/inventory-view-table-browser.mjs`.
+- [x] `ResourceInventoryShell` už nekopíruje CSS rámika; resource metriky, notice, tabs a všetky stavy sa skladajú cez nový shared frame.
+- [x] `ResourceViewportFrame` je tenký obal shared viewportu; nadpis a karta majú spoločné zarovnanie a overený priestor pre tieň.
+- [x] Existujúca 64-prípadová resource QA používa `data-inventory-view` a zachová výsledky vrátane rohov, tieňa, krátkeho okna a troch smoke routes migrovaných na shared frame. Standalone fallback sa overí mimo InventoryShell.
+**Overenie:** `npm.cmd exec -- vitest run src/shared/components/page/ContainedViewportFrame.test.tsx src/features/discovery-inventory/resources/components/ResourceInventoryShell.test.tsx src/features/discovery-inventory/resources/components/ResourceInventoryPanel.test.tsx --maxWorkers=2` (existujúci ContainedViewportFrame test; nový class-string test sa nepridával); `node scripts/qa/inventory-view-table-browser.mjs`.
 **Závislosti:** T21.
 **Súbory (M, 5):** nový `src/shared/components/page/InventoryViewportFrame.tsx`, nový `InventoryViewportFrame.test.tsx`, `src/features/discovery-inventory/resources/components/ResourceInventoryShell.tsx`, `ResourceViewportFrame.tsx`, `scripts/qa/inventory-view-table-browser.mjs`.
 
@@ -480,9 +480,9 @@ Rozsah, matica stránok a rozhodnutia: [fáza 5 plánu](table-redesign-v2-plan.m
 
 **Popis:** Nahradiť staré CSS skladanie v `InventoryShell` explicitným shared view frame. Resource shell sa vráti na tenký obal toho istého `InventoryShell`; metriky, notice a spacing bude skladať spoločná vrstva.
 **Akceptačné kritériá:**
-- [ ] Všetkých 11 priamych konzumentov shellu získa rovnakého vlastníka rámika a ich panely automaticky zdedia embedded scope bez povinných props na každej tabuľke.
-- [ ] Zo shellu zmizne `:has`/`group-has` rámovanie a odoberanie horných okrajov potomkom; shared `VirtualMachinesSkeleton` použije rovnaký frame a vnorený skeleton.
-- [ ] Zachované sú accessible region name, metriky/notice mimo karty, `compactSpacing` a `surfaceMinHeightClassName`; resource wrapper nemá vlastný frame markup ani business logiku.
+- [x] Všetkých 11 priamych konzumentov shellu získa rovnakého vlastníka rámika a ich panely automaticky zdedia embedded scope bez povinných props na každej tabuľke.
+- [x] Zo shellu zmizne `:has`/`group-has` rámovanie a odoberanie horných okrajov potomkom; shared `VirtualMachinesSkeleton` použije rovnaký frame a vnorený skeleton.
+- [x] Zachované sú accessible region name, metriky/notice mimo karty, `compactSpacing` a `surfaceMinHeightClassName`; resource wrapper nemá vlastný frame markup ani business logiku.
 **Overenie:** `npm.cmd exec -- vitest run src/shared/components/inventory-shell/InventoryShell.test.tsx src/shared/components/inventory-shell/InventoryViewFrame.test.tsx src/features/discovery-inventory/resources/components/ResourceInventoryShell.test.tsx src/features/discovery-inventory/resources/components/ResourceInventoryPanel.test.tsx --maxWorkers=2`; smoke Identity Users a Resources v Chrome.
 **Závislosti:** T22.
 **Súbory (M, 4):** `src/shared/components/inventory-shell/InventoryShell.tsx`, `InventoryShell.test.tsx`, `src/features/discovery-inventory/resources/components/ResourceInventoryShell.tsx`, `ResourceInventoryShell.test.tsx`.
@@ -490,17 +490,17 @@ Rozsah, matica stránok a rozhodnutia: [fáza 5 plánu](table-redesign-v2-plan.m
 **Priebeh (2026-11-03):** Implementovane: vsetci InventoryShell konzumenti skladaju InventoryViewFrame, resource wrapper je tenky. Focused Vitest 4 subory / 12 testov PASS; focused ESLint PASS. Typecheck a browser sa zaznamenaju v checkpointoch.
 
 ### Checkpoint 8: Spoločný shell aktívny
-- [ ] `npm.cmd run typecheck` a focused kontroly T22/T23 prešli.
-- [ ] Resources aj Identity skutočne renderujú ten istý shared frame; root CSS rámika sa nenachádza v resource feature súbore.
-- [ ] Feature navigačné prepisy a viewporty, ktoré ešte čakajú na T24–T29, sú evidované; tento medzistav sa neodovzdá ako hotová globálna migrácia.
+- [x] `npm.cmd run typecheck` a focused kontroly T22/T23 prešli.
+- [x] Resources aj Identity skutočne renderujú ten istý shared frame; root CSS rámika sa nenachádza v resource feature súbore.
+- [x] Feature navigačné prepisy a viewporty, ktoré ešte čakajú na T24–T29, sú evidované; tento medzistav sa neodovzdá ako hotová globálna migrácia.
 
 ### T24: Identity & access cez spoločnú kompozíciu
 
 **Popis:** Zapojiť shared viewport, odstrániť povrchové CSS prepisy hlavnej Identity navigácie a upraviť primárny `IdentityContentPanel`, aby rešpektoval frame scope. Preveriť listové aj formulárové/detailové vetvy tej istej stránky.
 **Akceptačné kritériá:**
-- [ ] Users, Clients a Application roles majú spoločný súvislý frame, priehľadný pás view s jediným oddeľovačom a celý tieň; neexistuje vlastná Identity kópia view frame.
-- [ ] Primárne Identity settings/detailové panely sa vložia do view bez druhej karty; zámerne nezávislé detailové/portal karty majú konkrétny standalone override, ak ho potrebujú.
-- [ ] Zachované sú URL/sekcia/tab/entity navigácia, loading/fatal/cached error, retry, otvorenie detailu a scrollovanie dlhého formulára/tabuľky vrátane krátkeho okna.
+- [x] Users, Clients a Application roles majú spoločný súvislý frame, priehľadný pás view s jediným oddeľovačom a celý tieň; neexistuje vlastná Identity kópia view frame.
+- [x] Primárne Identity settings/detailové panely sa vložia do view bez druhej karty; zámerne nezávislé detailové/portal karty majú konkrétny standalone override, ak ho potrebujú.
+- [x] Zachované sú URL/sekcia/tab/entity navigácia, loading/fatal/cached error, retry, otvorenie detailu a scrollovanie dlhého formulára/tabuľky vrátane krátkeho okna.
 **Overenie:** `npm.cmd exec -- vitest run src/features/platform-administration/identity-access/pages/IdentityAccessPage.test.tsx src/features/platform-administration/identity-access/components/IdentityAccessNavigation.test.tsx src/features/platform-administration/identity-access/components/IdentityResourceLayout.test.tsx src/features/platform-administration/identity-access/components/UsersSection.test.tsx src/features/platform-administration/identity-access/components/ClientsSection.test.tsx src/features/platform-administration/identity-access/components/RealmRolesSection.test.tsx --maxWorkers=2`; browser Users/Clients/Application roles a aspoň jeden dostupný settings/detailový view.
 **Závislosti:** T23.
 **Súbory (M, 5):** `src/features/platform-administration/identity-access/pages/IdentityAccessPage.tsx`, `components/IdentityAccessNavigation.tsx`, `components/IdentityResourceLayout.tsx`, `pages/IdentityAccessPage.test.tsx`, `components/IdentityResourceLayout.test.tsx` v tom istom feature adresári. Ďalšie zistené nezávislé výnimky rozčleniť pred rozšírením kroku.
@@ -511,22 +511,24 @@ Rozsah, matica stránok a rozhodnutia: [fáza 5 plánu](table-redesign-v2-plan.m
 
 **Popis:** Pre Recovery runs a spoločný Recovery policies shell použiť shared viewport a zdedenú prezentáciu hlavnej navigácie. Tabuľkové komponenty budú rámovanie dediť zo spoločného shellu.
 **Akceptačné kritériá:**
-- [ ] Runs aj Snapshot/Application recovery/Clean room policy view majú jeden frame a jednu čiaru pod tabs; žiadne lokálne bg/border pravidlo nepremaľuje horný oblúk.
-- [ ] Prepínanie view a existujúce query, retry, refresh a policy akcie fungujú bez zmeny modelu; bez tabs nevznikne prázdny navigation slot.
-- [ ] História/detail ostáva funkčný, pagination a relevantné formulárové/dátové viewporty sú dostupné pri 1280×600 a na mobile.
+- [x] Runs aj Snapshot/Application recovery/Clean room policy view majú jeden frame a jednu čiaru pod tabs; žiadne lokálne bg/border pravidlo nepremaľuje horný oblúk.
+- [x] Prepínanie view a existujúce query, retry, refresh a policy akcie fungujú bez zmeny modelu; bez tabs nevznikne prázdny navigation slot.
+- [x] História/detail ostáva funkčný, pagination a relevantné formulárové/dátové viewporty sú dostupné pri 1280×600 a na mobile.
 **Overenie:** `npm.cmd exec -- vitest run src/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage.test.tsx src/features/recovery-plans/recovery-runs/components/RecoveryRunsTable.test.tsx src/features/recovery-plans/recovery-policies/components/RecoveryPolicyPageShell.test.tsx --maxWorkers=2`; browser všetky tri policy typy a runs view/detail.
 **Závislosti:** T23.
-**Súbory (M, 4):** `src/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage.tsx`, `RecoveryRunsPage.test.tsx`, `src/features/recovery-plans/recovery-policies/components/RecoveryPolicyPageShell.tsx`, `RecoveryPolicyPageShell.test.tsx`.
+**Súbory (M, 5):** `src/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage.tsx`, `src/features/recovery-plans/recovery-policies/components/RecoveryPolicyPageShell.tsx`, `RecoveryPolicyPageShell.test.tsx`, `src/features/recovery-plans/recovery-runs/components/RecoveryRunsTable.tsx`, `RecoveryRunsTable.test.tsx`. Posledné dva súbory doplnené po browser reprodukcii nefunkčného source Retry; zachovanie tejto akcie je súčasť kritérií T25.
 
 **Priebeh (2026-11-03):** Implementovane. Focused Vitest 3 subory / 25 testov PASS; focused ESLint PASS. Povodna assertion lokalneho bg/border override aktualizovana na shared navigation kontrakt; funkcne kontroly zachovane.
+
+**Priebeh (2026-11-03):** Doplnok po browser reprodukcii: opraveny existujuci source Retry callback, RED SyntheticBaseEvent -> GREEN Vitest 3 subory/25 testov a opakovany komponent 1 subor/8 testov PASS. Focused ESLint PASS; browser retry-success PASS. Samostatny fix commit.
 
 ### T26: Discovery settings formulár aj história
 
 **Popis:** Zapojiť shared viewport/navigáciu v Discovery settings. Configuration primárny formulár dostane embedded prezentáciu `SettingsSectionCard` v tomto konkrétnom použití; History tabuľka prevezme shared frame scope automaticky.
 **Akceptačné kritériá:**
-- [ ] Configuration aj History používajú rovnaký view frame a ich prepnutie nemení počet obvodových rámikov ani polohu navigácie.
-- [ ] `SettingsSectionCard` má explicitný embedded režim pre primárny formulár, pričom ostatné samostatné settings karty zachovajú dnešný default a vnútorné sémantické členenie.
-- [ ] Save/cancel/discard, request chyby a retry, dlhý formulár a History footer sú dostupné; existuje správny scroll owner pre každý typ obsahu.
+- [x] Configuration aj History používajú rovnaký view frame a ich prepnutie nemení počet obvodových rámikov ani polohu navigácie.
+- [x] `SettingsSectionCard` má explicitný embedded režim pre primárny formulár, pričom ostatné samostatné settings karty zachovajú dnešný default a vnútorné sémantické členenie.
+- [x] Save/cancel/discard, request chyby a retry, dlhý formulár a History footer sú dostupné; existuje správny scroll owner pre každý typ obsahu.
 **Overenie:** `npm.cmd exec -- vitest run src/shared/components/settings/SettingsSectionCard.test.tsx src/features/discovery-inventory/discovery-settings/pages/DiscoverySettingsPage.test.tsx src/features/discovery-inventory/discovery-settings/pages/DiscoverySettingsPage.stubfetch.test.tsx src/features/discovery-inventory/discovery-settings/components/DiscoveryHistoryCard.test.tsx --maxWorkers=2`; Chrome Configuration/History a neuložené zmeny.
 **Závislosti:** T23.
 **Súbory (M, najviac 5):** `src/features/discovery-inventory/discovery-settings/pages/DiscoverySettingsPage.tsx`, `DiscoverySettingsPage.test.tsx`, `src/shared/components/settings/SettingsSectionCard.tsx`, `SettingsSectionCard.test.tsx`, prípadne `DiscoveryHistoryCard.test.tsx` pri zámernej zmene existujúcej layout assertion.
@@ -534,17 +536,17 @@ Rozsah, matica stránok a rozhodnutia: [fáza 5 plánu](table-redesign-v2-plan.m
 **Priebeh (2026-11-03):** Implementovane: Configuration formular embedded, History dedenie, spolocny viewport. Focused Vitest 4 subory / 28 testov PASS; focused ESLint PASS. Ostatne SettingsSectionCard defaulty ostali standalone.
 
 ### Checkpoint 9: Všetky view s hlavnými záložkami
-- [ ] Identity, Recovery runs/policies, Discovery settings a Resources používajú jeden shared frame a zdedenú vloženú navigáciu.
-- [ ] Dátový viewport, hlavná navigácia a vnútorné detailové tabs majú oddelené zodpovednosti; neexistuje duplicitný nav render ani neplatné ARIA odkazy.
-- [ ] Každá položka bola overená aj mimo úspešného zoznamu; zistené nezávislé vnútorné karty sú explicitne zapísané.
+- [x] Identity, Recovery runs/policies, Discovery settings a Resources používajú jeden shared frame a zdedenú vloženú navigáciu.
+- [x] Dátový viewport, hlavná navigácia a vnútorné detailové tabs majú oddelené zodpovednosti; neexistuje duplicitný nav render ani neplatné ARIA odkazy.
+- [x] Každá položka bola overená aj mimo úspešného zoznamu; zistené nezávislé vnútorné karty sú explicitne zapísané.
 
 ### T27: Provider a credential zoznamy
 
 **Popis:** Zjednotiť viewport Platform providers, Providers a Credentials. Ich existujúce tabuľkové panely zdedia framing zo spoločného shellu, bez feature CSS pre rámik.
 **Akceptačné kritériá:**
-- [ ] Všetky tri stránky majú jeden frame bez tabs, celé rohy a tieň a spoločné zarovnanie nadpisu/karty; nevznikne prázdny navigačný riadok.
-- [ ] Existujúce CRUD/modal/detail, hľadanie a stránkovanie zostanú funkčné; loading/error/empty sú obsahom spoločnej karty.
-- [ ] Krátky a dlhý zoznam funguje na desktope i mobile bez horizontálneho scrollu dokumentu a bez orezanej pätičky.
+- [x] Všetky tri stránky majú jeden frame bez tabs, celé rohy a tieň a spoločné zarovnanie nadpisu/karty; nevznikne prázdny navigačný riadok.
+- [x] Existujúce CRUD/modal/detail, hľadanie a stránkovanie zostanú funkčné; loading/error/empty sú obsahom spoločnej karty.
+- [x] Krátky a dlhý zoznam funguje na desktope i mobile bez horizontálneho scrollu dokumentu a bez orezanej pätičky.
 **Overenie:** `npm.cmd exec -- vitest run src/features/platform-administration/platform-providers/pages/PlatformProvidersPage.test.tsx src/features/platform-administration/platform-providers/components/PlatformProvidersTable.test.tsx src/features/providers-connectors/providers/pages/ProvidersPage.test.tsx src/features/providers-connectors/providers/components/ProvidersCatalogueTable.test.tsx src/features/providers-connectors/credentials/components/CredentialsTable.test.tsx --maxWorkers=2`; Chrome všetky tri routes.
 **Závislosti:** T23, CP9.
 **Súbory (M, 5):** `src/features/platform-administration/platform-providers/pages/PlatformProvidersPage.tsx`, `PlatformProvidersPage.test.tsx`, `src/features/providers-connectors/providers/pages/ProvidersPage.tsx`, `ProvidersPage.test.tsx`, `src/features/providers-connectors/credentials/pages/CredentialsPage.tsx`.
@@ -555,9 +557,9 @@ Rozsah, matica stránok a rozhodnutia: [fáza 5 plánu](table-redesign-v2-plan.m
 
 **Popis:** Presunúť oba zoznamy na shared viewport pri zachovaní spoločného shellu a existujúcich notice a akcií.
 **Akceptačné kritériá:**
-- [ ] Obe stránky majú jeden spoločný frame bez lokálnej kópie rámovania; notice ostáva mimo karty podľa kontraktu shellu.
-- [ ] Create/edit/detail, delete/rollback a prechody na builder zachovajú doterajšie správanie; layoutová migrácia nemení orchestration ani mutation logiku.
-- [ ] Loading/error/empty a krátky/dlhý zoznam zachovajú dostupný footer, správny scroll a priestor na tieň.
+- [x] Obe stránky majú jeden spoločný frame bez lokálnej kópie rámovania; notice ostáva mimo karty podľa kontraktu shellu.
+- [x] Create/edit/detail, delete/rollback a prechody na builder zachovajú doterajšie správanie; layoutová migrácia nemení orchestration ani mutation logiku.
+- [x] Loading/error/empty a krátky/dlhý zoznam zachovajú dostupný footer, správny scroll a priestor na tieň.
 **Overenie:** `npm.cmd exec -- vitest run src/features/recovery-plans/recovery-applications/pages/RecoveryApplicationsListPage.test.tsx src/features/recovery-plans/recovery-applications/components/RecoveryApplicationsTable.test.tsx src/features/recovery-plans/recovery-groups/pages/RecoveryGroupsListPage.test.tsx src/features/recovery-plans/recovery-groups/components/RecoveryGroupsTable.test.tsx --maxWorkers=2`; browser oba zoznamy a návrat z buildera bez zápisov do živého backendu.
 **Závislosti:** T23, CP9.
 **Súbory (M, 4):** `src/features/recovery-plans/recovery-applications/pages/RecoveryApplicationsListPage.tsx`, `RecoveryApplicationsListPage.test.tsx`, `src/features/recovery-plans/recovery-groups/pages/RecoveryGroupsListPage.tsx`, `RecoveryGroupsListPage.test.tsx`.
@@ -568,9 +570,9 @@ Rozsah, matica stránok a rozhodnutia: [fáza 5 plánu](table-redesign-v2-plan.m
 
 **Popis:** Dokončiť zvyšné priame konzumenty InventoryShell zapojením spoločného viewportu. Audit overí dedenie aj cez `InventoryPanel`, Policy sets cez priamy `DataTableSurface`.
 **Akceptačné kritériá:**
-- [ ] Obe routes používajú ten istý shared frame a bez tabs nekreslia navigačný pás; embedded režim sa zdedí cez obe panelové cesty.
-- [ ] Audit dotazovací toolbar/hustota a Policy Set modal/refresh po mutation zostanú funkčné; request stavy nevytvoria ďalšiu kartu.
-- [ ] Dlhé logy aj krátke Policy sets majú správny scroll owner, celý tieň a dostupné ovládanie pri krátkom okne a na mobile.
+- [x] Obe routes používajú ten istý shared frame a bez tabs nekreslia navigačný pás; embedded režim sa zdedí cez obe panelové cesty.
+- [x] Audit dotazovací toolbar/hustota a Policy Set modal/refresh po mutation zostanú funkčné; request stavy nevytvoria ďalšiu kartu.
+- [x] Dlhé logy aj krátke Policy sets majú správny scroll owner, celý tieň a dostupné ovládanie pri krátkom okne a na mobile.
 **Overenie:** `npm.cmd exec -- vitest run src/features/recovery-plans/policy-sets/pages/PolicySetsPage.test.tsx src/features/recovery-plans/policy-sets/components/PolicySetsTable.test.tsx src/features/platform-administration/audit/pages/AuditPage.test.tsx src/features/platform-administration/audit/components/AccessLogsTable.test.tsx --maxWorkers=2`; Chrome obe routes.
 **Závislosti:** T23, CP9.
 **Súbory (M, 4):** `src/features/recovery-plans/policy-sets/pages/PolicySetsPage.tsx`, `PolicySetsPage.test.tsx`, `src/features/platform-administration/audit/pages/AuditPage.tsx`, `AuditPage.test.tsx`.
@@ -578,23 +580,76 @@ Rozsah, matica stránok a rozhodnutia: [fáza 5 plánu](table-redesign-v2-plan.m
 **Priebeh (2026-11-03):** Implementovane. Focused Vitest 4 subory / 37 testov PASS; focused ESLint PASS. Vsetky produkcne zmeny preverene npm.cmd run typecheck PASS.
 
 ### Checkpoint 10: Celá matica migrovaná
-- [ ] Každý z 11 priamych konzumentov InventoryShell a resource wrapper má výsledok v matici; žiadna položka nezostala pri starom skladaní rámika.
-- [ ] Header aj view sú v shared viewport kompozícii, všetky feature špecifiká sú dáta/obsah/akcie a existujúce spacing/floor voľby.
-- [ ] `npm.cmd run typecheck`, focused lint a cielené regresie T24–T29 prešli; samostatné panely mimo view majú stále standalone default.
+- [x] Každý z 11 priamych konzumentov InventoryShell a resource wrapper má výsledok v matici; žiadna položka nezostala pri starom skladaní rámika.
+- [x] Header aj view sú v shared viewport kompozícii, všetky feature špecifiká sú dáta/obsah/akcie a existujúce spacing/floor voľby.
+- [x] `npm.cmd run typecheck`, focused lint a cielené regresie T24–T29 prešli; samostatné panely mimo view majú stále standalone default.
 
 ### T30: Browser matica a audit úplnosti shared migrácie
 
 **Popis:** Rozšíriť existujúcu CDP kontrolu o celú maticu konzumentov a potvrdiť, že oprava žije v shared vrstve. Spoločný browser transport/merania extrahovať iba v rozsahu potrebnom pre resource a nové inventory prípady.
 **Akceptačné kritériá:**
-- [ ] Každá položka matice má pomenovaný výsledok a screenshot/meranie; plná geometrická matica reprezentatívnych view a minimálne desktop/mobil oboch tém ostatných routes potvrdí jeden frame, jednu čiaru, celé rohy/tieň a zarovnanie.
-- [ ] Request stavy, retry/cache, list/form/detail navigácia, dlhé dáta, formulárové footery a standalone mimo scope sú overené validnými lokálnymi fixtures; externé požiadavky sú blokované a reálny backend sa nemení.
-- [ ] Zdrojový audit potvrdí jedinú implementáciu view frame/viewportu, tenké resource wrappery a absenciu starého `:has` rámovania či feature kópií; výsledkový report pomenúva limity a každý neoverený stav.
+- [x] Každá položka matice má pomenovaný výsledok a screenshot/meranie; plná geometrická matica reprezentatívnych view a minimálne desktop/mobil oboch tém ostatných routes potvrdí jeden frame, jednu čiaru, celé rohy/tieň a zarovnanie.
+- [x] Request stavy, retry/cache, list/form/detail navigácia, dlhé dáta, formulárové footery a standalone mimo scope sú overené validnými lokálnymi fixtures; externé požiadavky sú blokované a reálny backend sa nemení.
+- [x] Zdrojový audit potvrdí jedinú implementáciu view frame/viewportu, tenké resource wrappery a absenciu starého `:has` rámovania či feature kópií; výsledkový report pomenúva limity a každý neoverený stav.
 **Overenie:** `node scripts/qa/inventory-view-table-browser.mjs` a nový `node scripts/qa/shared-inventory-view-browser.mjs`; `node --check` nad zmenenými QA skriptmi; focused ESLint, `git diff --check`, kontrola scope cez `rg -l '<InventoryShell\b' src -g '*.tsx' -g '!*.test.tsx'` a zodpovedajúcu kontrolu `InventoryViewFrame`/`InventoryViewportFrame`/legacy selectors. Celá suite a build iba pri preukázanom dôvode podľa AGENTS.md.
 **Závislosti:** T20–T29, CP10.
 **Súbory (M, najviac 5):** `scripts/qa/inventory-view-table-browser.mjs`, nový `scripts/qa/shared-inventory-view-browser.mjs`, podľa potreby nový spoločný `scripts/qa/inventory-browser-harness.mjs`, tento todo a existujúci plan súbor. Nevkladať screenshots do produkčného kódu ani do shared komponentov.
 
+**Priebeh (2026-11-03):** Dokoncene: resource64 PASS; shared geometry96 + interactions88 PASS, union180, oba completed:true, nula runtime/API/asset/navigation chyb. node--check a focused ESLint oboch QA skriptov PASS; source a QA review bez zavaznych nalezov. Report a checkboxy aktualizovane, ludska akceptacia ostava otvorena.
+
 ### Checkpoint 11: Shared migrácia pripravená na odovzdanie
-- [ ] T20–T30 majú splnené kritériá, focused overenie a atomické commity; do reportu sa nepočíta prerušený alebo zlyhaný beh ako úspech.
-- [ ] Resources aj Identity a ostatní konzumenti používajú spoločné shared komponenty; rovnaký vizuálny defekt nezostal v nepreverenej položke matice.
-- [ ] Report obsahuje presné príkazy, browser dôkazy, zoznam standalone výnimiek, limity backend fixtures/zoom a stav celej suite/build.
+- [x] T20–T30 majú splnené kritériá, focused overenie a atomické commity; do reportu sa nepočíta prerušený alebo zlyhaný beh ako úspech.
+- [x] Resources aj Identity a ostatní konzumenti používajú spoločné shared komponenty; rovnaký vizuálny defekt nezostal v nepreverenej položke matice.
+- [x] Report obsahuje presné príkazy, browser dôkazy, zoznam standalone výnimiek, limity backend fixtures/zoom a stav celej suite/build.
 - [ ] Používateľ skontroloval hotový vzhľad aspoň na Identity a Resources. Túto ľudskú kontrolu agent nezaškrtáva za používateľa.
+
+
+## Výsledok fázy 5 (2026-11-03)
+
+Implementácia prebehla inline v existujúcom worktree po pokyne používateľa. Jeden `InventoryViewFrame` vlastní obvod, pozadie, rohy, tieň a divider navigácie. `InventoryShell` ho používa pre všetkých 11 priamych konzumentov; resource shell a viewport sú tenké adaptéry. `InventoryViewportFrame` poskytuje spoločné zarovnanie headera a karty a 8 px gutter. Feature komponenty dodávajú obsah, dáta a akcie. Hlavné view tabs dedia embedded vzhľad iba v navigation slote, vnútorné detailové tabs svoj default.
+
+Panely a skeletony používajú explicitný frame → nearest context → standalone mimo view. IdentityContentPanel rešpektuje rovnaký scope. Iba primárna Discovery Configuration karta má explicitný embedded režim SettingsSectionCard; Notifications a ostatné nezávislé settings karty si ponechali standalone default. Audit portalov nenašiel prípad vyžadujúci ďalší override. Nevznikla globálna maska/orezanie rohov ani DOM detekcia cez :has. Hustota a obsahová výška riadkov, toolbar, pagination a header z revertovaných T5–T7 sa neobnovovali.
+
+### Focused overenie
+
+Príkazy Vitest uvedené pri T20–T29 boli vykonané s `npm.cmd exec -- vitest run <explicitné súbory> --maxWorkers=2`:
+
+| Krok | Súbory | Testy | Výsledok |
+|---|---:|---:|---|
+| T20 | 3 | 14 | PASS |
+| T21 | 3 | 14 | PASS |
+| T22 | 3 | 7 | PASS |
+| T23 | 4 | 12 | PASS |
+| T24 | 6 | 72 | PASS |
+| T25 | 3 | 25 | PASS |
+| T26 | 4 | 28 | PASS |
+| T27 | 5 | 67 | PASS |
+| T28 | 4 | 88 | PASS |
+| T29 | 4 | 37 | PASS |
+
+Počty sa nesčítavajú na unikátne testy: niektoré shared testy sa zámerne opakujú. Focused ESLint zmenených zdrojov/testov prešiel pri každom kroku. `npm.cmd run typecheck` prešiel na CP8 aj po dokončení všetkých produkčných migrácií. Existing ContainedViewportFrame test a browser geometria overujú presun viewportu; nepridával sa test, ktorý by iba kopíroval CSS class string. RecoveryPolicyPageShell mal jednu assertion starého lokálneho bg/border override: po zámernej zmene vlastníka štýlu bola aktualizovaná, ostatné behaviorálne assertions zachované a celý focused súbor opäť prešiel.
+
+Read-only review `12e40104..9e0e2021` nenašlo závažný nález. Zdrojový audit cez `rg -l '<InventoryShell\b' src -g '*.tsx' -g '!*.test.tsx'` potvrdil 11 priamych feature konzumentov a resource wrapper. Všetci majú shared viewport; frame CSS je iba v shared vlastníkovi a legacy framing selectors v shelli chýbajú.
+
+### Browser overenie a limity
+
+- `node scripts/qa/inventory-view-table-browser.mjs` — 64 geometry captures PASS, exit 0. Výstup `%TEMP%/abco-resource-final-qa/results.json` a PNG v rovnakom adresári. Po globálnej migrácii sú posledné tri pôvodne standalone routes správne shared smoke prípady; genuine standalone sa testuje osobitne v shared skripte.
+- `node scripts/qa/shared-inventory-view-browser.mjs --geometry-only` — 96 záznamov PASS, `completed:true`. Výstup `%TEMP%/abco-shared-inventory-geometry-final-qa/results.json` a 99 PNG.
+- `node scripts/qa/shared-inventory-view-browser.mjs --interactions-only` — 88 záznamov PASS, `completed:true`. Výstup `%TEMP%/abco-shared-inventory-interactions-final-qa/results.json` a 92 PNG. Tento beh už overuje opravený Recovery runs source Retry.
+- Štyri standalone prípady sú spoločné obom behom: zjednotenie obsahuje **180 unikátnych shared prípadov**. Oba dokončené behy majú nula runtime exceptions, neočakávaných API/externých originov, chybných assetov a navigation diagnostics. Predchádzajúce prerušené kombinované behy nie sú vykazované ako úspešný full run.
+- `node --check scripts/qa/inventory-view-table-browser.mjs`, `node --check scripts/qa/shared-inventory-view-browser.mjs`, `npm.cmd exec eslint -- scripts/qa/inventory-view-table-browser.mjs scripts/qa/shared-inventory-view-browser.mjs --max-warnings 0`, `git diff --check` — PASS.
+- Finálne PNG Identity light desktop/dark mobile, Resources dark 1280×600, Discovery short-window footer, Recovery runs retry-success a standalone Recovery actions history boli aj vizuálne prezreté. Short-window footer screenshot ukazuje Save a zachované horné záložky; Retry screenshot ukazuje úspešné načítanie aplikácie aj skupiny. Zdrojový aj QA read-only review bez závažných nálezov.
+
+Testy používajú izolovaný headless Chrome/CDP9357 a Vite5191, validné vymyslené lokálne fixtures a blokovanie externých originov. Identity má AUTH_ENABLED=true a iba v QA nahradený localhost Keycloak adapter modul; reálne účty/tokeny ani autentifikácia sa netestujú. 125 % je emulácia CSS viewport/raster scale, nie native browser zoom. CRUD submissions a reálna orchestrácia nie sú predmetom browser geometrie; existujúce behaviorálne focused testy zostali zachované. Screenshots/geometry nenahrádzajú screen-reader ani pixel-perfect contrast audit.
+
+Browser osobitne nepreveril cached refresh latest-run buniek a Discovery konfigurácie ani standalone loading/skeleton. Shared browser matica overuje cached refresh na desiatich listových view; Resources má vlastnú lifecycle maticu. Standalone loading/skeleton defaulty a správanie konfiguračného formulára pokrývajú focused komponentové/stránkové testy. CRUD a návraty z buildera sa neposielali do živého backendu.
+
+Browser odhalil existujúci problém Recovery runs source Retry, prítomný už v `12e40104`: callback s voliteľným riadkom dostával priamo click event. Page ho vyhodnotila ako riadok a nespustila refetch zoznamov. T25 doplnené o jediný wrapper `onRetry: () => onRetry()` a regresnú assertion nad reálnym klikom. RED beh preukázal `SyntheticBaseEvent` namiesto prázdnych argumentov; výsledok GREEN a samostatný commit sú zaznamenané pri T25. Pôvodná hypotéza, že ide iba o čakanie na povolenie Retry, nestačila; následný probe overil hit target a nulové refetch požiadavky a identifikoval skutočnú príčinu.
+
+Resource regresia bežala vo vlastnej izolovanej Chrome inštancii na CDP9358. Pri diagnostike screenshotov sa preukázalo, že Chrome `captureBeyondViewport:true` resetoval vnútorný scrollTop zo 111 na 0. Oba QA skripty preto zachytávajú skutočný viewport cez `captureBeyondViewport:false`; shared formulárová kontrola navyše overuje zachovanie polohy po screenshote. Ide o opravu zberu QA dôkazov, nie zmenu scrollovania aplikácie. Expired script initializer a nedokončená navigácia majú úzko ohraničenú CDP diagnostiku/recovery; geometry assertions sa nepreskakujú.
+
+Pri vývoji QA sa pôvodná požiadavka na stále viditeľné Save opravila na skutočnú dostupnosť cez interné posúvanie formulára. Discovery pri nízkom okne posúva celý formulár vrátane footeru; kontroluje sa dosiahnutie Save kolieskom, stabilná hlavná navigácia a neposunutý desktop dokument. Zlyhané či prerušené pokusy sa nepočítajú ako úspešné dokončené behy. Kompletná test suite, full lint a production build neboli spustené podľa focused pravidiel AGENTS.md.
+
+### Commity fázy 5
+
+T20 d9ee4fde; T21 ad139c36; T22 3e610f84; T23 c30ff931; T24 5148738a; T25 6ef80b26; T26 b36ad491; T27 f9f32f1c; T28 038be82a; T29 9e0e2021; doplnok source Retry 8d74eeac. T30 obsahuje finálne QA skripty a tento report; hash je v Git histórii. Po Retry doplnku znovu prešli focused ESLint, komponentový test aj `npm.cmd run typecheck`. Predexistujúci routeContract snapshot nebol zahrnutý. Worktree zostáva na pôvodnej vetve test; bez push/merge. Ľudská vizuálna akceptácia v CP11 zostáva otvorená.

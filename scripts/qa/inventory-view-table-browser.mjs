@@ -127,7 +127,8 @@ async function click(expression) {
 }
 const viewSelector = '[data-inventory-view]'
 async function screenshot(name, clip) {
-  const { data } = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true, ...(clip ? { clip } : {}) })
+  // Full-document capture can reset nested scrollers in Chrome; preserve the tested viewport.
+  const { data } = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false, ...(clip ? { clip } : {}) })
   await writeFile(join(output, `${name}.png`), Buffer.from(data, 'base64'))
 }
 async function geometry(name) {
@@ -141,7 +142,7 @@ async function geometry(name) {
     return {card:rect(card),cardCount:document.querySelectorAll('${viewSelector}').length,overflow:style.overflow,radius:style.borderTopLeftRadius,border:style.borderTopWidth,shadow:style.boxShadow,
       headingX:document.querySelector('h1')?.getBoundingClientRect().x,
       nestedFrames:card.querySelectorAll('[data-table-surface]').length,nav:nav?rect(nav):null,navBackground:nav?getComputedStyle(nav).backgroundColor:null,
-      navBorder:nav?getComputedStyle(nav).borderBottomWidth:null,navWrapperBorder:nav?getComputedStyle(nav.parentElement).borderBottomWidth:null,
+      navBorder:nav?getComputedStyle(nav).borderBottomWidth:null,navWrapperBorder:nav?getComputedStyle(nav.parentElement).borderBottomWidth:null,navParentIsSlot:nav?.parentElement===card.firstElementChild,
       viewport:viewport?{...rect(viewport),scrollHeight:viewport.scrollHeight,clientHeight:viewport.clientHeight}:null,footer:footer?rect(footer):null,clips,
       pageWidth:document.documentElement.scrollWidth,windowWidth:innerWidth,windowHeight:innerHeight}; })()`)
   assert.equal(value.cardCount, 1, `${name}: one view card`)
@@ -154,7 +155,7 @@ async function geometry(name) {
   if (value.nav) assert.equal(value.navBackground, 'rgba(0, 0, 0, 0)', `${name}: transparent navigation`)
   if (value.nav) {
     assert.equal(value.navBorder, '0px', `${name}: tablist does not duplicate the divider`)
-    assert.equal(value.navWrapperBorder, '0px', `${name}: scroll controls do not duplicate the divider`)
+    assert.equal(value.navWrapperBorder, value.navParentIsSlot ? '1px' : '0px', `${name}: only the navigation slot owns the divider`)
   }
   assert.equal(value.card.x, value.headingX, `${name}: card aligns with page heading`)
   results.push({ name, ...value })
@@ -166,13 +167,13 @@ let navigation = 0
 async function load(path, { theme = 'light', width = 1600, height = 900, zoom = 1 } = {}) {
   if (initScript) await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: initScript })
   // App preferences only, in this disposable test profile; no auth material is read.
-  initScript = (await send('Page.addScriptToEvaluateOnNewDocument', { source: `localStorage.setItem('app-theme',${JSON.stringify(theme)});localStorage.setItem('app-language','en');` })).identifier
+  initScript = (await send('Page.addScriptToEvaluateOnNewDocument', { source: `window.__inventoryQaRun=new URL(location.href).searchParams.get('inventory-qa-run');localStorage.setItem('app-theme',${JSON.stringify(theme)});localStorage.setItem('app-language','en');` })).identifier
   // Changing the CSS viewport and raster scale together reproduces desktop browser zoom.
   await send('Emulation.setDeviceMetricsOverride', { width: Math.round(width / zoom), height: Math.round(height / zoom), deviceScaleFactor: zoom, mobile: false })
   const destination = new URL(base + path)
   destination.searchParams.set('inventory-qa-run', String(++navigation))
   await send('Page.navigate', { url: destination.href })
-  await wait(`new URL(location.href).searchParams.get('inventory-qa-run')===${JSON.stringify(String(navigation))} && document.readyState==='complete' && !!document.querySelector('${viewSelector}')`)
+  await wait(`window.__inventoryQaRun===${JSON.stringify(String(navigation))} && document.readyState==='complete' && !!document.querySelector('${viewSelector}')`)
   if (mode === 'loading') await wait(`!!document.querySelector('${viewSelector} [role=status][aria-busy=true]')`)
   else if (['inventory-error', 'provider-error'].includes(mode)) await wait(`!!document.querySelector('${viewSelector} [role=alert]')`)
   else if (['empty', 'no-provider'].includes(mode)) await wait(`!!document.querySelector('${viewSelector} [role=status] h2')`)
@@ -278,15 +279,13 @@ try {
     }
     for (const path of ['/platform-administration/platform-providers', '/recovery-plans/recovery-runs', '/discovery-inventory/discovery-settings']) {
       await send('Emulation.setDeviceMetricsOverride', { width: 1600, height: 900, deviceScaleFactor: 1, mobile: false })
-      await send('Page.navigate', { url: base + path })
-      await wait(`document.readyState==='complete' && !!document.querySelector('h1') && !document.querySelector('${viewSelector}')`)
-      if (path.includes('platform-providers')) await wait(`!!document.querySelector('[data-table-surface] tbody tr')`)
-      else if (path.includes('recovery-runs')) await wait(`!!document.querySelector('[data-table-surface]')`)
-      else await wait(`!!document.querySelector('form') || document.body.innerText.includes('Cache')`)
-      await screenshot(`standalone-${path.split('/').at(-1)}`)
-      const normal = await read(`(() => {const e=document.querySelector('[data-table-surface]');if(!e)return null;const s=getComputedStyle(e);return {border:s.borderLeftWidth,radius:s.borderBottomLeftRadius,shadow:s.boxShadow}})()`)
-      if (normal) { assert.equal(normal.border, '1px'); assert.equal(normal.radius, '20px'); assert.notEqual(normal.shadow, 'none') }
-      results.push({ name: path, standalone: normal })
+      const nonce = String(++navigation)
+      await send('Page.navigate', { url: `${base}${path}?inventory-qa-run=${nonce}` })
+      await wait(`document.readyState==='complete' && window.__inventoryQaRun===${JSON.stringify(nonce)} && !!document.querySelector('h1') && !!document.querySelector('${viewSelector}')`)
+      if (path.includes('platform-providers')) await wait(`!!document.querySelector('${viewSelector} tbody tr')`)
+      else if (path.includes('recovery-runs')) await wait(`!!document.querySelector('${viewSelector} [role=tablist]')`)
+      else await wait(`!!document.querySelector('#discovery-cache-retention-days')`)
+      await geometry(`shared-smoke-${path.split('/').at(-1)}`)
     }
   }
   assert.deepEqual(exceptions, [], 'No browser runtime exceptions')
