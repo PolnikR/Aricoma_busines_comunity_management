@@ -98,7 +98,7 @@ export function VirtualMachinesToolbar({ filters, options, availableTags = [], o
               value={tempFilters.tags}
               options={[...new Set([...availableTags, ...tempFilters.tags])].map(tag => ({ value: tag, label: tag }))}
               onChange={updateTempTags}
-              readOnly={isFilterFixed}
+              disabled={isFilterFixed}
               placeholder={t('pages.virtualMachines.filters.tagAll')}
               emptyText={t('forms.vmTagsEmpty')}
             />

@@ -1048,3 +1048,16 @@ Commands:
 - `git diff --check`
 
 Full suite/build not run; unrelated worktree changes excluded.
+
+
+### Restore disabled provider-configured tag dropdown (2026-11-03)
+
+Correction to the previous Resources multi-tag change: readOnly inspection was not authorized by the intended rule. Restore disabled={isFilterFixed}. A configured nonempty name prefix OR any configured tag disables the dropdown completely, while the field still displays all selected tags. Unconfigured filtering retains multiple selection. Removed the now-unused MultiSelect readOnly extension introduced by that change.
+
+Verification passed:
+- `npm.cmd exec -- vitest run src/features/discovery-inventory/resources/components/vmware/VirtualMachinesToolbar.test.tsx src/shared/components/form/MultiSelect.test.tsx src/features/discovery-inventory/resources/helpers/vmwareProviderFilter.test.ts --maxWorkers=2` ? 13 tests; separate prefix-only, tags-only and combined cases assert disabled/no popup, preserved values and no callbacks.
+- `npm.cmd exec -- eslint src/shared/components/form/MultiSelect.tsx src/features/discovery-inventory/resources/components/vmware/VirtualMachinesToolbar.tsx src/features/discovery-inventory/resources/components/vmware/VirtualMachinesToolbar.test.tsx scripts/qa/inventory-view-table-browser.mjs --max-warnings 0`; changed QA script lint rerun afterward.
+- `node scripts/qa/inventory-view-table-browser.mjs --phase6-only --quick` ? final 24 cases passed; source/target desktop/mobile assert disabled field, all five loaded labels and no popup after native pointer input. Screenshot visually confirms disabled appearance. Artifacts: %TEMP%/abco-fixed-tag-disabled.
+- `node --check scripts/qa/inventory-view-table-browser.mjs` and `git diff --check`.
+
+The first browser attempt used the general click helper, which intentionally waits for enabled controls; replaced that probe with native pointer coordinates for the disabled-control test, then reran successfully. Full suite/build not run. Unrelated worktree changes excluded.

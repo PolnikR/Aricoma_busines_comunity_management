@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { resolveVmwareProviderFilter } from '../../helpers/vmwareProviderFilter'
 import { VirtualMachinesToolbar } from './VirtualMachinesToolbar'
 import type { VirtualMachineFilterOptions, VirtualMachineFilters } from '../../types/virtualMachineTypes'
 
@@ -46,15 +47,20 @@ describe('VirtualMachinesToolbar source filters', () => {
     expect(onFiltersChange.mock.calls[0]?.[0]).not.toHaveProperty('providerId')
   })
 
-  it('shows fixed filters without allowing edits', () => {
+  it.each([
+    { vmPrefix: 'prod-', vmTags: [] },
+    { vmPrefix: '', vmTags: ['ABCO-managed', 'Saved tag absent from catalog'] },
+    { vmPrefix: 'prod-', vmTags: ['ABCO-managed', 'Saved tag absent from catalog'] },
+  ])('disables the tag dropdown for configured prefix or tags: %j', provider => {
+    const scope = resolveVmwareProviderFilter(provider)
     const onFiltersChange = vi.fn()
     const onReset = vi.fn()
     render(
       <VirtualMachinesToolbar
-        filters={{ ...filters, search: 'prod-', tags: ['ABCO-managed', 'Saved tag absent from catalog'] }}
+        filters={{ ...filters, ...scope.filters }}
         options={options}
         availableTags={['ABCO-managed']}
-        isFilterFixed
+        isFilterFixed={scope.isFixed}
         onFiltersChange={onFiltersChange}
         onReset={onReset}
       />,
@@ -62,12 +68,12 @@ describe('VirtualMachinesToolbar source filters', () => {
 
     expect(screen.getByRole('searchbox')).toBeDisabled()
     fireEvent.click(screen.getByRole('button', { name: /Filters/i }))
-    expect(screen.getByRole('button', { name: 'Tag' })).toHaveTextContent('ABCO-managed, Saved tag absent from catalog')
-    fireEvent.click(screen.getByRole('button', { name: 'Tag' }))
-    for (const name of ['ABCO-managed', 'Saved tag absent from catalog']) {
-      expect(screen.getByRole('checkbox', { name })).toBeChecked()
-      expect(screen.getByRole('checkbox', { name })).toBeDisabled()
-    }
+    const tagDropdown = screen.getByRole('button', { name: 'Tag' })
+    expect(tagDropdown).toBeDisabled()
+    for (const tag of provider.vmTags) expect(tagDropdown).toHaveTextContent(tag)
+    fireEvent.click(tagDropdown)
+    expect(tagDropdown).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByRole('group', { name: 'Tag' })).not.toBeInTheDocument()
     expect(screen.getByLabelText(/without tags/i)).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Clear all' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Apply' })).toBeDisabled()
