@@ -1,6 +1,6 @@
 # Implementačný plán: Redizajn tabuliek v2 (variant B)
 
-Dátum pôvodného plánu: 2026-11-02. Aktualizácia: 2026-11-03. Stav: T13–T30 sú implementované v automaticky overenom rozsahu; historické ľudské akceptácie zostávajú otvorené. Nová fáza T31–T41 plánuje provider lištu a podmienky podľa HTML prototypu. Implementácia fázy 6 nezačala. Výsledky a úlohy sú v todo dokumente.
+Dátum pôvodného plánu: 2026-11-02. Aktualizácia: 2026-11-03. Stav: T13–T30 sú implementované v automaticky overenom rozsahu; historické ľudské akceptácie zostávajú otvorené. Nová fáza T31–T41 plánuje provider lištu a podmienky podľa HTML prototypu. Fáza 6 prebieha inline. Výsledky a úlohy sú v todo dokumente.
 Úlohy a checkpointy: [table-redesign-v2-todo.md](table-redesign-v2-todo.md).
 Vizuálny vzor: prototyp https://claude.ai/artifact/SSm6HEN89RW3LJJ2PqdtmU (Platform providers).
 
@@ -329,7 +329,7 @@ T31 ďalej overí, či POST /vms/search bez tag vracia kompletný inventár pre 
 ### Poradie a checkpointy
 
 T31 kontrakt → T32 normalizácia → T33 efektívny inventory scope → CP12.
-T34 dotknutí konzumenti; T35 opt-in Tabs; T36 vlastný popover trigger → CP13.
+T34 dotknutí konzumenti → T34b builder prefetch; T35 opt-in Tabs; T36 vlastný popover trigger → CP13.
 T37 summary → T38 resource kompozícia → T39 oba routes → CP14.
 T40 preklady/odstránenie starej summary cesty → T41 browser regresia → CP15.
 
@@ -365,3 +365,5 @@ Ruling: zachovať jeden existujúci prefixový/no-tag request a lokálny OR, nie
 Izolovaný Chrome na existujúcom production route, validné fixtures bez tagu, 1600×900: 1 000 VM / 211 817 B VM odpovedí / 6 523 ms cold-ready / 10 renderovaných riadkov; 10 000 VM / 2 137 820 B / 2 754 ms warm-ready / 10 riadkov. Čas zahŕňa CDP/Vite/ready čakanie, nie čistý čas filtra ani porovnateľný výkonový benchmark. Oba behy dokončené bez runtime/API/asset chýb, celý total overený, bez DOM renderu všetkých VM. Dôkazy %TEMP%/abco-phase6-baseline-1000 a abco-phase6-baseline-10000 (benchmark.json/results.json/PNG). Nevytvára to garanciu pre ľubovoľný inventár alebo diskové metadáta. T33 doplní správnosť provider OR a odvodených metrík.
 
 Baseline T31: npm.cmd exec -- vitest run helpers/vmwareProviderFilter.test.ts helpers/filterVirtualMachines.test.ts model/inventoryQueries.test.ts (úplné cesty podľa todo), --maxWorkers=2: 3 súbory / 13 testov PASS.
+
+Ruling T34b (2026-11-03): audit potvrdil samostatný first-tag prefetch v recovery-groups/components/RecoveryGroupBuilder.tsx:128–150. Pred jeho zmenou bol doplnený T34b (2 súbory) po T34 a pred CP13, aby T34 neprekročil päť súborov a cache buildera zodpovedala resource hooku. Bez rozšírenia builder UI alebo CRUD.

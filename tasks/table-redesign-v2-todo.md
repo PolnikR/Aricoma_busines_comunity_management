@@ -711,6 +711,18 @@ Plán: fáza 6 v table-redesign-v2-plan.md. **Stav: prebieha inline podľa pokyn
 **Závislosti:** T33.
 **Súbory (M, 4):** recovery-groups/hooks/useRecoveryGroupResourceInventory.ts a test; helpers/providerScopeDisplay.ts a nový providerScopeDisplay.test.ts. Použiť existujúci tag predicate z T33, nepridávať druhú OR implementáciu.
 
+
+### T34b: Zosúladiť samostatné builder prednačítanie
+
+**Popis:** Source audit našiel ďalší singular-tag prefetch v RecoveryGroupBuilder.tsx:128–150. Oddelený krok drží T34 pod limitom piatich súborov.
+**Akceptačné kritériá:**
+- [ ] Builder prefetch použije celé normalizované filters.tags a getServerSideTagFilter; viac tagov nezúži na prvý a zdieľa query key s následným resource hookom.
+- [ ] Zero/single-tag a prefix-only optimalizácia ostávajú; zdrojový raw cache sa lokálnym OR neprepíše.
+- [ ] Zachované readiness, inventoryScopeKnown, závislosti efektu a žiadne nové zápisy/request fan-out.
+**Overenie:** npm.cmd exec -- vitest run src/features/recovery-plans/recovery-groups/components/RecoveryGroupBuilder.prefetch.test.tsx src/features/recovery-plans/recovery-groups/hooks/useRecoveryGroupResourceInventory.test.tsx --maxWorkers=2; focused ESLint.
+**Závislosti:** T34.
+**Súbory (S, 2):** recovery-groups/components/RecoveryGroupBuilder.tsx a RecoveryGroupBuilder.prefetch.test.tsx.
+
 ### T35: Opt-in limit štyroch položiek v shared Tabs
 
 **Popis:** Rozšíriť existujúci Tabs opt-in parametrom maxVisibleItems a rozmerom slotu cez lokálnu CSS premennú. Ostatní konzumenti zostávajú pri súčasnom defaulte.
