@@ -6,7 +6,8 @@ import { tmpdir } from 'node:os'
 // Run Vite on 127.0.0.1:5191 and a dedicated headless Chrome with
 // --remote-debugging-port=9357 --user-data-dir=<temporary QA profile>.
 // node scripts/qa/shared-inventory-view-browser.mjs
-// Optional focused modes: --quick, --geometry-only, --interactions-only, --standalone-only.
+// Optional focused modes: --quick, --geometry-only, --interactions-only,
+// --standalone-only, --minimum-width-only (320px with a classic scrollbar).
 // All config/API calls in this isolated tab are fulfilled locally. No live backend.
 const base = process.env.INVENTORY_QA_BASE ?? 'http://127.0.0.1:5191'
 const endpoint = process.env.INVENTORY_QA_CDP ?? 'http://127.0.0.1:9357'
@@ -14,7 +15,8 @@ const output = process.env.INVENTORY_QA_OUTPUT ?? join(tmpdir(), 'abco-shared-in
 const quick = process.argv.includes('--quick')
 const interactionsOnly = process.argv.includes('--interactions-only')
 const standaloneOnly = process.argv.includes('--standalone-only')
-const geometryOnly = process.argv.includes('--geometry-only')
+const minimumWidthOnly = process.argv.includes('--minimum-width-only')
+const geometryOnly = process.argv.includes('--geometry-only') || minimumWidthOnly
 await mkdir(output, { recursive: true })
 const target = await fetch(`${endpoint}/json/new?about:blank`, { method: 'PUT' }).then(r => r.json())
 const socket = new WebSocket(target.webSocketDebuggerUrl)
@@ -182,7 +184,7 @@ async function geometry(name) {
     const save=[...card.querySelectorAll('button')].find(e=>/^save/i.test(e.textContent.trim()));
     return {card:rect(card),count:document.querySelectorAll('${viewSelector}').length,border:s.borderTopWidth,radius:s.borderTopLeftRadius,borders:[s.borderTopWidth,s.borderRightWidth,s.borderBottomWidth,s.borderLeftWidth],radii:[s.borderTopLeftRadius,s.borderTopRightRadius,s.borderBottomRightRadius,s.borderBottomLeftRadius],shadow:s.boxShadow,overflow:s.overflow,
       headingX:document.querySelector('h1')?.getBoundingClientRect().x,nestedFrames:card.querySelectorAll('[data-table-surface]').length,
-      divider:slot?getComputedStyle(slot).borderBottomWidth:null,tabStyles,clips,scrolls,saveButton:save?rect(save):null,pageWidth:document.documentElement.scrollWidth,windowWidth:innerWidth,windowHeight:innerHeight};})()`)
+      divider:slot?getComputedStyle(slot).borderBottomWidth:null,tabStyles,clips,scrolls,saveButton:save?rect(save):null,pageWidth:document.documentElement.scrollWidth,pageClientWidth:document.documentElement.clientWidth,bodyMinWidth:getComputedStyle(document.body).minWidth,windowWidth:innerWidth,windowHeight:innerHeight};})()`)
   results.push({ name, ...value })
   assert.equal(value.count, 1, `${name}: one view frame`)
   assert.equal(value.nestedFrames, 0, `${name}: embedded content has no standalone frame`)
@@ -193,7 +195,7 @@ async function geometry(name) {
   assert.equal(value.overflow, 'visible', name)
   assert.notEqual(value.shadow, 'none', name)
   assert.ok(Math.abs(value.card.x - value.headingX) <= 1, `${name}: heading/card alignment`)
-  assert.ok(value.pageWidth <= value.windowWidth + 1, `${name}: no document horizontal scroll`)
+  assert.ok(value.pageWidth <= value.pageClientWidth + 1, `${name}: no document horizontal scroll inside the usable viewport`)
   if (value.divider) assert.equal(value.divider, '1px', `${name}: navigation owns one divider`)
   for (const style of value.tabStyles) {
     assert.equal(style.background, 'rgba(0, 0, 0, 0)', `${name}: transparent main navigation`)
@@ -261,6 +263,7 @@ async function load(path, { theme = 'light', width = 1600, height = 900, zoom = 
   await wait(`document.readyState==='complete' && !!document.querySelector('${selector}')`)
   await wait(ready)
   await read('document.fonts.ready.then(()=>true)')
+  if (minimumWidthOnly) await read(`document.documentElement.style.overflowY='scroll';new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))`)
 }
 
 const identity = '/platform-administration/identity-access'
@@ -305,12 +308,12 @@ try {
   await send('Fetch.enable', { patterns: [{ urlPattern: '*' }] })
   if (!interactionsOnly && !standaloneOnly) {
     for (const [name, path, ready] of representatives) for (const theme of ['light', 'dark']) {
-      for (const [width, height, zoom] of (quick ? [[1600, 900, 1]] : [[1600, 900, 1], [1280, 600, 1], [800, 900, 1], [390, 844, 1], [1600, 900, 1.25]])) {
+      for (const [width, height, zoom] of (minimumWidthOnly ? [[320, 844, 1]] : quick ? [[1600, 900, 1]] : [[1600, 900, 1], [1280, 600, 1], [800, 900, 1], [390, 844, 1], [1600, 900, 1.25]])) {
         await load(path, { theme, width, height, zoom, ready })
         await geometry(`${name}-${theme}-${width}x${height}-zoom${zoom}`)
       }
     }
-    if (!quick) for (const [name, path] of routes) for (const theme of ['light', 'dark']) for (const [width, height] of [[1600, 900], [390, 844]]) {
+    if (!quick) for (const [name, path] of routes) for (const theme of ['light', 'dark']) for (const [width, height] of (minimumWidthOnly ? [[320, 844]] : [[1600, 900], [390, 844]])) {
       await load(path, { theme, width, height, ready: rowsReady })
       await geometry(`${name}-${theme}-${width}`)
     }
@@ -352,8 +355,8 @@ try {
     await click(`document.querySelector('${viewSelector} tbody tr[tabindex]')`)
     await wait(`!!document.querySelector('[role=dialog]')`)
     await screenshot('identity-user-detail')
-    await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape' })
-    await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape' })
+    await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27 })
+    await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27 })
     await wait(`!document.querySelector('[role=dialog]')`)
     await click(`Array.from(document.querySelectorAll('${viewSelector} [role=tab]')).find(e=>e.textContent.includes('Clients'))`)
     await wait(`new URL(location.href).searchParams.get('section')==='clients' && ${rowsReady}`)
@@ -393,8 +396,8 @@ try {
       await click(`document.querySelector('${viewSelector} tbody tr[tabindex]')`)
       await wait(`!!document.querySelector('[role=dialog]') && document.querySelector('[role=dialog]').innerText.includes('qa-run')`)
       await screenshot(`recovery-runs-${tab}-history-detail`)
-      await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape' })
-      await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape' })
+      await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27 })
+      await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27 })
       await wait(`!document.querySelector('[role=dialog]')`)
     }
     statePaths = ['/get_orchestrator_runs']
@@ -418,15 +421,15 @@ try {
     assert.ok(long.scrolls.length > 0, 'Long identity list has an internal vertical viewport')
     inventoryCount = 2
   }
-  for (const theme of ['light', 'dark']) for (const [width, height] of [[1600, 900], [390, 844]]) {
+  for (const theme of ['light', 'dark']) for (const [width, height] of (minimumWidthOnly ? [[320, 844]] : [[1600, 900], [390, 844]])) {
     await load('/recovery-actions/history', { theme, width, height, selector: '[data-table-surface]', ready: `!!document.querySelector('[data-table-surface] tbody tr td:not([colspan])')` })
-    const standalone = await read(`(() => {const e=document.querySelector('[data-table-surface]'),s=getComputedStyle(e);return {viewCount:document.querySelectorAll('${viewSelector}').length,count:document.querySelectorAll('[data-table-surface]').length,border:s.borderTopWidth,radius:s.borderTopLeftRadius,shadow:s.boxShadow,pageWidth:document.documentElement.scrollWidth,windowWidth:innerWidth}})()`)
+    const standalone = await read(`(() => {const e=document.querySelector('[data-table-surface]'),s=getComputedStyle(e);return {viewCount:document.querySelectorAll('${viewSelector}').length,count:document.querySelectorAll('[data-table-surface]').length,border:s.borderTopWidth,radius:s.borderTopLeftRadius,shadow:s.boxShadow,pageWidth:document.documentElement.scrollWidth,pageClientWidth:document.documentElement.clientWidth,windowWidth:innerWidth}})()`)
     assert.equal(standalone.viewCount, 0, 'Recovery actions history stays outside inventory scope')
     assert.equal(standalone.count, 1, 'One standalone table surface')
     assert.equal(standalone.border, '1px')
     assert.equal(standalone.radius, '20px')
     assert.notEqual(standalone.shadow, 'none')
-    assert.ok(standalone.pageWidth <= standalone.windowWidth + 1, 'Standalone document has no horizontal overflow')
+    assert.ok(standalone.pageWidth <= standalone.pageClientWidth + 1, 'Standalone document has no horizontal overflow inside the usable viewport')
     const name = `standalone-recovery-actions-history-${theme}-${width}`
     results.push({ name, standalone })
     await screenshot(name)
@@ -435,6 +438,7 @@ try {
   assert.deepEqual(exceptions, [], 'No runtime exceptions')
   assert.deepEqual(unexpected, [], 'No unmocked API or external origins')
   assert.deepEqual(resourceFailures, [], 'No failed application assets')
+  if (minimumWidthOnly) assert.equal(results.length, 36, 'All minimum-width representative, list, and standalone cases completed')
   completed = true
   console.log(`PASS: ${results.length} geometry captures; output ${output}`)
 } finally {
@@ -443,7 +447,14 @@ try {
     await writeFile(join(output, 'results.json'), JSON.stringify({ completed, results, exceptions, unexpected, resourceFailures, navigationDiagnostics, limits }, null, 2))
       .catch(error => console.warn(`Diagnostic results unavailable: ${error.message}`))
   } finally {
-    socket.close()
-    await fetch(`${endpoint}/json/close/${target.id}`).catch(error => console.warn(error.message))
+    // Keep interception attached until the tab is gone, so pending API reads
+    // cannot be released to Vite's proxy during cleanup.
+    try {
+      const response = await fetch(`${endpoint}/json/close/${target.id}`)
+      assert.ok(response.ok, `QA target cleanup failed: ${response.status}`)
+    } finally {
+      socket.close()
+      for (const { timer } of pending.values()) clearTimeout(timer)
+    }
   }
 }

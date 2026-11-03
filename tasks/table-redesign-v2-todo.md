@@ -1,7 +1,7 @@
 # Redizajn tabuliek v2 (variant B): úlohy
 
 Plán: [table-redesign-v2-plan.md](table-redesign-v2-plan.md).
-Stav (2026-11-03): T4 zrušené, T5–T7 vrátené. T13–T19 implementované pre Resources; výsledky sú uvedené nižšie. Nová fáza T20–T30 pre spoločné shared view vrátane Identity & access je naplánovaná a nezačala.
+Stav (2026-11-03): T4 zrušené, T5–T7 vrátené; T13–T41 implementované a overené v zaznamenanom automatizovanom rozsahu. Historické ľudské vizuálne akceptácie zostávajú otvorené.
 
 Spoločné pravidlo pre každú úlohu: focused `npm exec vitest run <testy úlohy>`, `npm exec eslint -- <zmenené súbory> --max-warnings 0`, `git diff --check` a atomický commit vlastných overených zmien. Testy chránia správanie, nie CSS triedy.
 
@@ -656,7 +656,7 @@ T20 d9ee4fde; T21 ad139c36; T22 3e610f84; T23 c30ff931; T24 5148738a; T25 6ef80b
 
 ## Fáza 6: Provider lišta a viac tagov — T31–T41
 
-Plán: fáza 6 v table-redesign-v2-plan.md. **Stav: prebieha inline podľa pokynu executing-plans.** Používateľ potvrdil OR: VM má aspoň jeden zo zvolených tagov. Vykonanie celého plánu používateľ následne schválil pokynom executing-plans inline. Predchádzajúce checkboxy sa nemenia. Každý krok končí focused overením, diff check a atomickým commitom vlastných zmien; dokumentačný záznam je spoločný plán/todo.
+Plán: fáza 6 v table-redesign-v2-plan.md. **Stav: implementované a overené inline podľa pokynu executing-plans.** Používateľ potvrdil OR: VM má aspoň jeden zo zvolených tagov. Vykonanie celého plánu používateľ následne schválil pokynom executing-plans inline. Predchádzajúce checkboxy sa nemenia. Každý krok končí focused overením, diff check a atomickým commitom vlastných zmien; dokumentačný záznam je spoločný plán/todo.
 
 ### T31: Overiť úplnosť inventory kontraktu
 
@@ -733,9 +733,9 @@ Plán: fáza 6 v table-redesign-v2-plan.md. **Stav: prebieha inline podľa pokyn
 
 **Popis:** Rozšíriť existujúci Tabs opt-in parametrom maxVisibleItems a rozmerom slotu cez lokálnu CSS premennú. Ostatní konzumenti zostávajú pri súčasnom defaulte.
 **Akceptačné kritériá:**
-- [ ] Na širokom okne štyri celé položky a žiadna piata; pri 1/2/3 položkách sa viewport zúži. Šípky sú mimo slotov a zobrazia sa iba pri overflow.
-- [ ] Limitovaný režim posúva celé viditeľné sloty; disabled okraje, Home/End, ArrowLeft/ArrowRight, wrap-around, touch/wheel a dosunutie active tab fungujú aj po resize.
-- [ ] Default Tabs a embedded navigation scope zostanú funkčné pre Identity/Recovery; bez novej masky alebo kreslenia ďalšieho dividera.
+- [x] Na širokom okne štyri celé položky a žiadna piata; pri 1/2/3 položkách sa viewport zúži. Šípky sú mimo slotov a zobrazia sa iba pri overflow.
+- [x] Limitovaný režim posúva celé viditeľné sloty; disabled okraje, Home/End, ArrowLeft/ArrowRight, wrap-around, touch/wheel a dosunutie active tab fungujú aj po resize.
+- [x] Default Tabs a embedded navigation scope zostanú funkčné pre Identity/Recovery; bez novej masky alebo kreslenia ďalšieho dividera.
 **Overenie:** `npm.cmd exec -- vitest run src/shared/components/tabs/Tabs.test.tsx src/shared/components/inventory-shell/InventoryViewFrame.test.tsx src/features/platform-administration/identity-access/components/IdentityAccessNavigation.test.tsx src/features/recovery-plans/recovery-policies/components/RecoveryPolicyPageShell.test.tsx --maxWorkers=2`; reálne rozmerové assertions v T41, nie unit kópia class stringu.
 **Závislosti:** T30; nezávislé od T31 dátového gate.
 **Súbory (S, 2):** shared/components/tabs/Tabs.tsx a Tabs.test.tsx.
@@ -777,9 +777,9 @@ Plán: fáza 6 v table-redesign-v2-plan.md. **Stav: prebieha inline podľa pokyn
 
 **Popis:** V resource feature vytvoriť ResourceViewNavigation skladajúci shared Tabs vľavo a summary napravo. Je to prezentačná hranica spoločná source/target, bez fetch a vlastnej query logiky.
 **Akceptačné kritériá:**
-- [ ] Široký desktop zachová štyri sloty vľavo a pravý summary v tom istom páse. Pri chýbajúcom scope sa pravé miesto neuplatní. Nevznikne ďalší riadok/divider/rám.
-- [ ] Menšie šírky zachovajú posúvanie a čitateľné hodnoty/popover; bez horizontálneho scrollu dokumentu, kruhového resize prepočtu alebo skrývania navigácie.
-- [ ] Summary patrí vybranému VMware providerovi, nie poslednému response. Flash/Power, provider-list error a no-provider nekreslia falošné VMware podmienky.
+- [x] Široký desktop zachová štyri sloty vľavo a pravý summary v tom istom páse. Pri chýbajúcom scope sa pravé miesto neuplatní. Nevznikne ďalší riadok/divider/rám.
+- [x] Menšie šírky zachovajú posúvanie a čitateľné hodnoty/popover; bez horizontálneho scrollu dokumentu, kruhového resize prepočtu alebo skrývania navigácie.
+- [x] Summary patrí vybranému VMware providerovi, nie poslednému response. Flash/Power, provider-list error a no-provider nekreslia falošné VMware podmienky.
 **Overenie:** `npm.cmd exec -- vitest run src/features/discovery-inventory/resources/components/ResourceViewNavigation.test.tsx src/features/discovery-inventory/resources/components/ResourceInventoryShell.test.tsx --maxWorkers=2`; browser geometry v T41.
 **Závislosti:** T35, T37.
 **Súbory (S, 2):** nový components/ResourceViewNavigation.tsx a test.
@@ -790,9 +790,9 @@ Plán: fáza 6 v table-redesign-v2-plan.md. **Stav: prebieha inline podľa pokyn
 
 **Popis:** Nahradiť duplicitné Tabs markup v ResourcesPage/ResourcesIsePage spoločným ResourceViewNavigation. Oba ďalej používajú InventoryViewFrame cez existujúci shell tabs slot.
 **Akceptačné kritériá:**
-- [ ] Oba routes majú rovnakú navigáciu; zachované poradie a provider badge, active fallback a všetky resource typy.
-- [ ] Deep link/browser back/session/query role isolation ostávajú; provider switching počas loading/error/cached refresh ukazuje podmienky zvoleného providera.
-- [ ] Šípky nespúšťajú výber providera alebo inventory request; skutočný výber nemení density či provider konfiguráciu. Bez duplicitnej summary nad tabuľkou.
+- [x] Oba routes majú rovnakú navigáciu; zachované poradie a provider badge, active fallback a všetky resource typy.
+- [x] Deep link/browser back/session/query role isolation ostávajú; provider switching počas loading/error/cached refresh ukazuje podmienky zvoleného providera.
+- [x] Šípky nespúšťajú výber providera alebo inventory request; skutočný výber nemení density či provider konfiguráciu. Bez duplicitnej summary nad tabuľkou.
 **Overenie:** `npm.cmd exec -- vitest run src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx src/features/discovery-inventory/resources-ise/pages/ResourcesIsePage.test.tsx src/features/discovery-inventory/resources/hooks/useResourceTabSearchParam.test.tsx src/features/discovery-inventory/resources/pages/ResourcesBackgroundPrefetch.integration.test.tsx --maxWorkers=2`; focused lint.
 **Závislosti:** T34, T38.
 **Súbory (M, 4):** pages/ResourcesPage.tsx a test; resources-ise/pages/ResourcesIsePage.tsx a test.
@@ -800,9 +800,9 @@ Plán: fáza 6 v table-redesign-v2-plan.md. **Stav: prebieha inline podľa pokyn
 **Priebeh (2026-11-03):** Oba routes pouzivaju ResourceViewNavigation, bez duplicity markup/fetch. Parent fresh4subory/69testov PASS, focused5fileESLint PASS, nezavislyreviewclean. Doplnkova table-scoped SECOND assertion zachovava povodny kontrakt; browserT41 nasleduje.
 
 ### Checkpoint 14: Jeden pripojený resource view
-- [ ] Obe roly sú zapojené cez jeden komponent; shared frame zostal jediný.
-- [ ] Prefix/tag/none/multi zodpovedajú vybranému providerovi aj v request stavoch.
-- [ ] Focused regresie a npm.cmd run typecheck PASS; ostatné inventory stránky sa vizuálne nezmenili.
+- [x] Obe roly sú zapojené cez jeden komponent; shared frame zostal jediný.
+- [x] Prefix/tag/none/multi zodpovedajú vybranému providerovi aj v request stavoch.
+- [x] Focused regresie a npm.cmd run typecheck PASS; ostatné inventory stránky sa vizuálne nezmenili.
 
 ### T40: Preklady a odstránenie neúčinného renderu
 
@@ -823,8 +823,8 @@ Plán: fáza 6 v table-redesign-v2-plan.md. **Stav: prebieha inline podľa pokyn
 
 **Popis:** Reálny Chrome pri 320 px odhalil nulovú šírku prefix/tag hodnôt a iba 35 px provider viewport. Kompaktná úprava pod 640 px zachová jeden pás, celý provider badge a klávesnicou dostupné hodnoty; desktop zostane nezmenený.
 **Akceptačné kritériá:**
-- [ ] Pri 320 px sú prefix aj tag nenulové a aspoň jeden celý provider slot dostupný medzi šípkami; bez prekrytia a horizontálneho scrollu dokumentu.
-- [ ] Plné prístupné názvy, +N, resize focus a provider-change dismissal zostávajú zachované; desktop má štyri sloty a pôvodný počet tagov.
+- [x] Pri 320 px sú prefix aj tag nenulové a aspoň jeden celý provider slot dostupný medzi šípkami; bez prekrytia a horizontálneho scrollu dokumentu.
+- [x] Plné prístupné názvy, +N, resize focus a provider-change dismissal zostávajú zachované; desktop má štyri sloty a pôvodný počet tagov.
 **Overenie:** focused ResourceViewNavigation, VmwareProviderFilterSummary a Tabs testy; owned ESLint; reálny browser 320/1440 a finálna T41 matica.
 **Závislosti:** T40, prvý T41 browser probe.
 **Súbory (M, 4):** ResourceViewNavigation.tsx a test; VmwareProviderFilterSummary.tsx a test. Bez úprav shared Tabs alebo rámu.
@@ -835,8 +835,8 @@ Plán: fáza 6 v table-redesign-v2-plan.md. **Stav: prebieha inline podľa pokyn
 
 **Popis:** Mobile 4rem slot by orezal Flash/Power badge. Ponechať 5rem slot; opt-in Tabs prijme CSS premennú --tab-control-width s existujúcim defaultom 2.25rem a resource mobile nastaví 1.75rem. Rozmer viewportu počíta dve skutočné šírky ovládania.
 **Akceptačné kritériá:**
-- [ ] Default Tabs a default control šírky ostanú nezmenené; limitovaný režim používa rovnakú premennú pre tlačidlá aj celkovú šírku.
-- [ ] Resource pri 320 px ukáže celý krátky VMware/Flash/Power badge a nenulové prefix/tag hodnoty; desktop štyri sloty sa nemenia.
+- [x] Default Tabs a default control šírky ostanú nezmenené; limitovaný režim používa rovnakú premennú pre tlačidlá aj celkovú šírku.
+- [x] Resource pri 320 px ukáže celý krátky VMware/Flash/Power badge a nenulové prefix/tag hodnoty; desktop štyri sloty sa nemenia.
 **Overenie:** focused Tabs a ResourceViewNavigation testy; owned ESLint; T41 browser 320/1440.
 **Závislosti:** T41a, výsledná geometria sa akceptuje až po oboch krokoch.
 **Súbory (S, 2):** shared/components/tabs/Tabs.tsx a Tabs.test.tsx.
@@ -847,32 +847,36 @@ Plán: fáza 6 v table-redesign-v2-plan.md. **Stav: prebieha inline podľa pokyn
 
 **Popis:** Reálny Windows Chrome pri 320 × 844 px má 305 px použiteľnej šírky. Body min-w-80 vynucuje 320 px a vytvára vodorovný scroll dokumentu. Zmeniť body na min-w-0 a iba mobilné resource šípky na 1.5rem, aby pri 305 px ostal celý 5rem provider slot.
 **Akceptačné kritériá:**
-- [ ] Pri klasickom scrollbare je document scrollWidth rovné clientWidth, bez masky alebo overflow-x-hidden.
-- [ ] Pri 305 px použiteľnej šírky sa zmestí celý 80 px slot, 24 px šípky a nenulové prefix/tag hodnoty; desktop default sa nemení.
-- [ ] Globálny min-width fix prejde focused AppShell/shared testami a minimálnou browser maticou ostatných view.
+- [x] Pri klasickom scrollbare je document scrollWidth rovné clientWidth, bez masky alebo overflow-x-hidden.
+- [x] Pri 305 px použiteľnej šírky sa zmestí celý 80 px slot, 24 px šípky a nenulové prefix/tag hodnoty; desktop default sa nemení.
+- [x] Globálny min-width fix prejde focused AppShell/shared testami a minimálnou browser maticou ostatných view.
 **Overenie:** ResourceViewNavigation, Tabs, AppShell a InventoryViewFrame focused testy; typecheck; focused TSX ESLint a CSS parser; reálny forced-classic browser probe a shared minimum-width geometria.
 **Závislosti:** T41a/T41b a nameraný T41 classic-scrollbar RED.
 **Súbory (S, 2):** src/index.css; ResourceViewNavigation.tsx. Žiadne skrývanie overflow alebo nové frame pravidlá.
+
+**Priebeh (2026-11-03):** Bodymin0 + local24pxmobilearrows, bezmaskovaniaoverflow. Focused4subory/33testov, ESLint/PostCSS/typecheckPASS; actualproduct20 + sharedminimum36PASS. Pri305client scroll305, viewport81.8125/slot80, hodnoty25px. Commitb98c2adf; scopedajwholebranchsource reviewclean.
 
 ### T41: Browser matica a finálny audit
 
 **Popis:** Rozšíriť existujúcu resource CDP kontrolu o štyri sloty a podmienky. Zachovať obidve shared/regresné sady bez kopírovania celého QA transportu alebo použitia živých mutácií.
 **Akceptačné kritériá:**
-- [ ] Dokončené prípady pre 0/1/2/4/5/10 providerov, none/prefix/tag/both, 1/2/5/long tags, všetky typy a source/target; request payload/VM iba s druhým tagom/metriky overujú OR. Mocks nefalšujú podporu poľa tag v API.
-- [ ] Obe témy, 320/768/1024/1440, 1280×600 a emulácia 125 %; presné štyri desktop sloty, užší pás než karta, pravý summary bez ďalšieho desktop riadka, null bez rezervy, obe hranice popovera, klávesnica, touch/wheel a zachovaný dátový scroll.
-- [ ] Report uvádza úspešne dokončené behy, PNG a limity; bez runtime výnimiek, neočakávaných endpointov alebo živých zápisov. Zdrojový audit potvrdí opt-in shared zmenu, tenké resource wrappery a jediný frame.
+- [x] Dokončené prípady pre 0/1/2/4/5/10 providerov, none/prefix/tag/both, 1/2/5/long tags, všetky typy a source/target; request payload/VM iba s druhým tagom/metriky overujú OR. Mocks nefalšujú podporu poľa tag v API.
+- [x] Obe témy, 320/768/1024/1440, 1280×600 a emulácia 125 %; presné štyri desktop sloty, užší pás než karta, pravý summary bez ďalšieho desktop riadka, null bez rezervy, obe hranice popovera, klávesnica, touch/wheel a zachovaný dátový scroll.
+- [x] Report uvádza úspešne dokončené behy, PNG a limity; bez runtime výnimiek, neočakávaných endpointov alebo živých zápisov. Zdrojový audit potvrdí opt-in shared zmenu, tenké resource wrappery a jediný frame.
 **Overenie:** `node scripts/qa/inventory-view-table-browser.mjs`; `node scripts/qa/shared-inventory-view-browser.mjs --geometry-only` a `--interactions-only` ako oddelené dokončené scope; `node --check` oboch skriptov; focused ESLint; `npm.cmd run typecheck`; `git diff --check`. Vitest opakovať len pri nových zmenách/zisteniach, nie plnú suite/build.
 **Závislosti:** T40.
 **Súbory (M, 4):** oba existujúce scripts/qa inventory skripty; tento todo a plan. Dôkazy PNG mimo produkčného zdroja.
 
-### Checkpoint 15: Pripravené na odovzdanie
-- [ ] T31–T41 overené a commitnuté; OR výsledok, metriky, cache a zobrazenie sú konzistentné.
-- [ ] Staré historické checkboxy ani používateľské akceptácie sa automaticky neuzatvorili; nesúvisiaci routeContract snapshot nie je commitnutý.
-- [ ] Report obsahuje presné focused príkazy, browser výsledky a stav plnej suite/build.
-- [x] Používateľ schválil tento implementačný plán pokynom executing-plans inline (2026-11-03).
-- [ ] Používateľ vizuálne akceptoval produkčný výsledok. Agent tieto dve ľudské položky nezaškrtáva.
+**Priebeh (2026-11-03):** FULLResources166=64legacy+102phase6 completedtrue/exit0, shared96geometry+88interactions (180unique), newminimum36PASS. Parentartifact78counter/positivewidthassertionsPASS; nodechecks/ESLint/typecheck/diffPASS. WholebranchASTRA: specAPPROVE,qualityAPPROVE,0findings. Runtime/crash/API/assets/navigationerrors0; sixexactprotocolcancellationsrecorded. FinalQAcommitnasledujeatomicky.
 
-### Phase 6 integration verification (in progress)
+### Checkpoint 15: Pripravené na odovzdanie
+- [x] T31–T41 overené a commitnuté; OR výsledok, metriky, cache a zobrazenie sú konzistentné.
+- [x] Staré historické checkboxy ani používateľské akceptácie sa automaticky neuzatvorili; nesúvisiaci routeContract snapshot nie je commitnutý.
+- [x] Report obsahuje presné focused príkazy, browser výsledky a stav plnej suite/build.
+- [x] Používateľ schválil tento implementačný plán pokynom executing-plans inline (2026-11-03).
+- [ ] Používateľ vizuálne akceptoval produkčný výsledok. Agent neuzatvára vizuálnu akceptáciu za používateľa.
+
+### Fáza 6 — overenie integrácie
 
 Parent fresh verification after T39/T40b: the exact T39 four-file command above passed 69 tests; exact T40 two-file command passed 30 tests; `npm.cmd run typecheck` passed after integration (exit 0). T39 independent spec/quality review and T40b cleanup review both approve, no required findings. T39 commit 40b728e6; T40b commit 11f08238. Browser T41 remains in progress; these unit results are not a browser geometry claim. Raw cache immutability is covered by focused query/component tests; browser will prove the full intercepted wire response and scoped rows/metrics, without adding a production introspection seam.
 
@@ -899,8 +903,59 @@ Presné cesty a príkazy sú pri jednotlivých T31–T41 vyššie. Parent vykona
 | T41a/T41b responsive + shared regresie | 6 | 49 | PASS |
 | T41a/T41b strict fixture oprava | 3 | 42 | PASS |
 
-Focused ESLint pre všetky zmenené TS/TSX súbory prešiel pri krokoch. `npm.cmd run typecheck` prešiel po shared kontraktoch, integrácii aj po oprave strict test fixtures. Finálne QA skripty a ich lint sú ešte predmetom T41; plná suite, full lint a production build sa podľa AGENTS.md nespúšťajú.
+Focused ESLint pre všetky zmenené TS/TSX súbory prešiel pri krokoch. `npm.cmd run typecheck` prešiel po shared kontraktoch, integrácii aj po oprave strict test fixtures. Finálne QA skripty a ich lint prešli v T41; plná suite, full lint a production build sa podľa AGENTS.md nespúšťajú.
 
 T41 QA diagnostic record: the initial 320px zero-width layout was a real product defect, fixed by d0adf183/5aec8c70. Later partial resource runs exposed harness issues: URL readiness before the new selected-provider DOM, DOM.focus on an inactive test page (document.hasFocus=false), and cached-refresh Retry notice located before the inventory frame. Native keyboard/focus assertions remain; the harness waits for current selected DOM and genuine page focus and scopes Retry to the actual alert. These failed/aborted attempts are not reported as completed passes. The final default resource command will include both the old matrix and every new phase6 scenario; its single completed run is the acceptance evidence, without requiring another duplicate full phase6-only replay.
 
 T41c actual product verification: focused resource `--phase6-only --quick` completed 20 records after the real two-line source correction, %TEMP%/abco-phase6-classic-product-green-20261103/results.json. Both source and target with forced classic scrollbar at 320×844: innerWidth320 / clientWidth305 / scrollWidth305 / body min-width0; tab viewport81.8125≥80px slot; 24px controls; 25px prefix/tag value regions; +4 panel bounds and native keyboard PASS. This uses compiled production CSS, unlike the earlier diagnostic DOM patches. Focused four-file Vitest33 PASS, owned ESLint/PostCSS parse/typecheck PASS, independent scoped and whole-branch source review clean. Shared36 and full Resources166 remain T41 acceptance gates; no claim that those pending runs passed.
+
+### Finálny výsledok fázy 6 (2026-11-03)
+
+Resources aj Resources ISE používajú jediný ResourceViewNavigation v existujúcom shared frame. Ľavá časť má najviac štyri celé desktop sloty a posúvanie; pravá časť zobrazuje iba nastavený prefix/tagy vybraného VMware providera. None nerezervuje wrapper. Viac tagov používa skutočné OR pred metrikami, options a pagination, vrátane oboch prefetch ciest a recovery-group konzumentov. Raw cache ostáva pôvodná wire odpoveď. +N používa shared HelpPopover a celý normalizovaný zoznam.
+
+| Dokončené browser overenie | Záznamy | Výsledok | Výstup pod %TEMP% |
+|---|---:|---|---|
+| Resources, pôvodné aj nové scenáre | 166 = 64 + 102 | completed:true, exit0 | abco-phase6-resource-final-native-20261103 |
+| Shared geometria | 96 | completed:true, exit0 | abco-phase6-shared-geometry-final |
+| Shared interakcie | 88 | completed:true, exit0 | abco-phase6-shared-interactions-final |
+| Shared minimum-width po T41c | 36 | completed:true, exit0 | abco-phase6-shared-minimum-width-20261103 |
+
+Shared 96/88 obsahujú štyri spoločné standalone záznamy, teda 180 unikátnych shared prípadov. Bežali pred T41c v rozsahu clientWidth >=375px, kde sa zníženie body minimum neuplatní; následná 36-prípadová matica overila zmenený rozsah 305px na commitnutom b98c2adf. Posledný kompletný Resources beh už používa b98c2adf a finálne QA skripty.
+
+Presné hlavné príkazy:
+
+```powershell
+$env:BACKEND_URL='http://127.0.0.1:9'
+npm.cmd run dev -- --host 127.0.0.1 --port 5191 --strictPort
+node scripts/qa/inventory-view-table-browser.mjs
+node scripts/qa/shared-inventory-view-browser.mjs --geometry-only
+node scripts/qa/shared-inventory-view-browser.mjs --interactions-only
+node scripts/qa/shared-inventory-view-browser.mjs --minimum-width-only
+node --check scripts/qa/inventory-view-table-browser.mjs
+node --check scripts/qa/shared-inventory-view-browser.mjs
+npm.cmd exec -- eslint scripts/qa/inventory-view-table-browser.mjs scripts/qa/shared-inventory-view-browser.mjs --max-warnings 0
+npm.cmd run typecheck
+git diff --check
+```
+
+Každý browser beh mal samostatný INVENTORY_QA_OUTPUT smerujúci do uvedeného adresára. Resources a minimum-width používali izolovaný CDP9357; parent shared96/88 vlastný CDP9358/profil. Pôvodných96/88 bežalo na pôvodnom izolovanom Vite, posledný166 a36 na hermetickom Vite s overeným BACKEND_URL override. Všetky API/config dáta sú lokálne fixtures. Žiadny skutočný create/update/delete ani orchestration request sa neposielal.
+
+Finálny Resources audit: 166 unikátnych mien, 78 summary počtov +N nezávisle overených z artefaktu, 192 kladných šírok hodnôt, 16 OR prípadov, 36 popover záznamov, dva skutočné natívne touch tap záznamy a štyri overenia dostupnosti short-zoom päty. Všetkých180 document navigácií má jediný zodpovedajúci nonce; bez neočakávaných reloadov. Runtime exceptions, renderer crashes, neočakávané API/originy, chybné assets a navigation diagnostics sú nula. Šesť presných Invalid InterceptionId pri zrušenom fulfillment je samostatný cancellation ledger; 192 Network.loadingFailed sú zrušené Fetch ERR_ABORTED pri navigácii. Tieto protokolové zrušenia nie sú runtime chyby. Výstup obsahuje221 PNG vrátane posledného stavu.
+
+Pri forced-classic 320×844 je clientWidth=scrollWidth=305px v oboch rolách, mobilný slot80px sa zmestí do81.8125px viewportu, šípky majú24px a prefix/tag hodnoty25px. Shared36 potvrdzuje rovnakú šírku305px pre všetky sledované view a standalone tabuľku v oboch témach. Root vizuálne prezrel finálny source light1440 a target dark320 s otvoreným zoznamom piatich tagov; pôvodný horizontálny scrollbar dokumentu chýba. Orezávanie alebo overflow-x-hidden sa nepridalo.
+
+Prerušené pokusy nie sú úspešné full behy. Diagnostika odhalila starý DOM po URL zmene, neaktívnu kartu pri DOM.focus, externú pozíciu cached Retry a nesprávne zahrnuté staré requests v refresh assertion. Pôvodná príčina jedného blank-document a nulového tap hold nie je jednoznačne dokázaná; finálny čistý beh sa dokončil s nav/crash diagnostikou a dôveryhodným natívnym80ms touch gestom. Staré zatváranie socketu pred kartou umožnilo jeden proxy read pokus o18:06:50, blokovaný EACCES bez backend odpovede. Oba skripty teraz zatvárajú iba vlastnú kartu ešte so zapnutým interception; posledný server má navyše iba loopback fallback. Shared cleanup quick12 a focused native interactions14 prešli po príslušných úpravách.
+
+Limity: lokálne vymyslené fixtures, bez dôkazu o nasadenej verzii backendu alebo produkčnej autentifikácii. Backend kontrakt je doložený lokálnym f0abff98; 1k/10k vzorka negarantuje maximálny produkčný objem. Browser dokazuje plný wire response a scoped UI; immutable raw cache pokrývajú focused query/component testy. 125% je CSS viewport/raster emulácia, nie natívny browser zoom. Geometria a screenshoty nenahrádzajú screen-reader alebo pixel-perfect contrast audit. Plná suite, full lint a production build neboli spustené podľa AGENTS.md. Historické ľudské akceptácie aj finálna používateľská vizuálna akceptácia zostávajú otvorené.
+
+Finálne whole-branch review rozsahu a23bdde0..b98c2adf plus zmrazených QA zmien: **Spec APPROVE / Quality APPROVE**, žiadne Critical, Important ani actionable Minor findings. Review nezávisle načítalo finálny report aj JSON artefakty a potvrdilo počty, responsive +N, kladné hodnoty, plánované navigácie a zachované API/cache limity. Finálny commit QA nemení produkčný kód oproti overenému b98c2adf. Ľudská vizuálna akceptácia zostáva otvorená.
+
+Doplnené focused overenie T41c (33 testov v štyroch súboroch):
+
+```powershell
+npm.cmd exec -- vitest run src/features/discovery-inventory/resources/components/ResourceViewNavigation.test.tsx src/shared/components/tabs/Tabs.test.tsx src/layouts/app-shell/AppShell.test.tsx src/shared/components/inventory-shell/InventoryViewFrame.test.tsx --maxWorkers=2
+```
+
+Parent overil aj lokálny PostCSS parser a `npm.cmd run typecheck`. Po poslednom tap delta znovu prešli `node --check` oboch QA skriptov a ich focused ESLint. Hodnota78 je počet metadata záznamov vrátane správne neprítomného triggera; **64 má viditeľné +N**, všetky očakávané počty aj null prípady boli overené.
+
+Po dokončení boli ukončené iba vlastné QA Vite5191 a izolované Chrome9357/9358; používateľský prototype5192 zostal nedotknutý. Práca ostáva v existujúcom worktree na vetve test. Predexistujúci routeContract snapshot nie je súčasťou task commitov.

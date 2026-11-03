@@ -1,6 +1,6 @@
 # Implementačný plán: Redizajn tabuliek v2 (variant B)
 
-Dátum pôvodného plánu: 2026-11-02. Aktualizácia: 2026-11-03. Stav: T13–T30 sú implementované v automaticky overenom rozsahu; historické ľudské akceptácie zostávajú otvorené. Nová fáza T31–T41 plánuje provider lištu a podmienky podľa HTML prototypu. Fáza 6 prebieha inline. Výsledky a úlohy sú v todo dokumente.
+Dátum pôvodného plánu: 2026-11-02. Aktualizácia: 2026-11-03. Stav: T13–T41 sú implementované a overené v zaznamenanom automatizovanom rozsahu vrátane provider lišty a OR tagov. Historické ľudské akceptácie zostávajú otvorené. Výsledky a presné overenie sú v todo dokumente.
 Úlohy a checkpointy: [table-redesign-v2-todo.md](table-redesign-v2-todo.md).
 Vizuálny vzor: prototyp https://claude.ai/artifact/SSm6HEN89RW3LJJ2PqdtmU (Platform providers).
 
@@ -282,7 +282,7 @@ T20–T30 boli vykonané po pokyne používateľa `executing-plans inline` z 202
 
 ## Fáza 6: Štyria provideri a podmienky načítania v jednej lište (T31–T41)
 
-Dátum: 2026-11-03. **Stav: vykonávanie inline schválené používateľom 2026-11-03; prebieha T31–T41.** Ide o pokračovanie tohto plánu podľa pokynu používateľa; nesúvisiace tasks/plan.md a tasks/todo.md sa nemenia. Otvorené historické úlohy a ľudské akceptácie zostávajú zachované.
+Dátum: 2026-11-03. **Stav: vykonané inline podľa pokynu používateľa; T31–T41 vrátane doplnkov T34b a T41a–T41c sú dokončené v automatizovanom rozsahu.** Ide o pokračovanie tohto plánu podľa pokynu používateľa; nesúvisiace tasks/plan.md a tasks/todo.md sa nemenia. Otvorené historické úlohy a ľudské akceptácie zostávajú zachované.
 
 ### Východisko a požadovaný výsledok
 
@@ -354,7 +354,7 @@ T35/T36 sa dajú pripravovať nezávisle od dátového rozhodnutia; aktivácia m
 | Popover odíde vľavo mimo mobil | Stredný | Obe horizontálne hranice podľa clientWidth, resize/scroll/focus browser QA |
 | Pravé tagy vytlačia navigáciu alebo ďalší riadok | Stredný | Limit pravej šírky, +N, responsive sloty, bez masky obvodu |
 
-Implementácia fázy prebieha inline. T31 gate je doložený nižšie; výsledok finálneho browser overenia bude v todo reporte.
+Implementácia fázy je dokončená. T31 gate je doložený nižšie; finálne focused a browser overenie je v todo reporte.
 
 ### T31 — overený kontrakt a rozhodnutie (2026-11-03)
 
