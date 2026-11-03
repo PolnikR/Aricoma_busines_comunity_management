@@ -71,6 +71,11 @@ function getColumns(
       ),
     },
     {
+      id: 'credential',
+      header: t('tables.provider.credential'),
+      cell: provider => <CredentialStatusBadge status={provider.credentialStatus} />,
+    },
+    {
       id: 'json',
       header: t('tables.common.json'),
       cell: provider => (
