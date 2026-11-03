@@ -275,13 +275,15 @@ Východisko a rozhodnutia sú vo [fáze 4 plánu](table-redesign-v2-plan.md#fáz
 **Popis:** Pridať `frame?: 'standalone' | 'embedded'` do `DataTableSurface` a odovzdanie cez `InventoryPanel`. Default zostáva standalone. Embedded panel je rozložením toolbar/data/footer v spoločnej karte view.
 
 **Akceptačné kritériá:**
-- [ ] Embedded obal nemá vlastný vonkajší rámik, pozadie, polomer, tieň ani orezávanie rohov; vnútorný dátový viewport zachová scroll a min-size pravidlá.
-- [ ] Toolbar a stránkovanie sú mimo vertikálneho dátového viewportu; chybové/cached správanie `InventoryPanel` zostáva funkčné.
-- [ ] Konzumenti bez prop ostávajú standalone; tabuľková vrstva neprijíma provider model ani logiku výberu view.
+- [x] Embedded obal nemá vlastný vonkajší rámik, pozadie, polomer, tieň ani orezávanie rohov; vnútorný dátový viewport zachová scroll a min-size pravidlá.
+- [x] Toolbar a stránkovanie sú mimo vertikálneho dátového viewportu; chybové/cached správanie `InventoryPanel` zostáva funkčné.
+- [x] Konzumenti bez prop ostávajú standalone; tabuľková vrstva neprijíma provider model ani logiku výberu view.
 
 **Overenie:** `npm.cmd exec vitest run src/shared/components/data-table/DataTableSurface.test.tsx src/features/discovery-inventory/resources/components/ResourceInventoryPanel.test.tsx src/shared/components/data-table/DataTable.test.tsx`; focused ESLint na zmenených TS/TSX.
 **Závislosti:** žiadne.
 **Súbory (M, najviac 4):** `src/shared/components/data-table/DataTableSurface.tsx`, `DataTableSurface.test.tsx`, `src/shared/components/inventory-shell/InventoryPanel.tsx`, prípadne jeho nový `InventoryPanel.test.tsx` pre verejný kontrakt (nezavádzať duplicitné testy existujúceho error správania).
+
+**Priebeh (2026-11-03):** implementovane; focused Vitest 3 subory / 10 testov PASS, focused ESLint PASS. Vzhlad standalone/embedded overi T19.
 
 ### T15: Skeleton použiteľný vo view karte
 
