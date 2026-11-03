@@ -760,6 +760,8 @@
   "pages.recovery.searchLabel": "Hľadať aplikácie",
   "pages.recovery.tableAriaLabel": "Tabuľka aplikácií obnovy",
   "pages.recovery.empty.noApplications": "Zatiaľ nie je vytvorená žiadna aplikácia obnovy",
+  "pages.recovery.empty.description": "Vytvorte svoju prvú aplikáciu obnovy a usporiadajte skupiny obnovy do vrstiev.",
+  "pages.recovery.empty.createButton": "Vytvoriť prvú aplikáciu obnovy",
   "pages.recovery.filters.button": "Filtre",
   "pages.recovery.filters.title": "Filtrovať aplikácie obnovy",
   "pages.recovery.filters.environment": "Prostredie",

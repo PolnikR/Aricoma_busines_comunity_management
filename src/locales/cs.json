@@ -732,6 +732,8 @@
   "pages.recovery.searchLabel": "Hledat aplikace",
   "pages.recovery.tableAriaLabel": "Tabulka aplikací pro obnovení",
   "pages.recovery.empty.noApplications": "Zatím nejsou definovány žádné aplikace pro obnovení",
+  "pages.recovery.empty.description": "Vytvořte svou první aplikaci pro obnovení a uspořádejte skupiny obnovy do vrstev.",
+  "pages.recovery.empty.createButton": "Vytvořit první aplikaci pro obnovení",
   "pages.recovery.filters.button": "Filtry",
   "pages.recovery.filters.title": "Filtrovat aplikace obnovy",
   "pages.recovery.filters.environment": "Prostředí",

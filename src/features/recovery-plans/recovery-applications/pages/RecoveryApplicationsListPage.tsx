@@ -79,6 +79,7 @@ export function RecoveryApplicationsListPage() {
           error={error instanceof Error ? error : null}
           isRetrying={isFetching}
           onRetry={() => { void refetch() }}
+          onCreate={() => { void navigate('/recovery-plans/recovery-applications/create') }}
         />
       </InventoryShell>
     </div>

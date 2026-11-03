@@ -781,6 +781,8 @@
   "pages.recovery.searchLabel": "Search applications",
   "pages.recovery.tableAriaLabel": "Recovery applications table",
   "pages.recovery.empty.noApplications": "No recovery applications defined yet",
+  "pages.recovery.empty.description": "Create your first recovery application to organize recovery groups into tiers.",
+  "pages.recovery.empty.createButton": "Create Your First Recovery Application",
   "pages.recovery.filters.button": "Filters",
   "pages.recovery.filters.title": "Filter recovery applications",
   "pages.recovery.filters.environment": "Environment",

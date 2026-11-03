@@ -85,6 +85,22 @@ beforeEach(() => {
 })
 
 describe('RecoveryApplicationsListPage', () => {
+  it('opens creation from the empty application list', async () => {
+    const user = userEvent.setup()
+    renderListPage()
+    await user.click(screen.getByRole('button', { name: 'Create Your First Recovery Application' }))
+    expect(navigate).toHaveBeenCalledWith('/recovery-plans/recovery-applications/create')
+  })
+
+  it('does not offer first application creation for an empty search result', async () => {
+    const user = userEvent.setup()
+    query = { ...query, data: [{ id: 'finance-app', data: { application: { name: 'Finance', environment: 'prod', platform: 'IBM_POWER', tiers: {} } } }] }
+    renderListPage()
+    await user.type(screen.getByRole('searchbox', { name: 'Search applications' }), 'missing')
+    expect(screen.queryByText('Finance')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Create Your First Recovery Application' })).not.toBeInTheDocument()
+  })
+
   it('opens the verified read-only editor for a pushed application', async () => {
     const user = userEvent.setup()
     query = { ...query, data: [{ id: 'finance-app', pushToOrchestrator: true, data: { application: { name: 'Finance', environment: 'prod', platform: 'IBM_POWER', tiers: {} } } }] }

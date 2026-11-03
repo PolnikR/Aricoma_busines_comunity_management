@@ -52,6 +52,7 @@ interface RecoveryApplicationsTableProps {
   error?: Error | null
   isRetrying?: boolean
   onRetry?: () => void
+  onCreate?: () => void
 }
 
 interface RecoveryApplicationFilters {
@@ -149,6 +150,7 @@ export function RecoveryApplicationsTable({
   error = null,
   isRetrying = false,
   onRetry = () => undefined,
+  onCreate,
 }: RecoveryApplicationsTableProps) {
   const { t } = useTranslation()
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -391,7 +393,17 @@ export function RecoveryApplicationsTable({
           ariaLabel={isLoading ? t('pages.recovery.loading') : t('pages.recovery.tableAriaLabel')}
           onRowClick={(app) => { setSelectedId(app.id) }}
           selectedRowKey={selectedId}
-          emptyContent={applications.length > 0 ? t('messages.noResults') : t('pages.recovery.empty.noApplications')}
+          emptyContent={applications.length > 0 ? t('messages.noResults') : (
+            <div className="space-y-3">
+              <p>{t('pages.recovery.empty.noApplications')}</p>
+              <p>{t('pages.recovery.empty.description')}</p>
+              {onCreate ? (
+                <Button size="sm" onClick={onCreate}>
+                  {t('pages.recovery.empty.createButton')}
+                </Button>
+              ) : null}
+            </div>
+          )}
         />
       </DataTableRequestState>
       </DataTableSurface>
