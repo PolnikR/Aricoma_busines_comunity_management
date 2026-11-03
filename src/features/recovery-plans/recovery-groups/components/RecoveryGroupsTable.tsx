@@ -1,8 +1,9 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ExecutionIcon, GridIcon, ServerIcon } from '@/shared/icons/Icons'
-import { useNavigate } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import { routes } from '@/app/routes'
 import { Badge } from '@/shared/components/badge/Badge'
+import { Alert } from '@/shared/components/alert/Alert'
 import { Button } from '@/shared/components/button/Button'
 import { Field, Select } from '@/shared/components/form/FormControls'
 import {
@@ -102,6 +103,34 @@ export function RecoveryGroupsTable({
     isError: isPlatformProvidersError,
   } = useGetPlatformProviders({ type: 'all' }, { query: { select: selectPlatformProviders } })
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const requestedDetailId = searchParams.get('detail')
+  const detailId = requestedDetailId === '' ? null : requestedDetailId
+  const selectedKey = detailId ?? selectedId
+  const mounted = useRef(true)
+  useEffect(() => {
+    mounted.current = true
+    return () => { mounted.current = false }
+  }, [])
+  const closeDetail = () => {
+    if (!mounted.current) return
+    setSelectedId(null)
+    if (detailId) setSearchParams(current => {
+      const next = new URLSearchParams(current)
+      next.delete('detail')
+      return next
+    }, { replace: true })
+  }
+  const selectDetail = (id: string) => {
+    if (detailId) {
+      setSelectedId(null)
+      setSearchParams(current => {
+        const next = new URLSearchParams(current)
+        next.set('detail', id)
+        return next
+      })
+    } else setSelectedId(id)
+  }
   const [jsonViewId, setJsonViewId] = useState<string | null>(null)
   const [filters, setFilters] = useState<RecoveryGroupFilters>(EMPTY_FILTERS)
   const [pendingFilters, setPendingFilters] = useState<RecoveryGroupFilters>(EMPTY_FILTERS)
@@ -127,7 +156,7 @@ export function RecoveryGroupsTable({
   const table = useTableState(rows, {
     searchFields: ['id', 'name', 'description'],
   })
-  const selected = rows.find(group => group.id === selectedId) ?? null
+  const selected = (detailId ? groups : rows).find(group => group.id === selectedKey) ?? null
   const computeHelpKey = recoveryGroupComputeHelpKey(selected?.providerResolution === 'unresolved' ? null
     : selected?.workloadType === 'vmware_virtual_machines' ? 'VMWARE'
       : selected?.workloadType === 'ibm_power_virtual_machines' ? 'IBM_POWER' : null)
@@ -242,7 +271,7 @@ export function RecoveryGroupsTable({
         />
       ),
     },
-  ], [t, openMenuId, platformProviders])
+  ], [t, openMenuId, platformProviders, setJsonViewId, setOpenMenuId])
 
   const prepareFilters = () => {
     setPendingFilters(filters)
@@ -331,6 +360,12 @@ export function RecoveryGroupsTable({
 
   return (
     <>
+      {detailId && !isLoading && !error && !selected ? (
+        <div className="mb-3 space-y-2">
+          <Alert variant="warning" title={t('policyReferences.detailMissing', { id: detailId })} />
+          <Button size="sm" variant="outline" onClick={closeDetail}>{t('policyReferences.closeDetail')}</Button>
+        </div>
+      ) : null}
       <DataTableSurface
         ariaLabel={t('pages.recoveryGroups.tableAriaLabel')}
         toolbar={toolbar}
@@ -354,8 +389,8 @@ export function RecoveryGroupsTable({
           density={table.density}
           minWidthClassName="min-w-200"
           ariaLabel={isLoading ? t('pages.recoveryGroups.loading') : t('pages.recoveryGroups.tableAriaLabel')}
-          onRowClick={group => { setSelectedId(group.id) }}
-          selectedRowKey={selectedId}
+          onRowClick={group => { selectDetail(group.id) }}
+          selectedRowKey={selectedKey}
           emptyContent={groups.length > 0 ? t('pages.recoveryGroups.empty.noGroups') : (
             <div className="space-y-3">
               <p>{t('pages.recoveryGroups.empty.title')}</p>
@@ -373,7 +408,7 @@ export function RecoveryGroupsTable({
 
       {openMenuId && currentMenuGroup && (
         <RowActionsMenu
-          key={openMenuId}
+          key={`menu-${openMenuId}`}
           triggerRef={triggerRefForMenu}
           open={true}
           onClose={() => { setOpenMenuId(null) }}
@@ -385,8 +420,8 @@ export function RecoveryGroupsTable({
           } : {})}
           deleteLabel={t('buttons.delete')}
           edit={() => {
+            closeDetail()
             onEdit(openMenuId)
-            setSelectedId(null)
           }}
           delete={() => {
             setDeleteTarget(currentMenuGroup)
@@ -405,11 +440,11 @@ export function RecoveryGroupsTable({
       {selected ? (
         <DetailView
           // Keyed by group so each newly opened group starts expanded on Overview.
-          key={selected.id}
+          key={`detail-${selected.id}`}
           open
           // xl: the Inventory replication chain needs room for long auxiliary volume names.
           size="xl"
-          onClose={() => { setSelectedId(null) }}
+          onClose={() => { closeDetail() }}
           entityLabel={t('drawer.entity.recoveryGroup')}
           title={selected.name}
           statuses={[
@@ -446,8 +481,8 @@ export function RecoveryGroupsTable({
                   : undefined}
                 onClick={() => {
                   if (selected.providerResolution === 'unresolved') return
+                  closeDetail()
                   onEdit(selected.id)
-                  setSelectedId(null)
                 }}
               >
                 {t('buttons.edit')}
@@ -553,7 +588,7 @@ export function RecoveryGroupsTable({
               const report = await onDelete(target)
               if (report) setRollbackResult({ groupName: target.name, report })
               setDeleteTarget(null)
-              setSelectedId(null)
+              closeDetail()
               setOpenMenuId(null)
             } catch {
               setDeleteTarget(null)
@@ -582,7 +617,7 @@ export function RecoveryGroupsTable({
             try {
               const report = await onRollback(groupId, providerId)
               setRollbackResult({ groupName, report })
-              setSelectedId(null)
+              closeDetail()
               setRollbackTarget(null)
             } catch {
               setRollbackTarget(null)

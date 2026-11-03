@@ -1,6 +1,6 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ExecutionIcon, GridIcon, ServerIcon } from '@/shared/icons/Icons'
-import { useNavigate } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import { routes } from '@/app/routes'
 import { resolveUserFacingErrorMessage } from '@/shared/api/apiErrorMessage'
 import { Badge } from '@/shared/components/badge/Badge'
@@ -154,6 +154,34 @@ export function RecoveryApplicationsTable({
 }: RecoveryApplicationsTableProps) {
   const { t } = useTranslation()
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const requestedDetailId = searchParams.get('detail')
+  const detailId = requestedDetailId === '' ? null : requestedDetailId
+  const selectedKey = detailId ?? selectedId
+  const mounted = useRef(true)
+  useEffect(() => {
+    mounted.current = true
+    return () => { mounted.current = false }
+  }, [])
+  const closeDetail = () => {
+    if (!mounted.current) return
+    setSelectedId(null)
+    if (detailId) setSearchParams(current => {
+      const next = new URLSearchParams(current)
+      next.delete('detail')
+      return next
+    }, { replace: true })
+  }
+  const selectDetail = (id: string) => {
+    if (detailId) {
+      setSelectedId(null)
+      setSearchParams(current => {
+        const next = new URLSearchParams(current)
+        next.set('detail', id)
+        return next
+      })
+    } else setSelectedId(id)
+  }
   const [jsonViewId, setJsonViewId] = useState<string | null>(null)
   const [filters, setFilters] = useState<RecoveryApplicationFilters>(EMPTY_FILTERS)
   const [pendingFilters, setPendingFilters] = useState<RecoveryApplicationFilters>(EMPTY_FILTERS)
@@ -185,7 +213,7 @@ export function RecoveryApplicationsTable({
       && (!filters.platform || sourceProviderIdOf(application) === filters.platform)
     )
   }), [applications, filters])
-  const selected = rows.find((app) => app.id === selectedId) ?? null
+  const selected = (detailId ? applications : rows).find((app) => app.id === selectedKey) ?? null
   const jsonViewed = rows.find((app) => app.id === jsonViewId) ?? null
   const activeFilterCount = Number(Boolean(filters.environment)) + Number(Boolean(filters.platform))
 
@@ -258,7 +286,7 @@ export function RecoveryApplicationsTable({
         />
       ),
     }] : []),
-  ], [t, providers, platformProviders, openMenuId, onDelete, onRollback, onEdit])
+  ], [t, providers, platformProviders, openMenuId, onDelete, onRollback, onEdit, setJsonViewId, setOpenMenuId])
 
   const searchableRows = useMemo(() => rows.map(application => ({ id: application.id, name: application.data.application.name, application })), [rows])
   const table = useTableState(searchableRows, {
@@ -364,6 +392,12 @@ export function RecoveryApplicationsTable({
 
   return (
     <>
+      {detailId && !isLoading && !error && !selected ? (
+        <div className="mb-3 space-y-2">
+          <Alert variant="warning" title={t('policyReferences.detailMissing', { id: detailId })} />
+          <Button size="sm" variant="outline" onClick={closeDetail}>{t('policyReferences.closeDetail')}</Button>
+        </div>
+      ) : null}
       {rollbackReportMissing ? <Alert variant="warning" title={t('recovery.application.rollback.reportUnavailable')} /> : null}
       {rollbackError ? <Alert variant="error" title={t('recovery.application.lifecycle.rollbackFailed')}
         description={applicationHttpStatus(rollbackError) === 403 ? t('recovery.application.lifecycle.rollbackForbidden')
@@ -391,8 +425,8 @@ export function RecoveryApplicationsTable({
           density={table.density}
           minWidthClassName="min-w-250"
           ariaLabel={isLoading ? t('pages.recovery.loading') : t('pages.recovery.tableAriaLabel')}
-          onRowClick={(app) => { setSelectedId(app.id) }}
-          selectedRowKey={selectedId}
+          onRowClick={(app) => { selectDetail(app.id) }}
+          selectedRowKey={selectedKey}
           emptyContent={applications.length > 0 ? t('messages.noResults') : (
             <div className="space-y-3">
               <p>{t('pages.recovery.empty.noApplications')}</p>
@@ -410,7 +444,7 @@ export function RecoveryApplicationsTable({
 
       {openMenuId && currentMenuApp && (onDelete || onRollback || onEdit) ? (
         <RowActionsMenu
-          key={openMenuId}
+          key={`menu-${openMenuId}`}
           triggerRef={triggerRefForMenu}
           open={true}
           onClose={() => { setOpenMenuId(null) }}
@@ -421,8 +455,8 @@ export function RecoveryApplicationsTable({
           deleteLabel={t('buttons.delete')}
           edit={() => {
             if (mutationPending) return
+            closeDetail()
             onEdit?.(currentMenuApp.id)
-            setSelectedId(null)
           }}
           {...(onDelete ? { delete: () => { if (!mutationPending) setDeleteTarget(currentMenuApp) } } : {})}
           {...(onRollback ? { rollback: {
@@ -437,9 +471,9 @@ export function RecoveryApplicationsTable({
       {selected ? (
         <DetailView
           // Keyed by application so each newly opened app starts on Overview.
-          key={selected.id}
+          key={`detail-${selected.id}`}
           open
-          onClose={() => { setSelectedId(null) }}
+          onClose={() => { closeDetail() }}
           entityLabel={t('drawer.entity.recoveryApplication')}
           title={selected.data.application.name}
           statuses={[
@@ -464,7 +498,7 @@ export function RecoveryApplicationsTable({
               size="sm"
               disabled={mutationPending}
 
-              onClick={() => { if (mutationPending) return; onEdit(selected.id); setSelectedId(null) }}
+              onClick={() => { if (mutationPending) return; closeDetail(); onEdit(selected.id) }}
             >
               {t('buttons.edit')}
             </Button>
@@ -610,7 +644,7 @@ export function RecoveryApplicationsTable({
                 setRollbackResult({ appName: target.data.application.name, report: result.rollback })
               }
               setDeleteTarget(null)
-              setSelectedId(null)
+              closeDetail()
               setOpenMenuId(null)
             } catch {
               setDeleteTarget(null)

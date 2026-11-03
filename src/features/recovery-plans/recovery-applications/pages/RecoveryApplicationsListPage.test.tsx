@@ -1,4 +1,5 @@
 import { render, screen, waitFor, within } from '@testing-library/react'
+import { MemoryRouter } from 'react-router'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -9,7 +10,7 @@ import type { RecoveryApplicationListItem } from '../model/recoveryApplicationTy
 function renderListPage() {
   return render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-      <RecoveryApplicationsListPage />
+      <MemoryRouter><RecoveryApplicationsListPage /></MemoryRouter>
     </QueryClientProvider>,
   )
 }
@@ -177,7 +178,7 @@ describe('RecoveryApplicationsListPage', () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     const view = render(
       <QueryClientProvider client={client}>
-        <RecoveryApplicationsListPage />
+        <MemoryRouter><RecoveryApplicationsListPage /></MemoryRouter>
       </QueryClientProvider>,
     )
     expect(screen.getByRole('status', { name: 'Loading recovery applications...' })).toBeInTheDocument()
@@ -191,7 +192,7 @@ describe('RecoveryApplicationsListPage', () => {
     query = { ...query, isLoading: false, error: new Error('offline') }
     view.rerender(
       <QueryClientProvider client={client}>
-        <RecoveryApplicationsListPage />
+        <MemoryRouter><RecoveryApplicationsListPage /></MemoryRouter>
       </QueryClientProvider>,
     )
     expect(screen.getByRole('button', { name: 'Filters' })).toBeInTheDocument()
@@ -199,7 +200,7 @@ describe('RecoveryApplicationsListPage', () => {
     query = { ...query, error: null, data: [] }
     view.rerender(
       <QueryClientProvider client={client}>
-        <RecoveryApplicationsListPage />
+        <MemoryRouter><RecoveryApplicationsListPage /></MemoryRouter>
       </QueryClientProvider>,
     )
     expect(screen.getByText('No recovery applications defined yet')).toBeInTheDocument()
