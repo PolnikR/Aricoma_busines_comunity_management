@@ -1,7 +1,7 @@
 # Plán: Used in cez shared tabuľky
 
 Dátum: 2026-11-03. Východiskový commit: `6fd813cb`.
-Stav: plán na zapracovanie; v tomto kroku sa upravuje iba HTML prototyp.
+Stav: T1–T5 implementované a overené inline 2026-11-03.
 Úlohy: [policy-set-used-in-table-todo.md](policy-set-used-in-table-todo.md).
 Návrh: [policy-set-used-in.html](../prototypes/policy-set-used-in.html).
 
@@ -14,7 +14,7 @@ Návrh: [policy-set-used-in.html](../prototypes/policy-set-used-in.html).
 - Produkcia musí použiť existujúce shared `DataTable` a `DataTableSurface`, nie kopírovať HTML/CSS prototypu do novej vlastnej tabuľky.
 - Lazy načítanie, query keys, staleTime, invalidácie, GET/DELETE ochrana a presné URL ID zostávajú zachované. Nevytvára sa nový endpoint, API model, query key, hľadanie, stránkovanie alebo prepínač hustoty.
 
-Tento krok vytvára plán/TODO a aktualizuje HTML. Nie je povolením meniť produkčné TSX; implementácia nasleduje po kontrole plánu. Pôvodný dokončený `policy-reference-protection-plan.md`/TODO ani iné existujúce plány sa neprepisujú.
+Plán a HTML boli schválené používateľom; následná implementácia prebehla inline. Pôvodný dokončený `policy-reference-protection-plan.md`/TODO ani iné existujúce plány sa neprepisujú.
 
 ## 2. Overený aktuálny kód
 
@@ -139,4 +139,12 @@ Spustiť iba pomenované affected test files, focused ESLint a raz `npm.cmd run 
 
 ## 9. Overené teraz
 
-HTML prototyp už ukazuje nové poradie, samostatné table viewports, sticky hlavičky, pevnú navigáciu/footer a režim **Many records** so 40 riadkami na zdroj. Browser validácia `node node_modules/.cache/verify-used-in-template.mjs` prešla pri 320/768/1024/1440 px aj 768×600: skutočný wheel scroll, nezávislosť zdrojov, stĺpce, klávesnica, stavy, žiadne page/console errors. Produkčné TSX ani query logika sa teraz nemenili; vyššie uvedené implementačné úlohy zostávajú otvorené.
+HTML prototyp ukazuje schválený návrh a režim **Many records** so 40 riadkami na zdroj. Produkčná implementácia používa shared komponenty, ikonu a lokalizované stĺpce ID/Name/Open detail. Query logika a ochrana mazania zostali zachované; existujúci cache test sa nemenil.
+
+Produkčný browser probe `node node_modules/.cache/verify-policy-usage-tables.mjs` prešiel s izolovanými API fixtures (100 riadkov na zdroj), EN/SK/CS, šírkami 320/768/1024/1440, oknami 768×600 a 320×600. Overil wheel, keyboard, touch, horizontálny scroll, nezávislosť zdrojov, sticky hlavičky, pevný dialog/footer, lazy/cache správanie, presné ID v reálnych detailoch, dlhú cached/no-cache chybu, Retry a prázdne dáta. Žiadne page errors; console obsahovala iba očakávané fixture HTTP 503.
+
+Browser odhalil kolíziu dvoch min-width tried; lokálne `w-144 min-w-full` zachováva šírku aj horizontálny scroll. Fill sekcia má kompaktnejšie odsadenie iba v opt-in režime. Cached chyba má samostatný focusable scroll pre úplnú správu/Retry a tabuľka rezervovaných 5.25rem; pri 320×600 sa nameralo 34px pre správu a 84px pre tabuľku (37px hlavička), Open detail aj Retry boli dostupné bez scrollovania dialogu. Bežný stav má jediný scroller na tabuľku.
+
+Spoločné overenie: 106/106 testov v deviatich súboroch uvedených v TODO, `npm.cmd run typecheck`, focused ESLint všetkých deviatich zmenených TS/TSX súborov a `git diff --check` prešli. Nezávislé review nenašlo potvrdený nedostatok. Kompletná test suite ani production build sa nespúšťali.
+
+Produkčné commity: `0a91faba` (shared fill režimy), `5352d5f5` (Used in tabuľky a preklady). Výsledky a checklist sú v súvisiacom TODO.
