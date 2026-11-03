@@ -505,6 +505,8 @@ Rozsah, matica stránok a rozhodnutia: [fáza 5 plánu](table-redesign-v2-plan.m
 **Závislosti:** T23.
 **Súbory (M, 5):** `src/features/platform-administration/identity-access/pages/IdentityAccessPage.tsx`, `components/IdentityAccessNavigation.tsx`, `components/IdentityResourceLayout.tsx`, `pages/IdentityAccessPage.test.tsx`, `components/IdentityResourceLayout.test.tsx` v tom istom feature adresári. Ďalšie zistené nezávislé výnimky rozčleniť pred rozšírením kroku.
 
+**Priebeh (2026-11-03):** Implementovane: Identity zdiela viewport/frame, hlavne tabs dedia embedded a IdentityContentPanel respektuje scope. Focused Vitest 6 suborov / 72 testov PASS; focused ESLint PASS. Browser overenie cez izolovany auth stub v T30.
+
 ### T25: Recovery view navigácie
 
 **Popis:** Pre Recovery runs a spoločný Recovery policies shell použiť shared viewport a zdedenú prezentáciu hlavnej navigácie. Tabuľkové komponenty budú rámovanie dediť zo spoločného shellu.

@@ -1,15 +1,19 @@
 import type { ReactNode } from 'react'
+import { cn } from '@/shared/utils/cn'
+import { useInventoryFrame, type InventoryFrame } from '@/shared/components/inventory-shell/InventoryCompositionContext'
 import { useTranslation } from '@/hooks/useTranslation'
 import { Button } from '@/shared/components/button/Button'
 import { Tabs, type TabItem } from '@/shared/components/tabs/Tabs'
 
 interface IdentityContentPanelProps {
   children: ReactNode
+  frame?: InventoryFrame
 }
 
-export function IdentityContentPanel({ children }: IdentityContentPanelProps) {
+export function IdentityContentPanel({ children, frame: frameOverride }: IdentityContentPanelProps) {
+  const frame = useInventoryFrame(frameOverride)
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
+    <div className={cn('flex min-h-0 min-w-0 flex-1 flex-col', frame === 'standalone' && 'overflow-hidden rounded-lg border border-border bg-surface shadow-sm')}>
       {children}
     </div>
   )
