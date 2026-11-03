@@ -1,6 +1,6 @@
 # Implementačný plán: Redizajn tabuliek v2 (variant B)
 
-Dátum pôvodného plánu: 2026-11-02. Aktualizácia: 2026-11-03. Stav: časť pôvodných úloh vykonaná alebo vrátená; fáza T13–T19 bola používateľom schválená na vykonanie inline a je implementovaná. Výsledky a limity overenia sú na konci todo súboru; vizuálne prijatie používateľom ostáva otvorené.
+Dátum pôvodného plánu: 2026-11-02. Aktualizácia: 2026-11-03. Stav: fáza T13–T19 je implementovaná pre Resources. Nadväzujúca fáza T20–T30 plánuje spoločné shared rámovanie pre všetkých konzumentov inventory view vrátane Identity & access; táto fáza zatiaľ nebola implementovaná. Výsledky skorších úloh a nové úlohy sú v todo súbore.
 Úlohy a checkpointy: [table-redesign-v2-todo.md](table-redesign-v2-todo.md).
 Vizuálny vzor: prototyp https://claude.ai/artifact/SSm6HEN89RW3LJJ2PqdtmU (Platform providers).
 
@@ -177,3 +177,105 @@ T15 vložený skeleton ─────┘                                       
 - Umiestnenie je potvrdené používateľom: doplniť tento existujúci plán a todo, neprepisovať `tasks/plan.md` ani `tasks/todo.md`.
 - Podoba a hranica view/table sú popísané týmto plánom a HTML podkladom. Implementácia používa explicitný resource view shell, embedded panel/skeleton/záložky a lokálny `p-2` gutter na tieň. Zmeny globálneho scrollovania neboli potrebné. Používateľ má ešte vizuálne skontrolovať výsledok.
 - Ak meranie v T18 ukáže, že lokálny resource gutter nestačí, zaznamenať konkrétny clipping ancestor a dopad pred rozšírením scope do shared route layoutu. Nevoliť globálne vypnutie scrollovania ako náhradu návrhu.
+
+## Fáza 5: Spoločné shared view pre všetky inventory stránky (T20–T30)
+
+### Cieľ a zmena rozsahu
+
+Po dodaní T13–T19 používateľ ukázal rovnakú chybu v Identity & access a požiadal spoločné riešenie cez shared komponenty. Cieľom je jediná implementácia rámika, navigačného pásu a priestoru na tieň, používaná Resources aj ostatnými inventory stránkami. Funkčné rozdiely zostanú v dátach, stĺpcoch, akciách a navigácii konkrétnej stránky. Nevytvárať ďalší samostatný rámik pre Identity.
+
+Ide o pokračovanie tej istej práce. Dokumenty a úlohy sa na základe už potvrdeného umiestnenia dopĺňajú do tohto plánu/todo. Historické obmedzenie fázy 4 na Resources sa pre T20–T30 nahrádza nasledujúcou maticou. Staršie úlohy, výsledky a zrušené zmeny sa nemažú. Tento pokyn je vytvorenie plánu, nie vykonanie implementácie.
+
+### Overená matica konzumentov (2026-11-03)
+
+V aktuálnych súboroch je 11 priamych produkčných konzumentov `<InventoryShell>` a samostatný `ResourceInventoryShell`. Staršie počty v CodeGraph nie sú spoľahlivé; maticu potvrdiť pri začatí implementácie oproti aktuálnemu stromu.
+
+| View / stránka | Dnešný vstup do shellu | Obsah a potrebná kontrola | Migračná úloha |
+|---|---|---|---|
+| Resources a Resources ISE | `ResourceInventoryShell` v troch resource pages | VMware/FlashSystem/Power, všetky request stavy a provider tabs; referenčný hotový vzhľad | T22, T23 |
+| Identity & access | `IdentityAccessPage` | Users, Clients, Application roles; aj ďalšie dostupné sekcie, primárne `IdentityContentPanel` formuláre a detaily | T24 |
+| Recovery runs | `RecoveryRunsPage` | Výber view, loading/error/empty a detail histórie | T25 |
+| Recovery policies | `RecoveryPolicyPageShell` | Snapshot, Application recovery a Clean room; spoločná navigácia a tabuľky | T25 |
+| Discovery settings | `DiscoverySettingsPage` | Configuration formulár aj History tabuľka, save/cancel/discard a footer | T26 |
+| Platform providers | `PlatformProvidersPage` | Zoznam bez tabs, modal a request stavy | T27 |
+| Providers | `ProvidersPage` | Zoznam bez tabs, vlastné akcie a detail | T27 |
+| Credentials | `CredentialsPage` | Zoznam bez tabs, CRUD modal a loading/error | T27 |
+| Recovery applications | `RecoveryApplicationsListPage` | Zoznam, notice, detail a prechody na builder | T28 |
+| Recovery groups | `RecoveryGroupsListPage` | Zoznam, mutation notice, delete/rollback, prechody na builder | T28 |
+| Policy sets | `PolicySetsPage` | Zoznam bez tabs, modal a refresh po mutation | T29 |
+| Audit | `AuditPage` | `InventoryPanel` cez Access logs, dotazovací toolbar, hustota a error | T29 |
+
+Samostatné `DataTableSurface` mimo inventory view (napr. Recovery actions history) zostanú samostatnými kartami. Menšie obsahové karty, fieldsety, upozornenia a otvorené modaly nie sú duplicitné obvodové rámy celého view; ich účel sa zachová. Dashboard a samotné recovery builders nepatria do tejto migrácie, pokiaľ sa pri inventúre nepotvrdí ich používanie rovnakého shellu.
+
+### Rozhodnutie: zdieľaná kompozícia a lokálne dedenie rámovania
+
+Presunúť overený rámik z resource komponentu do `src/shared/components/inventory-shell/InventoryViewFrame.tsx`. Existujúci `InventoryShell` bude skladať metriky, notice a tento shared frame. `ResourceInventoryShell` sa nakoniec vráti na tenký obal `InventoryShell` s nastavením resource spacing; nebude obsahovať vlastné CSS rámika. Všeobecný `Card` používaný po celej aplikácii sa týmto globálne nemení.
+
+```text
+InventoryViewportFrame (shared/page) — priestor na tieň, header a dostupná výška
+  page header
+  InventoryShell (shared/inventory-shell) — metriky, notice, compact spacing, floor
+    InventoryViewFrame (shared/inventory-shell) — jediný obvodový rámik
+      tabs slot — samostatný pás view, navigation scope = embedded
+      content slot — surface frame scope = embedded
+        ľubovoľná feature komponenta
+          InventoryPanel / DataTableSurface / DataTableSkeleton
+            toolbar / scroll viewport / riadky / footer
+```
+
+Používateľom očakávané „dedenie“ bude scoped React context, nie CSS zisťovanie vnorených DOM prvkov. Malý `InventoryCompositionContext.ts` bude obsahovať dva nezávislé kontexty, bez query/dát/provider modelu a bez importu barrel exportov, ktoré by vytvárali cyklus:
+
+- **Frame scope:** mimo spoločného view `standalone`, v jeho content slote `embedded`. `DataTableSurface`, `DataTableSkeleton` a `InventoryPanel` vyriešia `explicit frame ?? nearest frame scope`. `InventoryPanel` nesmie vopred nahradiť chýbajúci prop hodnotou `standalone`, lebo by tým dedenie zablokoval. Existujúci explicitný override zostáva platný pre zámerne samostatnú vnútornú kartu.
+- **Navigation scope:** mimo hlavného tabs slotu `default`, iba v tabs slote `embedded`. `Tabs` vyrieši `explicit appearance ?? nearest navigation scope`. Vnútorné detailové záložky v content slote nezdedia automaticky prezentáciu hlavného view pásu.
+
+Alternatíva odovzdávať `frame="embedded"` cez každú feature stránku a tabuľku by duplikovala vedomosť o rodičovi na mnohých miestach. Scoped context zvolíme preto, že rámik vlastní najbližší view a tabuľka nemusí poznať stránku. Explicitný override je určený len pre skutočnú výnimku, nie ako povinný migračný prepínač pre každú tabuľku. Nepridávať DOM scan, `cloneElement`, kontrolu názvu komponentu ani nový global store.
+
+### Pravidlá rámika, navigácie a scrollovania
+
+1. CSS pre obvodový rámik, biele pozadie, polomer a tieň existuje na jedinom shared frame. `InventoryShell` prestane používať `:has([data-table-surface])`, `group-has-*` a odoberanie horných okrajov potomkom. Loading aj bežné dáta sa skladajú v tom istom frame; existujúci `VirtualMachinesSkeleton` helper v shared shell súbore sa takisto oprie oň.
+2. Pás view vlastní jednu deliacu čiaru. Odstrániť staré `bg-surface border-b-0 px-0` vizuálne prepisy z hlavných navigácií Identity, Recovery runs, Recovery policies a Discovery settings; rozmerové triedy môžu zostať. Provider badge a modré podčiarknutie Resources sa zachovajú. URL/model/roly a business správanie sa nemenia.
+3. Spoločný `InventoryViewportFrame` prevezme overený gutter z Resources a obalí nadpis aj view, aby zostali zarovnané. `ResourceViewportFrame` bude jeho tenkým obalom. Ostatné inventory pages použijú tento spoločný viewport namiesto lokálnych kópií root flex layoutu. Globálny `AppShell` ani všetky `ContainedViewportFrame` sa nemenia kvôli jednej rodine stránok.
+4. Zachovať `compactSpacing`, `surfaceMinHeightClassName` a fallback route scroll pri nízkom okne. Skutočný dátový viewport a formulárový viewport zostávajú vlastníkmi scrollu. Rámik sa neopravuje orezaním, maskou ani prekrývaním rohov.
+5. `IdentityContentPanel`, ktorý je primárnym obsahom view, bude rešpektovať frame scope. Vnútorné nastavenia/sekcie si zachovajú vlastné sémantické oddelenie. `SettingsSectionCard` v Configuration je konkrétny primárny formulár: dostane explicitný vložený režim v tomto použití; ostatným settings kartám zostane ich dnešný default. Neodstraňovať plošne všetky vnútorné borders.
+6. React context sa prenáša aj do portalov. Pri migrácii preveriť panely v detailoch/modaloch; ak ide o nezávislú kartu, explicitne nastaviť standalone na jej hranici. Konkrétne výnimky zapísať do matice, nevkladať reset do všetkých modalov preventívne.
+7. Nový shared marker pre QA je `data-inventory-view`. Resource QA prejde naň; nepridávať do shared frame resource-specific props. `data-table-surface` môže ďalej označovať standalone panel, ale vzhľad view od tejto značky nezávisí.
+
+### Poradie, kompatibilita a kontrolné body
+
+```text
+T20 frame scope ── T21 shared view frame + navigation scope ── CP7
+  └──────────────── T22 overené Resources cez shared frame/viewport
+                       └─ T23 spoločný InventoryShell default ── CP8
+                           ├─ T24 Identity
+                           ├─ T25 Recovery runs/policies
+                           └─ T26 Discovery settings ── CP9
+                               ├─ T27 Provider/credential zoznamy
+                               ├─ T28 Recovery app/group zoznamy
+                               └─ T29 Policy sets/Audit ── CP10
+                                   └─ T30 browser matica a audit úplnosti ── CP11
+```
+
+V T20/T21 sa pripravia kontrakty bez zmeny existujúceho defaultu mimo nového frame. T22 overí nový shared frame na už funkčných Resources pred globálnym prepnutím. T23 prepne všetkých dnešných používateľov `InventoryShell`; T24–T29 odstránia zostávajúce feature navigačné prepisy a zjednotia ich viewport. Medzikroky musia zostať funkčné; za vizuálne dokončenú sa migrácia považuje až po celej matici, nie po Resources alebo Users.
+
+Úlohy sa vykonávajú postupne. Každá má najviac päť predpokladaných produkčných/testovacích súborov; spoločný výsledkový zápis do plánovacích dokumentov sa vedie pri commitovaní. Ak sa ukáže ďalší konzument alebo nutný zásah nad tento limit, najprv doplniť samostatnú úlohu a maticu. Návrat k stavu pred migráciou je revert konkrétneho atomického kroku, bez resetovania cudzej práce.
+
+### Overovanie a riziká
+
+- Testovať dedenie cez skutočný vnorený feature wrapper, implicitný standalone mimo view, explicitný standalone override, nezávislosť navigation/content scope a zachovanie loading/error/cache/pagination. Overiť, že zmena iba na shared frame sa prejaví v Resources aj Identity bez kópie CSS vo feature moduloch.
+- Focused príkazy sú pri T20–T30. Zachovať silu existujúcich behaviorálnych assertions; meniť CSS assertions iba tam, kde bol zámerne presunutý vlastník rámika. Čistý presun štýlu overiť browserom, nepridávať test len ako kópiu class stringu.
+- Na CP8 a po kompletnej integrácii spustiť `npm.cmd run typecheck`; focused ESLint zmenených súborov a `git diff --check` pri každom kroku. Celá test suite, full lint a production build sa nespúšťajú automaticky. Pri väčšej focused sade používať správny tvar `npm.cmd exec -- vitest run <súbory> --maxWorkers=2` a browser QA spúšťať oddelene.
+- Rozšíriť existujúce izolované CDP QA namiesto druhého nesúvisiaceho test systému. Identity používa vymyslené fixture identity, bez reálnych Keycloak účtov/tokenov. Každý route z matice musí mať zaznamenaný výsledok, nie iba screenshot jednej reprezentatívnej tabuľky.
+- Plná geometrická matica pre Identity, Resources, Recovery runs a Discovery settings: svetlá/tmavá, 1600×900, 1280×600, 800×900, 390×844, desktop emulácia 125 %. Ostatné položky aspoň desktop a mobil v oboch témach. Stavy úspech/loading/fatal/cached error/empty a retry pokryť podľa možností jednotlivého view.
+
+| Riziko | Dopad | Opatrenie |
+|---|---|---|
+| Explicitné defaulty v `InventoryPanel` alebo feature wrapperi zablokujú dedenie | Vysoký | Integračný test scoped frame cez vnorený wrapper; audit všetkých explicitných `frame` props |
+| Kontextová zmena odstráni rám nezávislej detailovej/portal karty | Vysoký | Scope iba obsah view, audit nezávislých povrchov a konkrétne standalone override |
+| Identity/Discovery settings obsahuje formulár aj tabuľku | Vysoký | T24/T26 overia oba druhy obsahu vrátane footeru a save/cancel/discard, nie iba Users/History |
+| Feature navigácia znovu pridá nepriehľadné pozadie | Stredný | Vyčistiť všetky štyri hlavné navigácie z inventúry a merať jednu deliacu čiaru v Chrome |
+| Shared gutter posunie nadpis alebo znemožní scroll v krátkom okne | Stredný | Header aj view v tom istom viewport komponente; test floor kontraktu, 1280×600 a dlhých dát |
+| Testy založené na starej DOM štruktúre budú mechanicky oslabené | Stredný | Zachovať pomenované regióny, behaviorálne overenie navigácie a scrollbar ownerov |
+
+### Podmienky odovzdania
+
+T20–T30 sú plán, všetky nové úlohy ostávajú nezaškrtnuté. Implementácia začne až po pokyne používateľa. Po dokončení musí zdrojová inventúra preukázať jednu shared implementáciu view frame a viewportu; Resources a Identity nemajú vlastnú kópiu. Každá položka matice musí byť overená alebo výslovne uvedená ako blokovaná s dôvodom. Nepovažovať novú fázu za hotovú, ak rovnaký defekt ostane na inom konzumentovi spoločného shellu.
