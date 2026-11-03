@@ -49,6 +49,7 @@ let phase6Captures = 0
 const scopeTags = ['WEB', 'DR', 'Critical', 'Tier-1', 'Backup']
 function configuredScope(role) {
   const prefix = role === 'source' ? 'SRC-' : 'TGT-'
+  if (scope === 'readable-short') return { vmPrefix: 'TEST-', vmTags: ['WEB'] }
   if (scope === 'readable') return { vmPrefix: 'TEST-', vmTags: ['Nekriticke-produkcne', 'Archiv', 'WEB'] }
   if (scope === 'none') return { vmPrefix: ' ', vmTags: [' ', ''] }
   if (scope === 'prefix') return { vmPrefix: prefix }
@@ -94,7 +95,7 @@ function scopedVms(providerId) {
   ]
   if (scope === 'long') rows[0] = ['FIRST', configuredScope(role).vmTags.slice(0, 1), 'poweredOn', 2, 4, 'cluster-a']
   return Array.from({ length: inventoryCount > 6 ? Math.ceil(inventoryCount / 6) : 1 }, (_, repeat) => rows.map(([suffix, tags, power_state, vcpu, memory_gb, cluster], i) => ({
-    name: `${suffix === 'OUTSIDE' ? 'OTHER-' : (scope === 'long' || scope === 'readable') ? configuredScope(role).vmPrefix : prefix}${suffix}`,
+    name: `${suffix === 'OUTSIDE' ? 'OTHER-' : (scope === 'long' || scope.startsWith('readable')) ? configuredScope(role).vmPrefix : prefix}${suffix}`,
     moId: `${providerId}-vm-${repeat}-${i}`, provider_id: providerId, provider_type: 'VMWARE',
     tags, power_state, vcpu, memory_gb, cluster, connection_state: 'connected',
   }))).flat()
@@ -299,7 +300,7 @@ async function load(path, { theme = 'light', width = 1600, height = 900, zoom = 
   else if (['inventory-error', 'provider-error'].includes(mode)) await wait(`!!document.querySelector('${viewSelector} [role=alert]')`)
   else if (['empty', 'no-provider'].includes(mode) || (phase6 && providerCount === 0)) await wait(`!!document.querySelector('${viewSelector} [role=status] h2')`)
   else await wait(`!!document.querySelector('${viewSelector} tbody tr') && !document.querySelector('${viewSelector} [role=status][aria-busy=true]')`)
-  await read('document.fonts.ready.then(()=>true)')
+  await read('document.fonts.ready.then(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true)))))')
   if (classicScrollbar) await read(`document.documentElement.style.overflowY='scroll';new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))`)
 }
 const rowsReady = `!!document.querySelector('${viewSelector} tbody tr td:not([colspan])') && !document.querySelector('${viewSelector} [aria-busy=true]')`
@@ -659,14 +660,16 @@ async function phase6Cases() {
       await wait(`!document.querySelector('[role=dialog][aria-modal=true]')`)
 
     }
-    scope = 'readable'
-    for (const width of [1440, 320]) {
-      await load(path, { width })
-      const name = `phase6-${role}-readable-scope-${width}`
-      await scopeGeometry(name, id)
-      if (width === 1440) {
-        const heights = await read(`[...document.querySelectorAll('[data-provider-scope] [role=region]')].map(e=>({height:e.getBoundingClientRect().height,line:parseFloat(getComputedStyle(e).lineHeight)}))`)
-        assert.ok(heights.every(e=>e.height<=e.line+1), 'TEST- and Nekriticke-produkcne fit on one desktop line')
+    for (const readableScope of ['readable-short', 'readable']) {
+      scope = readableScope
+      for (const width of [1440, 1024, 320]) {
+        await load(path, { width })
+        const name = `phase6-${role}-${scope}-scope-${width}`
+        await scopeGeometry(name, id)
+        if (width >= 1024) {
+          const heights = await read(`[...document.querySelectorAll('[data-provider-scope] [role=region]')].map(e=>({height:e.getBoundingClientRect().height,line:parseFloat(getComputedStyle(e).lineHeight)}))`)
+          assert.ok(heights.every(e=>e.height<=e.line+1), `${scope}: prefix and tag fit on one desktop line`)
+        }
       }
     }
     for (const variant of ['none', 'prefix', 'tag-1', 'both-1', 'tag-2', 'both-2', 'tag-5', 'both-5']) {
