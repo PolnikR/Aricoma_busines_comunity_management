@@ -130,10 +130,16 @@ Discovery settings sa nemení, lebo popis stránky už vymenúva všetky sekcie.
 - `RowDensityToggle` ako dve ikonové tlačidlá s prístupnými menami a tooltipom (doterajšie texty ostanú ako mená),
 - `segments` ako chips s voliteľným `count`.
 
+**Výsledok (2026-11-03):**
+- Vyhľadávanie má vlastné tlačidlo ✕ (`common.clearSearch` v en/sk/cs) a natívne ✕ prehliadača je skryté.
+- Prepínač hustoty má ikony `DensityComfortableIcon`/`DensityCompactIcon`, prístupné meno z props a tooltip s veľkým začiatočným písmenom.
+- `Segment.count` je voliteľný. Rýchle filtre **neboli** prestylované na chips, ostal segmentový ovládač, aby sa nemenili stránky, ktoré ho dnes používajú.
+- Headless Chrome (Platform providers, :5174, testovacie `/api` dáta): ✕ sa zobrazí po zadaní textu a tlačidlá hustoty sú 36 px ikony.
+
 **Akceptačné kritériá:**
-- [ ] Tlačidlo na vymazanie sa zobrazí len pri neprázdnom hľadaní, vyprázdni ho a vráti fokus do poľa.
-- [ ] Prepínač hustoty má `aria-pressed`, prístupné mená „comfortable“/„compact“ (z props) a funguje klávesnicou.
-- [ ] `Segment.count` je voliteľný a existujúci volajúci bez neho fungujú bez zmeny.
+- [x] Tlačidlo na vymazanie sa zobrazí len pri neprázdnom hľadaní, vyprázdni ho a vráti fokus do poľa.
+- [x] Prepínač hustoty má `aria-pressed`, prístupné mená „comfortable“/„compact“ (z props) a funguje klávesnicou (natívne `<button>`).
+- [x] `Segment.count` je voliteľný a existujúci volajúci bez neho fungujú bez zmeny.
 
 **Overenie:** `npm exec vitest run src/shared/components/data-table/DataTableToolbar.test.tsx`
 **Závislosti:** CP1.

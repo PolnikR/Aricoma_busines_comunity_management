@@ -1,3 +1,5 @@
+import { DensityComfortableIcon, DensityCompactIcon } from '@/shared/icons/Icons'
+
 export type TableDensity = 'comfortable' | 'compact'
 
 interface RowDensityToggleProps {
@@ -8,6 +10,8 @@ interface RowDensityToggleProps {
   comfortableLabel?: string
   compactLabel?: string
 }
+
+const densityIcons = { comfortable: DensityComfortableIcon, compact: DensityCompactIcon }
 
 export function RowDensityToggle({
   density,
@@ -27,20 +31,27 @@ export function RowDensityToggle({
           Updating
         </span>
       ) : null}
-      <div className="inline-flex h-10 overflow-x-auto rounded-xl bg-surface-muted p-0.5" role="group" aria-label={ariaLabel}>
-        {(['comfortable', 'compact'] as const).map((mode) => (
-          <button
-            key={mode}
-            type="button"
-            onClick={() => {
-              onDensityChange(mode)
-            }}
-            aria-pressed={density === mode}
-            className={`shrink-0 rounded-[10px] px-3 text-xs font-medium capitalize transition sm:text-sm ${density === mode ? 'bg-surface text-accent shadow-sm' : 'text-text-muted hover:text-text-secondary'}`}
-          >
-            {labels[mode]}
-          </button>
-        ))}
+      <div className="inline-flex h-10 rounded-xl bg-surface-muted p-0.5" role="group" aria-label={ariaLabel}>
+        {(['comfortable', 'compact'] as const).map((mode) => {
+          const Icon = densityIcons[mode]
+          const label = labels[mode]
+          return (
+            // Icon only; the label stays the accessible name and shows as a tooltip.
+            <button
+              key={mode}
+              type="button"
+              onClick={() => {
+                onDensityChange(mode)
+              }}
+              aria-pressed={density === mode}
+              aria-label={label}
+              title={label.charAt(0).toUpperCase() + label.slice(1)}
+              className={`flex w-9 shrink-0 items-center justify-center rounded-[10px] transition ${density === mode ? 'bg-surface text-accent shadow-sm' : 'text-text-muted hover:text-text-secondary'}`}
+            >
+              <Icon className="size-4" />
+            </button>
+          )
+        })}
       </div>
     </div>
   )

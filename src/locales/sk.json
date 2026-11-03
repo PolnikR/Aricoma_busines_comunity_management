@@ -1557,6 +1557,7 @@
   "common.search": "Hľadať",
   "common.filters": "Filtre",
   "common.refresh": "Aktualizovať",
+  "common.clearSearch": "Vymazať vyhľadávanie",
   "common.loading": "Načítava sa...",
   "common.error": "Chyba",
   "common.noResults": "Nenašli sa žiadne výsledky",
