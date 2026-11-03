@@ -342,7 +342,8 @@ async function scopeGeometry(name, expectedProviderId) {
     const rect=e=>{const r=e.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom,clientWidth:e.clientWidth,scrollWidth:e.scrollWidth,text:e.textContent}};
     const tabs=nav?[...nav.querySelectorAll('[role=tab]')]:[];
     return {provider:summary?.dataset.providerScope??null,summary:summary?rect(summary):null,regions:summary?[...summary.querySelectorAll('[role=region]')].map(rect):[],navigationChildren:nav?.parentElement.parentElement.parentElement.children.length,
-      nav:nav?rect(nav):null,scrollLeft:nav?.scrollLeft,gap:nav?getComputedStyle(nav).columnGap:null,tabs:tabs.map(t=>({...rect(t),label:t.getAttribute('aria-label'),selected:t.getAttribute('aria-selected'),tabIndex:t.tabIndex})),
+      nav:nav?rect(nav):null,availableWidth:nav?.parentElement.parentElement.clientWidth,scrollLeft:nav?.scrollLeft,gap:nav?getComputedStyle(nav).columnGap:null,tabs:tabs.map(t=>({...rect(t),label:t.getAttribute('aria-label'),selected:t.getAttribute('aria-selected'),tabIndex:t.tabIndex})),
+      names:tabs.map(t=>({ ...rect(t.firstElementChild.firstElementChild),display:getComputedStyle(t.firstElementChild.firstElementChild).display,textOverflow:getComputedStyle(t.firstElementChild.firstElementChild).textOverflow })),
       badges:tabs.map(t=>({tab:rect(t),badge:rect(t.firstElementChild.lastElementChild)})),controls:nav?[...nav.parentElement.querySelectorAll('button:not([role=tab])')].map(e=>({...rect(e),disabled:e.disabled})):[],
       trigger:summary?.querySelector('[aria-haspopup=dialog]')?.textContent??null};})()`)
   requireDocument(value, name)
@@ -350,18 +351,18 @@ async function scopeGeometry(name, expectedProviderId) {
   assert.equal(value.tabs.length, providerCount, `${name}: exact visible-role provider count`)
   assert.equal(value.provider, expectedProviderId, `${name}: metadata follows selected configured provider`)
   if (!value.nav) return value
-  assert.equal(value.gap, '0px', `${name}: slots have zero gap`)
+  assert.equal(value.gap, '4px', `${name}: small consistent gap matches spike`)
   assert.ok(value.nav.width < frame.card.width, `${name}: navigation is narrower than card`)
   assert.ok(value.nav.width >= value.tabs[0].width - 1, `${name}: one whole provider slot fits`)
+  for (const label of value.names) {
+    assert.ok(label.display !== 'none' && label.clientWidth > 0, `${name}: provider name is visible: ${label.text}`)
+    assert.ok(label.scrollWidth <= label.clientWidth + 1 && label.textOverflow !== 'ellipsis', `${name}: entire provider name is readable: ${label.text}`)
+  }
   for (const { tab, badge } of value.badges) {
     if (badge.text.length < 15) assert.ok(badge.x >= tab.x && badge.right <= tab.right, `${name}: short badge fits ${badge.text}`)
   }
-  if (frame.windowWidth >= 1440) {
-    const slots = Math.min(4, providerCount)
-    assert.ok(Math.abs(value.nav.width - slots * value.tabs[0].width) <= 1, `${name}: exactly ${slots} desktop slots`)
-    const fullyVisible = value.tabs.filter(tab => tab.x >= value.nav.x - 1 && tab.right <= value.nav.right + 1)
-    assert.equal(fullyVisible.length, slots, `${name}: complete visible slots`)
-    if (providerCount > 4) assert.ok(value.tabs[4].x >= value.nav.right - 1, `${name}: fifth slot is outside viewport`)
+  for (let i = 1; i < value.tabs.length; i++) {
+    assert.ok(Math.abs(value.tabs[i].x - value.tabs[i - 1].right - 4) <= 1, `${name}: natural tabs have no blank slots`)
   }
   if (value.summary) {
     assert.ok(value.regions.every(region => region.clientWidth > 0), `${name}: prefix/tag regions have positive readable width`)
@@ -434,9 +435,11 @@ async function phase6Interactions(role, path, id) {
   const before = await read(`({url:location.href,selected:${selected}.getAttribute('aria-label'),left:document.querySelector('[role=tablist]').scrollLeft,width:document.querySelector('[role=tablist]').clientWidth,slot:document.querySelector('[role=tab]').getBoundingClientRect().width,max:document.querySelector('[role=tablist]').scrollWidth-document.querySelector('[role=tablist]').clientWidth})`)
   const requestCount = requests.filter(request => ['/vms/search','/get_volumes','/get_power_vm'].includes(request.path)).length
   assert.equal(await read(`${previous}.disabled`), true, 'Start arrow disabled')
+  const arrowX = await read(`${next}.getBoundingClientRect().x`)
   await click(next)
-  const expectedLeft = Math.min(before.max, Math.floor(before.width / before.slot) * before.slot)
+  const expectedLeft = Math.min(before.max, Math.max(160, before.width * 0.8))
   await wait(`Math.abs(document.querySelector('[role=tablist]').scrollLeft-${expectedLeft})<=1`)
+  assert.equal(await read(`${next}.getBoundingClientRect().x`), arrowX, 'Next arrow stays fixed after scrolling')
   assert.equal(await read('location.href'), before.url, 'Scroll controls do not change selection URL')
   assert.equal(await read(`${selected}.getAttribute('aria-label')`), before.selected, 'Scroll controls do not select provider')
   assert.equal(requests.filter(request => ['/vms/search','/get_volumes','/get_power_vm'].includes(request.path)).length, requestCount, 'Scroll controls do not fetch inventory')

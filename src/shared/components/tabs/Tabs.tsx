@@ -82,7 +82,7 @@ export function Tabs<T extends string>({
     updateScrollState()
     const handleResize = () => {
       updateScrollState()
-      if (visibleSlots !== undefined) revealSelectedTab()
+      revealSelectedTab()
     }
     window.addEventListener('resize', handleResize)
     const resizeObserver = typeof ResizeObserver === 'undefined'

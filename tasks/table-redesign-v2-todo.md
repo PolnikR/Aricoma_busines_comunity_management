@@ -959,3 +959,27 @@ npm.cmd exec -- vitest run src/features/discovery-inventory/resources/components
 Parent overil aj lokálny PostCSS parser a `npm.cmd run typecheck`. Po poslednom tap delta znovu prešli `node --check` oboch QA skriptov a ich focused ESLint. Hodnota78 je počet metadata záznamov vrátane správne neprítomného triggera; **64 má viditeľné +N**, všetky očakávané počty aj null prípady boli overené.
 
 Po dokončení boli ukončené iba vlastné QA Vite5191 a izolované Chrome9357/9358; používateľský prototype5192 zostal nedotknutý. Práca ostáva v existujúcom worktree na vetve test. Predexistujúci routeContract snapshot nie je súčasťou task commitov.
+
+
+### Provider navigation follow-up ? restore spike scrolling (2026-11-03)
+
+User explicitly requested the normal slider from spike/ant-design-shell after rejecting truncated labels, equal-width empty slots, and a moving right arrow. This supersedes the four fixed slots requirement for Resources navigation.
+
+- Resources and Resources ISE now use the existing native smooth-scrolling Tabs path from spike (80% viewport per arrow, minimum 160px), inside a responsive strip capped at 44rem.
+- Provider items have natural desktop widths and a consistent 4px gap. Names are not replaced with ellipses or hidden on mobile. Mobile labels wrap above their badges.
+- Removed the experimental page measurement implementation entirely. Scrolling does not recalculate the strip width. Prefix/tag metadata remains on the right.
+- Resize reveals the selected tab in natural-width mode too; focused regression test added.
+- Browser assertions now check natural spacing, readable labels, spike scrolling distance, and a stationary next arrow after scrolling. Continuous scrolling can show part of the next item at the viewport edge, as on spike; this is no longer whole-item pagination.
+
+Verified:
+
+```powershell
+npm.cmd exec -- vitest run src/shared/components/tabs/Tabs.test.tsx src/features/discovery-inventory/resources/components/ResourceViewNavigation.test.tsx src/shared/components/inventory-shell/InventoryViewFrame.test.tsx src/features/platform-administration/identity-access/components/IdentityAccessNavigation.test.tsx src/features/recovery-plans/recovery-policies/components/RecoveryPolicyPageShell.test.tsx --maxWorkers=2
+npm.cmd exec -- eslint src/shared/components/tabs/Tabs.tsx src/shared/components/tabs/Tabs.test.tsx src/features/discovery-inventory/resources/components/ResourceViewNavigation.tsx scripts/qa/inventory-view-table-browser.mjs --max-warnings 0
+node scripts/qa/inventory-view-table-browser.mjs --phase6-only --quick
+node scripts/qa/inventory-view-table-browser.mjs --phase6-only
+node --check scripts/qa/inventory-view-table-browser.mjs
+git diff --check
+```
+
+Results: 34 component tests passed; focused ESLint passed; quick browser 20 captures passed; final browser 102 captures passed, including source/target native arrow, keyboard, wheel/touch and resize checks. Final artifacts: %TEMP%/abco-provider-spike-scroll-final. Desktop/mobile screenshots visually inspected. Local isolated fixtures only; complete suite and production build were not run. The earlier browser failure on resize was fixed and the entire phase6 scope then rerun successfully. Pre-existing routeContract snapshot excluded.

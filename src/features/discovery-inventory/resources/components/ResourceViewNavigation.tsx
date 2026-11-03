@@ -24,17 +24,17 @@ export function ResourceViewNavigation({ items, labels, value, onChange, selecte
   const providerFilter = vmwareProvider ? resolveVmwareProviderFilter(vmwareProvider) : null
 
   return (
-    <div className="flex min-w-0 items-center gap-1 [--tab-control-width:1.5rem] [--tab-slot-width:5rem] sm:gap-3 sm:[--tab-control-width:2.25rem] sm:[--tab-slot-width:9rem] 2xl:[--tab-slot-width:10rem]">
-      <div className="min-w-0 flex-initial">
+    <div className="flex min-w-0 items-center gap-1 sm:gap-3">
+      <div className="min-w-0 max-w-[44rem] flex-1 [&>div>button]:w-6 sm:[&>div>button]:w-9">
         <Tabs
           items={items.map(tab => ({
             value: tab.value,
             accessibleLabel: tab.label,
             label: (
-              <span className="flex min-w-0 items-center gap-2">
-                <span className={tab.providerId ? 'hidden min-w-0 truncate sm:inline' : 'min-w-0 truncate'}>{labels[tab.resourceTab]}</span>
+              <span className="flex min-w-0 flex-col items-start gap-1 sm:flex-row sm:items-center sm:gap-2">
+                <span className="min-w-0 max-w-full whitespace-normal text-left [overflow-wrap:anywhere]">{labels[tab.resourceTab]}</span>
                 {tab.providerId ? (
-                  <span className="shrink-0 rounded bg-surface-muted px-1 py-0.5 font-mono text-[10px] text-text-muted sm:px-1.5 sm:text-[11px]">
+                  <span className="no-scrollbar max-w-full shrink-0 overflow-x-auto rounded bg-surface-muted px-1 py-0.5 font-mono text-[10px] text-text-muted sm:max-w-28 sm:px-1.5 sm:text-[11px]">
                     {formatResourceProviderId(tab.resourceTab, tab.providerId)}
                   </span>
                 ) : null}
@@ -47,7 +47,7 @@ export function ResourceViewNavigation({ items, labels, value, onChange, selecte
           indicator="inset"
           appearance="embedded"
           compact
-          maxVisibleItems={4}
+          className="[&>button]:!max-w-20 sm:[&>button]:!max-w-none"
           scrollControls={{
             previousLabel: t('pages.virtualMachines.tabs.previous'),
             nextLabel: t('pages.virtualMachines.tabs.next'),

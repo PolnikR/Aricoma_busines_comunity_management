@@ -179,6 +179,18 @@ describe('Tabs', () => {
     expect(revealSelected).toHaveBeenCalledWith({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
   })
 
+  it('reveals the selected natural-width tab after resizing without assigning slot widths', () => {
+    render(<Tabs items={overflowItems} value="tab-1" onChange={vi.fn()} ariaLabel="Sources"
+      scrollControls={{ previousLabel: 'Previous', nextLabel: 'Next' }} />)
+    const selected = screen.getByRole('tab', { selected: true })
+    const reveal = vi.fn()
+    Object.defineProperty(selected, 'scrollIntoView', { configurable: true, value: reveal })
+    fireEvent(window, new Event('resize'))
+    expect(reveal).toHaveBeenCalledWith({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
+    expect(selected.style.width).toBe('')
+    expect(screen.getByRole('tablist').parentElement?.style.width).toBe('')
+  })
+
   it.each([undefined, 4])('uses custom control widths only when maxVisibleItems is set (%s)', (maxVisibleItems) => {
     render(
       <div style={{ '--tab-control-width': '1.75rem' } as CSSProperties}>
