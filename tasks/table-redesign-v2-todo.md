@@ -456,6 +456,8 @@ Rozsah, matica stránok a rozhodnutia: [fáza 5 plánu](table-redesign-v2-plan.m
 **Závislosti:** T20.
 **Súbory (M, 4):** nový `src/shared/components/inventory-shell/InventoryViewFrame.tsx`, nový `InventoryViewFrame.test.tsx`, `src/shared/components/tabs/Tabs.tsx`, `Tabs.test.tsx`.
 
+**Priebeh (2026-11-03):** Implementovane. Focused Vitest 3 subory / 15 testov PASS; focused ESLint PASS. Navigacny scope oddeleny od content scope.
+
 ### Checkpoint 7: Shared kontrakty pripravené
 - [ ] T20/T21 overené bez aktivácie nového defaultu vo všetkých stránkach; pôvodný samostatný panel funguje mimo scope.
 - [ ] Frame a navigation scope sú nezávislé, explicitné override sú otestované a shared rámik má jediný zdroj CSS.

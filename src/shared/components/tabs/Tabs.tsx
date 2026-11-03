@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { KeyboardEvent, ReactNode } from 'react'
 import { cn } from '@/shared/utils/cn'
 import { ChevronLeftIcon, ChevronRightIcon } from '@/shared/icons/Icons'
+import { useInventoryNavigation } from '../inventory-shell/InventoryCompositionContext'
 
 export interface TabItem<T extends string> {
   value: T
@@ -31,10 +32,11 @@ export function Tabs<T extends string>({
   ariaLabel,
   indicator = 'edge',
   compact = false,
-  appearance = 'default',
+  appearance: appearanceOverride,
   className,
   scrollControls,
 }: TabsProps<T>) {
+  const appearance = useInventoryNavigation(appearanceOverride)
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
   const tabListRef = useRef<HTMLDivElement>(null)
   const [isOverflowing, setIsOverflowing] = useState(false)
