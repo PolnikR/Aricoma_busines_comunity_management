@@ -529,6 +529,8 @@ Rozsah, matica stránok a rozhodnutia: [fáza 5 plánu](table-redesign-v2-plan.m
 **Závislosti:** T23.
 **Súbory (M, najviac 5):** `src/features/discovery-inventory/discovery-settings/pages/DiscoverySettingsPage.tsx`, `DiscoverySettingsPage.test.tsx`, `src/shared/components/settings/SettingsSectionCard.tsx`, `SettingsSectionCard.test.tsx`, prípadne `DiscoveryHistoryCard.test.tsx` pri zámernej zmene existujúcej layout assertion.
 
+**Priebeh (2026-11-03):** Implementovane: Configuration formular embedded, History dedenie, spolocny viewport. Focused Vitest 4 subory / 28 testov PASS; focused ESLint PASS. Ostatne SettingsSectionCard defaulty ostali standalone.
+
 ### Checkpoint 9: Všetky view s hlavnými záložkami
 - [ ] Identity, Recovery runs/policies, Discovery settings a Resources používajú jeden shared frame a zdedenú vloženú navigáciu.
 - [ ] Dátový viewport, hlavná navigácia a vnútorné detailové tabs majú oddelené zodpovednosti; neexistuje duplicitný nav render ani neplatné ARIA odkazy.
