@@ -656,18 +656,20 @@ T20 d9ee4fde; T21 ad139c36; T22 3e610f84; T23 c30ff931; T24 5148738a; T25 6ef80b
 
 ## Fáza 6: Provider lišta a viac tagov — T31–T41
 
-Plán: fáza 6 v table-redesign-v2-plan.md. **Stav: nezačaté.** Používateľ potvrdil OR: VM má aspoň jeden zo zvolených tagov. Schválenie OR nie je pokyn na implementáciu celého plánu. Predchádzajúce checkboxy sa nemenia. Každý krok končí focused overením, diff check a atomickým commitom vlastných zmien; dokumentačný záznam je spoločný plán/todo.
+Plán: fáza 6 v table-redesign-v2-plan.md. **Stav: prebieha inline podľa pokynu executing-plans.** Používateľ potvrdil OR: VM má aspoň jeden zo zvolených tagov. Vykonanie celého plánu používateľ následne schválil pokynom executing-plans inline. Predchádzajúce checkboxy sa nemenia. Každý krok končí focused overením, diff check a atomickým commitom vlastných zmien; dokumentačný záznam je spoločný plán/todo.
 
 ### T31: Overiť úplnosť inventory kontraktu
 
 **Popis:** Zaznamenať potvrdené OR a overiť úplnosť odpovede bez singular tag, backend aplikovanie provider konfigurácie, význam metriky a dopad na všetky volania resolvera. Najskôr uzavrieť dátové riziko; neliečiť ho len novou UI prezentáciou.
 **Akceptačné kritériá:**
-- [ ] Rozhodnutie OR je zaznamenané; testovacia matica zahŕňa VM s prvým tagom, iba druhým tagom, oboma a žiadnym, s/bez prefixu.
-- [ ] Zdroj/kontrakt alebo overiteľná fixture potvrdzuje kompletný response pre provider/prefix bez tag a prípustný objem. Mock vytvorený podľa želaného správania nie je dôkazom backend kontraktu. Samotná existencia endpointu nestačí; zdokumentovať prípadné server pagination/limity a vlastné provider filtre backendu.
-- [ ] Pri nepotvrdení úplnosti vznikne konkrétna API/backend závislosť a samostatný rozpad pred T33; bez tichého prechodu na neúplný inventár či iba prvý tag.
+- [x] Rozhodnutie OR je zaznamenané; testovacia matica zahŕňa VM s prvým tagom, iba druhým tagom, oboma a žiadnym, s/bez prefixu.
+- [x] Zdroj/kontrakt alebo overiteľná fixture potvrdzuje kompletný response pre provider/prefix bez tag a prípustný objem. Mock vytvorený podľa želaného správania nie je dôkazom backend kontraktu. Samotná existencia endpointu nestačí; zdokumentovať prípadné server pagination/limity a vlastné provider filtre backendu.
+- [x] Pri nepotvrdení úplnosti vznikne konkrétna API/backend závislosť a samostatný rozpad pred T33; bez tichého prechodu na neúplný inventár či iba prvý tag.
 **Overenie:** baseline `npm.cmd exec -- vitest run src/features/discovery-inventory/resources/helpers/vmwareProviderFilter.test.ts src/features/discovery-inventory/resources/helpers/filterVirtualMachines.test.ts src/features/discovery-inventory/resources/model/inventoryQueries.test.ts --maxWorkers=2`; read-only kontrola OpenAPI/aktuálnych generated kontraktov a query implementácie, dôkazy zapísať do plánu. Žiadne živé mutácie.
 **Závislosti:** T30.
 **Súbory (S, 2):** existujúci plan/todo, aktualizácia kontraktového záznamu. Žiadny produkčný kód.
+
+**Priebeh (2026-11-03):** Backendový source audit + existujúci full-response route potvrdené; focused baseline 3 súbory/13 testov PASS; Chrome 1k/10k VM PASS. Výkonový ruling a presné limity/dôkazy v pláne.
 
 ### T32: Zachovať celú normalizovanú množinu provider tagov
 
@@ -798,5 +800,5 @@ Plán: fáza 6 v table-redesign-v2-plan.md. **Stav: nezačaté.** Používateľ 
 - [ ] T31–T41 overené a commitnuté; OR výsledok, metriky, cache a zobrazenie sú konzistentné.
 - [ ] Staré historické checkboxy ani používateľské akceptácie sa automaticky neuzatvorili; nesúvisiaci routeContract snapshot nie je commitnutý.
 - [ ] Report obsahuje presné focused príkazy, browser výsledky a stav plnej suite/build.
-- [ ] Používateľ schválil tento implementačný plán.
+- [x] Používateľ schválil tento implementačný plán pokynom executing-plans inline (2026-11-03).
 - [ ] Používateľ vizuálne akceptoval produkčný výsledok. Agent tieto dve ľudské položky nezaškrtáva.

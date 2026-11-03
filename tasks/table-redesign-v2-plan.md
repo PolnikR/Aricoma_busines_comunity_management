@@ -282,7 +282,7 @@ T20–T30 boli vykonané po pokyne používateľa `executing-plans inline` z 202
 
 ## Fáza 6: Štyria provideri a podmienky načítania v jednej lište (T31–T41)
 
-Dátum: 2026-11-03. **Stav: plán pripravený, implementácia nezačatá.** Ide o pokračovanie tohto plánu podľa pokynu používateľa; nesúvisiace tasks/plan.md a tasks/todo.md sa nemenia. Otvorené historické úlohy a ľudské akceptácie zostávajú zachované.
+Dátum: 2026-11-03. **Stav: vykonávanie inline schválené používateľom 2026-11-03; prebieha T31–T41.** Ide o pokračovanie tohto plánu podľa pokynu používateľa; nesúvisiace tasks/plan.md a tasks/todo.md sa nemenia. Otvorené historické úlohy a ľudské akceptácie zostávajú zachované.
 
 ### Východisko a požadovaný výsledok
 
@@ -322,7 +322,7 @@ Pri plánovaní bol najprv použitý CodeGraph. Jeho výsledok pre shared Tabs n
 
 ### Potvrdené OR a zostávajúci dátový gate
 
-**Používateľ potvrdil OR (2026-11-03):** VM musí mať aspoň jeden zo zvolených tagov. Prefix sa kombinuje s touto tag podmienkou. Toto rozhodnutie je schválené; implementačný plán ešte nie. UI nesmie tvrdiť účinnosť celej množiny, pokiaľ query cesta nezodpovedá potvrdenému kontraktu.
+**Používateľ potvrdil OR (2026-11-03):** VM musí mať aspoň jeden zo zvolených tagov. Prefix sa kombinuje s touto tag podmienkou. OR aj vykonanie implementačného plánu boli schválené používateľom. UI nesmie tvrdiť účinnosť celej množiny, pokiaľ query cesta nezodpovedá potvrdenému kontraktu.
 
 T31 ďalej overí, či POST /vms/search bez tag vracia kompletný inventár pre prefix, či backend uplatňuje provider konfiguráciu sám, a aký objem dát je prípustný. Schéma jedného tagu sama tieto odpovede nedokazuje.
 
@@ -354,4 +354,14 @@ T35/T36 sa dajú pripravovať nezávisle od dátového rozhodnutia; aktivácia m
 | Popover odíde vľavo mimo mobil | Stredný | Obe horizontálne hranice podľa clientWidth, resize/scroll/focus browser QA |
 | Pravé tagy vytlačia navigáciu alebo ďalší riadok | Stredný | Limit pravej šírky, +N, responsive sloty, bez masky obvodu |
 
-Implementácia tejto fázy nezačala. Plán obsahuje gate, ktorý sa musí uzavrieť pred aktiváciou viacerých aplikovaných tagov.
+Implementácia fázy prebieha inline. T31 gate je doložený nižšie; výsledok finálneho browser overenia bude v todo reporte.
+
+### T31 — overený kontrakt a rozhodnutie (2026-11-03)
+
+Backend: čistý lokálny checkout C:/Users/polnikr/source/ABCO/abco-be, HEAD f0abff981619c8e57c956a69a3cd12605af160ce. api/routers/vcenter.py:24–38 načíta snapshot get_all_vms a aplikuje iba request body filtre; neaplikuje skryto vmTags/vmPrefix providera. vcenter/discovery.py:226–255 používa rekurzívny root ContainerView a celý list(container.view); :335–354 robí presnú case-sensitive tag membership a startswith prefix a vracia celý count/vms bez slicing. api/schemas.py:193–195 nemá pagination. discovery_cache/service.py:21–65 a store.py:40–41 neskracujú snapshot; stale fallback môže byť kompletný starší snapshot. Kontrakt dokumentuje docs/superpowers/specs/2026-08-26-discovery-endpoint-caching-design.md:103–105. Nasadená verzia backendu sa týmto neoverila.
+
+Ruling: zachovať jeden existujúci prefixový/no-tag request a lokálny OR, nie nový fan-out N requestov. Bez tagu už dnes funguje nezamknutý a prefix-only provider; nejde o nový neobmedzený endpoint. Neexistuje doložený produkčný maximálny počet VM, preto gate výkonu znamená meranú reprezentatívnu vzorku plus explicitný limit tvrdenia, nie vymyslenú hornú hranicu. Pri reálnom prekročení prijateľného objemu bude potrebné serverové multi-tag filtrovanie; frontend nesmie potichu odrezať výsledok.
+
+Izolovaný Chrome na existujúcom production route, validné fixtures bez tagu, 1600×900: 1 000 VM / 211 817 B VM odpovedí / 6 523 ms cold-ready / 10 renderovaných riadkov; 10 000 VM / 2 137 820 B / 2 754 ms warm-ready / 10 riadkov. Čas zahŕňa CDP/Vite/ready čakanie, nie čistý čas filtra ani porovnateľný výkonový benchmark. Oba behy dokončené bez runtime/API/asset chýb, celý total overený, bez DOM renderu všetkých VM. Dôkazy %TEMP%/abco-phase6-baseline-1000 a abco-phase6-baseline-10000 (benchmark.json/results.json/PNG). Nevytvára to garanciu pre ľubovoľný inventár alebo diskové metadáta. T33 doplní správnosť provider OR a odvodených metrík.
+
+Baseline T31: npm.cmd exec -- vitest run helpers/vmwareProviderFilter.test.ts helpers/filterVirtualMachines.test.ts model/inventoryQueries.test.ts (úplné cesty podľa todo), --maxWorkers=2: 3 súbory / 13 testov PASS.
