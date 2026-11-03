@@ -58,12 +58,13 @@ export function ResourcesPage() {
       }}
       ariaLabel={t('pages.virtualMachines.tabs.label')}
       indicator="inset"
+      appearance="embedded"
       compact
       scrollControls={{
         previousLabel: t('pages.virtualMachines.tabs.previous'),
         nextLabel: t('pages.virtualMachines.tabs.next'),
       }}
-      className="w-full shrink-0 border-b-0 bg-surface px-0 sm:w-auto"
+      className="w-full shrink-0 sm:w-auto"
     />
   )
   const rolePageProps: SourceResourcesPageProps = {

@@ -21,22 +21,28 @@ describe('Tabs', () => {
     vi.restoreAllMocks()
   })
 
-  it('exposes the selected tab and changes it on click', () => {
+  it.each(['default', 'embedded'] as const)('exposes the selected tab and changes it on click (%s)', (appearance) => {
     const onChange = vi.fn()
-    render(<Tabs items={items} value="overview" onChange={onChange} ariaLabel="Sections" />)
+    render(<Tabs items={items} value="overview" onChange={onChange} ariaLabel="Sections" appearance={appearance} />)
 
     expect(screen.getByRole('tab', { name: 'Overview' })).toHaveAttribute('aria-selected', 'true')
     fireEvent.click(screen.getByRole('tab', { name: 'Details' }))
     expect(onChange).toHaveBeenCalledWith('details')
   })
 
-  it('supports arrow-key navigation', () => {
+  it.each(['default', 'embedded'] as const)('supports keyboard navigation (%s)', (appearance) => {
     const onChange = vi.fn()
-    render(<Tabs items={items} value="overview" onChange={onChange} ariaLabel="Sections" />)
+    render(<Tabs items={items} value="overview" onChange={onChange} ariaLabel="Sections" appearance={appearance} />)
 
     fireEvent.keyDown(screen.getByRole('tab', { name: 'Overview' }), { key: 'ArrowRight' })
     expect(onChange).toHaveBeenCalledWith('details')
     expect(screen.getByRole('tab', { name: 'Details' })).toHaveFocus()
+    fireEvent.keyDown(screen.getByRole('tab', { name: 'Details' }), { key: 'ArrowLeft' })
+    expect(onChange).toHaveBeenLastCalledWith('overview')
+    fireEvent.keyDown(screen.getByRole('tab', { name: 'Overview' }), { key: 'End' })
+    expect(onChange).toHaveBeenLastCalledWith('details')
+    fireEvent.keyDown(screen.getByRole('tab', { name: 'Details' }), { key: 'Home' })
+    expect(onChange).toHaveBeenLastCalledWith('overview')
   })
 
   it('uses an inset selected indicator when explicitly configured', () => {

@@ -260,13 +260,15 @@ Východisko a rozhodnutia sú vo [fáze 4 plánu](table-redesign-v2-plan.md#fáz
 **Popis:** Pridať do `Tabs` explicitné `appearance="embedded"` a zapojiť ho v Resources aj Resources ISE. Vložená navigácia má priehľadný obal/list a nevlastní deliaci rámik. Provider badge, aktívne podčiarknutie a navigačné správanie zostanú.
 
 **Akceptačné kritériá:**
-- [ ] „VMware VMs“ a štítok `vm-01` ostávajú jednou záložkou view; aktivita je vyjadrená modrým textom, podčiarknutím a `aria-selected`, bez zmeny modelu providerov.
-- [ ] Embedded vzhľad funguje s aj bez scroll controls; defekt horného oblúka sa nerieši maskou alebo orezaním celej karty. Default `Tabs` inde zostáva zachovaný.
-- [ ] Kliknutie a klávesy ArrowLeft/ArrowRight/Home/End vyberajú ten istý view/provider ako dnes; source/target role a URL pravidlá zostávajú.
+- [x] „VMware VMs“ a štítok `vm-01` ostávajú jednou záložkou view; aktivita je vyjadrená modrým textom, podčiarknutím a `aria-selected`, bez zmeny modelu providerov.
+- [x] Embedded vzhľad funguje s aj bez scroll controls; defekt horného oblúka sa nerieši maskou alebo orezaním celej karty. Default `Tabs` inde zostáva zachovaný.
+- [x] Kliknutie a klávesy ArrowLeft/ArrowRight/Home/End vyberajú ten istý view/provider ako dnes; source/target role a URL pravidlá zostávajú.
 
 **Overenie:** `npm.cmd exec vitest run src/shared/components/tabs/Tabs.test.tsx src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx src/features/discovery-inventory/resources-ise/pages/ResourcesIsePage.test.tsx src/features/discovery-inventory/resources/hooks/useResourceTabSearchParam.test.tsx`; Chrome: dva VMware providery a pretečený navigačný pás.
 **Závislosti:** žiadne; vychádzať z aktuálneho stavu po revert T5–T7.
 **Súbory (M, 4):** `src/shared/components/tabs/Tabs.tsx`, `Tabs.test.tsx`, `src/features/discovery-inventory/resources/pages/ResourcesPage.tsx`, `src/features/discovery-inventory/resources-ise/pages/ResourcesIsePage.tsx`.
+
+**Priebeh (2026-11-03):** implementovane; focused Vitest 4 subory / 38 testov PASS, focused ESLint PASS. Vzhlad v Chrome bude overeny spolu s finalnou kartou v T19.
 
 ### T14: Panel tabuľky s explicitným vlastníctvom rámika
 

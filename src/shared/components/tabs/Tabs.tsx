@@ -16,6 +16,7 @@ interface TabsProps<T extends string> {
   ariaLabel: string
   indicator?: 'edge' | 'inset'
   compact?: boolean
+  appearance?: 'default' | 'embedded'
   className?: string
   scrollControls?: {
     previousLabel: string
@@ -30,6 +31,7 @@ export function Tabs<T extends string>({
   ariaLabel,
   indicator = 'edge',
   compact = false,
+  appearance = 'default',
   className,
   scrollControls,
 }: TabsProps<T>) {
@@ -106,7 +108,8 @@ export function Tabs<T extends string>({
     <div
       ref={tabListRef}
       className={cn(
-        'flex gap-1 overflow-x-auto border-b border-border px-3',
+        'flex gap-1 overflow-x-auto',
+        appearance === 'embedded' ? 'px-0' : 'border-b border-border px-3',
         scrollControls && 'no-scrollbar min-w-0 flex-1 touch-pan-x overscroll-x-contain scroll-smooth',
         className,
       )}
@@ -156,7 +159,7 @@ export function Tabs<T extends string>({
   }
 
   return (
-    <div className="flex min-w-0 items-stretch border-b border-border bg-surface">
+    <div className={cn('flex min-w-0 items-stretch', appearance === 'default' && 'border-b border-border bg-surface')}>
       {isOverflowing ? (
         <button
           type="button"
