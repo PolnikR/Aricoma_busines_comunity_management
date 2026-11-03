@@ -68,12 +68,12 @@ export function RealmRolesSection() {
     {
       id: 'name',
       header: t('identity.roles.columns.name'),
-      cell: role => (
-        <>
-          <span className="block font-semibold text-text-primary">{role.name}</span>
-          {role.description?.trim() ? <span className="mt-0.5 block text-[11px] text-text-subtle">{role.description}</span> : null}
-        </>
-      ),
+      cell: role => <span className="font-semibold text-text-primary">{role.name}</span>,
+    },
+    {
+      id: 'description',
+      header: t('identity.roles.fields.description'),
+      cell: role => (role.description?.trim() ?? '') || '—',
     },
     { id: 'permissions', header: t('identity.roles.columns.permissions'), align: 'right', cell: role => String(role.permissions.length) },
     { id: 'users', header: t('identity.roles.columns.users'), align: 'right', cell: role => (hasKnownMembership(role) ? String(role.userCount) : '—') },

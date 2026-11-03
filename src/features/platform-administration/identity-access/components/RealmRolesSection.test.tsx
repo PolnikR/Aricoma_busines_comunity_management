@@ -73,8 +73,8 @@ describe('RealmRolesSection', () => {
     expect(scrollRegion).toHaveClass('custom-scrollbar', 'min-h-0', 'overflow-y-auto')
     expect(scrollRegion).not.toContainElement(screen.getByLabelText('Rows per page'))
 
-    expect(cellsOf('Open application role platform-admin')).toEqual(['platform-adminManages platform configuration.', '3', '2'])
-    expect(cellsOf('Open application role viewer')).toEqual(['viewer', '0', '0'])
+    expect(cellsOf('Open application role platform-admin')).toEqual(['platform-admin', 'Manages platform configuration.', '3', '2'])
+    expect(cellsOf('Open application role viewer')).toEqual(['viewer', '—', '0', '0'])
     expect(screen.queryByText(/providers\.read/)).not.toBeInTheDocument()
   })
 
@@ -82,7 +82,7 @@ describe('RealmRolesSection', () => {
     mockRoles({ roles: [operator] })
     render(<RealmRolesSection />)
 
-    expect(cellsOf('Open application role operator')).toEqual(['operatorRuns recoveries.', '1', '—'])
+    expect(cellsOf('Open application role operator')).toEqual(['operator', 'Runs recoveries.', '1', '—'])
   })
 
   it.each([

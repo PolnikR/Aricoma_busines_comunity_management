@@ -71,12 +71,7 @@ function getColumns(
     {
       id: 'name',
       header: t('tables.provider.name'),
-      cell: (provider) => (
-        <>
-          <span className="block font-semibold text-text-primary">{provider.name}</span>
-          <span className="mt-0.5 block font-mono text-[11px] text-text-subtle">{provider.id}</span>
-        </>
-      ),
+      cell: provider => <span className="font-semibold text-text-primary">{provider.name}</span>,
     },
     {
       id: 'description',

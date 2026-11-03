@@ -59,7 +59,7 @@ describe('UsersSection', () => {
     mockUsers({ users: [alice, bob] })
     render(<UsersSection />)
 
-    expect(screen.getAllByRole('columnheader').map(header => header.textContent)).toEqual(['User', 'Username', 'Roles', 'Status', 'Active session start'])
+    expect(screen.getAllByRole('columnheader').map(header => header.textContent)).toEqual(['User', 'Username', 'Email', 'Roles', 'Status', 'Active session start'])
     expect(screen.queryByRole('columnheader', { name: 'Last login' })).not.toBeInTheDocument()
     const aliceRow = rowFor('Alice Smith')
     expect(aliceRow.getByText('alice@example.com')).toBeInTheDocument()
@@ -73,7 +73,7 @@ describe('UsersSection', () => {
     mockUsers({ users: [alice, bob, carol] })
     render(<UsersSection />)
 
-    const rolesCell = (name: string) => rowFor(name).getAllByRole('cell')[2]
+    const rolesCell = (name: string) => rowFor(name).getAllByRole('cell')[3]
     expect(rolesCell('Alice Smith')).toHaveTextContent(/^2$/)
     expect(rolesCell('Carol White')).toHaveTextContent(/^1$/)
     expect(rolesCell('Bob Jones')).toHaveTextContent(/^—$/)

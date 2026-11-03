@@ -147,14 +147,9 @@ export function ClientsSection() {
 
   const columns = useMemo<ColumnDef<ClientRecord>[]>(() => [
     {
-      id: 'client',
-      header: t('identity.clients.columns.client'),
-      cell: client => (
-        <>
-          <span className="block font-semibold text-text-primary">{client.displayName || client.clientId}</span>
-          <span className="mt-0.5 block font-mono text-[11px] text-text-subtle">{client.clientId}</span>
-        </>
-      ),
+      id: 'name',
+      header: t('identity.clients.fields.displayName'),
+      cell: client => <span className="font-semibold text-text-primary">{client.displayName || client.clientId}</span>,
     },
     { id: 'protocol', header: t('identity.clients.columns.protocol'), cell: client => client.protocol || '—' },
     { id: 'type', header: t('identity.clients.columns.type'), cell: client => <ClientTypeBadge isPublicClient={client.isPublicClient} /> },
