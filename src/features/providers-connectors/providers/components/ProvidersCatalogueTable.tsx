@@ -71,7 +71,7 @@ function getColumns(
     {
       id: 'name',
       header: t('tables.provider.name'),
-      cell: provider => <span className="font-semibold text-text-primary">{provider.name}</span>,
+      cell: provider => <span className="block max-w-64 truncate font-semibold text-text-primary" title={provider.name}>{provider.name}</span>,
     },
     {
       id: 'description',
@@ -100,12 +100,9 @@ function getColumns(
       id: 'credential',
       header: t('tables.provider.credential'),
       cell: (provider) => (
-        <div className="flex flex-col items-start gap-1">
-          <span className="font-mono text-[12px] text-text-secondary">{provider.credentialId ?? '-'}</span>
-          <Badge color={credentialStatusColor(provider.credentialStatus)} size="sm">
-            {credentialStatusLabel(provider.credentialStatus, t)}
-          </Badge>
-        </div>
+        <Badge color={credentialStatusColor(provider.credentialStatus)} size="sm">
+          {credentialStatusLabel(provider.credentialStatus, t)}
+        </Badge>
       ),
     },
     {
