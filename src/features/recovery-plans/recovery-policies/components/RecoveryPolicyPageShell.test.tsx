@@ -53,8 +53,9 @@ describe('RecoveryPolicyPageShell', () => {
     )
 
     const tabList = screen.getByRole('tablist', { name: 'Recovery policy types' })
-    // cn() only joins classes, so these overrides sit next to the Tabs base `border-b px-3`.
-    expect(tabList).toHaveClass('w-full', 'shrink-0', 'border-b-0', 'bg-surface', 'px-0', 'sm:w-auto')
+    // The shared view owns the background and divider; the tab list inherits its presentation.
+    expect(tabList).toHaveClass('w-full', 'shrink-0', 'px-0', 'sm:w-auto')
+    expect(tabList).not.toHaveClass('bg-surface', 'border-b')
 
     const selectedTab = screen.getByRole('tab', { name: 'Snapshot' })
     expect(selectedTab).toHaveClass('after:inset-x-4', 'border-transparent')

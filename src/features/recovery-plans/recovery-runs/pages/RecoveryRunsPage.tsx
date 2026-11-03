@@ -1,3 +1,4 @@
+import { InventoryViewportFrame } from '@/shared/components/page/InventoryViewportFrame'
 import { useMemo } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { InventoryShell } from '@/shared/components/inventory-shell/InventoryShell'
@@ -62,7 +63,7 @@ export function RecoveryRunsPage() {
   ]
 
   return (
-    <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
+    <InventoryViewportFrame>
       <TableToolbar
         title={t('pages.recoveryRuns.title')}
         description={`${t('pages.recoveryRuns.description')} ${t('recoveryRuns.inventoryDescription')}`}
@@ -84,7 +85,7 @@ export function RecoveryRunsPage() {
             ariaLabel={t('recoveryRuns.tabs.ariaLabel')}
             indicator="inset"
             compact
-            className="w-full shrink-0 border-b-0 bg-surface px-0 sm:w-auto"
+            className="w-full shrink-0 sm:w-auto"
           />
         )}
       >
@@ -113,6 +114,6 @@ export function RecoveryRunsPage() {
         entity={selectedEntity}
         onClose={() => { setEntity(null) }}
       />
-    </div>
+    </InventoryViewportFrame>
   )
 }

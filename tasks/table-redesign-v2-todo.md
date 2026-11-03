@@ -518,6 +518,8 @@ Rozsah, matica stránok a rozhodnutia: [fáza 5 plánu](table-redesign-v2-plan.m
 **Závislosti:** T23.
 **Súbory (M, 4):** `src/features/recovery-plans/recovery-runs/pages/RecoveryRunsPage.tsx`, `RecoveryRunsPage.test.tsx`, `src/features/recovery-plans/recovery-policies/components/RecoveryPolicyPageShell.tsx`, `RecoveryPolicyPageShell.test.tsx`.
 
+**Priebeh (2026-11-03):** Implementovane. Focused Vitest 3 subory / 25 testov PASS; focused ESLint PASS. Povodna assertion lokalneho bg/border override aktualizovana na shared navigation kontrakt; funkcne kontroly zachovane.
+
 ### T26: Discovery settings formulár aj história
 
 **Popis:** Zapojiť shared viewport/navigáciu v Discovery settings. Configuration primárny formulár dostane embedded prezentáciu `SettingsSectionCard` v tomto konkrétnom použití; History tabuľka prevezme shared frame scope automaticky.
