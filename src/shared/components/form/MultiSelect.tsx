@@ -107,7 +107,7 @@ export function MultiSelect({ id, label, options, value, onChange, placeholder, 
     }}>
       <Button id={id} variant="outline" fullWidth disabled={disabled}
         aria-label={label} aria-expanded={expanded} aria-controls={panelId}
-        className="justify-between" onClick={() => { setOpen(current => !current) }}>
+        className="justify-between disabled:opacity-100 disabled:bg-surface-muted disabled:text-text-muted disabled:border-border-strong disabled:hover:bg-surface-muted disabled:hover:text-text-muted disabled:hover:border-border-strong" onClick={() => { setOpen(current => !current) }}>
         <span className="min-w-0 truncate" title={summary || placeholder}>{summary || placeholder}</span>
         <span aria-hidden="true" className="shrink-0">▾</span>
       </Button>

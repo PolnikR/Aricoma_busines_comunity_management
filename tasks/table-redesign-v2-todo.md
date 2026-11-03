@@ -1061,3 +1061,17 @@ Verification passed:
 - `node --check scripts/qa/inventory-view-table-browser.mjs` and `git diff --check`.
 
 The first browser attempt used the general click helper, which intentionally waits for enabled controls; replaced that probe with native pointer coordinates for the disabled-control test, then reran successfully. Full suite/build not run. Unrelated worktree changes excluded.
+
+
+### Disabled tag dropdown colors (2026-11-03)
+
+MultiSelect now uses the same muted background/text and normal border as disabled form controls, without the generic button's 50% opacity. Explicit disabled-hover colors prevent the outline button's accent styles from leaking into the disabled state. Native disabled behavior and full selected-tag summary are preserved.
+
+Passed commands:
+- `npm.cmd exec -- vitest run src/shared/components/form/MultiSelect.test.tsx src/features/discovery-inventory/resources/components/vmware/VirtualMachinesToolbar.test.tsx --maxWorkers=2` ? 8 tests.
+- `npm.cmd exec -- eslint src/shared/components/form/MultiSelect.tsx scripts/qa/inventory-view-table-browser.mjs --max-warnings 0`.
+- `node --check scripts/qa/inventory-view-table-browser.mjs`.
+- `node scripts/qa/inventory-view-table-browser.mjs --phase6-only --quick` ? 24 cases; added computed-style equality against the disabled Cluster select for background, text, border and opacity after native hover in source/target desktop/mobile. Screenshot visually checked. Artifacts: %TEMP%/abco-disabled-colors.
+- `git diff --check`.
+
+Full suite/build not run; unrelated changes excluded.
