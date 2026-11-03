@@ -1,7 +1,7 @@
 # Redizajn tabuliek v2 (variant B): úlohy
 
 Plán: [table-redesign-v2-plan.md](table-redesign-v2-plan.md).
-Stav (2026-11-03): výsledky pôvodných úloh sú uvedené pri jednotlivých krokoch; T4 zrušené, T5–T7 vrátené. Doplnená fáza 4 (T13–T19) čaká na review plánu a nezačala.
+Stav (2026-11-03): výsledky pôvodných úloh sú uvedené pri jednotlivých krokoch; T4 zrušené, T5–T7 vrátené. Fáza 4 (T13–T19) implementovaná po pokyne executing-plans inline; výsledky overenia a otvorené vizuálne prijatie sú uvedené na konci.
 
 Spoločné pravidlo pre každú úlohu: focused `npm exec vitest run <testy úlohy>`, `npm exec eslint -- <zmenené súbory> --max-warnings 0`, `git diff --check` a atomický commit vlastných overených zmien. Testy chránia správanie, nie CSS triedy.
 
@@ -312,15 +312,17 @@ Východisko a rozhodnutia sú vo [fáze 4 plánu](table-redesign-v2-plan.md#fáz
 **Popis:** `ResourceInventoryShell` prestane delegovať rámovanie na všeobecný `InventoryShell` a explicitne zloží metriky/notice a jednu kartu s navigáciou a obsahom. `ResourceInventoryPanel` bude obaľovať `InventoryPanel` s embedded frame. `ResourceInventoryLoading` a `ResourceInventoryState` sa upravia súčasne na obsah tej istej karty.
 
 **Akceptačné kritériá:**
-- [ ] Úspešný výsledok, loading, chyba providerov, bez providera, chyba inventára a prázdny výsledok majú jeden spoločný vonkajší rámik; metriky a notice zostanú mimo karty.
-- [ ] Resource vetva sa nespolieha na `:has([data-table-surface])`, odoberanie horného rámika potomkom ani na `!rounded-*`; navigácia a obsah majú jediný oddeľovač a transparentné krajné vrstvy.
-- [ ] Sekcia view má prístupné pomenovanie, navigácia sa nerenderuje duplicitne a samotný `DataTable` ju nepozná; žiadny ARIA odkaz nesmeruje na neexistujúci prvok.
+- [x] Úspešný výsledok, loading, chyba providerov, bez providera, chyba inventára a prázdny výsledok majú jeden spoločný vonkajší rámik; metriky a notice zostanú mimo karty.
+- [x] Resource vetva sa nespolieha na `:has([data-table-surface])`, odoberanie horného rámika potomkom ani na `!rounded-*`; navigácia a obsah majú jediný oddeľovač a transparentné krajné vrstvy.
+- [x] Sekcia view má prístupné pomenovanie, navigácia sa nerenderuje duplicitne a samotný `DataTable` ju nepozná; žiadny ARIA odkaz nesmeruje na neexistujúci prvok.
 
 **Overenie:** `npm.cmd exec vitest run src/features/discovery-inventory/resources/components/ResourceInventoryShell.test.tsx src/features/discovery-inventory/resources/components/ResourceInventoryPanel.test.tsx src/features/discovery-inventory/resources/components/ResourceInventoryStates.test.tsx src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.test.tsx`; Chrome: normálny stav → loading → error → retry v rovnakom rámci.
 **Závislosti:** T13, T14, T15, CP4.
 **Súbory (M, 5):** `src/features/discovery-inventory/resources/components/ResourceInventoryShell.tsx`, `ResourceInventoryPanel.tsx`, `ResourceInventoryStates.tsx`, `ResourceInventoryPanel.test.tsx`, `ResourceInventoryStates.test.tsx`. Zachovať rozhranie existujúcich stránok; ak treba rozšíriť kontrakt shellu, rozdeliť krok pred prekročením tohto rozsahu.
 
 **Priebeh (2026-11-03):** kod implementovany; focused Vitest 4 subory / 20 testov PASS, focused ESLint PASS. Browser kriterium vsetkych stavov ostava na T19.
+
+**Doplnené po T19:** browser kritériá všetkých resource stavov overené; vonkajšia karta ani navigácia nezískavajú druhý rámik pri loading/error/empty.
 
 ### T17: Prechody medzi view a request stavmi
 
@@ -364,16 +366,64 @@ Východisko a rozhodnutia sú vo [fáze 4 plánu](table-redesign-v2-plan.md#fáz
 **Popis:** Uložiť malý QA skript podľa existujúcich `scripts/qa/*-browser.mjs`, ktorý otvorí izolovaný lokálny prehliadač s validnými fixture odpoveďami, prejde resource view a uloží merania a screenshoty. Slúži na vykreslenie a skutočné scroll správanie; nenahrádza ho kontrola CSS tried.
 
 **Akceptačné kritériá:**
-- [ ] Browser matica z plánu pokrýva view s rovnakým typom a odlišným providerom, pretekajúce/dlhé záložky, view bez tabs, krátky/dlhý/prázdny zoznam, loading, fatal aj cached error a retry na source/target routes.
-- [ ] Screenshoty a merania dokazujú jeden rámik, jednu deliacu čiaru, celé rohy/tieň, oddelený pás view a vlastný dátový scroll; klávesnicová navigácia/otvorenie detailu fungujú a nevznikajú nové runtime chyby.
-- [ ] Reprezentatívne standalone stránky (Platform providers, Recovery runs a Discovery settings) zachovali defaultné rámovanie; výsledky obsahujú presné príkazy, limity fixtures a porovnanie s HTML návrhom.
+- [x] Browser matica z plánu pokrýva view s rovnakým typom a odlišným providerom, pretekajúce/dlhé záložky, view bez tabs, krátky/dlhý/prázdny zoznam, loading, fatal aj cached error a retry na source/target routes.
+- [x] Screenshoty a merania dokazujú jeden rámik, jednu deliacu čiaru, celé rohy/tieň, oddelený pás view a vlastný dátový scroll; klávesnicová navigácia/otvorenie detailu fungujú a nevznikajú nové runtime chyby.
+- [x] Reprezentatívne standalone stránky (Platform providers, Recovery runs a Discovery settings) zachovali defaultné rámovanie; výsledky obsahujú presné príkazy, limity fixtures a porovnanie s HTML návrhom.
 
 **Overenie:** `node scripts/qa/inventory-view-table-browser.mjs` (nový skript; konkrétne lokálne porty a spustenie izolovaného Chrome uviesť v komentári), focused ESLint zmenených TS/TSX a `git diff --check`. Nevykonávať zápisy do živého backendu.
 **Závislosti:** T13–T18.
 **Súbory (S–M, 3):** nový `scripts/qa/inventory-view-table-browser.mjs`, tento todo súbor, podľa skutočných zistení existujúci plan súbor. Screenshoty/QA výstupy ukladať mimo tracked produkčných súborov.
 
 ### Checkpoint 6: Fáza view/table pripravená na odovzdanie
-- [ ] T13–T19 spĺňajú kritériá; ku každému implementačnému kroku existuje focused overenie a atomický commit.
-- [ ] Výsledné screenshoty zodpovedajú spoločnej karte HTML návrhu a jasne odlišujú výber view od ovládania tabuľky.
-- [ ] Report uvádza vykonané príkazy, prehliadač/viewport/tému/zoom a prípadné limity. Celá test suite ani production build sa neoznačia za vykonané, ak neboli spustené.
+- [x] T13–T19 spĺňajú kritériá; ku každému implementačnému kroku existuje focused overenie a atomický commit.
+- [x] Výsledné screenshoty zodpovedajú spoločnej karte HTML návrhu a jasne odlišujú výber view od ovládania tabuľky.
+- [x] Report uvádza vykonané príkazy, prehliadač/viewport/tému/zoom a prípadné limity. Celá test suite ani production build sa neoznačia za vykonané, ak neboli spustené.
 - [ ] Používateľ skontroloval výsledok; pôvodné otvorené alebo vrátené úlohy mimo tejto fázy neboli automaticky označené ako hotové.
+
+## Výsledok fázy 4 (2026-11-03)
+
+T13–T19 boli vykonané po pokyne používateľa executing-plans inline. Vlastník rámika je `ResourceInventoryShell`: názov view, badge providera a modré podčiarknutie zostávajú v samostatnom hornom navigačnom páse. Pod ním je toolbar a obsah tabuľky. `ResourceInventoryPanel`, skeleton aj fatal/empty obsah sú vložené bez ďalšej karty. Predvolené standalone rozhrania shared komponentov sú zachované. `ResourceViewportFrame` má lokálny `p-2` priestor; meraný odstup karty od najbližšej clipping hranice je 8 px vľavo, vpravo a dole. Globálne route scrollovanie sa nemenilo.
+
+### Vykonané overenie
+
+Finálny focused príkaz — **15 súborov, 108 testov PASS, exit 0**:
+
+```powershell
+npm.cmd exec -- vitest run src/shared/components/tabs/Tabs.test.tsx src/shared/components/data-table/DataTableSurface.test.tsx src/shared/components/data-table/DataTableSkeleton.test.tsx src/shared/components/data-table/DataTable.test.tsx src/features/discovery-inventory/resources/components/ResourceInventoryShell.test.tsx src/features/discovery-inventory/resources/components/ResourceInventoryPanel.test.tsx src/features/discovery-inventory/resources/components/ResourceInventoryStates.test.tsx src/features/discovery-inventory/resources/components/vmware/VmwareResourcesPage.test.tsx src/features/discovery-inventory/resources/components/flash-system/FlashSystemInventoryView.test.tsx src/features/discovery-inventory/resources/components/ibm-power/PowerInventoryView.test.tsx src/features/discovery-inventory/resources/pages/ResourcesPage.test.tsx src/features/discovery-inventory/resources-ise/pages/ResourcesIsePage.test.tsx src/features/discovery-inventory/resources/hooks/useResourceTabSearchParam.test.tsx src/features/discovery-inventory/resources/pages/ResourcesBackgroundPrefetch.integration.test.tsx src/shared/components/page/ContainedViewportFrame.test.tsx --maxWorkers=2
+```
+
+- `npm.cmd run typecheck` — PASS po shared kontraktoch aj po finálnej resource integrácii.
+- Focused `npm.cmd exec eslint -- <zmenené TS/TSX súbory kroku> --max-warnings 0` — PASS pri T13–T18; konkrétne oblasti sú uvedené pri krokoch.
+- `npm.cmd exec eslint -- scripts/qa/inventory-view-table-browser.mjs --max-warnings 0` — PASS.
+- `node --check scripts/qa/inventory-view-table-browser.mjs` — PASS.
+- `node scripts/qa/inventory-view-table-browser.mjs` — **64 dokončených prípadov PASS**, z toho 61 resource geometrických záznamov a 3 standalone kontroly. Nula runtime výnimiek, neočakávaných endpointov a zlyhaných súborov aplikácie. Očakávané HTTP 503 sú lokálne fixtures chybových scenárov.
+- `node scripts/qa/inventory-view-table-browser.mjs --interactions-only` — 40 prípadov PASS pri vývoji skriptu. Po review oprave assertion tieňa/cleanup ešte `--quick` s osobitným `INVENTORY_QA_OUTPUT` — PASS; obsahová kontrola všetkých 61 záznamov plnej matice tiež potvrdila prítomný tieň.
+- `git diff --check` a pred commitmi `git diff --cached --check` — PASS.
+
+### Browser dôkazy a reprodukcia
+
+Spustenie aplikácie: `npm.cmd run dev -- --host 127.0.0.1 --port 5191 --strictPort`. Izolovaný headless Chrome používal CDP port 9357 a samostatný dočasný profil. Skript má komentár k spusteniu a voliteľné `INVENTORY_QA_BASE`, `INVENTORY_QA_CDP`, `INVENTORY_QA_OUTPUT`. Všetky lokálne config/API odpovede sú fixtures; externé originy skript blokuje. Nenastali zápisy do živého backendu.
+
+Výstup: `%TEMP%/abco-inventory-view-qa/results.json` a PNG v tom istom adresári. Príklady: `initial-light-desktop.png`, `source-dark-1280x600-zoom1.png`, `source-light-390x844-zoom1.png`, `source-long-table-scrolled.png`, `source-vmware-loading.png`, `target-flashsystem-inventory-error.png`, `source-cached-refresh-error.png`, `standalone-platform-providers.png`.
+
+Matica overila source/target routes, oba motívy, 1600×900, 1280×600, 800×900, 390×844 a desktop emuláciu zoom 125 % pomocou zodpovedajúcej CSS šírky/výšky a raster scale. Overené oba VMware providery, všetky tri typy zdrojov, dlhé/pretečené záložky, view bez providerov, chyba zoznamu providerov, success/loading/fatal/empty, retry, cached refresh chyba, otvorenie detailu a dlhý zoznam so samostatným dátovým scrollom. Tlačidlá navigácie a hlavička view pri posúvaní dát zostávajú na mieste. Hlavné svetlé, tmavé a mobilné PNG boli aj vizuálne prezreté; rohy sú súvislé a obraz zodpovedá spoločnej karte HTML návrhu.
+
+### Review a limity
+
+Read-only code review T13–T18 nenašlo závažný problém ani regresiu. Review QA skriptu odhalilo chýbajúcu assertion existencie tieňa a cleanup závislý od uloženia screenshotu. Obe veci opravené a opravy opätovne skontrolované: tieň sa explicitne vyžaduje a best-effort diagnostické výstupy neblokujú uzavretie socketu/QA tabu.
+
+Prehliadač testoval lokálne validné ukážkové odpovede, nie živý backend, a 125 % je emulovaný zoom. Pri zmene typu zdroja aplikácia už pred touto úpravou montuje inú resource stránku; QA pred ďalším klávesom zameria jej aktívnu záložku a čaká na zmenu URL aj renderu. Nepotvrdzuje teda neprerušené zachovanie fokusu pri remounte iného typu stránky.
+
+Pri vývoji QA sa opravilo čakanie na dokončenie renderu záložky (samotná zmena URL nestačila). Priebežné veľké súbežné test spustenia boli prerušené; výsledok uvedený vyššie je samostatne dokončený focused beh s `--maxWorkers=2`, správne odovzdaným cez `npm.cmd exec --`.
+
+Kompletná test suite, full lint a production build neboli spustené podľa dohodnutého focused rozsahu. Otvorená zostáva iba vizuálna kontrola výsledku používateľom v CP6. Pôvodné T1–T12 ani ich historické checkpointy sa týmto automaticky neuzatvárajú. T4 a T5–T7 neboli obnovené. Predexistujúca zmena `src/app/routing/__snapshots__/routeContract.test.tsx.snap` nebola zahrnutá do commitov tejto práce.
+
+### Commity implementácie
+
+- T13 `cf5f8876` — vložená resource view navigácia.
+- T14 `dacd242d` — embedded panel a explicitný vlastník rámika.
+- T15 `433e5743` — embedded loading skeleton.
+- T16 `27befee0` — jediná karta resource view a vnorené stavy.
+- T17 `b2d2924a` — integračné prechody stavov so zachovaním navigácie.
+- T18 `14a92f09` — lokálny priestor pre celý tieň.
+- T19 — záverečný commit obsahuje QA skript a tento výsledkový report; presný hash je v Git histórii.

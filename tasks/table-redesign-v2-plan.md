@@ -1,6 +1,6 @@
 # Implementačný plán: Redizajn tabuliek v2 (variant B)
 
-Dátum pôvodného plánu: 2026-11-02. Aktualizácia: 2026-11-03. Stav: časť pôvodných úloh vykonaná alebo vrátená; nadväzujúce úlohy T13–T19 sú pripravené na review, implementácia tejto fázy nezačala.
+Dátum pôvodného plánu: 2026-11-02. Aktualizácia: 2026-11-03. Stav: časť pôvodných úloh vykonaná alebo vrátená; fáza T13–T19 bola používateľom schválená na vykonanie inline a je implementovaná. Výsledky a limity overenia sú na konci todo súboru; vizuálne prijatie používateľom ostáva otvorené.
 Úlohy a checkpointy: [table-redesign-v2-todo.md](table-redesign-v2-todo.md).
 Vizuálny vzor: prototyp https://claude.ai/artifact/SSm6HEN89RW3LJJ2PqdtmU (Platform providers).
 
@@ -91,7 +91,7 @@ Riziková úloha T1 ide prvá. T5, T6 a T7 sú navzájom nezávislé a dajú sa 
 
 Odstrániť prerušený horný rámik, nerovnomernú deliacu čiaru a orezaný tieň na Resources a Resources ISE. Zachovať rozlíšenie medzi výberom view a ovládaním tabuľky. Podklad je [samostatný HTML návrh](../.worktrees/table-frame-design/prototypes/table-frame-prototype/index.html), uložený vo vetve `prototype/table-frame-design`, commit `d770bd3c`. Je to vizuálny podklad; jeho ukážkové dáta ani JavaScript sa nekopírujú do aplikácie.
 
-Používateľ požiadal o plán a osobitne zdôraznil záložku „VMware VMs · vm-01“. Vytvorenie plánu neznamená spustenie implementácie.
+Používateľ požiadal o plán a osobitne zdôraznil záložku „VMware VMs · vm-01“. Následne výslovne požiadal vykonať plán cez executing-plans inline; implementovaný bol iba rozsah T13–T19.
 
 ### Potvrdená príčina
 
@@ -175,5 +175,5 @@ T15 vložený skeleton ─────┘                                       
 ### Stav a otázky pred implementáciou
 
 - Umiestnenie je potvrdené používateľom: doplniť tento existujúci plán a todo, neprepisovať `tasks/plan.md` ani `tasks/todo.md`.
-- Podoba a hranica view/table sú popísané týmto plánom a HTML podkladom; používateľ ešte má skontrolovať konkrétny implementačný rozpis. Pri tejto plánovacej úlohe sa produktový kód nemení.
+- Podoba a hranica view/table sú popísané týmto plánom a HTML podkladom. Implementácia používa explicitný resource view shell, embedded panel/skeleton/záložky a lokálny `p-2` gutter na tieň. Zmeny globálneho scrollovania neboli potrebné. Používateľ má ešte vizuálne skontrolovať výsledok.
 - Ak meranie v T18 ukáže, že lokálny resource gutter nestačí, zaznamenať konkrétny clipping ancestor a dopad pred rozšírením scope do shared route layoutu. Nevoliť globálne vypnutie scrollovania ako náhradu návrhu.
