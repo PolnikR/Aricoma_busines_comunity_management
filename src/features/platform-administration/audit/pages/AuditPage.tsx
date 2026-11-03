@@ -1,3 +1,4 @@
+import { InventoryViewportFrame } from '@/shared/components/page/InventoryViewportFrame'
 import { useState } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { InventoryShell } from '@/shared/components/inventory-shell/InventoryShell'
@@ -18,7 +19,7 @@ export function AuditPage() {
   const [tableResetKey, setTableResetKey] = useState(0)
 
   return (
-    <div className="flex min-h-full flex-col lg:h-full lg:min-h-0 lg:overflow-hidden">
+    <InventoryViewportFrame>
       <TableToolbar
         title={t('audit.accessLogs.page.title')}
         description={`${t('audit.accessLogs.page.description')} ${t('audit.accessLogs.inventory.description')
@@ -48,6 +49,6 @@ export function AuditPage() {
           )}
         />
       </InventoryShell>
-    </div>
+    </InventoryViewportFrame>
   )
 }

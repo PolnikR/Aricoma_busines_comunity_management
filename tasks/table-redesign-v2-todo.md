@@ -575,6 +575,8 @@ Rozsah, matica stránok a rozhodnutia: [fáza 5 plánu](table-redesign-v2-plan.m
 **Závislosti:** T23, CP9.
 **Súbory (M, 4):** `src/features/recovery-plans/policy-sets/pages/PolicySetsPage.tsx`, `PolicySetsPage.test.tsx`, `src/features/platform-administration/audit/pages/AuditPage.tsx`, `AuditPage.test.tsx`.
 
+**Priebeh (2026-11-03):** Implementovane. Focused Vitest 4 subory / 37 testov PASS; focused ESLint PASS. Vsetky produkcne zmeny preverene npm.cmd run typecheck PASS.
+
 ### Checkpoint 10: Celá matica migrovaná
 - [ ] Každý z 11 priamych konzumentov InventoryShell a resource wrapper má výsledok v matici; žiadna položka nezostala pri starom skladaní rámika.
 - [ ] Header aj view sú v shared viewport kompozícii, všetky feature špecifiká sú dáta/obsah/akcie a existujúce spacing/floor voľby.
