@@ -1,3 +1,4 @@
+import { InventoryViewportFrame } from '@/shared/components/page/InventoryViewportFrame'
 import { useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
 import { InventoryShell } from '@/shared/components/inventory-shell/InventoryShell'
@@ -20,7 +21,7 @@ export function PlatformProvidersPage() {
   } = useGetPlatformProviders({ type: 'all' }, { query: { select: selectPlatformProviders } })
 
   return (
-    <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
+    <InventoryViewportFrame>
       <TableToolbar
         title={t('pages.platformProviders.title')}
         description={t('pages.platformProviders.description')}
@@ -51,6 +52,6 @@ export function PlatformProvidersPage() {
         onClose={() => { setIsCreateModalOpen(false) }}
         existingProviders={platformProviders}
       />
-    </div>
+    </InventoryViewportFrame>
   )
 }

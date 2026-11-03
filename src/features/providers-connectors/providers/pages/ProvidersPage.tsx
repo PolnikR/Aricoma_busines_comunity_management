@@ -1,3 +1,4 @@
+import { InventoryViewportFrame } from '@/shared/components/page/InventoryViewportFrame'
 import { useState } from 'react'
 import { Button } from '@/shared/components/button/Button'
 import { InventoryShell } from '@/shared/components/inventory-shell/InventoryShell'
@@ -19,7 +20,7 @@ export function ProvidersPage() {
   const allProviders = allProvidersQuery.data ?? []
 
   return (
-    <div className="flex min-h-full flex-col lg:h-full lg:min-h-0">
+    <InventoryViewportFrame>
       <TableToolbar
         title={t('pages.providers.title')}
         description={t('pages.providers.description')}
@@ -55,6 +56,6 @@ export function ProvidersPage() {
         onClose={() => { setIsCreateModalOpen(false) }}
         existingProviders={allProviders}
       />
-    </div>
+    </InventoryViewportFrame>
   )
 }

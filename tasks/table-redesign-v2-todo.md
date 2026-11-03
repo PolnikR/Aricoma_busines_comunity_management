@@ -549,6 +549,8 @@ Rozsah, matica stránok a rozhodnutia: [fáza 5 plánu](table-redesign-v2-plan.m
 **Závislosti:** T23, CP9.
 **Súbory (M, 5):** `src/features/platform-administration/platform-providers/pages/PlatformProvidersPage.tsx`, `PlatformProvidersPage.test.tsx`, `src/features/providers-connectors/providers/pages/ProvidersPage.tsx`, `ProvidersPage.test.tsx`, `src/features/providers-connectors/credentials/pages/CredentialsPage.tsx`.
 
+**Priebeh (2026-11-03):** Implementovane. Focused Vitest 5 suborov / 67 testov PASS; focused ESLint PASS. Vsetky produkcne zmeny preverene npm.cmd run typecheck PASS.
+
 ### T28: Recovery application a group zoznamy
 
 **Popis:** Presunúť oba zoznamy na shared viewport pri zachovaní spoločného shellu a existujúcich notice a akcií.
