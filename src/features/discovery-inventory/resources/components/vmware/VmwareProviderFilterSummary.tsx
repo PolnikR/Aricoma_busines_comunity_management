@@ -1,4 +1,3 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { HelpPopover } from '@/shared/components/help-popover/HelpPopover'
 import type { VmwareProviderFilter } from '../../helpers/vmwareProviderFilter'
@@ -13,44 +12,14 @@ interface VmwareProviderFilterSummaryProps {
 
 export function VmwareProviderFilterSummary({ filter, label, nameLabel, tagLabel, providerId }: VmwareProviderFilterSummaryProps) {
   const { t } = useTranslation()
-  const [isNarrow, setIsNarrow] = useState(() => window.innerWidth < 1100)
-  const summaryRef = useRef<HTMLDivElement>(null)
-  const restoreSummaryFocus = useRef(false)
   const tags = filter.filters.tags
-  const visibleTagCount = isNarrow ? 1 : 2
+  const visibleTagCount = 1
   const hiddenTagCount = Math.max(0, tags.length - visibleTagCount)
-
-  useEffect(() => {
-    const onResize = () => {
-      const nextIsNarrow = window.innerWidth < 1100
-      const active = document.activeElement
-      restoreSummaryFocus.current = Boolean(nextIsNarrow && active && active === summaryRef.current?.querySelector('[data-provider-tag-index="1"]'))
-      // The only disappearing trigger is the two-tag narrow scope. Preserve focus
-      // from that trigger or its portaled panel, without moving external focus.
-      if (!nextIsNarrow && tags.length === 2) {
-        const trigger = summaryRef.current?.querySelector<HTMLButtonElement>('button[aria-haspopup="dialog"]')
-        const panelId = trigger?.getAttribute('aria-controls')
-        const panel = panelId ? document.getElementById(panelId) : null
-        restoreSummaryFocus.current = Boolean(trigger && (active === trigger || (active && panel?.contains(active))))
-      }
-      setIsNarrow(nextIsNarrow)
-    }
-    window.addEventListener('resize', onResize)
-    return () => { window.removeEventListener('resize', onResize) }
-  }, [tags.length])
-
-  useLayoutEffect(() => {
-    if (restoreSummaryFocus.current) {
-      restoreSummaryFocus.current = false
-      summaryRef.current?.focus()
-    }
-  }, [isNarrow])
 
   if (!filter.prefix && tags.length === 0) return null
 
   return (
     <div
-      ref={summaryRef}
       role="group"
       aria-label={label}
       tabIndex={-1}

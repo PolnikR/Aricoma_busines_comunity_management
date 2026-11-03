@@ -983,3 +983,21 @@ git diff --check
 ```
 
 Results: 34 component tests passed; focused ESLint passed; quick browser 20 captures passed; final browser 102 captures passed, including source/target native arrow, keyboard, wheel/touch and resize checks. Final artifacts: %TEMP%/abco-provider-spike-scroll-final. Desktop/mobile screenshots visually inspected. Local isolated fixtures only; complete suite and production build were not run. The earlier browser failure on resize was fixed and the entire phase6 scope then rerun successfully. Pre-existing routeContract snapshot excluded.
+
+
+### Provider tags follow-up ? one tag plus remainder (2026-11-03)
+
+User requested exactly one inline tag at every viewport width. The remaining count is shown as +N; activating it opens the existing complete tag list. Zero tags still render nothing and a single tag has no plus button. Removed the obsolete two-tag desktop breakpoint and resize/focus recovery for disappearing tags/triggers. The trigger now stays mounted across resize, preserving focus and its open panel. This supersedes the previous desktop-two/mobile-one requirement.
+
+Validation passed: 28 tests in the two affected component files, focused ESLint, 20 quick browser captures and 14 interaction captures for source and target. Browser checks assert remaining counts, keyboard/touch popover operation and retained focus across 1099/1100px. Desktop screenshot visually checked. Commands:
+
+```powershell
+npm.cmd exec -- vitest run src/features/discovery-inventory/resources/components/vmware/VmwareProviderFilterSummary.test.tsx src/features/discovery-inventory/resources/components/ResourceViewNavigation.test.tsx --maxWorkers=2
+npm.cmd exec -- eslint src/features/discovery-inventory/resources/components/vmware/VmwareProviderFilterSummary.tsx src/features/discovery-inventory/resources/components/vmware/VmwareProviderFilterSummary.test.tsx src/features/discovery-inventory/resources/components/ResourceViewNavigation.test.tsx scripts/qa/inventory-view-table-browser.mjs --max-warnings 0
+node scripts/qa/inventory-view-table-browser.mjs --phase6-only --quick
+node scripts/qa/inventory-view-table-browser.mjs --phase6-interactions-only
+node --check scripts/qa/inventory-view-table-browser.mjs
+git diff --check
+```
+
+Artifacts: %TEMP%/abco-single-provider-tag-quick and %TEMP%/abco-single-provider-tag-interactions. Isolated local fixtures only. Complete suite and production build not run; unrelated routeContract snapshot excluded.

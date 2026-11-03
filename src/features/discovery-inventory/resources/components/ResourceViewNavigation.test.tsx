@@ -106,7 +106,7 @@ describe('ResourceViewNavigation', () => {
   it('shows the full normalized selected scope through the compact tag popover', () => {
     render(<ResourceViewNavigation items={items} labels={labels} value="vmware:vcenter-01" onChange={vi.fn()} selectedProvider={{ ...provider, vmPrefix: 'prod-', vmTags: [...tags, ' Production ', ''] }} />)
     expect(summary()).toHaveTextContent('prod-')
-    expect(showTags()).toHaveTextContent('+3')
+    expect(showTags()).toHaveTextContent('+4')
     fireEvent.click(showTags())
     expect(within(screen.getByRole('dialog', { name: 'Provider tags (5)' })).getAllByRole('listitem').map(item => item.textContent)).toEqual(tags)
   })
