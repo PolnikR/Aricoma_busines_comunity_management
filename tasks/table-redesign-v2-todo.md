@@ -164,10 +164,16 @@ Discovery settings sa nemení, lebo popis stránky už vymenúva všetky sekcie.
 
 **Popis:** `TableToolbar`: Refresh ako ikonové tlačidlo s prístupným menom, ktoré sa počas načítania točí (nahrádza text „Updating“), a voliteľný `count` vedľa nadpisu.
 
+**Výsledok (2026-11-03):**
+- Refresh je 36×36 px ikonové tlačidlo (`size="sm"`, `w-9 px-0!`), počas načítania má `aria-busy` a ikona sa točí.
+- „Updating“ ostáva ako skrytý text s `aria-live="polite"`, zámerne bez `role="status"`, aby nekolidoval so stavom načítania tabuľky (test Recovery groups ho hľadá ako jediný).
+- Stránky bez `onRefresh` ukazujú pri načítaní viditeľný indikátor ako doteraz.
+- `PageHeader` sa nemenil.
+
 **Akceptačné kritériá:**
-- [ ] Refresh má prístupné meno z `refreshLabel` alebo `common.refresh` a počas `isFetching` oznamuje stav (`aria-busy` alebo skrytý text).
-- [ ] `count` sa zobrazí len, keď je zadaný. Volajúci bez neho sa nemenia.
-- [ ] `PageHeader` ostáva kompatibilný s 13 priamymi volajúcimi.
+- [x] Refresh má prístupné meno z `refreshLabel` alebo `common.refresh` a počas `isFetching` oznamuje stav (`aria-busy` aj skrytý text).
+- [x] `count` sa zobrazí len, keď je zadaný. Volajúci bez neho sa nemenia.
+- [x] `PageHeader` ostáva kompatibilný s 13 priamymi volajúcimi (nezmenený).
 
 **Overenie:** `npm exec vitest run src/shared/components/table/TableToolbar.test.tsx src/shared/components/page/PageHeader.test.tsx`
 **Závislosti:** CP1.
