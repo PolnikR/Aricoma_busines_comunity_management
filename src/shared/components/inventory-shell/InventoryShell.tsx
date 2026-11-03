@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Card } from '@/shared/components/card/Card'
+import { InventoryViewFrame } from './InventoryViewFrame'
 import { DataTableSkeleton } from '@/shared/components/data-table'
 import { MetricsSkeleton } from '@/shared/components/stat-card/StatCard'
 import { cn } from '@/shared/utils/cn'
@@ -30,49 +30,18 @@ export function InventoryShell({
   children,
 }: InventoryShellProps) {
   return (
-  <div className={cn('flex flex-1 flex-col gap-4', !surfaceMinHeightClassName && 'lg:min-h-0', compactSpacing && 'lg:gap-1')}>
-    {metrics}
-    {notice}
-
-    <section
-      className={cn('flex flex-1 flex-col', surfaceMinHeightClassName ?? 'lg:min-h-0')}
-      aria-label={inventoryTitle}
-    >
-      {/*
-        The card frames content that has no frame of its own (forms, bare tables). When the
-        content brings a DataTableSurface, that surface is the only card and this one steps back.
-      */}
-      <Card className={cn(
-        'group/inventory relative flex flex-1 flex-col overflow-hidden p-0 sm:p-0 lg:min-h-0',
-        'has-[[data-table-surface]]:overflow-visible has-[[data-table-surface]]:p-0 has-[[data-table-surface]]:rounded-none has-[[data-table-surface]]:border-0 has-[[data-table-surface]]:bg-transparent has-[[data-table-surface]]:shadow-none',
-        compactSpacing && 'lg:!p-0',
-      )}>
-        {/*
-          The page header already names the page; the inventory title only labels the region.
-          Next to a table surface the tabs become that card's first row: they take its top edge
-          and the surface below gives up its own.
-        */}
-        {tabs ? (
-          <div className={cn(
-            'flex shrink-0 items-center gap-2 border-b border-border px-4 py-2.5',
-            'group-has-[[data-table-surface]]/inventory:rounded-t-[20px] group-has-[[data-table-surface]]/inventory:border group-has-[[data-table-surface]]/inventory:bg-surface group-has-[[data-table-surface]]/inventory:px-2 group-has-[[data-table-surface]]/inventory:py-0',
-            compactSpacing && 'lg:py-0.5',
-          )}>
-            {tabs}
-          </div>
-        ) : null}
-
-        <div className={cn(
-          'flex flex-1 flex-col overflow-hidden bg-surface-subtle p-3 lg:min-h-0 group-has-[[data-table-surface]]/inventory:bg-transparent group-has-[[data-table-surface]]/inventory:p-0',
-          tabs ? '[&_[data-table-surface]]:rounded-t-none [&_[data-table-surface]]:border-t-0' : undefined,
-          compactSpacing && 'lg:p-0',
-        )}>
-          {children}
-        </div>
-      </Card>
-    </section>
-  </div>
-);
+    <div className={cn('flex min-w-0 flex-1 flex-col gap-4', !surfaceMinHeightClassName && 'lg:min-h-0', compactSpacing && 'lg:gap-1')}>
+      {metrics}
+      {notice}
+      <InventoryViewFrame
+        ariaLabel={inventoryTitle}
+        tabs={tabs}
+        {...(surfaceMinHeightClassName ? { minHeightClassName: surfaceMinHeightClassName } : {})}
+      >
+        {children}
+      </InventoryViewFrame>
+    </div>
+  )
 }
 
 export function VirtualMachinesSkeleton() {
@@ -83,8 +52,8 @@ export function VirtualMachinesSkeleton() {
     >
       <MetricsSkeleton />
 
-      <Card className="relative flex flex-1 flex-col overflow-hidden p-0 sm:p-0 lg:min-h-0">
-        <div className="shrink-0 border-b border-border bg-surface px-4 py-3" aria-hidden="true">
+      <InventoryViewFrame ariaLabel="Loading virtual machines">
+        <div className="shrink-0 border-b border-border px-4 py-3" aria-hidden="true">
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1 space-y-2">
               <div className="h-5 w-48 rounded-lg bg-linear-to-r from-border to-surface-muted animate-pulse" />
@@ -96,14 +65,14 @@ export function VirtualMachinesSkeleton() {
             </div>
           </div>
         </div>
-        <div className="flex flex-1 flex-col bg-surface-subtle p-3 lg:min-h-0">
+        <div className="flex flex-1 flex-col lg:min-h-0">
           <DataTableSkeleton
             columnCount={9}
             ariaLabel="Loading virtual machines"
             className="flex-1 lg:min-h-0"
           />
         </div>
-      </Card>
+      </InventoryViewFrame>
     </div>
   )
 }

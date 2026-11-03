@@ -487,6 +487,8 @@ Rozsah, matica stránok a rozhodnutia: [fáza 5 plánu](table-redesign-v2-plan.m
 **Závislosti:** T22.
 **Súbory (M, 4):** `src/shared/components/inventory-shell/InventoryShell.tsx`, `InventoryShell.test.tsx`, `src/features/discovery-inventory/resources/components/ResourceInventoryShell.tsx`, `ResourceInventoryShell.test.tsx`.
 
+**Priebeh (2026-11-03):** Implementovane: vsetci InventoryShell konzumenti skladaju InventoryViewFrame, resource wrapper je tenky. Focused Vitest 4 subory / 12 testov PASS; focused ESLint PASS. Typecheck a browser sa zaznamenaju v checkpointoch.
+
 ### Checkpoint 8: Spoločný shell aktívny
 - [ ] `npm.cmd run typecheck` a focused kontroly T22/T23 prešli.
 - [ ] Resources aj Identity skutočne renderujú ten istý shared frame; root CSS rámika sa nenachádza v resource feature súbore.
