@@ -31,7 +31,7 @@ let inventoryCount = 2
 let manyProviders = false
 const send = (method, params = {}) => new Promise((resolve, reject) => {
   const id = ++sequence
-  const timer = setTimeout(() => { pending.delete(id); reject(Error(`CDP timeout: ${method}`)) }, 15000)
+  const timer = setTimeout(() => { pending.delete(id); reject(Error(`CDP timeout: ${method}`)) }, method === 'Page.captureScreenshot' ? 45000 : 15000)
   pending.set(id, { resolve, reject, timer })
   socket.send(JSON.stringify({ id, method, params }))
 })
@@ -125,7 +125,7 @@ async function click(expression) {
   await send('Input.dispatchMouseEvent', { type: 'mousePressed', ...point, button: 'left', clickCount: 1 })
   await send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...point, button: 'left', clickCount: 1 })
 }
-const viewSelector = '[data-resource-view]'
+const viewSelector = '[data-inventory-view]'
 async function screenshot(name, clip) {
   const { data } = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true, ...(clip ? { clip } : {}) })
   await writeFile(join(output, `${name}.png`), Buffer.from(data, 'base64'))
@@ -162,14 +162,17 @@ async function geometry(name) {
   return value
 }
 let initScript
+let navigation = 0
 async function load(path, { theme = 'light', width = 1600, height = 900, zoom = 1 } = {}) {
   if (initScript) await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: initScript })
   // App preferences only, in this disposable test profile; no auth material is read.
   initScript = (await send('Page.addScriptToEvaluateOnNewDocument', { source: `localStorage.setItem('app-theme',${JSON.stringify(theme)});localStorage.setItem('app-language','en');` })).identifier
   // Changing the CSS viewport and raster scale together reproduces desktop browser zoom.
   await send('Emulation.setDeviceMetricsOverride', { width: Math.round(width / zoom), height: Math.round(height / zoom), deviceScaleFactor: zoom, mobile: false })
-  await send('Page.navigate', { url: base + path })
-  await wait(`document.readyState==='complete' && !!document.querySelector('${viewSelector}')`)
+  const destination = new URL(base + path)
+  destination.searchParams.set('inventory-qa-run', String(++navigation))
+  await send('Page.navigate', { url: destination.href })
+  await wait(`new URL(location.href).searchParams.get('inventory-qa-run')===${JSON.stringify(String(navigation))} && document.readyState==='complete' && !!document.querySelector('${viewSelector}')`)
   if (mode === 'loading') await wait(`!!document.querySelector('${viewSelector} [role=status][aria-busy=true]')`)
   else if (['inventory-error', 'provider-error'].includes(mode)) await wait(`!!document.querySelector('${viewSelector} [role=alert]')`)
   else if (['empty', 'no-provider'].includes(mode)) await wait(`!!document.querySelector('${viewSelector} [role=status] h2')`)

@@ -456,7 +456,7 @@ Rozsah, matica stránok a rozhodnutia: [fáza 5 plánu](table-redesign-v2-plan.m
 **Závislosti:** T20.
 **Súbory (M, 4):** nový `src/shared/components/inventory-shell/InventoryViewFrame.tsx`, nový `InventoryViewFrame.test.tsx`, `src/shared/components/tabs/Tabs.tsx`, `Tabs.test.tsx`.
 
-**Priebeh (2026-11-03):** Implementovane. Focused Vitest 3 subory / 15 testov PASS; focused ESLint PASS. Navigacny scope oddeleny od content scope.
+**Priebeh (2026-11-03):** Implementovane. Focused Vitest 3 subory / 14 testov PASS; focused ESLint PASS. Navigacny scope oddeleny od content scope.
 
 ### Checkpoint 7: Shared kontrakty pripravené
 - [ ] T20/T21 overené bez aktivácie nového defaultu vo všetkých stránkach; pôvodný samostatný panel funguje mimo scope.
@@ -470,9 +470,11 @@ Rozsah, matica stránok a rozhodnutia: [fáza 5 plánu](table-redesign-v2-plan.m
 - [ ] `ResourceInventoryShell` už nekopíruje CSS rámika; resource metriky, notice, tabs a všetky stavy sa skladajú cez nový shared frame.
 - [ ] `ResourceViewportFrame` je tenký obal shared viewportu; nadpis a karta majú spoločné zarovnanie a overený priestor pre tieň.
 - [ ] Existujúca 64-prípadová resource QA používa `data-inventory-view` a zachová výsledky vrátane rohov, tieňa, krátkeho okna a standalone fallbackov.
-**Overenie:** `npm.cmd exec -- vitest run src/shared/components/page/InventoryViewportFrame.test.tsx src/features/discovery-inventory/resources/components/ResourceInventoryShell.test.tsx src/features/discovery-inventory/resources/components/ResourceInventoryPanel.test.tsx --maxWorkers=2` (viewport test je nový); `node scripts/qa/inventory-view-table-browser.mjs`.
+**Overenie:** `npm.cmd exec -- vitest run src/shared/components/page/ContainedViewportFrame.test.tsx src/features/discovery-inventory/resources/components/ResourceInventoryShell.test.tsx src/features/discovery-inventory/resources/components/ResourceInventoryPanel.test.tsx --maxWorkers=2` (viewport test je nový); `node scripts/qa/inventory-view-table-browser.mjs`.
 **Závislosti:** T21.
 **Súbory (M, 5):** nový `src/shared/components/page/InventoryViewportFrame.tsx`, nový `InventoryViewportFrame.test.tsx`, `src/features/discovery-inventory/resources/components/ResourceInventoryShell.tsx`, `ResourceViewportFrame.tsx`, `scripts/qa/inventory-view-table-browser.mjs`.
+
+**Priebeh (2026-11-03):** Implementovane: spolocny frame a viewport. Focused Vitest 3 subory / 7 testov PASS; focused ESLint PASS; Chrome quick PASS. Plna matica prerusena CDP screenshot timeoutom, zopakuje sa samostatne v T30. Viewport nema ziadnu novu logiku; namiesto class-string testu sa pouziva existujuci ContainedViewportFrame test a realna geometria.
 
 ### T23: Spoločný InventoryShell pre všetky inventory view
 
