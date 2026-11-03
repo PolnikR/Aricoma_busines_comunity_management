@@ -40,6 +40,26 @@ function setup() {
 afterEach(() => { vi.unstubAllGlobals(); onlineManager.setOnline(true) })
 
 describe('PolicySetUsage', () => {
+  it('renders ID, plain Name and one Open detail link in order for each source', async () => {
+    stub()
+    setup()
+    await screen.findByRole('link', { name: 'Open detail: Database group' })
+    for (const [label, consumer, path] of [
+      ['Recovery Groups', group, '/recovery-plans/recovery-groups'],
+      ['Recovery Applications', { id: app.id, name: app.application.name }, '/recovery-plans/recovery-applications'],
+    ] as const) {
+      const source = screen.getByRole('region', { name: label })
+      const table = within(source).getByRole('table')
+      expect(within(table).getAllByRole('columnheader').map(cell => cell.textContent)).toEqual(['ID', 'Name', 'Open detail'])
+      const cells = within(table).getAllByRole('cell')
+      expect(cells.map(cell => cell.textContent)).toEqual([consumer.id, consumer.name, 'Open detail'])
+      expect(within(within(table).getByRole('cell', { name: consumer.name })).queryByRole('link')).not.toBeInTheDocument()
+      const link = within(table).getByRole('link', { name: `Open detail: ${consumer.name}` })
+      expect(within(table).getAllByRole('link')).toHaveLength(1)
+      expect(link).toHaveAttribute('href', `${path}?${new URLSearchParams({ detail: consumer.id }).toString()}`)
+    }
+  })
+
   it.each(['Database group', 'Finance app'])('opens the actual %s detail through a real link and router', async name => {
     stub()
     setup()
@@ -56,6 +76,10 @@ describe('PolicySetUsage', () => {
     stub({ '/api/get_recovery_groups': () => pending, '/api/get_recovery_apps': () => Promise.resolve(response({ applications: [] })) })
     setup()
     expect(screen.getAllByRole('status').length).toBeGreaterThan(0)
+    const pendingSource = screen.getByRole('region', { name: 'Recovery Groups' })
+    expect(within(pendingSource).getByRole('status', { name: 'Loading usage…' })).toHaveAttribute('aria-busy', 'true')
+    expect(within(pendingSource).getAllByRole('columnheader').map(cell => cell.textContent)).toEqual(['ID', 'Name', 'Open detail'])
+    expect(within(pendingSource).queryByText('0')).not.toBeInTheDocument()
     expect(screen.queryByText('This Policy Set is not used by any Recovery Group or Recovery Application.')).not.toBeInTheDocument()
     release(response({ recovery_groups: [] }))
     expect(await screen.findByText('This Policy Set is not used by any Recovery Group or Recovery Application.')).toBeVisible()
@@ -84,6 +108,7 @@ describe('PolicySetUsage', () => {
     await client.invalidateQueries({ queryKey: ['/get_recovery_groups'] })
     expect(await screen.findByRole('alert')).toHaveTextContent('Groups offline')
     expect(screen.getByRole('link', { name: 'Open detail: Database group' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Retry Recovery Groups' })).toBeEnabled()
     expect(screen.queryByText('This Policy Set is not used by any Recovery Group or Recovery Application.')).not.toBeInTheDocument()
   })
 

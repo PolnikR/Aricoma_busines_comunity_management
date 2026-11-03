@@ -15,7 +15,7 @@ import {
 } from '@/shared/components/data-table'
 import type { ColumnDef } from '@/shared/components/data-table'
 import { DetailField, DetailOverview, DetailView, DetailViewSection } from '@/shared/components/detail-view'
-import { GridIcon } from '@/shared/icons/Icons'
+import { GridIcon, NetworkIcon } from '@/shared/icons/Icons'
 import { ConfirmDialog } from '@/shared/components/modal/ConfirmDialog'
 import { JsonViewerModal } from '@/shared/components/modal/JsonViewerModal'
 import { useTranslation } from '@/hooks/useTranslation'
@@ -224,7 +224,7 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
               <DetailField label={t('details.cleanRoomPolicy')} labelHelp={<KeyedHelpPopover helpKey="policySets.fieldHelp.clean_room_policy_id" sections={[]} />} {...referenceField('cleanRoom', selected.clean_room_policy_id, t('policySets.form.cleanRoomPolicy'))} />
             </DetailOverview>
           </DetailViewSection>
-          <DetailViewSection id="used-in" title={t('policyReferences.usedIn.title')}>
+          <DetailViewSection id="used-in" title={t('policyReferences.usedIn.title')} icon={NetworkIcon} layout="fill">
             <PolicySetUsage policySetId={selected.id} />
           </DetailViewSection>
         </DetailView>
