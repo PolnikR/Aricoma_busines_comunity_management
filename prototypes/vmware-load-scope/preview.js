@@ -1,8 +1,5 @@
 // Prototype only: provider scope and table filters stay independent, in memory.
 const $ = (selector) => document.querySelector(selector)
-const scope = $('#scope')
-const toolbar = $('.toolbar')
-const nav = $('.view-nav')
 const records = ['WEB01', 'WEB02', 'DB01', 'APP01', 'BATCH01', 'BACKUP01'].map((name, index) => ({
   name: `TEST-${name}`, os: index === 2 ? 'Red Hat Enterprise Linux 9' : 'Windows Server 2022',
   on: index < 4, compute: index === 2 ? '4 vCPU · 16 GB' : '2 vCPU · 8 GB',
@@ -11,12 +8,6 @@ let provider = 'vm-01'
 let powerOnly = false
 let previewState = 'success'
 let refreshTimer
-let scopeOpener
-const explanations = {
-  strip: 'Recommended: keep the loading conditions visible directly under the view navigation. Locked provider conditions have no remove action; removable table filters appear separately below the toolbar.',
-  header: 'Alternative: loading conditions sit beside the view navigation. This saves a row on wide screens, but competes with provider tabs and wraps earlier.',
-  compact: 'Alternative: inspect the loading conditions from a toolbar button. It uses less space, but hides the actual values until opened.',
-}
 function render() {
   const scoped = provider === 'vm-01'
   const source = scoped ? records : records.map(row => ({ ...row, name: row.name.replace('TEST-', 'PROD-') }))
@@ -34,8 +25,7 @@ function render() {
     })
     return tr
   }))
-  scope.hidden = !scoped
-  $('#compact-scope').hidden = !scoped
+  $('#provider-conditions').hidden = !scoped
   $('#active-filter').hidden = !powerOnly
   $('#filter-count').hidden = !powerOnly
   $('#rows').hidden = previewState !== 'success'
@@ -50,16 +40,6 @@ function render() {
   if (previewState === 'empty') { $('#empty h2').textContent = 'No VMs in the provider scope'; $('#empty p').textContent = 'No VMs match the configured prefix and tag. Check the provider configuration.'; $('#reset').hidden = true }
   else { $('#empty h2').textContent = 'No VMs match these table filters'; $('#empty p').textContent = 'The provider loading scope still applies.'; $('#reset').hidden = false }
 }
-function variant(value) {
-  value = Object.hasOwn(explanations, value) ? value : 'strip'
-  document.body.dataset.variant = value
-  $('#variant').value = value
-  if (value === 'header') nav.append(scope)
-  else toolbar.before(scope)
-  $('#rationale').textContent = explanations[value]
-  const url = new URL(location.href); url.searchParams.set('variant', value); history.replaceState(null, '', url)
-}
-$('#variant').addEventListener('change', event => variant(event.target.value))
 $('#state').addEventListener('change', event => { clearTimeout(refreshTimer); previewState = event.target.value; render() })
 $('#search').addEventListener('input', render)
 document.querySelectorAll('[data-provider]').forEach(button => button.addEventListener('click', () => {
@@ -67,8 +47,6 @@ document.querySelectorAll('[data-provider]').forEach(button => button.addEventLi
   document.querySelectorAll('[data-provider]').forEach(item => { item.classList.toggle('active', item === button); if (item === button) item.setAttribute('aria-current', 'page'); else item.removeAttribute('aria-current') })
   $('#search').value = ''; powerOnly = false; render()
 }))
-document.querySelectorAll('.scope-details').forEach(button => button.addEventListener('click', () => { scopeOpener = button; $('#scope-dialog').showModal() }))
-$('#scope-dialog').addEventListener('close', () => scopeOpener?.focus())
 $('#filter-dialog').addEventListener('close', () => $('#filter-button').focus())
 $('#filter-button').addEventListener('click', () => { $('#power').checked = powerOnly; $('#filter-dialog').showModal() })
 $('#cancel-filter').addEventListener('click', () => $('#filter-dialog').close())
@@ -85,5 +63,4 @@ function refresh() { clearTimeout(refreshTimer); previewState = 'loading'; $('#s
 $('#reload').addEventListener('click', refresh)
 $('#retry').addEventListener('click', refresh)
 $('#theme').addEventListener('click', () => { const dark = document.documentElement.classList.toggle('dark'); $('#theme').textContent = dark ? 'Light theme' : 'Dark theme' })
-variant(new URLSearchParams(location.search).get('variant') ?? 'strip')
 render()
