@@ -19,7 +19,7 @@ describe('DataTableSurface', () => {
 
     expect(surface).toHaveClass('grid', 'grid-rows-[auto_minmax(0,1fr)_auto]', 'rounded-[20px]')
     expect(surface).not.toHaveClass('rounded-2xl')
-    expect(dataViewport).toHaveClass('custom-scrollbar', 'min-h-0', 'overflow-y-auto')
+    expect(dataViewport).toHaveClass('custom-scrollbar', 'min-h-0', 'overflow-y-auto', 'flex', 'flex-col')
     expect(dataViewport).toContainElement(screen.getByText('Inventory rows'))
     expect(dataViewport).not.toContainElement(screen.getByRole('button', { name: 'Filters' }))
     expect(dataViewport).not.toContainElement(screen.getByText('Pagination'))

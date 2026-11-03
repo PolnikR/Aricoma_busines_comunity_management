@@ -92,13 +92,13 @@ Discovery settings sa nemení, lebo popis stránky už vymenúva všetky sekcie.
 
 **Výsledok (2026-11-03):**
 - Hlavička stĺpcov: `text-xs font-medium text-text-secondary/80`, bez kapitálok. Konštanta `DATA_TABLE_HEADER_TEXT` je exportovaná. `text-text-muted` z prototypu má pri 12 px kontrast len ≈3,9:1, preto sa použila sekundárna farba na 80 % (≈5,6:1).
-- Riadky: minimálna výška `h-14`/`h-[72px]` na `tr`, padding `py-2`/`py-3`. Hover je `surface-subtle`, výber ostáva `accent-soft` s ľavým pruhom.
+- Riadky: minimálnu výšku `h-14`/`h-[72px]` používateľ vrátil commitom `a954471a` („restore content-sized data table rows“). Riadky sú opäť vysoké podľa obsahu s paddingom `py-1.5`/`py-2.5`. Hover je `surface-subtle`, výber ostáva `accent-soft` s ľavým pruhom.
 - Override súbory `VirtualMachinesTable`, `AccessLogsTable` a `BackingStorageInfo` mali skopírovaný starý štýl hlavičky. Teraz používajú `DATA_TABLE_HEADER_TEXT`, ich odsadenia a `align-top` ostali.
 - `DataTableSkeleton` sa nemenil: prvý stĺpec už má ≈56 px.
-- Headless Chrome (dev server :5174, `/api` zachytené testovacími dátami, lebo backend vracal 502): hlavička 12 px/500/bez transformácie, riadky 56 px (compact) a 72 px (comfortable).
+- Headless Chrome (dev server :5174, `/api` zachytené testovacími dátami, lebo backend vracal 502): hlavička 12 px/500/bez transformácie. Výšky 56/72 px namerané pred `a954471a` už neplatia.
 
 **Akceptačné kritériá:**
-- [x] Nový vzhľad sa uplatní na `layout="scroll"` aj `"fit"` a zalamovanie textu vo `fit` funguje ďalej (výška `tr` je minimum).
+- [x] Nový vzhľad sa uplatní na `layout="scroll"` aj `"fit"` a zalamovanie textu vo `fit` funguje ďalej.
 - [x] Kliknutie, Enter/Space na riadku, `aria-selected` a `hideInCompact` sa správajú ako doteraz (logika riadkov sa nemenila, `DataTable.test.tsx` prechádza).
 - [x] Súbory s vlastným `headerCellClassName`/`cellClassName` sú skontrolované a výsledok je zapísaný.
 
@@ -108,12 +108,14 @@ Discovery settings sa nemení, lebo popis stránky už vymenúva všetky sekcie.
 
 ### T4: Výplň prázdneho miesta pod riadkami
 
-**Popis:** `DataTable` vloží za tabuľku výplň s jemnými čiarami v rozostupe nominálnej výšky riadku podľa hustoty. Scroll oblasť `DataTableSurface` sa stane flex stĺpcom, aby sa výplň natiahla.
+**Popis:** `DataTable` vloží za tabuľku výplň s jemnými čiarami. Scroll oblasť `DataTableSurface` sa stane flex stĺpcom, aby sa výplň natiahla.
+
+**Zmena oproti plánu (2026-11-03):** riadky sú po `a954471a` vysoké podľa obsahu, preto pevný rozostup nesedel. `DataTableFiller` si odmeria rozostup medzi posledným a predposledným riadkom (pri jednom riadku jeho výšku + 1 px) a čiary kreslí v rovnakom rytme. Prvá čiara uzavrie posledný riadok. Výplň je `sticky left-0`, aby pri vodorovnom posune ostala pod viditeľnými stĺpcami.
 
 **Akceptačné kritériá:**
-- [ ] Pri krátkom zozname v `DataTableSurface` siahajú čiary po pätičku. Pri plnej strane výplň nemá výšku a nevytvára scroll navyše.
-- [ ] Výplň je `aria-hidden`, nezobrazuje sa pri loading ani pri prázdnom stave a mimo flex rodiča má nulovú výšku.
-- [ ] Čiary sú čitateľné vo svetlej aj tmavej téme a nepôsobia ako reálne riadky.
+- [x] Pri krátkom zozname v `DataTableSurface` siahajú čiary po pätičku. Pri plnej strane výplň nemá výšku a nevytvára scroll navyše (Platform providers 1600×900: výplň začína na spodku posledného riadku, rozostup 50/58 px pri riadkoch 49–50/57–58 px).
+- [x] Výplň je `aria-hidden`, nezobrazuje sa pri loading ani pri prázdnom stave a mimo flex rodiča má nulovú výšku.
+- [ ] Čiary sú čitateľné vo svetlej aj tmavej téme a nepôsobia ako reálne riadky (svetlá téma overená, tmavá nie).
 
 **Overenie:** `npm exec vitest run src/shared/components/data-table/DataTable.test.tsx src/shared/components/data-table/DataTableSurface.test.tsx`
 **Závislosti:** T1, T3.

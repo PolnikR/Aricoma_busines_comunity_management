@@ -66,5 +66,21 @@ describe('DataTable', () => {
     expect(container.querySelectorAll('tbody tr')).toHaveLength(3)
     expect(container.querySelector('tbody')).toHaveAttribute('aria-hidden', 'true')
     expect(screen.queryByText('No records found')).not.toBeInTheDocument()
+    expect(container.querySelector('[data-table-filler]')).not.toBeInTheDocument()
+  })
+
+  it('continues the row rhythm below the last row as a decorative filler', () => {
+    const { container } = render(<DataTable columns={columns} rows={rows} rowKey={row => row.id} ariaLabel="Short table" />)
+
+    const filler = container.querySelector('[data-table-filler]')
+    expect(filler).toHaveAttribute('aria-hidden', 'true')
+    expect(within(screen.getByLabelText('Short table')).getByRole('table').nextElementSibling).toBe(filler)
+  })
+
+  it('leaves out the filler when there are no rows to continue', () => {
+    const { container } = render(<DataTable columns={columns} rows={[]} rowKey={row => row.id} ariaLabel="Empty table" />)
+
+    expect(screen.getByText('No records found')).toBeInTheDocument()
+    expect(container.querySelector('[data-table-filler]')).not.toBeInTheDocument()
   })
 })
