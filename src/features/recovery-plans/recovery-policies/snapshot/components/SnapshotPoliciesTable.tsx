@@ -1,3 +1,5 @@
+import { useReferenceProtectedDelete } from '@/features/recovery-plans/references/hooks/useReferenceProtectedDelete'
+import { ReferenceDeleteNotice } from '@/features/recovery-plans/references/components/ReferenceDeleteNotice'
 import type { PostDeletePhase } from '../../../hooks/usePostDeleteRefresh'
 import { useMemo, useState } from 'react'
 import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
@@ -127,6 +129,7 @@ interface SnapshotPoliciesTableProps {
 
 export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, onRetry, postDeletePhase, onDeleted }: SnapshotPoliciesTableProps) {
   const { t } = useTranslation()
+  const referenceDelete = useReferenceProtectedDelete()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editing, setEditing] = useState<SnapshotPolicyRecordOutput | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<SnapshotPolicyRecordOutput | null>(null)
@@ -141,6 +144,7 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
     setSelectedId(null)
     void onDeleted()
   } } })
+  const isDeletePending = referenceDelete.isPending || deletePolicy.isPending
   const isRowsLoading = isLoading || postDeletePhase === 'refreshing'
   const rows = useMemo(() => policies.filter(policy => (
     (!filters.level || policy.level === filters.level)
@@ -258,7 +262,7 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
           minWidthClassName="min-w-260"
           ariaLabel={isRowsLoading ? t('snapshotPolicies.loading') : t('snapshotPolicies.tableLabel')}
           rowAriaLabel={policy => policy.name}
-          onRowClick={policy => { setSelectedId(policy.id) }}
+          onRowClick={policy => { if (isDeletePending) return; referenceDelete.reset(); setSelectedId(policy.id) }}
           selectedRowKey={selectedId}
           emptyContent={rows.length > 0 ? t('snapshotPolicies.noMatches') : t('snapshotPolicies.empty')}
         />
@@ -270,7 +274,7 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
           // Keyed by record so each newly opened record starts fresh.
           key={selected.id}
           open
-          onClose={() => { setSelectedId(null) }}
+          onClose={() => { if (isDeletePending) return; referenceDelete.reset(); setSelectedId(null) }}
           size="md"
           entityLabel={t('snapshotPolicies.drawer.entity')}
           title={selected.name}
@@ -278,8 +282,8 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
           headerActions={<KeyedHelpPopover helpKey="snapshotPolicies.help" sections={['frequency', 'retention', 'usage']} />}
           ariaLabel={t('snapshotPolicies.drawer.label')}
           closeLabel={t('snapshotPolicies.drawer.close')}
-          footerStart={<Button onClick={() => { setDeleteTarget(selected) }} size="sm" variant="danger">{t('buttons.delete')}</Button>}
-          footer={<Button onClick={() => { setEditing(selected); setSelectedId(null) }} size="sm">{t('buttons.edit')}</Button>}
+          footerStart={<Button onClick={() => { if (isDeletePending) return; referenceDelete.reset(); deletePolicy.reset(); setDeleteTarget(selected) }} size="sm" variant="danger">{t('buttons.delete')}</Button>}
+          footer={<Button onClick={() => { if (isDeletePending) return; referenceDelete.reset(); setEditing(selected); setSelectedId(null) }} size="sm">{t('buttons.edit')}</Button>}
         >
           <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
             {/* The fields in the order of the original detail drawer; Level is also a header badge. */}
@@ -305,17 +309,22 @@ export function SnapshotPoliciesTable({ policies, isLoading, error, isRetrying, 
         message={t('snapshotPolicies.delete.message').replace('{name}', deleteTarget?.name ?? '')}
         confirmLabel={t('buttons.delete')}
         cancelLabel={t('buttons.cancel')}
-        loadingLabel={t('buttons.deleting')}
+        loadingLabel={t(referenceDelete.phase === 'checking' ? 'policyReferences.checking' : 'buttons.deleting')}
         tone="danger"
-        isLoading={deletePolicy.isPending}
-        onCancel={() => { setDeleteTarget(null) }}
+        isLoading={isDeletePending}
+        onCancel={() => { if (!isDeletePending) { setDeleteTarget(null); referenceDelete.reset() } }}
         onConfirm={() => {
-          if (!deleteTarget) return
-          deletePolicy.mutate({ params: { policy_id: deleteTarget.id } }, {
+          if (!deleteTarget || isDeletePending) return
+          const id = deleteTarget.id
+          void referenceDelete.execute({ kind: 'snapshot', id }, () => deletePolicy.mutateAsync({ params: { policy_id: id } }, {
             onError: () => { setDeleteTarget(null) },
+          })).then(result => {
+            if (result === 'blocked' || result === 'checkFailed') setDeleteTarget(null)
           })
         }}
       />
+
+      <ReferenceDeleteNotice issue={deleteTarget === null ? referenceDelete.issue : null} onClose={referenceDelete.reset} />
 
       {jsonViewed ? (
         <ChecklistResultDialog

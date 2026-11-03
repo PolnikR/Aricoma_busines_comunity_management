@@ -8,7 +8,7 @@ import { detailNavigationLabels, detailSectionsFields, detailSectionsLabels } fr
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('@/generated/query/recovery-app-policies/recovery-app-policies.gen', () => ({
-  useDeleteRecoveryAppPolicy: () => ({ mutate: vi.fn(), isPending: false }),
+  useDeleteRecoveryAppPolicy: () => ({ mutateAsync: vi.fn(), reset: vi.fn(), isPending: false }),
   useSubmitRecoveryAppPolicy: () => ({ mutate: vi.fn(), isPending: false, error: null }),
 }))
 

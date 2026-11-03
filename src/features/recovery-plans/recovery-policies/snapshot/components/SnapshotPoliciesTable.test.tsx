@@ -8,7 +8,7 @@ import { detailNavigationLabels, detailSectionsFields, detailSectionsLabels } fr
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('@/generated/query/snapshot-policies/snapshot-policies.gen', () => ({
-  useDeletePolicy: () => ({ mutate: vi.fn(), isPending: false }),
+  useDeletePolicy: () => ({ mutateAsync: vi.fn(), reset: vi.fn(), isPending: false }),
   useSubmitPolicy: () => ({ mutate: vi.fn(), isPending: false, error: null }),
 }))
 

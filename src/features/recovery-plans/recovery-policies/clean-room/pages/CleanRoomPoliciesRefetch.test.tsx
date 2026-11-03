@@ -26,7 +26,7 @@ function deferred() {
   return { promise, resolve }
 }
 
-function stubFetch(refreshResponse: Promise<Response>) {
+function stubFetch(refreshResponse: Promise<Response>, options: { preflight?: () => Promise<Response>; deleteResponse?: Promise<Response> } = {}) {
   let reads = 0
   const policy = {
     id: 'enforce-clean-target',
@@ -36,6 +36,9 @@ function stubFetch(refreshResponse: Promise<Response>) {
   }
   const mock = vi.fn((url: string, init?: RequestInit) => {
     const method = init?.method ?? 'GET'
+    if (url.startsWith('/api/get_policy_sets')) {
+      return options.preflight?.() ?? Promise.resolve(new Response(JSON.stringify({ policy_sets: [] }), { status: 200 }))
+    }
     if (url.startsWith('/api/get_clean_room_policies')) {
       if (++reads > 1) return refreshResponse
       return Promise.resolve(new Response(JSON.stringify({ clean_room_policies: [policy] }), {
@@ -45,6 +48,7 @@ function stubFetch(refreshResponse: Promise<Response>) {
     }
     if (url.startsWith('/api/delete_clean_room_policy') && method === 'DELETE') {
       expect(url).toBe(`/api/delete_clean_room_policy?policy_id=${policy.id}`)
+      if (options.deleteResponse) return options.deleteResponse
       return Promise.resolve(new Response(JSON.stringify({ clean_room_policies: [] }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
@@ -58,6 +62,36 @@ function stubFetch(refreshResponse: Promise<Response>) {
 
 describe('CleanRoomPoliciesPage refetch', () => {
   afterEach(() => { vi.unstubAllGlobals() })
+
+  it.each([1, 2])('blocks deletion and shows all %s policy set references above the retained detail', async count => {
+    const fetchMock = stubFetch(Promise.resolve(new Response(JSON.stringify({ clean_room_policies: [] }))), {
+      preflight: () => Promise.resolve(new Response(JSON.stringify({ policy_sets: Array.from({ length: count }, (_, index) => ({ id: `set-${String(index)}`, name: `Blocking set ${String(index)}`, clean_room_policy_id: 'enforce-clean-target' })) }))),
+    })
+    renderWithProviders(<CleanRoomPoliciesPage />)
+    await userEvent.click(await screen.findByText('Enforce Clean Target'))
+    await userEvent.click(screen.getByRole('button', { name: 'Delete' }))
+    await userEvent.click(within(screen.getByRole('dialog', { name: 'Delete clean room policy' })).getByRole('button', { name: 'Delete' }))
+    const result = await screen.findByRole('dialog', { name: 'Cannot delete an item that is in use' })
+    for (let index = 0; index < count; index++) expect(result).toHaveTextContent(`Blocking set ${String(index)}`)
+    expect(screen.queryByRole('dialog', { name: 'Delete clean room policy' })).not.toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: 'Clean room policy detail' })).toBeInTheDocument()
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'DELETE')).toHaveLength(0)
+    expect(fetchMock.mock.calls.find(([url]) => url.startsWith('/api/get_policy_sets'))?.[1]?.cache).toBe('no-store')
+    await userEvent.click(within(result).getByRole('button', { name: 'Close', exact: true }))
+    expect(within(screen.getByRole('dialog', { name: 'Clean room policy detail' })).getByRole('button', { name: 'Delete' })).toBeEnabled()
+  })
+
+  it.each([403, 503])('does not delete when checking policy sets fails with %s', async status => {
+    const fetchMock = stubFetch(Promise.resolve(new Response(JSON.stringify({ clean_room_policies: [] }))), {
+      preflight: () => Promise.resolve(new Response(JSON.stringify({ detail: 'Dependencies unavailable' }), { status })),
+    })
+    renderWithProviders(<CleanRoomPoliciesPage />)
+    await userEvent.click(await screen.findByText('Enforce Clean Target'))
+    await userEvent.click(screen.getByRole('button', { name: 'Delete' }))
+    await userEvent.click(within(screen.getByRole('dialog', { name: 'Delete clean room policy' })).getByRole('button', { name: 'Delete' }))
+    expect(await screen.findByRole('dialog', { name: 'Could not verify usage' })).toHaveTextContent('Policy Sets')
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'DELETE')).toHaveLength(0)
+  })
 
   it('renders the stubbed list through the real select and refetches after a delete', async () => {
     const refresh = deferred()

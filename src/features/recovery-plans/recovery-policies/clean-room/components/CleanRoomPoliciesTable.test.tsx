@@ -8,7 +8,7 @@ import { detailNavigationLabels, detailSectionsFields, detailSectionsLabels } fr
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('@/generated/query/clean-room-policies/clean-room-policies.gen', () => ({
-  useDeleteCleanRoomPolicy: () => ({ mutate: vi.fn(), isPending: false }),
+  useDeleteCleanRoomPolicy: () => ({ mutateAsync: vi.fn(), reset: vi.fn(), isPending: false }),
   useSubmitCleanRoomPolicy: () => ({ mutate: vi.fn(), isPending: false, error: null }),
 }))
 
