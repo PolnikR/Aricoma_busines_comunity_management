@@ -55,15 +55,15 @@ export function VmwareProviderFilterSummary({ filter, label, nameLabel, tagLabel
       aria-label={label}
       tabIndex={-1}
       data-provider-scope={providerId ?? ''}
-      className="ml-auto flex min-w-0 max-w-full items-center justify-end gap-2 text-[11px] text-text-secondary min-[1100px]:max-w-[17rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/30"
+      className="ml-auto flex min-w-0 max-w-full items-center justify-end gap-1 text-[11px] text-text-secondary sm:gap-2 min-[1100px]:max-w-[17rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/30"
     >
-      <svg aria-hidden="true" className="size-3 shrink-0 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <svg aria-hidden="true" className="hidden size-3 shrink-0 text-text-muted sm:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
         <rect x="5" y="10" width="14" height="11" rx="2" />
         <path d="M8 10V7a4 4 0 0 1 8 0v3" />
       </svg>
       {filter.prefix ? (
-        <span className="flex min-w-0 flex-1 items-center gap-1">
-          <span className="shrink-0 whitespace-nowrap text-text-muted">{nameLabel}</span>
+        <span className="flex min-w-0 flex-1 items-center sm:gap-1">
+          <span className="sr-only shrink-0 whitespace-nowrap text-text-muted sm:not-sr-only sm:whitespace-nowrap">{nameLabel}</span>
           <span
             role="region"
             aria-label={nameLabel}
@@ -73,8 +73,8 @@ export function VmwareProviderFilterSummary({ filter, label, nameLabel, tagLabel
         </span>
       ) : null}
       {tags.length > 0 ? (
-        <span className="flex min-w-0 flex-1 items-center gap-1">
-          <span className="shrink-0 whitespace-nowrap text-text-muted">{tagLabel}</span>
+        <span className="flex min-w-0 flex-1 items-center sm:gap-1">
+          <span className="sr-only shrink-0 whitespace-nowrap text-text-muted sm:not-sr-only sm:whitespace-nowrap">{tagLabel}</span>
           {tags.slice(0, visibleTagCount).map((tag, index) => (
             <span
               key={tag}

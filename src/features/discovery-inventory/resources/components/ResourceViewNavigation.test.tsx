@@ -54,6 +54,23 @@ describe('ResourceViewNavigation', () => {
     expect(screen.getByRole('tab', { name: 'IBM Power Partitions · HMC' })).toHaveFocus()
   })
 
+  it('keeps full tab names and keyboard navigation with a provider scope at 320px', () => {
+    window.innerWidth = 320
+    const onChange = vi.fn()
+    render(<ResourceViewNavigation items={items} labels={labels} value="vmware:vcenter-01" onChange={onChange} selectedProvider={{ ...provider, vmPrefix: 'production-', vmTags: tags }} />)
+
+    const selected = screen.getByRole('tab', { name: items[0].label })
+    expect(selected).toHaveAttribute('aria-selected', 'true')
+    expect(selected).toHaveTextContent('vm-01')
+    expect(within(summary()).getByRole('region', { name: 'Name prefix' })).toHaveTextContent('production-')
+    expect(within(summary()).getByRole('region', { name: 'Tags' })).toHaveTextContent('Production')
+    expect(showTags()).toHaveTextContent('+4')
+
+    fireEvent.keyDown(selected, { key: 'ArrowRight' })
+    expect(onChange).toHaveBeenLastCalledWith('vmware:vcenter-02')
+    expect(screen.getByRole('tab', { name: items[1].label })).toHaveFocus()
+  })
+
   it('renders fallback navigation without an invented badge or provider conditions', () => {
     render(<ResourceViewNavigation
       items={[{ value: 'vmware:none', resourceTab: 'vmware', providerId: null, label: 'VMware VMs' }]}

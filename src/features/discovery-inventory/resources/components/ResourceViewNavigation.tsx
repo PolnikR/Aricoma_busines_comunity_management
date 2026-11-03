@@ -24,7 +24,7 @@ export function ResourceViewNavigation({ items, labels, value, onChange, selecte
   const providerFilter = vmwareProvider ? resolveVmwareProviderFilter(vmwareProvider) : null
 
   return (
-    <div className="flex min-w-0 items-center gap-3 [--tab-slot-width:9rem] 2xl:[--tab-slot-width:10rem]">
+    <div className="flex min-w-0 items-center gap-1 [--tab-control-width:1.75rem] [--tab-slot-width:5rem] sm:gap-3 sm:[--tab-control-width:2.25rem] sm:[--tab-slot-width:9rem] 2xl:[--tab-slot-width:10rem]">
       <div className="min-w-0 flex-initial">
         <Tabs
           items={items.map(tab => ({
@@ -32,9 +32,9 @@ export function ResourceViewNavigation({ items, labels, value, onChange, selecte
             accessibleLabel: tab.label,
             label: (
               <span className="flex min-w-0 items-center gap-2">
-                <span className="min-w-0 truncate">{labels[tab.resourceTab]}</span>
+                <span className={tab.providerId ? 'hidden min-w-0 truncate sm:inline' : 'min-w-0 truncate'}>{labels[tab.resourceTab]}</span>
                 {tab.providerId ? (
-                  <span className="shrink-0 rounded bg-surface-muted px-1.5 py-0.5 font-mono text-[11px] text-text-muted">
+                  <span className="shrink-0 rounded bg-surface-muted px-1 py-0.5 font-mono text-[10px] text-text-muted sm:px-1.5 sm:text-[11px]">
                     {formatResourceProviderId(tab.resourceTab, tab.providerId)}
                   </span>
                 ) : null}
@@ -55,7 +55,7 @@ export function ResourceViewNavigation({ items, labels, value, onChange, selecte
         />
       </div>
       {vmwareProvider && providerFilter?.isFixed ? (
-        <div className="ml-auto w-1/2 min-w-0 max-w-[17rem] shrink-0">
+        <div className="ml-auto w-2/5 min-w-0 max-w-[17rem] shrink-0 sm:w-1/2">
           <VmwareProviderFilterSummary
             providerId={vmwareProvider.id}
             filter={providerFilter}

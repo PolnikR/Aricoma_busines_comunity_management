@@ -151,6 +151,25 @@ describe('VmwareProviderFilterSummary', () => {
     expect(group()).toHaveFocus()
   })
 
+  it('keeps compact field names and long values accessible at 320px', () => {
+    resize(320)
+    const prefix = 'production-very-long-provider-prefix-with-literal-*'
+    const tag = 'Department / European production infrastructure / Recovery required'
+    render(<VmwareProviderFilterSummary {...labels} filter={resolveVmwareProviderFilter({ vmPrefix: prefix, vmTags: [tag, ...fiveTags] })} />)
+
+    const prefixValue = within(group()).getByRole('region', { name: labels.nameLabel })
+    const tagValue = within(group()).getByRole('region', { name: labels.tagLabel })
+    expect(prefixValue).toHaveTextContent(prefix)
+    expect(tagValue).toHaveTextContent(tag)
+    act(() => { prefixValue.focus() })
+    expect(prefixValue).toHaveFocus()
+    act(() => { tagValue.focus() })
+    expect(tagValue).toHaveFocus()
+    expect(trigger(6)).toHaveTextContent('+5')
+    fireEvent.click(trigger(6))
+    expect(within(screen.getByRole('dialog')).getAllByRole('listitem').map(item => item.textContent)).toEqual([tag, ...fiveTags])
+  })
+
   it('keeps long prefix and tag text available to keyboard users and screen readers', () => {
     const prefix = 'production-very-long-provider-prefix-with-literal-*'
     const tag = 'Department / European production infrastructure / Recovery required'
