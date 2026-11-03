@@ -727,6 +727,8 @@ Plán: fáza 6 v table-redesign-v2-plan.md. **Stav: prebieha inline podľa pokyn
 **Závislosti:** T34.
 **Súbory (S, 2):** recovery-groups/components/RecoveryGroupBuilder.tsx a RecoveryGroupBuilder.prefetch.test.tsx.
 
+**Priebeh (2026-11-03):** Builder prefetch uz nepouziva singular alias prveho tagu; getServerSideTagFilter zo vsetkych tags, skalarnedependencies a readiness zachovane. Parent fresh2subory/46testov PASS, focused ESLint PASS, nezavislyreview APPROVE. Raw cache querykey reused bezfanout. Typecheck CP13 PASS.
+
 ### T35: Opt-in limit štyroch položiek v shared Tabs
 
 **Popis:** Rozšíriť existujúci Tabs opt-in parametrom maxVisibleItems a rozmerom slotu cez lokálnu CSS premennú. Ostatní konzumenti zostávajú pri súčasnom defaulte.
