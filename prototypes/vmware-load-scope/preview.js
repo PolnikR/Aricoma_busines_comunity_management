@@ -10,6 +10,9 @@ let previewState = 'success'
 let refreshTimer
 function render() {
   const scoped = provider === 'vm-01'
+  $('#scope-prefix').textContent = scoped ? 'TEST-' : 'Any'
+  $('#scope-tag').textContent = scoped ? 'ABC Orchestrator' : 'Any'
+  $('.provider-scope').setAttribute('aria-label', `Loading conditions for ${provider}`)
   const source = scoped ? records : records.map(row => ({ ...row, name: row.name.replace('TEST-', 'PROD-') }))
   const query = $('#search').value.trim().toLowerCase()
   const visible = source.filter(row => (!powerOnly || row.on) && `${row.name} ${row.os} ACMTHCICLUSTER`.toLowerCase().includes(query))

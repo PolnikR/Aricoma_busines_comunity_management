@@ -1,17 +1,18 @@
-﻿# Posúvanie providerov podľa spike
+﻿# Provider lišta: štyri položky a podmienky napravo
 
-Samostatný HTML náhľad: otvor index.html alebo http://127.0.0.1:5192/.
+Samostatný HTML prototyp: index.html alebo http://127.0.0.1:5192/.
 
-Aktuálny krok rieši iba provider navigáciu. Návrh umiestnenia filtrov je odložený; doplnené podmienky v záložke boli odstránené. Ukážka má desať VMware providerov na overenie pretečenia, nie živý inventár.
+Vľavo je navigácia s maximálne štyrmi viditeľnými providermi. Napravo v tej istej lište je read-only zobrazenie Name prefix a Tag pre vybraného providera. Pre vm-01 sú TEST- a ABC Orchestrator; ostatné ukážkové providery majú Any. Zmena providera, čistenie table filtrov a request stavy nemenia umiestnenie podmienok. Nový riadok ani ďalšie tlačidlo filtrov nepribudli.
 
-Nadväzuje na spike/ant-design-shell Tabs, s novým limitom štyroch viditeľných providerov podľa požiadavky používateľa. Navigácia sa nenaťahuje na šírku tabuľky: každá záložka má 160 px a medzi nimi 4 px, takže desktop viewport štyroch záložiek má 652 px. Pri menšom počte providerov sa pás zúži. Na mobile sa zmestí menej položiek. Šípky posúvajú po celých viditeľných záložkách, nie o pôvodných 80 %, aby sa na desktope zobrazila ďalšia celá štvorica. Horizontálny wheel/touch, deaktivácia na okrajoch, Home/End, ArrowLeft/ArrowRight a dosunutie aktívneho providera zostali zachované. Divider má stále šírku karty.
+Na širokom desktope zostáva viewport štyroch providerov 652 px. Na užších obrazovkách sa pás zúži tak, aby zostal priestor pre podmienky. Na mobile sú hodnoty napravo pod sebou v tej istej lište a názov typu je skrátený na VMs. Šípky, horizontálny wheel/touch, Home/End, ArrowLeft/ArrowRight, wrap-around a automatické dosunutie aktívneho providera zostali zachované. Spodný prepínač 2/4/10 providerov je iba pomôcka prototypu.
 
-Pás má v náhľade výšku 50 px a jeden divider. Vonkajší rám sa neorezáva. Spodný testovací prepínač Providers umožňuje 2/4/10 providerov; State zostáva na preverenie request stavov. Dáta sú lokálne fixtures. Produkčný kód sa nemenil.
+Príklad používa lokálne dáta, nemá API ani perzistenciu. Search loaded VMs je návrh lokálneho zužovania vzorky; produkčný kód a pravidlá providera sa nemenili.
 
-Overenie revízie:
+Overenie:
 
 - node --check prototypes/vmware-load-scope/preview.js — PASS.
-- Browser/CDP: 320, 768, 1024, 1440 px; navigácia 50 px, bez horizontálneho pretečenia dokumentu; pri 1024/1440 px overený viewport presne 652 px a navigácia užšia ako tabuľka.
-- Skutočné kliky/klávesy: next/previous, deaktivácia na okrajoch, horizontálny wheel, Home/End, oba smery šípok s wrap-around, dosunutie aktívneho providera, jeden tab stop, skrytie šípok po zmenšení počtu providerov — PASS, nula runtime výnimiek.
-- Vizuálne prezreté desktop/mobil a tmavý motív. PNG: %TEMP%/abco-vmware-scope-preview/providers-1440.png, providers-320.png, providers-end-1440.png, providers-fit.png, providers-dark.png.
-- git diff --check — PASS. Celá suite a build neboli spustené; ide o izolovaný HTML prototyp.
+- Browser/CDP: 320, 768, 1024, 1440 px; nula runtime výnimiek a horizontálneho pretečenia dokumentu.
+- Overená pravá pozícia podmienok, hodnoty TEST-/ABC Orchestrator, zmena na Any pri výbere iného providera, presne 652 px viewport pri 1440 px.
+- Prev/next, deaktivácia na okrajoch, horizontálny wheel, klávesnica Home/End/ArrowLeft/ArrowRight, wrap-around, jeden tab stop, dosunutie vybranej položky, skrytie šípok pri malom počte providerov — PASS.
+- Desktop/mobil a tmavý motív prezreté; PNG v %TEMP%/abco-vmware-scope-preview/providers-1440.png a providers-320.png.
+- git diff --check — PASS. Celá suite, build a automatický axe audit neboli spustené.
