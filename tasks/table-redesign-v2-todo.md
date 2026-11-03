@@ -290,13 +290,15 @@ Východisko a rozhodnutia sú vo [fáze 4 plánu](table-redesign-v2-plan.md#fáz
 **Popis:** Doplniť rovnaký frame kontrakt do `DataTableSkeleton`, aby loading nepotreboval druhú kartu ani následné CSS prepisovanie cez `!rounded-*`.
 
 **Akceptačné kritériá:**
-- [ ] Embedded skeleton nevytvára vonkajší rámik/tieň/pozadie; zachová prístupný loading status, `aria-busy` a existujúce rozmery obsahu.
-- [ ] Predvolený standalone skeleton a voľby `layout`, toolbar/pagination ostávajú kompatibilné.
-- [ ] Nezavádzajú sa pevné minimálne výšky reálnych riadkov ani dekoratívna výplň.
+- [x] Embedded skeleton nevytvára vonkajší rámik/tieň/pozadie; zachová prístupný loading status, `aria-busy` a existujúce rozmery obsahu.
+- [x] Predvolený standalone skeleton a voľby `layout`, toolbar/pagination ostávajú kompatibilné.
+- [x] Nezavádzajú sa pevné minimálne výšky reálnych riadkov ani dekoratívna výplň.
 
 **Overenie:** `npm.cmd exec vitest run src/shared/components/data-table/DataTableSkeleton.test.tsx src/shared/components/data-table/DataTable.test.tsx`; Chrome: porovnať standalone a embedded loading.
 **Závislosti:** T14 (rovnaké pomenovanie kontraktu).
 **Súbory (S, 2):** `src/shared/components/data-table/DataTableSkeleton.tsx`, `DataTableSkeleton.test.tsx`.
+
+**Priebeh (2026-11-03):** implementovane; focused Vitest 2 subory / 9 testov PASS, focused ESLint PASS. Skutocne rohy loading stavu overi T19.
 
 ### Checkpoint 4: Kompozičné kontrakty pripravené
 - [ ] Cielené kontroly T13–T15 prešli; defaulty shared komponentov sa nezmenili.

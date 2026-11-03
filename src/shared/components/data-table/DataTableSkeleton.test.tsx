@@ -6,8 +6,8 @@ import { FilterPanelSkeleton } from '../filters/FilterTabs'
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 
 describe('DataTableSkeleton', () => {
-  it('renders the requested table shape and accessible loading state', () => {
-    render(<DataTableSkeleton columnCount={4} rowCount={3} ariaLabel="Loading providers" />)
+  it.each(['standalone', 'embedded'] as const)('renders the requested table shape and accessible loading state (%s)', (frame) => {
+    render(<DataTableSkeleton columnCount={4} rowCount={3} ariaLabel="Loading providers" frame={frame} />)
 
     const skeleton = screen.getByRole('status', { name: 'Loading providers' })
     expect(skeleton).toHaveAttribute('aria-busy', 'true')
