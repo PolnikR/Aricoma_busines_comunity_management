@@ -797,6 +797,8 @@ Plán: fáza 6 v table-redesign-v2-plan.md. **Stav: prebieha inline podľa pokyn
 **Závislosti:** T34, T38.
 **Súbory (M, 4):** pages/ResourcesPage.tsx a test; resources-ise/pages/ResourcesIsePage.tsx a test.
 
+**Priebeh (2026-11-03):** Oba routes pouzivaju ResourceViewNavigation, bez duplicity markup/fetch. Parent fresh4subory/69testov PASS, focused5fileESLint PASS, nezavislyreviewclean. Doplnkova table-scoped SECOND assertion zachovava povodny kontrakt; browserT41 nasleduje.
+
 ### Checkpoint 14: Jeden pripojený resource view
 - [ ] Obe roly sú zapojené cez jeden komponent; shared frame zostal jediný.
 - [ ] Prefix/tag/none/multi zodpovedajú vybranému providerovi aj v request stavoch.

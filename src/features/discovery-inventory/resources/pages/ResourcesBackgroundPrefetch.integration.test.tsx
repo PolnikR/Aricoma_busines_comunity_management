@@ -1,7 +1,7 @@
 import { invalidateProviderMutation } from '@/shared/query/providerMutationInvalidation'
 import { StrictMode, type PropsWithChildren } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act, cleanup, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, renderHook, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { STANDARD_QUERY_OPTIONS, STANDARD_STALE_TIME_MS } from '@/shared/query/cachePolicy'
@@ -358,7 +358,7 @@ describe('Resources background VMware prefetch', () => {
     expect(inventoryCalls('vm-10')).toHaveLength(1)
     expect(inventoryCalls('vm-10')[0]?.[1]?.body).toBe(mode === 'defaults' ? '{}' : '{"tag":"prod","name_prefix":"SECOND"}')
     fireEvent.click(screen.getByRole('tab', { name: 'VMware VMs · VMware 10' }))
-    expect(await screen.findByText('SECOND')).toBeVisible()
+    expect(await within(screen.getByRole('region', { name: 'Virtual machine inventory table' })).findByText('SECOND')).toBeVisible()
     expect(inventoryCalls('vm-10')).toHaveLength(1)
     expect(screen.getByRole('searchbox', { name: 'Search virtual machines' })).toHaveValue(mode === 'defaults' ? '' : 'SECOND')
   })

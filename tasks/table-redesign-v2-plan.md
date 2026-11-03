@@ -369,3 +369,5 @@ Baseline T31: npm.cmd exec -- vitest run helpers/vmwareProviderFilter.test.ts he
 Ruling T34b (2026-11-03): audit potvrdil samostatný first-tag prefetch v recovery-groups/components/RecoveryGroupBuilder.tsx:128–150. Pred jeho zmenou bol doplnený T34b (2 súbory) po T34 a pred CP13, aby T34 neprekročil päť súborov a cache buildera zodpovedala resource hooku. Bez rozšírenia builder UI alebo CRUD.
 
 Ruling T40a/T40b: nové SK/CS/EN kľúče sa pripravia pred T37–T39, aby prezentačné komponenty nezobrazovali surové locale kľúče. T40b odstráni neúčinnú summary cestu po T39; celá úloha T40 sa uzavrie až po oboch krokoch. Stále iba 3 JSON + VmwareResourcesPage a test = päť produkčných/test súborov.
+
+Ruling T39 (2026-11-03): integration test lookup for SECOND now matches both the literal provider prefix and a VM name. Scope that existing assertion to the inventory table in ResourcesBackgroundPrefetch.integration.test.tsx; this is the fifth T39 file, within task budget. Cost if wrong: test selector rework; no production behavior expansion.
