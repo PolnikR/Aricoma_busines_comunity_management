@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Throwaway design prototype: loading conditions inside the existing view tab. No API or persistence. -->
+<!-- Throwaway prototype: provider scrolling mirrors spike/ant-design-shell Tabs. Filter placement deferred. -->
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -14,10 +14,21 @@
     <header class="page-heading"><div><p class="eyebrow">Discovery &amp; inventory / Resources</p><h1>Virtual machines</h1><p>VMware inventory, health and placement overview.</p></div><button id="reload" type="button">↻ Refresh preview</button></header>
     <div class="metrics" aria-label="Loaded inventory metrics"><span><strong id="total">6</strong> Discovered VMs</span><span><strong id="powered">4</strong> Powered on</span><span><strong>1</strong> Cluster</span><span><strong id="memory">48 GB</strong> Allocated memory</span><span class="metrics-note">Within provider scope</span></div>
     <section class="inventory" aria-label="Resource inventory">
-      <nav class="view-nav" aria-label="Inventory views">
-        <button class="view active" data-provider="vm-01" aria-current="page">VMware VMs <code>vm-01</code><span class="tab-scope"><svg class="icon" aria-hidden="true"><use href="#lock"/></svg><span class="sr-only">Provider loading scope: name starts with </span><code>TEST-*</code><span aria-hidden="true">·</span><span class="sr-only">and tag </span><span>ABC Orchestrator</span></span></button>
-        <button class="view" data-provider="vm-03">VMware VMs <code>vm-03</code></button>
-        <span class="other-view">FlashSystem Volumes <code>flash-01</code></span><span class="other-view">IBM Power Partitions <code>power-01</code></span>
+      <nav class="provider-nav" aria-label="Inventory providers">
+        <button id="previous-provider" class="provider-scroll previous" type="button" aria-label="Previous provider tabs" disabled hidden>‹</button>
+        <div class="view-nav" role="tablist" aria-label="VMware providers">
+          <button id="provider-vm-01" class="view active" type="button" role="tab" aria-selected="true" tabindex="0" aria-controls="vm-panel" data-provider="vm-01">VMware VMs <code>vm-01</code></button>
+          <button id="provider-vm-03" class="view" type="button" role="tab" aria-selected="false" tabindex="-1" aria-controls="vm-panel" data-provider="vm-03">VMware VMs <code>vm-03</code></button>
+          <button id="provider-vm-04" class="view" type="button" role="tab" aria-selected="false" tabindex="-1" aria-controls="vm-panel" data-provider="vm-04">VMware VMs <code>vm-04</code></button>
+          <button id="provider-vm-05" class="view" type="button" role="tab" aria-selected="false" tabindex="-1" aria-controls="vm-panel" data-provider="vm-05">VMware VMs <code>vm-05</code></button>
+          <button id="provider-vm-06" class="view" type="button" role="tab" aria-selected="false" tabindex="-1" aria-controls="vm-panel" data-provider="vm-06">VMware VMs <code>vm-06</code></button>
+          <button id="provider-vm-07" class="view" type="button" role="tab" aria-selected="false" tabindex="-1" aria-controls="vm-panel" data-provider="vm-07">VMware VMs <code>vm-07</code></button>
+          <button id="provider-vm-08" class="view" type="button" role="tab" aria-selected="false" tabindex="-1" aria-controls="vm-panel" data-provider="vm-08">VMware VMs <code>vm-08</code></button>
+          <button id="provider-vm-09" class="view" type="button" role="tab" aria-selected="false" tabindex="-1" aria-controls="vm-panel" data-provider="vm-09">VMware VMs <code>vm-09</code></button>
+          <button id="provider-vm-10" class="view" type="button" role="tab" aria-selected="false" tabindex="-1" aria-controls="vm-panel" data-provider="vm-10">VMware VMs <code>vm-10</code></button>
+          <button id="provider-vm-11" class="view" type="button" role="tab" aria-selected="false" tabindex="-1" aria-controls="vm-panel" data-provider="vm-11">VMware VMs <code>vm-11</code></button>
+        </div>
+        <button id="next-provider" class="provider-scroll next" type="button" aria-label="Next provider tabs" hidden>›</button>
       </nav>
       <div class="toolbar">
         <div class="search"><label for="search">Search loaded VMs</label><div class="search-control"><svg class="icon" aria-hidden="true"><use href="#search-icon"/></svg><input id="search" type="search" placeholder="Name, operating system or cluster…" autocomplete="off"></div></div>
@@ -25,7 +36,7 @@
         <button id="filter-button" type="button"><svg class="icon" aria-hidden="true"><use href="#filter-icon"/></svg>Filters <span id="filter-count" class="count" hidden>1</span></button>
       </div>
       <div id="active-filter" class="active-filter" hidden><span>Table filter</span><button id="clear-power" type="button">Powered on <span aria-hidden="true">×</span><span class="sr-only">Remove power filter</span></button><small>Applies within the loaded inventory</small></div>
-      <div class="table-scroll" tabindex="0" role="region" aria-label="Virtual machines table, scroll horizontally on small screens">
+      <div id="vm-panel" class="table-scroll" tabindex="0" role="tabpanel" aria-labelledby="provider-vm-01">
         <table><thead><tr><th scope="col">Virtual machine</th><th scope="col">Operating system</th><th scope="col">Placement</th><th scope="col">Tags</th><th scope="col">Compute</th><th scope="col">Connection</th><th scope="col">Power</th></tr></thead><tbody id="rows"></tbody></table>
         <div id="empty" class="empty" role="status" hidden><h2>No VMs match these table filters</h2><p>The provider loading scope still applies.</p><button id="reset" type="button">Clear table filters</button></div>
         <div id="loading" class="loading" role="status" hidden><span class="sr-only">Loading sample inventory</span><div></div><div></div><div></div></div>
@@ -33,9 +44,9 @@
       </div>
       <footer class="pagination"><span id="result" role="status" aria-live="polite"></span><span class="metrics-note">Preview data · 10 rows per page</span></footer>
     </section>
-    <p class="design-rationale">The prefix and tag belong to the provider tab. No extra row, badge counter or scope button. The existing Filters dialog explains the conditions.</p>
+    <p class="design-rationale">Provider navigation restored from spike: one row, overflow arrows, horizontal scrolling and keyboard navigation. Filter placement is deferred.</p>
   </main>
-  <aside class="prototype-switcher" aria-label="Prototype controls"><label for="state">State</label><select id="state"><option value="success">Loaded</option><option value="loading">Loading</option><option value="error">Error</option><option value="empty">Empty</option></select></aside>
+  <aside class="prototype-switcher" aria-label="Prototype controls"><label for="state">State</label><select id="state"><option value="success">Loaded</option><option value="loading">Loading</option><option value="error">Error</option><option value="empty">Empty</option></select><label for="provider-count">Providers</label><select id="provider-count"><option value="2">2 providers</option><option value="4">4 providers</option><option value="10" selected>10 providers</option></select></aside>
   <dialog id="filter-dialog" aria-labelledby="filter-title"><form id="filter-form"><header><div><p class="eyebrow">Within loaded inventory</p><h2 id="filter-title">Filters</h2></div><button id="cancel-filter" type="button" aria-label="Close table filters">×</button></header><section id="provider-conditions" aria-labelledby="conditions-title"><h3 id="conditions-title">Provider loading scope · vm-01</h3><p>Configured on the provider. Both conditions apply.</p><dl><div><dt>Name starts with</dt><dd><code>TEST-</code></dd></div><div><dt>Tag</dt><dd><code>ABC Orchestrator</code></dd></div></dl><p class="explanation"><svg class="icon" aria-hidden="true"><use href="#lock"/></svg>Read-only here. Clearing table filters preserves these conditions.</p></section><h3>Within loaded inventory</h3><label class="checkbox"><input id="power" type="checkbox">Powered on only</label><footer><button id="clear-filters" type="button">Clear table filters</button><button class="primary" type="submit">Apply</button></footer></form></dialog>
   <svg class="sr-only" aria-hidden="true"><defs><symbol id="lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></symbol><symbol id="search-icon" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 5 5"/></symbol><symbol id="filter-icon" viewBox="0 0 24 24"><path d="M3 4h18l-7 8v8l-4-2v-6Z"/></symbol></defs></svg>
 </body>

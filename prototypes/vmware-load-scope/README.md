@@ -1,19 +1,17 @@
-﻿# VMware: podmienky načítania v existujúcej záložke
+﻿# Posúvanie providerov podľa spike
 
-Samostatný HTML prototyp. Otvor index.html v prehliadači alebo http://127.0.0.1:5192/. Bez závislostí, API a ukladania stavu.
+Samostatný HTML náhľad: otvor index.html alebo http://127.0.0.1:5192/.
 
-Po spätnej väzbe boli odstránené všetky tri pôvodné návrhy: samostatný pás, pridaná sekcia navigácie aj duplicitné tlačidlo rozsahu. Prefix a tag sú teraz súčasťou existujúcej záložky VMware VMs / vm-01. Majú zámok a tlmené zobrazenie: TEST-* · ABC Orchestrator. Nepridávajú nový riadok ani ovládací prvok.
+Aktuálny krok rieši iba provider navigáciu. Návrh umiestnenia filtrov je odložený; doplnené podmienky v záložke boli odstránené. Ukážka má desať VMware providerov na overenie pretečenia, nie živý inventár.
 
-Navigácia zostáva vysoká 50 px aj na mobile; dlhšie záložky sa horizontálne posúvajú. Hodnoty patria konkrétnemu providerovi, preto zostávajú pri vm-01 aj po prepnutí na vm-03.
+Zdroj správania: spike/ant-design-shell, src/shared/components/tabs/Tabs.tsx a ResourcesPage.tsx. Spike nemá pevný počet viditeľných providerov: rozhoduje šírka pásu. Záložka má maximum 256 px, nezalamuje sa. Pri pretečení sa zobrazia šípky so šírkou 36 px. Posun je max(160 px, 80 % šírky viewportu záložiek); na začiatku/konci je príslušná šípka disabled. Bez pretečenia obe zmiznú. Zachované sú horizontálne posúvanie, ArrowLeft/ArrowRight s prechodom cez okraj, Home/End, jediný tab stop a automatické dosunutie vybraného providera.
 
-Existujúce Filters otvára jediné spoločné okno: hore sú read-only podmienky providera, pod nimi filtre viditeľnej tabuľky. Pri vm-03 bez pevných podmienok sa read-only sekcia skryje. Vymazanie table filtrov nemení provider podmienky.
+Pás má v náhľade výšku 50 px a jeden divider. Vonkajší rám sa neorezáva. Spodný testovací prepínač Providers umožňuje 2/4/10 providerov; State zostáva na preverenie request stavov. Dáta sú lokálne fixtures. Produkčný kód sa nemenil.
 
-Search loaded VMs je návrh lokálneho zužovania už načítaného zoznamu. Aktuálna produkčná aplikácia pri pevnom filtri ovládanie zamyká; týmto prototypom sa produkčná logika nemení.
+Overenie revízie:
 
-Overenie tejto revízie:
-
-- node --check prototypes/vmware-load-scope/preview.js a git diff --check: PASS.
-- Izolovaný Chrome: 320, 768, 1024, 1440 px; bez horizontálneho pretečenia dokumentu, navigácia 50 px, toolbar bezprostredne po navigácii, nula dodatočných scope tlačidiel.
-- Skutočné kliky/klávesy: existujúce Filters a jeho provider detail, Escape a návrat fokusu, Apply/reset, prepnutie providera, zobrazenie podmienok počas loading: PASS, bez runtime výnimiek. Skontrolovaný svetlý aj tmavý motív.
-- PNG v %TEMP%/abco-vmware-scope-preview/: tab-1440.png, tab-320.png, tab-dark.png, filters-existing-dialog.png.
-- Celá suite, production build a automatický axe audit neboli spustené.
+- node --check prototypes/vmware-load-scope/preview.js — PASS.
+- Browser/CDP: 320, 768, 1024, 1440 px; navigácia 50 px, bez horizontálneho pretečenia dokumentu.
+- Skutočné kliky/klávesy: next/previous, deaktivácia na okrajoch, horizontálny wheel, Home/End, oba smery šípok s wrap-around, dosunutie aktívneho providera, jeden tab stop, skrytie šípok po zmenšení počtu providerov — PASS, nula runtime výnimiek.
+- Vizuálne prezreté desktop/mobil a tmavý motív. PNG: %TEMP%/abco-vmware-scope-preview/providers-1440.png, providers-320.png, providers-end-1440.png, providers-fit.png, providers-dark.png.
+- git diff --check — PASS. Celá suite a build neboli spustené; ide o izolovaný HTML prototyp.

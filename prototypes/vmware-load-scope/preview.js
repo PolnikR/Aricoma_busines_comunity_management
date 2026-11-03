@@ -42,11 +42,50 @@ function render() {
 }
 $('#state').addEventListener('change', event => { clearTimeout(refreshTimer); previewState = event.target.value; render() })
 $('#search').addEventListener('input', render)
-document.querySelectorAll('[data-provider]').forEach(button => button.addEventListener('click', () => {
+const providerList = $('.view-nav')
+const providerTabs = [...document.querySelectorAll('[data-provider]')]
+function selectProvider(button) {
   provider = button.dataset.provider
-  document.querySelectorAll('[data-provider]').forEach(item => { item.classList.toggle('active', item === button); if (item === button) item.setAttribute('aria-current', 'page'); else item.removeAttribute('aria-current') })
+  providerTabs.forEach(item => {
+    item.classList.toggle('active', item === button)
+    item.setAttribute('aria-selected', String(item === button))
+    item.tabIndex = item === button ? 0 : -1
+  })
+  $('#vm-panel').setAttribute('aria-labelledby', button.id)
+  button.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
   $('#search').value = ''; powerOnly = false; render()
-}))
+}
+providerTabs.forEach(button => {
+  button.addEventListener('click', () => selectProvider(button))
+  button.addEventListener('keydown', event => {
+    const visibleTabs = providerTabs.filter(tab => !tab.hidden)
+    const index = visibleTabs.indexOf(button)
+    const next = { ArrowRight: (index + 1) % visibleTabs.length, ArrowLeft: (index - 1 + visibleTabs.length) % visibleTabs.length, Home: 0, End: visibleTabs.length - 1 }[event.key]
+    if (next === undefined) return
+    event.preventDefault()
+    selectProvider(visibleTabs[next])
+    visibleTabs[next].focus({ preventScroll: true })
+  })
+})
+function updateProviderScroll() {
+  const max = Math.max(0, providerList.scrollWidth - providerList.clientWidth)
+  $('#previous-provider').hidden = max <= 1
+  $('#next-provider').hidden = max <= 1
+  $('#previous-provider').disabled = providerList.scrollLeft <= 1
+  $('#next-provider').disabled = providerList.scrollLeft >= max - 1
+}
+for (const [id, direction] of [['previous-provider', -1], ['next-provider', 1]]) {
+  $(`#${id}`).addEventListener('click', () => providerList.scrollBy({ left: direction * Math.max(160, providerList.clientWidth * 0.8), behavior: 'smooth' }))
+}
+providerList.addEventListener('scroll', updateProviderScroll, { passive: true })
+new ResizeObserver(updateProviderScroll).observe(providerList)
+window.addEventListener('resize', updateProviderScroll)
+$('#provider-count').addEventListener('change', event => {
+  providerTabs.forEach((tab, index) => { tab.hidden = index >= Number(event.target.value) })
+  if (providerTabs.find(tab => tab.dataset.provider === provider)?.hidden) selectProvider(providerTabs[0])
+  updateProviderScroll()
+})
+updateProviderScroll()
 $('#filter-dialog').addEventListener('close', () => $('#filter-button').focus())
 $('#filter-button').addEventListener('click', () => { $('#power').checked = powerOnly; $('#filter-dialog').showModal() })
 $('#cancel-filter').addEventListener('click', () => $('#filter-dialog').close())
