@@ -367,3 +367,5 @@ Izolovaný Chrome na existujúcom production route, validné fixtures bez tagu, 
 Baseline T31: npm.cmd exec -- vitest run helpers/vmwareProviderFilter.test.ts helpers/filterVirtualMachines.test.ts model/inventoryQueries.test.ts (úplné cesty podľa todo), --maxWorkers=2: 3 súbory / 13 testov PASS.
 
 Ruling T34b (2026-11-03): audit potvrdil samostatný first-tag prefetch v recovery-groups/components/RecoveryGroupBuilder.tsx:128–150. Pred jeho zmenou bol doplnený T34b (2 súbory) po T34 a pred CP13, aby T34 neprekročil päť súborov a cache buildera zodpovedala resource hooku. Bez rozšírenia builder UI alebo CRUD.
+
+Ruling T40a/T40b: nové SK/CS/EN kľúče sa pripravia pred T37–T39, aby prezentačné komponenty nezobrazovali surové locale kľúče. T40b odstráni neúčinnú summary cestu po T39; celá úloha T40 sa uzavrie až po oboch krokoch. Stále iba 3 JSON + VmwareResourcesPage a test = päť produkčných/test súborov.

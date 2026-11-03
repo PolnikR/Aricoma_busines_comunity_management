@@ -805,6 +805,8 @@ Plán: fáza 6 v table-redesign-v2-plan.md. **Stav: prebieha inline podľa pokyn
 **Závislosti:** T40a (preklady) pred T37/T38; T40b (starý render) po T39. Celá T40 sa uzavrie po oboch krokoch.
 **Súbory (M, 5):** locales/sk.json, cs.json, en.json; components/vmware/VmwareResourcesPage.tsx a test.
 
+**Priebeh T40a (2026-11-03):** 4 nove kluce v EN/SK/CS pripravene pred UI konzumentmi. JSON parse/unikatnost/count interpolacia/help.close PASS; parent obsahoveassertions PASS, nezavislyreviewclean. T40b odstranenie stareho renderu zostava po T39.
+
 ### T41: Browser matica a finálny audit
 
 **Popis:** Rozšíriť existujúcu resource CDP kontrolu o štyri sloty a podmienky. Zachovať obidve shared/regresné sady bez kopírovania celého QA transportu alebo použitia živých mutácií.
