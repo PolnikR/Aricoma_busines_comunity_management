@@ -33,10 +33,7 @@ function getColumns(
       id: 'name',
       header: t('tables.cleanRoomPolicy.name'),
       cell: policy => (
-        <>
-          <span className="block font-semibold text-text-primary">{policy.name}</span>
-          <span className="mt-0.5 block font-mono text-[11px] text-text-subtle">{policy.id}</span>
-        </>
+        <span className="block max-w-64 truncate font-semibold text-text-primary" title={policy.name}>{policy.name}</span>
       ),
     },
     {

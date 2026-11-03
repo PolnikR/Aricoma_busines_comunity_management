@@ -31,10 +31,7 @@ function getColumns(
       id: 'app',
       header: t('recoveryRuns.table.application'),
       cell: row => (
-        <>
-          <span className="block font-semibold text-text-primary">{row.name}</span>
-          <span className="mt-0.5 block font-mono text-[11px] text-text-subtle">{row.id}</span>
-        </>
+        <span className="block max-w-64 truncate font-semibold text-text-primary" title={row.name}>{row.name}</span>
       ),
     },
   ]
