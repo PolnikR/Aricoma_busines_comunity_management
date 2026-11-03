@@ -784,6 +784,8 @@ Plán: fáza 6 v table-redesign-v2-plan.md. **Stav: prebieha inline podľa pokyn
 **Závislosti:** T35, T37.
 **Súbory (S, 2):** nový components/ResourceViewNavigation.tsx a test.
 
+**Priebeh (2026-11-03):** Jeden ResourceViewNavigation bez fetch: opt-in4 provider slots vlavo + len zodpovedajuci VMware scope napravo, bez prazdneho wrappera pri none. Parent fresh2subory/14testov PASS, focused ESLint PASS, reviewclean. Taglabel pouziva novepluralTags key. Responsive9rem/2xl10rem a badge-shrink0; realbrowserT41 nasleduje.
+
 ### T39: Zapojiť source aj target routes
 
 **Popis:** Nahradiť duplicitné Tabs markup v ResourcesPage/ResourcesIsePage spoločným ResourceViewNavigation. Oba ďalej používajú InventoryViewFrame cez existujúci shell tabs slot.
