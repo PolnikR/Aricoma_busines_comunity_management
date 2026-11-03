@@ -55,7 +55,7 @@ export function ResourceViewNavigation({ items, labels, value, onChange, selecte
         />
       </div>
       {vmwareProvider && providerFilter?.isFixed ? (
-        <div className="ml-auto w-2/5 min-w-0 max-w-[17rem] shrink-0 sm:w-1/2">
+        <div className="ml-auto w-max min-w-0 max-w-[calc(100%-8.25rem)] shrink-0 sm:max-w-[50%]">
           <VmwareProviderFilterSummary
             providerId={vmwareProvider.id}
             filter={providerFilter}

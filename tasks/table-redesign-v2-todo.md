@@ -1032,3 +1032,19 @@ Verification passed:
 - `git diff --check`.
 
 Full suite/build not run. Unrelated worktree edits excluded from this commit.
+
+
+### Provider scope readability correction (2026-11-03)
+
+The fixed 17rem summary cap compressed TEST- and Nekriticke-produkcne into independently scrolling fields. Removed both 17rem caps and the individual horizontal scrollers. The right-hand summary now uses its natural content width, limited to half the desktop strip; mobile reserves 8.25rem for one provider tab, arrow controls and gap. Prefix keeps its intrinsic width up to 45% when tags coexist. Long values wrap when constrained. One visible tag and +N remain unchanged.
+
+Validation: 28 affected component tests passed; focused ESLint and script syntax passed; final quick browser run passed 24 source/target cases. Added the reported TEST-/Nekriticke-produkcne/+2 fixture at desktop/mobile, assertions for no horizontal value overflow and full single-line desktop rendering. Existing single-line tag-to-plus spacing checks retained; wrapped text is measured for overflow rather than final-line whitespace. Desktop screenshot visually inspected. An initial fixture mistakenly returned SRC-/TGT- rows for TEST-; corrected fixture prefixes before the final run. Final artifacts: %TEMP%/abco-scope-readable.
+
+Commands:
+- `npm.cmd exec -- vitest run src/features/discovery-inventory/resources/components/vmware/VmwareProviderFilterSummary.test.tsx src/features/discovery-inventory/resources/components/ResourceViewNavigation.test.tsx --maxWorkers=2`
+- `npm.cmd exec -- eslint src/features/discovery-inventory/resources/components/vmware/VmwareProviderFilterSummary.tsx src/features/discovery-inventory/resources/components/ResourceViewNavigation.tsx scripts/qa/inventory-view-table-browser.mjs --max-warnings 0`
+- `node scripts/qa/inventory-view-table-browser.mjs --phase6-only --quick`
+- `node --check scripts/qa/inventory-view-table-browser.mjs`
+- `git diff --check`
+
+Full suite/build not run; unrelated worktree changes excluded.
