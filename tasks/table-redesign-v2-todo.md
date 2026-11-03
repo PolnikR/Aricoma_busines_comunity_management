@@ -338,22 +338,26 @@ Východisko a rozhodnutia sú vo [fáze 4 plánu](table-redesign-v2-plan.md#fáz
 **Priebeh (2026-11-03):** integracny test zachovania view/navigacie cez loading, fatal error, retry, cached error a empty; focused Vitest 7 suborov / 74 testov PASS, focused ESLint PASS.
 
 ### Checkpoint 5: View a tabuľka fungujú spolu
-- [ ] T16/T17 majú výsledky focused testov a browser kontrolu jednej karty v úspešnom aj chybovom stave.
-- [ ] Horný pás ostáva navigáciou view s badge providera a modrým podčiarknutím; toolbar a stĺpce sú viditeľne samostatnou tabuľkovou vrstvou.
-- [ ] Neboli obnovené T4 ani vrátené T5–T7; sú pripravené screenshoty na review pred finálnou kontrolou layoutu.
+- [x] T16/T17 majú výsledky focused testov a browser kontrolu jednej karty v úspešnom aj chybovom stave.
+- [x] Horný pás ostáva navigáciou view s badge providera a modrým podčiarknutím; toolbar a stĺpce sú viditeľne samostatnou tabuľkovou vrstvou.
+- [x] Neboli obnovené T4 ani vrátené T5–T7; sú pripravené screenshoty na review pred finálnou kontrolou layoutu.
+
+**Overenie CP5:** realny Chrome: jedna karta, priehladne tabs, samostatny toolbar, loading/error/cached integracie PASS.
 
 ### T18: Priestor na súvislý tieň karty
 
 **Popis:** V resource route vetve ponechať okolo spoločnej karty priestor na tieň aj pri karte natiahnutej po spodok. Rozmery odmerať v Chrome; lokálny gutter/padding musí zohľadniť aj clipping hranicu `ContainedViewportFrame`.
 
 **Akceptačné kritériá:**
-- [ ] Tieň je súvislý po bokoch aj pod kartou, bez tmavej škvrny pri oblúku; všetky štyri rohy sú súvislé aj pri zoom 125 %.
-- [ ] Pri 1280×600 je footer dostupný; pri krátkom zozname ostáva dole, pri dlhom scrollujú údaje a nie navigácia view. Na mobile nevznikne horizontálny scroll dokumentu.
-- [ ] Zarovnanie karty a nadpisu je zachované; nezruší sa globálne route overflow a orezanie ani maska sa nepoužijú na schovanie chyby rámika.
+- [x] Tieň je súvislý po bokoch aj pod kartou, bez tmavej škvrny pri oblúku; všetky štyri rohy sú súvislé aj pri zoom 125 %.
+- [x] Pri 1280×600 je footer dostupný; pri krátkom zozname ostáva dole, pri dlhom scrollujú údaje a nie navigácia view. Na mobile nevznikne horizontálny scroll dokumentu.
+- [x] Zarovnanie karty a nadpisu je zachované; nezruší sa globálne route overflow a orezanie ani maska sa nepoužijú na schovanie chyby rámika.
 
 **Overenie:** `npm.cmd exec vitest run src/shared/components/page/ContainedViewportFrame.test.tsx src/features/discovery-inventory/resources/components/ResourceInventoryShell.test.tsx`; podľa zavedeného lokálneho kontraktu aj nový `ResourceViewportFrame.test.tsx`. Chrome: 1600×900, 1280×600, 800×900, 390×844, dve témy a desktop zoom 125 %.
 **Závislosti:** T16, T17, CP5.
 **Súbory (S–M, najviac 3):** `src/features/discovery-inventory/resources/components/ResourceViewportFrame.tsx`, prípadne nový `ResourceViewportFrame.test.tsx`, podľa merania `ResourceInventoryShell.tsx`. Zásah do `AppShell`/shared route frame vyžaduje najprv doložiť konkrétny ancestor a aktualizovať rozsah plánu.
+
+**Priebeh (2026-11-03):** lokalny p-2 gutter v ResourceViewportFrame; odstup karty od clipping hranice je 8 px vlavo/vpravo/dole. 25 Chrome merani (obe roly, obe temy, 4 viewporty a desktop 125 % zoom) PASS. Vitest 2 subory / 3 testy a focused ESLint PASS.
 
 ### T19: Reprodukovateľné browser overenie
 
