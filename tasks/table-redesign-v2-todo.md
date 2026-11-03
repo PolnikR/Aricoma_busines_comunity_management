@@ -1001,3 +1001,18 @@ git diff --check
 ```
 
 Artifacts: %TEMP%/abco-single-provider-tag-quick and %TEMP%/abco-single-provider-tag-interactions. Isolated local fixtures only. Complete suite and production build not run; unrelated routeContract snapshot excluded.
+
+
+### Provider tag spacing correction (2026-11-03)
+
+Removed flex growth from the prefix/tag field wrappers and tag value so the +N trigger follows the text instead of being separated by unused field width. Preserved shrinking/overflow handling and right alignment. Added a browser assertion measuring the actual tag text edge to the trigger (maximum 9px including rounding when the text fits).
+
+Passed: 28 component tests, 20 source/target browser captures (including prefix-only, tag-only, combined and mobile cases), focused ESLint, parser and diff checks. Commands:
+
+- `npm.cmd exec -- vitest run src/features/discovery-inventory/resources/components/vmware/VmwareProviderFilterSummary.test.tsx src/features/discovery-inventory/resources/components/ResourceViewNavigation.test.tsx --maxWorkers=2`
+- `npm.cmd exec -- eslint src/features/discovery-inventory/resources/components/vmware/VmwareProviderFilterSummary.tsx scripts/qa/inventory-view-table-browser.mjs --max-warnings 0`
+- `node scripts/qa/inventory-view-table-browser.mjs --phase6-only --quick` (artifacts: %TEMP%/abco-tag-gap; tag-only desktop screenshot visually checked)
+- `node --check scripts/qa/inventory-view-table-browser.mjs`
+- `git diff --check`
+
+Complete suite/build not run. Unrelated routeContract snapshot excluded.

@@ -31,7 +31,7 @@ export function VmwareProviderFilterSummary({ filter, label, nameLabel, tagLabel
         <path d="M8 10V7a4 4 0 0 1 8 0v3" />
       </svg>
       {filter.prefix ? (
-        <span className="flex min-w-0 flex-1 items-center sm:gap-1">
+        <span className="flex min-w-0 flex-initial items-center sm:gap-1">
           <span className="sr-only shrink-0 whitespace-nowrap text-text-muted sm:not-sr-only sm:whitespace-nowrap">{nameLabel}</span>
           <span
             role="region"
@@ -42,7 +42,7 @@ export function VmwareProviderFilterSummary({ filter, label, nameLabel, tagLabel
         </span>
       ) : null}
       {tags.length > 0 ? (
-        <span className="flex min-w-0 flex-1 items-center sm:gap-1">
+        <span className="flex min-w-0 flex-initial items-center sm:gap-1">
           <span className="sr-only shrink-0 whitespace-nowrap text-text-muted sm:not-sr-only sm:whitespace-nowrap">{tagLabel}</span>
           {tags.slice(0, visibleTagCount).map((tag, index) => (
             <span
@@ -51,7 +51,7 @@ export function VmwareProviderFilterSummary({ filter, label, nameLabel, tagLabel
               role="region"
               aria-label={tagLabel}
               tabIndex={0}
-              className="custom-scrollbar min-w-0 flex-1 overflow-x-auto whitespace-nowrap rounded-sm font-medium text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/30"
+              className="custom-scrollbar min-w-0 overflow-x-auto whitespace-nowrap rounded-sm font-medium text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/30"
             >{tag}</span>
           ))}
         </span>

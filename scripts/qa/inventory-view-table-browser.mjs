@@ -367,6 +367,10 @@ async function scopeGeometry(name, expectedProviderId) {
   for (let i = 1; i < value.tabs.length; i++) {
     assert.ok(Math.abs(value.tabs[i].x - value.tabs[i - 1].right - 4) <= 1, `${name}: natural tabs have no blank slots`)
   }
+  if (value.trigger) {
+    const tagGap = await read(`(() => {const s=document.querySelector('[data-provider-scope]'),t=s.querySelector('[data-provider-tag-index="0"]'),b=s.querySelector('button[aria-haspopup=dialog]');const r=document.createRange();r.selectNodeContents(t);return {gap:b.getBoundingClientRect().x-r.getBoundingClientRect().right,fits:t.scrollWidth<=t.clientWidth+1};})()`)
+    if (tagGap.fits) assert.ok(tagGap.gap <= 9, `${name}: +N follows tag text without stretched blank space`)
+  }
   if (value.summary) {
     assert.ok(value.regions.every(region => region.clientWidth > 0), `${name}: prefix/tag regions have positive readable width`)
     assert.ok(value.summary.y < value.nav.bottom && value.summary.bottom > value.nav.y, `${name}: summary remains on same band`)
