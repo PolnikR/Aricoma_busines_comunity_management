@@ -1016,3 +1016,19 @@ Passed: 28 component tests, 20 source/target browser captures (including prefix-
 - `git diff --check`
 
 Complete suite/build not run. Unrelated routeContract snapshot excluded.
+
+
+### Resources filter dialog ? multiple loaded tags (2026-11-03)
+
+User clarified this concerns the Resources filter dialog, not provider editing or the compact scope strip. Its native Select used tags[0] and replaced the array with a single selection. It now uses the shared MultiSelect with the complete array and merges selected tags into catalog options so missing catalog entries remain visible. Unlocked filters can apply multiple tags using existing OR semantics. Provider-fixed filters allow opening the list to inspect every checked tag while checkboxes and Apply/Clear remain disabled. MultiSelect gains an opt-in readOnly mode with keyboard-focusable panel; existing editable callers are unchanged.
+
+Verification passed:
+
+- `npm.cmd exec -- vitest run src/features/discovery-inventory/resources/components/vmware/VirtualMachinesToolbar.test.tsx src/shared/components/form/MultiSelect.test.tsx src/features/providers-connectors/providers/components/ProviderCreateForm.test.tsx --maxWorkers=2` ? 55 tests.
+- `npm.cmd exec -- eslint src/shared/components/form/MultiSelect.tsx src/features/discovery-inventory/resources/components/vmware/VirtualMachinesToolbar.tsx src/features/discovery-inventory/resources/components/vmware/VirtualMachinesToolbar.test.tsx --max-warnings 0`.
+- `npm.cmd exec -- eslint scripts/qa/inventory-view-table-browser.mjs --max-warnings 0` and `node --check scripts/qa/inventory-view-table-browser.mjs`.
+- `npm.cmd run typecheck`.
+- `node scripts/qa/inventory-view-table-browser.mjs --phase6-only --quick` ? 20 cases, plus explicit source/target filter-dialog probes at 1440px and 320px: all five configured tags checked/disabled, unchanged dialog bounds, keyboard focus into read-only list, first Escape closes only list. Artifacts: %TEMP%/abco-resources-multi-tags. Desktop open-filter screenshot visually inspected.
+- `git diff --check`.
+
+Full suite/build not run. Unrelated worktree edits excluded from this commit.

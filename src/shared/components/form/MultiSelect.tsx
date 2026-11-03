@@ -11,9 +11,10 @@ interface MultiSelectProps {
   placeholder: string
   emptyText: string
   disabled?: boolean
+  readOnly?: boolean
 }
 
-export function MultiSelect({ id, label, options, value, onChange, placeholder, emptyText, disabled = false }: MultiSelectProps) {
+export function MultiSelect({ id, label, options, value, onChange, placeholder, emptyText, disabled = false, readOnly = false }: MultiSelectProps) {
   const [open, setOpen] = useState(false)
   const panelId = useId()
   const root = useRef<HTMLDivElement>(null)
@@ -75,7 +76,7 @@ export function MultiSelect({ id, label, options, value, onChange, placeholder, 
       const active = document.activeElement
       const choices = [...menu.querySelectorAll<HTMLInputElement>('input:not([disabled])')]
       let target: HTMLElement | undefined
-      if (active === trigger && !event.shiftKey) target = choices[0]
+      if (active === trigger && !event.shiftKey) target = choices[0] ?? (menu.tabIndex === 0 ? menu : undefined)
       else if (active instanceof Node && menu.contains(active)) {
         const index = choices.findIndex(choice => choice === active)
         target = choices[index + (event.shiftKey ? -1 : 1)]
@@ -112,11 +113,11 @@ export function MultiSelect({ id, label, options, value, onChange, placeholder, 
         <span aria-hidden="true" className="shrink-0">▾</span>
       </Button>
       {expanded ? createPortal(
-        <div ref={panel} id={panelId} role="group" aria-label={label} style={placement}
+        <div ref={panel} id={panelId} role="group" aria-label={label} style={placement} tabIndex={readOnly ? 0 : undefined}
           className="custom-scrollbar fixed z-[60] overflow-y-auto rounded-lg border border-border bg-surface p-2 shadow-sm">
           {options.length === 0 ? <p className="p-2 text-sm text-text-muted">{emptyText}</p> : options.map(option => (
             <label key={option.value} className="flex cursor-pointer items-center gap-2 rounded-md p-2 text-sm text-text-secondary hover:bg-surface-muted">
-              <input type="checkbox" checked={value.includes(option.value)}
+              <input type="checkbox" disabled={readOnly} checked={value.includes(option.value)}
                 className="size-4 shrink-0 accent-accent"
                 onChange={event => { onChange(event.target.checked ? [...value, option.value] : value.filter(item => item !== option.value)) }} />
               <span className="min-w-0 break-words">{option.label}</span>

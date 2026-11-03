@@ -1,6 +1,7 @@
 import type { ChangeEvent } from 'react'
 import { useState } from 'react'
 import { CheckboxField, Field, Select } from '@/shared/components/form/FormControls'
+import { MultiSelect } from '@/shared/components/form/MultiSelect'
 import { DataTableToolbar } from '@/shared/components/data-table'
 import type { TableDensity } from '@/shared/components/data-table'
 import { useTranslation } from '@/hooks/useTranslation'
@@ -29,9 +30,8 @@ export function VirtualMachinesToolbar({ filters, options, availableTags = [], o
     setTempFilters({ ...tempFilters, [key]: event.target.value })
   }
 
-  const updateTempTag = (event: ChangeEvent<HTMLSelectElement>) => {
-    const value = event.target.value
-    setTempFilters({ ...tempFilters, tags: value ? [value] : [], untagged: false })
+  const updateTempTags = (tags: string[]) => {
+    setTempFilters({ ...tempFilters, tags, untagged: false })
   }
 
   const toggleTempUntagged = () => {
@@ -92,10 +92,16 @@ export function VirtualMachinesToolbar({ filters, options, availableTags = [], o
           </Field>
 
           <Field label={t('pages.virtualMachines.filters.tag')} htmlFor="modal-tag-filter">
-            <Select id="modal-tag-filter" value={tempFilters.tags[0] ?? ''} onChange={updateTempTag} disabled={isFilterFixed}>
-              <option value="">{t('pages.virtualMachines.filters.tagAll')}</option>
-              {availableTags.map((tag) => <option key={tag} value={tag}>{tag}</option>)}
-            </Select>
+            <MultiSelect
+              id="modal-tag-filter"
+              label={t('pages.virtualMachines.filters.tag')}
+              value={tempFilters.tags}
+              options={[...new Set([...availableTags, ...tempFilters.tags])].map(tag => ({ value: tag, label: tag }))}
+              onChange={updateTempTags}
+              readOnly={isFilterFixed}
+              placeholder={t('pages.virtualMachines.filters.tagAll')}
+              emptyText={t('forms.vmTagsEmpty')}
+            />
           </Field>
 
           <CheckboxField

@@ -31,17 +31,18 @@ describe('VirtualMachinesToolbar source filters', () => {
     expect(screen.getByRole('button', { name: 'Filters' })).not.toHaveTextContent('1')
   })
 
-  it('applies a single selected tag', () => {
+  it('applies all selected tags with OR filtering', () => {
     const onFiltersChange = vi.fn()
     render(<VirtualMachinesToolbar filters={filters} options={options} availableTags={['WEB', 'DB']} onFiltersChange={onFiltersChange} onReset={vi.fn()} />)
     fireEvent.click(screen.getByRole('button', { name: /Filters/i }))
 
     const tagSelect = screen.getByLabelText('Tag')
-    expect(screen.getByRole('option', { name: 'WEB' })).toBeInTheDocument()
-    fireEvent.change(tagSelect, { target: { value: 'WEB' } })
+    fireEvent.click(tagSelect)
+    fireEvent.click(screen.getByRole('checkbox', { name: 'WEB' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'DB' }))
     fireEvent.click(screen.getByRole('button', { name: 'Apply' }))
 
-    expect(onFiltersChange).toHaveBeenCalledWith(expect.objectContaining({ tags: ['WEB'] }))
+    expect(onFiltersChange).toHaveBeenCalledWith(expect.objectContaining({ tags: ['WEB', 'DB'], untagged: false }))
     expect(onFiltersChange.mock.calls[0]?.[0]).not.toHaveProperty('providerId')
   })
 
@@ -50,7 +51,7 @@ describe('VirtualMachinesToolbar source filters', () => {
     const onReset = vi.fn()
     render(
       <VirtualMachinesToolbar
-        filters={{ ...filters, search: 'prod-', tags: ['ABCO-managed'] }}
+        filters={{ ...filters, search: 'prod-', tags: ['ABCO-managed', 'Saved tag absent from catalog'] }}
         options={options}
         availableTags={['ABCO-managed']}
         isFilterFixed
@@ -61,7 +62,12 @@ describe('VirtualMachinesToolbar source filters', () => {
 
     expect(screen.getByRole('searchbox')).toBeDisabled()
     fireEvent.click(screen.getByRole('button', { name: /Filters/i }))
-    expect(screen.getByLabelText('Tag')).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Tag' })).toHaveTextContent('ABCO-managed, Saved tag absent from catalog')
+    fireEvent.click(screen.getByRole('button', { name: 'Tag' }))
+    for (const name of ['ABCO-managed', 'Saved tag absent from catalog']) {
+      expect(screen.getByRole('checkbox', { name })).toBeChecked()
+      expect(screen.getByRole('checkbox', { name })).toBeDisabled()
+    }
     expect(screen.getByLabelText(/without tags/i)).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Clear all' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Apply' })).toBeDisabled()

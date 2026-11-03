@@ -640,6 +640,22 @@ async function phase6Cases() {
       const name = `phase6-${role}-both-5-${width}`
       await scopeGeometry(name, id)
       await popover(name)
+      await click(`[...document.querySelectorAll('${viewSelector} button')].find(e=>/^Filters/.test(e.textContent))`)
+      await wait(`!!document.querySelector('#modal-tag-filter')`)
+      const modalBeforeTags = await read(`JSON.stringify(document.querySelector('[role=dialog][aria-modal=true]').getBoundingClientRect())`)
+      await click(`document.querySelector('#modal-tag-filter')`)
+      await wait(`!!document.querySelector('[role=group][aria-label="Tag"]')`)
+      const loadedTags = await read(`[...document.querySelectorAll('[role=group][aria-label="Tag"] input')].filter(e=>e.checked).map(e=>({label:e.parentElement.textContent.trim(),disabled:e.disabled}))`)
+      assert.deepEqual(loadedTags, scopeTags.map(label=>({label,disabled:true})), 'Resources filter displays every configured tag read-only')
+      assert.equal(await read(`JSON.stringify(document.querySelector('[role=dialog][aria-modal=true]').getBoundingClientRect())`), modalBeforeTags, 'Tag options do not resize filter dialog')
+      await screenshot(`${name}-loaded-filter-tags`)
+      await keyPress('Tab')
+      await wait(`document.activeElement===document.querySelector('[role=group][aria-label="Tag"]')`)
+      await keyPress('Escape')
+      await wait(`!document.querySelector('[role=group][aria-label="Tag"]') && !!document.querySelector('[role=dialog][aria-modal=true]')`)
+      await keyPress('Escape')
+      await wait(`!document.querySelector('[role=dialog][aria-modal=true]')`)
+
     }
     for (const variant of ['none', 'prefix', 'tag-1', 'both-1', 'tag-2', 'both-2', 'tag-5', 'both-5']) {
       scope = variant
