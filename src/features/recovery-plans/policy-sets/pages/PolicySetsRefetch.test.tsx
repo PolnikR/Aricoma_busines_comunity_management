@@ -25,7 +25,7 @@ function response(body: object, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 }
 
-function stubFetch(options: { refreshResponse?: () => Promise<Response>; deleteResponse?: Promise<Response> } = {}) {
+function stubFetch(options: { refreshResponse?: () => Promise<Response>; deleteResponse?: Promise<Response>; groupsResponse?: () => Promise<Response>; appsResponse?: () => Promise<Response> } = {}) {
   let reads = 0
   const policySet = {
     id: 'tier2-apps',
@@ -37,6 +37,8 @@ function stubFetch(options: { refreshResponse?: () => Promise<Response>; deleteR
   }
   const mock = vi.fn((url: string, init?: RequestInit) => {
     const method = init?.method ?? 'GET'
+    if (url.startsWith('/api/get_recovery_groups')) return options.groupsResponse?.() ?? Promise.resolve(response({ recovery_groups: [] }))
+    if (url.startsWith('/api/get_recovery_apps')) return options.appsResponse?.() ?? Promise.resolve(response({ applications: [] }))
     if (url.startsWith('/api/get_policy_sets')) {
       reads++
       if (reads > 1) return options.refreshResponse?.() ?? Promise.resolve(response({ policy_sets: [] }))
@@ -82,6 +84,38 @@ function getCount(mock: ReturnType<typeof stubFetch>) {
 
 describe('PolicySetsPage refetch', () => {
   afterEach(() => { vi.unstubAllGlobals() })
+
+  it.each(['group', 'application', 'both'])('blocks a policy set used by %s and preserves its detail', async source => {
+    const fetchMock = stubFetch({
+      groupsResponse: () => Promise.resolve(response({ recovery_groups: source === 'application' ? [] : [{ id: 'group-1', name: 'Blocking group', policy_set_id: 'tier2-apps' }] })),
+      appsResponse: () => Promise.resolve(response({ applications: source === 'group' ? [] : [{ id: 'app-1', policy_set_id: 'tier2-apps', application: { name: 'Blocking application', description: '', environment: 'prod', platform: 'IBM_POWER', tiers: {} } }] })),
+    })
+    renderWithQueryClient(<PolicySetsPage />)
+    await deleteRecord()
+    const notice = await screen.findByRole('dialog', { name: 'Cannot delete an item that is in use' })
+    if (source !== 'application') expect(notice).toHaveTextContent('Blocking group')
+    if (source !== 'group') expect(notice).toHaveTextContent('Blocking application')
+    expect(screen.queryByRole('dialog', { name: 'Delete policy set' })).not.toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: 'Policy set detail' })).toBeInTheDocument()
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'DELETE')).toHaveLength(0)
+    const checks = fetchMock.mock.calls.filter(([url]) => url.startsWith('/api/get_recovery_groups') || url.startsWith('/api/get_recovery_apps'))
+    expect(checks).toHaveLength(2)
+    expect(checks.every(([, init]) => init?.cache === 'no-store')).toBe(true)
+  })
+
+  it.each(['groups', 'applications', 'both', 'schema'])('does not delete when the %s dependency check fails', async failed => {
+    const fetchMock = stubFetch({
+      groupsResponse: () => Promise.resolve(failed === 'schema' ? response({}) : failed === 'groups' || failed === 'both' ? response({ detail: 'Groups unavailable' }, 503) : response({ recovery_groups: [] })),
+      appsResponse: () => Promise.resolve(failed === 'applications' || failed === 'both' ? response({ detail: 'Applications unavailable' }, 403) : response({ applications: [] })),
+    })
+    renderWithQueryClient(<PolicySetsPage />)
+    await deleteRecord()
+    const notice = await screen.findByRole('dialog', { name: 'Could not verify usage' })
+    if (failed !== 'applications') expect(notice).toHaveTextContent('Recovery Groups')
+    if (failed === 'applications' || failed === 'both') expect(notice).toHaveTextContent('Recovery Applications')
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'DELETE')).toHaveLength(0)
+    expect(getCount(fetchMock)).toBe(1)
+  })
 
   it('replaces only rows during the post-delete GET and preserves search and page-size', async () => {
     const refresh = deferred()

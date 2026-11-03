@@ -83,7 +83,7 @@ describe('SnapshotPoliciesPage refetch', () => {
     expect(screen.getByRole('dialog', { name: 'Snapshot policy detail' })).toBeInTheDocument()
     expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'DELETE')).toHaveLength(0)
     expect(fetchMock.mock.calls.find(([url]) => url.startsWith('/api/get_policy_sets'))?.[1]?.cache).toBe('no-store')
-    await userEvent.click(within(result).getByRole('button', { name: 'Close', exact: true }))
+    await userEvent.click(within(result).getByRole('button', { name: 'Close' }))
     expect(within(screen.getByRole('dialog', { name: 'Snapshot policy detail' })).getByRole('button', { name: 'Delete' })).toBeEnabled()
   })
 
@@ -134,7 +134,7 @@ describe('SnapshotPoliciesPage refetch', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Delete' }))
     await userEvent.click(within(screen.getByRole('dialog', { name: 'Delete snapshot policy' })).getByRole('button', { name: 'Delete' }))
     const notice = await screen.findByRole('dialog', { name: 'Cannot delete an item that is in use' })
-    await userEvent.click(within(notice).getByRole('button', { name: 'Close', exact: true }))
+    await userEvent.click(within(notice).getByRole('button', { name: 'Close' }))
     await userEvent.click(within(screen.getByRole('dialog', { name: 'Snapshot policy detail' })).getByRole('button', { name: 'Delete' }))
     await userEvent.click(within(screen.getByRole('dialog', { name: 'Delete snapshot policy' })).getByRole('button', { name: 'Delete' }))
     await waitFor(() => { expect(screen.queryByRole('row', { name: 'Critical — 15 min' })).not.toBeInTheDocument() })

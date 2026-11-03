@@ -1,3 +1,5 @@
+import { useReferenceProtectedDelete } from '@/features/recovery-plans/references/hooks/useReferenceProtectedDelete'
+import { ReferenceDeleteNotice } from '@/features/recovery-plans/references/components/ReferenceDeleteNotice'
 import type { PostDeletePhase } from '../../hooks/usePostDeleteRefresh'
 import { useMemo, useState } from 'react'
 import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
@@ -23,6 +25,7 @@ import type { PolicySetRecordOutput } from '@/generated/query/zod'
 import { usePolicyCatalog } from '@/features/recovery-plans/recovery-policies/catalog/hooks/usePolicyCatalog'
 import type { PolicyKind } from '@/features/recovery-plans/recovery-policies/catalog/model/policyCatalog'
 import { PolicySetModal } from './PolicySetModal'
+import { PolicySetUsage } from './PolicySetUsage'
 
 
 function countPolicies(policySet: PolicySetRecordOutput): number {
@@ -90,6 +93,7 @@ interface PolicySetsTableProps {
 
 export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRetry, postDeletePhase, onDeleted }: PolicySetsTableProps) {
   const { t } = useTranslation()
+  const referenceDelete = useReferenceProtectedDelete()
   const catalog = usePolicyCatalog()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editing, setEditing] = useState<PolicySetRecordOutput | null>(null)
@@ -100,6 +104,7 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
     setSelectedId(null)
     void onDeleted()
   } } })
+  const isDeletePending = referenceDelete.isPending || deletePolicySet.isPending
   const isRowsLoading = isLoading || postDeletePhase === 'refreshing'
   const rows = useMemo(() => policySets, [policySets])
   const selected = rows.find(policySet => policySet.id === selectedId) ?? null
@@ -187,7 +192,7 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
             minWidthClassName="min-w-200"
             ariaLabel={isRowsLoading ? t('policySets.loading') : t('policySets.tableLabel')}
             rowAriaLabel={policySet => policySet.name}
-            onRowClick={policySet => { setSelectedId(policySet.id) }}
+            onRowClick={policySet => { if (isDeletePending) return; referenceDelete.reset(); setSelectedId(policySet.id) }}
             selectedRowKey={selectedId}
             emptyContent={rows.length > 0 ? t('policySets.noMatches') : t('policySets.empty')}
           />
@@ -199,15 +204,15 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
           // Keyed by record so each newly opened record starts fresh.
           key={selected.id}
           open
-          onClose={() => { setSelectedId(null) }}
+          onClose={() => { if (isDeletePending) return; referenceDelete.reset(); setSelectedId(null) }}
           size="md"
           entityLabel={t('policySets.drawer.entity')}
           title={selected.name}
           headerActions={<KeyedHelpPopover helpKey="policySets.help" sections={['snapshot', 'recoveryApp', 'cleanRoom', 'reference']} />}
           ariaLabel={t('policySets.drawer.label')}
           closeLabel={t('policySets.drawer.close')}
-          footerStart={<Button onClick={() => { setDeleteTarget(selected) }} size="sm" variant="danger">{t('buttons.delete')}</Button>}
-          footer={<Button onClick={() => { setEditing(selected); setSelectedId(null) }} size="sm">{t('buttons.edit')}</Button>}
+          footerStart={<Button onClick={() => { if (isDeletePending) return; referenceDelete.reset(); deletePolicySet.reset(); setDeleteTarget(selected) }} size="sm" variant="danger">{t('buttons.delete')}</Button>}
+          footer={<Button onClick={() => { if (isDeletePending) return; referenceDelete.reset(); setEditing(selected); setSelectedId(null) }} size="sm">{t('buttons.edit')}</Button>}
         >
           <DetailViewSection id="overview" title={t('details.tabs.overview')} icon={GridIcon}>
             {/* The fields in the order of the original detail drawer. */}
@@ -218,6 +223,9 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
               <DetailField label={t('details.recoveryAppPolicy')} labelHelp={<KeyedHelpPopover helpKey="policySets.fieldHelp.recovery_app_policy_id" sections={[]} />} {...referenceField('recoveryApp', selected.recovery_app_policy_id, t('policySets.form.recoveryAppPolicy'))} />
               <DetailField label={t('details.cleanRoomPolicy')} labelHelp={<KeyedHelpPopover helpKey="policySets.fieldHelp.clean_room_policy_id" sections={[]} />} {...referenceField('cleanRoom', selected.clean_room_policy_id, t('policySets.form.cleanRoomPolicy'))} />
             </DetailOverview>
+          </DetailViewSection>
+          <DetailViewSection id="used-in" title={t('policyReferences.usedIn.title')}>
+            <PolicySetUsage policySetId={selected.id} />
           </DetailViewSection>
         </DetailView>
       ) : null}
@@ -230,17 +238,22 @@ export function PolicySetsTable({ policySets, isLoading, error, isRetrying, onRe
         message={t('policySets.delete.message').replace('{name}', deleteTarget?.name ?? '')}
         confirmLabel={t('buttons.delete')}
         cancelLabel={t('buttons.cancel')}
-        loadingLabel={t('buttons.deleting')}
+        loadingLabel={t(referenceDelete.phase === 'checking' ? 'policyReferences.checking' : 'buttons.deleting')}
         tone="danger"
-        isLoading={deletePolicySet.isPending}
-        onCancel={() => { setDeleteTarget(null) }}
+        isLoading={isDeletePending}
+        onCancel={() => { if (!isDeletePending) { setDeleteTarget(null); referenceDelete.reset() } }}
         onConfirm={() => {
-          if (!deleteTarget) return
-          deletePolicySet.mutate({ params: { policy_set_id: deleteTarget.id } }, {
+          if (!deleteTarget || isDeletePending) return
+          const id = deleteTarget.id
+          void referenceDelete.execute({ kind: 'policySet', id }, () => deletePolicySet.mutateAsync({ params: { policy_set_id: id } }, {
             onError: () => { setDeleteTarget(null) },
+          })).then(result => {
+            if (result === 'blocked' || result === 'checkFailed') setDeleteTarget(null)
           })
         }}
       />
+
+      <ReferenceDeleteNotice issue={deleteTarget === null ? referenceDelete.issue : null} onClose={referenceDelete.reset} />
 
       <JsonViewerModal
         open={jsonViewed !== null}

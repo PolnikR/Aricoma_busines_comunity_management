@@ -1,11 +1,14 @@
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
 import type { PolicySetRecordOutput } from '@/generated/query/zod'
 import { PolicySetsTable } from './PolicySetsTable'
-import { detailNavigationLabels, detailSectionsLabels } from '@/test-utils/detailView'
+import { detailNavigationLabels } from '@/test-utils/detailView'
 import en from '@/locales/en.json'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MemoryRouter } from 'react-router'
+import { STANDARD_QUERY_OPTIONS } from '@/shared/query/cachePolicy'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('react-router', async (importOriginal) => ({
@@ -14,7 +17,7 @@ vi.mock('react-router', async (importOriginal) => ({
 }))
 const { deleteMutation, snapshotState } = vi.hoisted(() => ({
   snapshotState: { error: null as Error | null, refetch: vi.fn() },
-  deleteMutation: { mutate: vi.fn(), isPending: false, error: null as Error | null },
+  deleteMutation: { mutateAsync: vi.fn(), reset: vi.fn(), isPending: false, error: null as Error | null },
 }))
 vi.mock('@/generated/query/policy-sets/policy-sets.gen', () => ({
   useDeletePolicySet: () => deleteMutation,
@@ -56,6 +59,26 @@ const partialPolicySet: PolicySetRecordOutput = {
 }
 
 describe('PolicySetsTable', () => {
+  afterEach(() => { vi.unstubAllGlobals() })
+  it('does not request usage until its section opens, then reuses fresh cache on return', async () => {
+    const fetchMock = vi.fn<(url: string) => Promise<Response>>(url => Promise.resolve(new Response(JSON.stringify(
+      url.includes('/get_recovery_groups') ? { recovery_groups: [] } : { applications: [] },
+    ), { status: 200 })))
+    vi.stubGlobal('fetch', fetchMock)
+    const client = new QueryClient({ defaultOptions: { queries: { ...STANDARD_QUERY_OPTIONS, retry: false } } })
+    render(<QueryClientProvider client={client}><MemoryRouter>
+      <PolicySetsTable policySets={[policySet]} isLoading={false} error={null} isRetrying={false} onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No delete in this scenario. */ }} />
+    </MemoryRouter></QueryClientProvider>)
+    await userEvent.click(screen.getByRole('row', { name: policySet.name }))
+    expect(fetchMock).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole('button', { name: 'Used in' }))
+    expect(await screen.findByText('This Policy Set is not used by any Recovery Group or Recovery Application.')).toBeVisible()
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    await userEvent.click(screen.getByRole('button', { name: 'Overview' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Used in' }))
+    expect(screen.getByText('This Policy Set is not used by any Recovery Group or Recovery Application.')).toBeVisible()
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
   it.each(['resolved', 'missing', 'unknown', 'notConfigured'] as const)('preserves %s references while opening field help', async status => {
     const record: PolicySetRecordOutput = status === 'notConfigured'
       ? { id: policySet.id, name: policySet.name, description: policySet.description ?? '', snapshot_policy_id: null, clean_room_policy_id: '' }
@@ -193,14 +216,14 @@ describe('PolicySetsTable', () => {
     const modelCDrawer = screen.getByRole('dialog', { name: 'Policy set detail' })
     const modelCHeader = within(modelCDrawer).getByRole('heading', { level: 2, name: 'Tier 2 applications' }).closest('header')
     expect(modelCHeader).toHaveTextContent('Policy set')
-    // A simple record is one section: the navigation lists only Overview.
+    // Overview retains the original fields; usage is a separate lazy section.
     expect(modelCDrawer).toHaveAttribute('data-size', 'md')
-    expect(detailNavigationLabels(modelCDrawer)).toEqual(['Overview'])
+    expect(detailNavigationLabels(modelCDrawer)).toEqual(['Overview', 'Used in'])
     expect(within(modelCDrawer).getByRole('button', { name: 'Overview' })).toHaveAttribute('aria-current', 'true')
     // One shared Overview field list in the original drawer order; the ID is a field, not a technical block.
     const overview = within(modelCDrawer).getByRole('region', { name: 'Overview' })
     expect(overview.querySelectorAll('dl')).toHaveLength(1)
-    expect(detailSectionsLabels(modelCDrawer)).toEqual(['Policy set ID', 'Description', 'Snapshot policies', 'Recovery application policy', 'Clean room policy'])
+    expect([...overview.querySelectorAll('dt')].map(term => term.textContent)).toEqual(['Policy set ID', 'Description', 'Snapshot policies', 'Recovery application policy', 'Clean room policy'])
     expect(within(overview).getByText('tier2-apps')).toHaveClass('font-mono')
     expect(within(overview).getByRole('button', { name: 'Copy Policy set ID' })).toBeInTheDocument()
     expect(modelCHeader).not.toHaveTextContent(/[a-z0-9]+-[a-z0-9-]+$/)
@@ -310,11 +333,15 @@ describe('PolicySetsTable', () => {
   it('closes the confirmation and shows backend detail when delete fails', async () => {
     const user = userEvent.setup()
     deleteMutation.error = null
-    deleteMutation.mutate.mockImplementation((_vars: unknown, options: { onError?: (error: Error) => void }) => {
+    vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(new Response(JSON.stringify(
+      url.startsWith('/api/get_recovery_groups') ? { recovery_groups: [] } : { applications: [] },
+    )))))
+    deleteMutation.mutateAsync.mockImplementation((_vars: unknown, options: { onError?: (error: Error) => void }) => {
       const apiError = new OrvalApiError(409, 'Conflict', { detail: 'Policy set is still in use.' })
       const error = new Error('Delete policy set request failed with status 409', { cause: apiError })
       deleteMutation.error = error
       options.onError?.(error)
+      return Promise.reject(error)
     })
 
     const view = render(

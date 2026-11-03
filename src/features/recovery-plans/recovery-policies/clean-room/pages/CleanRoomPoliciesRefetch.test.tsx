@@ -77,7 +77,7 @@ describe('CleanRoomPoliciesPage refetch', () => {
     expect(screen.getByRole('dialog', { name: 'Clean room policy detail' })).toBeInTheDocument()
     expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'DELETE')).toHaveLength(0)
     expect(fetchMock.mock.calls.find(([url]) => url.startsWith('/api/get_policy_sets'))?.[1]?.cache).toBe('no-store')
-    await userEvent.click(within(result).getByRole('button', { name: 'Close', exact: true }))
+    await userEvent.click(within(result).getByRole('button', { name: 'Close' }))
     expect(within(screen.getByRole('dialog', { name: 'Clean room policy detail' })).getByRole('button', { name: 'Delete' })).toBeEnabled()
   })
 
