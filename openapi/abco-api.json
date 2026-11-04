@@ -6602,6 +6602,11 @@
             "exclusiveMinimum": 0,
             "title": "Zoning Wait Minutes",
             "default": 240
+          },
+          "stop_source_lpar": {
+            "type": "boolean",
+            "title": "Stop Source Lpar",
+            "default": true
           }
         },
         "type": "object",
@@ -6761,6 +6766,11 @@
             "exclusiveMinimum": 0,
             "title": "Zoning Wait Minutes",
             "default": 240
+          },
+          "stop_source_lpar": {
+            "type": "boolean",
+            "title": "Stop Source Lpar",
+            "default": true
           }
         },
         "additionalProperties": true,

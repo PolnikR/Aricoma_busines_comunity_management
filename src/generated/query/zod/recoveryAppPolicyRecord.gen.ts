@@ -27,7 +27,7 @@ export const recoveryAppPolicyRecordSourceShutdownTimeoutSecondsExclusiveMin = 0
 export const recoveryAppPolicyRecordZoningWaitMinutesDefault = 240;
 export const recoveryAppPolicyRecordZoningWaitMinutesExclusiveMin = 0;
 
-
+export const recoveryAppPolicyRecordStopSourceLparDefault = true;
 export const RecoveryAppPolicyRecord = zod.object({
   "id": zod.string(),
   "name": zod.string(),
@@ -47,7 +47,8 @@ export const RecoveryAppPolicyRecord = zod.object({
   "manual_zoning": zod.boolean().default(recoveryAppPolicyRecordManualZoningDefault),
   "manual_wwpn_entry": zod.boolean().default(recoveryAppPolicyRecordManualWwpnEntryDefault),
   "source_shutdown_timeout_seconds": zod.int().gt(recoveryAppPolicyRecordSourceShutdownTimeoutSecondsExclusiveMin).default(recoveryAppPolicyRecordSourceShutdownTimeoutSecondsDefault),
-  "zoning_wait_minutes": zod.int().gt(recoveryAppPolicyRecordZoningWaitMinutesExclusiveMin).default(recoveryAppPolicyRecordZoningWaitMinutesDefault)
+  "zoning_wait_minutes": zod.int().gt(recoveryAppPolicyRecordZoningWaitMinutesExclusiveMin).default(recoveryAppPolicyRecordZoningWaitMinutesDefault),
+  "stop_source_lpar": zod.boolean().default(recoveryAppPolicyRecordStopSourceLparDefault)
 })
 
 export type RecoveryAppPolicyRecord = zod.input<typeof RecoveryAppPolicyRecord>;

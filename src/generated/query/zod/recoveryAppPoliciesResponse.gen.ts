@@ -27,7 +27,7 @@ export const recoveryAppPoliciesResponseRecoveryAppPoliciesItemSourceShutdownTim
 export const recoveryAppPoliciesResponseRecoveryAppPoliciesItemZoningWaitMinutesDefault = 240;
 export const recoveryAppPoliciesResponseRecoveryAppPoliciesItemZoningWaitMinutesExclusiveMin = 0;
 
-
+export const recoveryAppPoliciesResponseRecoveryAppPoliciesItemStopSourceLparDefault = true;
 export const RecoveryAppPoliciesResponse = zod.object({
   "recovery_app_policies": zod.array(zod.object({
   "id": zod.string(),
@@ -48,7 +48,8 @@ export const RecoveryAppPoliciesResponse = zod.object({
   "manual_zoning": zod.boolean().default(recoveryAppPoliciesResponseRecoveryAppPoliciesItemManualZoningDefault),
   "manual_wwpn_entry": zod.boolean().default(recoveryAppPoliciesResponseRecoveryAppPoliciesItemManualWwpnEntryDefault),
   "source_shutdown_timeout_seconds": zod.int().gt(recoveryAppPoliciesResponseRecoveryAppPoliciesItemSourceShutdownTimeoutSecondsExclusiveMin).default(recoveryAppPoliciesResponseRecoveryAppPoliciesItemSourceShutdownTimeoutSecondsDefault),
-  "zoning_wait_minutes": zod.int().gt(recoveryAppPoliciesResponseRecoveryAppPoliciesItemZoningWaitMinutesExclusiveMin).default(recoveryAppPoliciesResponseRecoveryAppPoliciesItemZoningWaitMinutesDefault)
+  "zoning_wait_minutes": zod.int().gt(recoveryAppPoliciesResponseRecoveryAppPoliciesItemZoningWaitMinutesExclusiveMin).default(recoveryAppPoliciesResponseRecoveryAppPoliciesItemZoningWaitMinutesDefault),
+  "stop_source_lpar": zod.boolean().default(recoveryAppPoliciesResponseRecoveryAppPoliciesItemStopSourceLparDefault)
 }))
 })
 
