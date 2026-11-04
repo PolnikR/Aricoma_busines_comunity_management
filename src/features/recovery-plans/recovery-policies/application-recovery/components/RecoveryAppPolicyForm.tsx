@@ -198,6 +198,13 @@ export function RecoveryAppPolicyForm({
             <Input id="recovery-app-policy-target-lpar-prefix" value={data.target_lpar_prefix} disabled={isSubmitting} invalid={Boolean(errors.target_lpar_prefix)} onKeyDown={handleKeyDown} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('target_lpar_prefix', event.target.value) }} />
             {errors.target_lpar_prefix ? <p className="mt-1 text-xs text-red-600">{errors.target_lpar_prefix}</p> : null}
           </div>
+          <div className={`flex min-h-10 items-center gap-3 rounded-xl border border-border-strong bg-surface px-3 text-xs text-text-secondary shadow-sm sm:self-end ${isSubmitting ? 'opacity-60' : ''}`}>
+            <input type="checkbox" className="size-4 shrink-0 rounded border-border-strong accent-accent focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15" id="recovery-app-policy-stop-source-lpar" checked={data.stop_source_lpar} disabled={isSubmitting} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('stop_source_lpar', event.target.checked) }} />
+            <div className="flex min-w-0 items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
+              <label htmlFor="recovery-app-policy-stop-source-lpar" className="cursor-pointer font-medium">{t('recoveryAppPolicies.form.stopSourceLpar')}</label>
+              <KeyedHelpPopover helpKey="recoveryAppPolicies.fieldHelp.stop_source_lpar" sections={[]} />
+            </div>
+          </div>
           <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:col-span-2 sm:grid-cols-2">
             <div className={`flex min-h-10 items-center gap-3 rounded-xl border border-border-strong bg-surface px-3 text-xs text-text-secondary shadow-sm ${isSubmitting ? 'opacity-60' : ''}`}>
               <input type="checkbox" className="size-4 shrink-0 rounded border-border-strong accent-accent focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15" id="recovery-app-policy-manual-zoning" checked={data.manual_zoning} disabled={isSubmitting} aria-invalid={Boolean(errors.manual_zoning)} aria-describedby={errors.manual_zoning ? 'recovery-app-policy-manual-mode-error' : undefined} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('manual_zoning', event.target.checked) }} />
@@ -214,13 +221,6 @@ export function RecoveryAppPolicyForm({
               </div>
             </div>
             {errors.manual_zoning ? <p id="recovery-app-policy-manual-mode-error" className="text-xs text-red-600 sm:col-span-2">{errors.manual_zoning}</p> : null}
-          </div>
-          <div className={`flex min-h-10 items-center gap-3 rounded-xl border border-border-strong bg-surface px-3 text-xs text-text-secondary shadow-sm sm:col-span-2 ${isSubmitting ? 'opacity-60' : ''}`}>
-            <input type="checkbox" className="size-4 shrink-0 rounded border-border-strong accent-accent focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-focus/15" id="recovery-app-policy-stop-source-lpar" checked={data.stop_source_lpar} disabled={isSubmitting} onChange={(event: ChangeEvent<HTMLInputElement>) => { onChange('stop_source_lpar', event.target.checked) }} />
-            <div className="flex min-w-0 items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
-              <label htmlFor="recovery-app-policy-stop-source-lpar" className="cursor-pointer font-medium">{t('recoveryAppPolicies.form.stopSourceLpar')}</label>
-              <KeyedHelpPopover helpKey="recoveryAppPolicies.fieldHelp.stop_source_lpar" sections={[]} />
-            </div>
           </div>
           <div className="min-w-0">
             <div className="mb-1.5 flex items-center gap-1.5 [&>span]:h-4 [&>span]:items-center">
