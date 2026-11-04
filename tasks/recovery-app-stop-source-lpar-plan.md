@@ -1,6 +1,6 @@
 # Implementačný plán: stop_source_lpar
 
-Stav: plán po kontrole, bez implementácie. Pôvodná analýza ABCO FE: 2026-11-04, HEAD `f5f02628`; následná revízia cez Rel.AI: HEAD `82b24fcb`.
+Stav: implementované inline 2026-11-04; výsledky kontrol a otvorené manuálne overenie sú v TODO. Pôvodná analýza ABCO FE: 2026-11-04, HEAD `f5f02628`; následná revízia cez Rel.AI: HEAD `82b24fcb`.
 Kontrolný zoznam: [recovery-app-stop-source-lpar-todo.md](recovery-app-stop-source-lpar-todo.md).
 
 ## Rozsah a východiská
@@ -143,4 +143,4 @@ Spúšťať najprv iba súbory relevantné pre danú úlohu; celý uvedený výb
 
 Žiadna otvorená funkčná otázka neblokuje tento návrh. BE implementácia v commite `12136ce` bola skontrolovaná cez Rel.AI; pred produkčným nasadením treba osobitne potvrdiť jej dostupnosť na cieľovom prostredí. Revízia plánu bola vykonaná cez Rel.AI v ABCO FE, bez spustenia implementácie alebo DAG obnovy.
 
-Dokumenty sú pripravené na ľudskú kontrolu; schválenie implementácie zatiaľ nebolo udelené. Po budúcej implementácii vykonať uvedené kontroly a atomický commit iba jej súborov podľa AGENTS.md, bez push/merge.
+Používateľ schválil vykonanie plánu inline 2026-11-04. Implementácia a automatické overenie sú dokončené; výsledky a zostávajúce manuálne kroky sú zaznamenané v TODO. Zmeny sa odovzdávajú atomickým commitom podľa AGENTS.md, bez push/merge.

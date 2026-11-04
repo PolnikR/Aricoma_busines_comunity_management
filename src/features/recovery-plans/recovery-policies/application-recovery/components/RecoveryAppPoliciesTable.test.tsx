@@ -13,6 +13,7 @@ vi.mock('@/generated/query/recovery-app-policies/recovery-app-policies.gen', () 
 }))
 
 const policy: RecoveryAppPolicyRecordOutput = {
+  stop_source_lpar: true,
   id: 'medium-monthly-exacttime', name: 'Medium monthly', description: 'Monthly test.', level: 'medium',
   frequency_value: 30, frequency_unit: 'days', retention_value: 2, retention_unit: 'days', boot_verify: false,
   snapshot_selection_mode: 'exact_time', snapshot_max_age_value: null, snapshot_max_age_unit: null,
@@ -30,6 +31,14 @@ const latestPolicy: RecoveryAppPolicyRecordOutput = {
 }
 
 describe('RecoveryAppPoliciesTable', () => {
+  it.each([true, false])('shows stop_source_lpar=%s in Overview', async stopSource => {
+    render(<RecoveryAppPoliciesTable policies={[{ ...policy, stop_source_lpar: stopSource }]} isLoading={false} error={null} isRetrying={false} onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No deletion in this test. */ }} />)
+    await userEvent.click(screen.getByText('Medium monthly'))
+    const fields = detailSectionsFields(screen.getByRole('dialog', { name: 'Recovery app policy detail' }))
+    expect(fields['Stop source LPAR']).toBe(stopSource ? 'Yes' : 'No')
+    expect(fields['Source shutdown timeout']).toBe('300 seconds')
+  })
+
   it('shows a missing time range age as not set without inventing a zero interval', async () => {
     render(<RecoveryAppPoliciesTable policies={[{ ...policy, snapshot_selection_mode: 'time_range', snapshot_max_age_value: null, snapshot_max_age_unit: null, manual_wwpn_entry: true }]} isLoading={false} error={null} isRetrying={false} onRetry={vi.fn()} postDeletePhase="idle" onDeleted={async () => { /* No request in this test. */ }} />)
     await userEvent.click(screen.getByText('Medium monthly'))
@@ -92,7 +101,7 @@ describe('RecoveryAppPoliciesTable', () => {
     expect(overview.querySelectorAll('dl')).toHaveLength(1)
     expect(detailSectionsLabels(modelCDrawer)).toEqual([
       'Policy ID', 'Description', 'Level', 'Frequency', 'Retention', 'Snapshot selection', 'Target time', 'Boot verification', 'Status',
-      'Target LPAR prefix', 'Manual zoning', 'Manual WWPN entry', 'Source shutdown timeout', 'Zoning wait',
+      'Target LPAR prefix', 'Manual zoning', 'Manual WWPN entry', 'Stop source LPAR', 'Source shutdown timeout', 'Zoning wait',
     ])
     expect(detailSectionsFields(modelCDrawer)).toMatchObject({
       'Target LPAR prefix': 'dr_',

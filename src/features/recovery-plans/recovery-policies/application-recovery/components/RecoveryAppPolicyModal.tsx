@@ -12,6 +12,7 @@ import {
   submitRecoveryAppPolicyBodyManualWwpnEntryDefault,
   submitRecoveryAppPolicyBodyManualZoningDefault,
   submitRecoveryAppPolicyBodySourceShutdownTimeoutSecondsDefault,
+  submitRecoveryAppPolicyBodyStopSourceLparDefault,
   submitRecoveryAppPolicyBodyTargetLparPrefixDefault,
   submitRecoveryAppPolicyBodyTargetLparPrefixRegExp,
   submitRecoveryAppPolicyBodyZoningWaitMinutesDefault,
@@ -36,6 +37,7 @@ const EMPTY_FORM: RecoveryAppPolicyFormData = {
   target_lpar_prefix: submitRecoveryAppPolicyBodyTargetLparPrefixDefault,
   manual_zoning: submitRecoveryAppPolicyBodyManualZoningDefault,
   manual_wwpn_entry: submitRecoveryAppPolicyBodyManualWwpnEntryDefault,
+  stop_source_lpar: submitRecoveryAppPolicyBodyStopSourceLparDefault,
   source_shutdown_timeout_seconds: String(submitRecoveryAppPolicyBodySourceShutdownTimeoutSecondsDefault),
   zoning_wait_minutes: String(submitRecoveryAppPolicyBodyZoningWaitMinutesDefault),
 }
@@ -59,6 +61,7 @@ function toFormData(policy: RecoveryAppPolicyRecordOutput): RecoveryAppPolicyFor
     target_lpar_prefix: policy.target_lpar_prefix,
     manual_zoning: policy.manual_zoning,
     manual_wwpn_entry: policy.manual_wwpn_entry,
+    stop_source_lpar: policy.stop_source_lpar,
     source_shutdown_timeout_seconds: String(policy.source_shutdown_timeout_seconds),
     zoning_wait_minutes: String(policy.zoning_wait_minutes),
   }

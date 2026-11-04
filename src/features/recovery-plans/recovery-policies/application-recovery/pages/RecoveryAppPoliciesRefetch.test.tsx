@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { RecoveryAppPoliciesPage } from './RecoveryAppPoliciesPage'
+import { detailSectionsFields } from '@/test-utils/detailView'
 
 vi.mock('@/hooks/useTranslation', () => import('@/test-utils/mockUseTranslation'))
 vi.mock('react-router', async (importOriginal) => ({
@@ -72,6 +73,22 @@ function stubFetch(refreshResponse: Promise<Response>, options: { preflight?: ()
 
 describe('RecoveryAppPoliciesPage refetch', () => {
   afterEach(() => { vi.unstubAllGlobals() })
+
+  it.each([undefined, false, true])('normalizes stop_source_lpar=%s through GET before displaying and editing', async stopSource => {
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(() => Promise.resolve(Response.json({ recovery_app_policies: [{
+      id: 'power-legacy', name: 'Power legacy', description: 'Legacy policy', level: 'high',
+      frequency_value: 1, frequency_unit: 'days', retention_value: 1, retention_unit: 'days',
+      source_shutdown_timeout_seconds: 600,
+      ...(stopSource === undefined ? {} : { stop_source_lpar: stopSource }),
+    }] }))))
+    renderWithProviders(<RecoveryAppPoliciesPage />)
+    await userEvent.click(await screen.findByText('Power legacy'))
+    const detail = screen.getByRole('dialog', { name: 'Recovery app policy detail' })
+    expect(detailSectionsFields(detail)['Stop source LPAR']).toBe(stopSource === false ? 'No' : 'Yes')
+    await userEvent.click(within(detail).getByRole('button', { name: 'Edit' }))
+    expect(screen.getByRole('checkbox', { name: 'Stop source LPAR' })).toHaveProperty('checked', stopSource !== false)
+    expect(screen.getByLabelText('Source shutdown timeout (seconds)')).toHaveValue(600)
+  })
 
   it.each([1, 2])('blocks deletion and shows all %s policy set references above the retained detail', async count => {
     const fetchMock = stubFetch(Promise.resolve(new Response(JSON.stringify({ recovery_app_policies: [] }))), {

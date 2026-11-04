@@ -16,6 +16,7 @@ vi.mock('react-router', async importOriginal => ({
 }))
 
 const policy: RecoveryAppPolicyRecordOutput = {
+  stop_source_lpar: true,
   id: 'help-test', name: 'Help test policy', description: 'Recovery help test.', level: 'high',
   frequency_value: 1, frequency_unit: 'days', retention_value: 1, retention_unit: 'days',
   boot_verify: false, enabled: true, snapshot_selection_mode: 'latest',
@@ -23,7 +24,7 @@ const policy: RecoveryAppPolicyRecordOutput = {
   target_lpar_prefix: 'dr_', manual_zoning: false, manual_wwpn_entry: false,
   source_shutdown_timeout_seconds: 123, zoning_wait_minutes: 7,
 }
-const commonParameters = ['level', 'frequency', 'retention', 'boot_verify', 'snapshot_selection_mode', 'enabled', 'target_lpar_prefix', 'manual_zoning', 'manual_wwpn_entry', 'source_shutdown_timeout_seconds', 'zoning_wait_minutes']
+const commonParameters = ['level', 'frequency', 'retention', 'boot_verify', 'snapshot_selection_mode', 'enabled', 'target_lpar_prefix', 'manual_zoning', 'manual_wwpn_entry', 'stop_source_lpar', 'source_shutdown_timeout_seconds', 'zoning_wait_minutes']
 
 describe.each(['en', 'sk', 'cs'] as const)('Recovery App Policy help in %s', language => {
   it.each(['latest', 'time_range', 'exact_time'] as const)('provides the same localized %s help in Create, Edit and Display', async selection => {
@@ -61,6 +62,10 @@ describe.each(['en', 'sk', 'cs'] as const)('Recovery App Policy help in %s', lan
         const help = screen.getByRole('dialog', { name: text(`${key}.title`) })
         expect(help).toHaveTextContent(text(`${key}.intro`))
         expect(help).not.toHaveTextContent(/default|predvolen/i)
+        if (parameter === 'stop_source_lpar') {
+          for (const term of ['MAC', 'DHCP', 'IP', 'hostname']) expect(help).toHaveTextContent(term)
+          expect(help).toHaveTextContent(/conflict|konflikt/)
+        }
         await userEvent.keyboard('{Escape}')
         expect(parent).toBeInTheDocument()
         expect(trigger).toHaveFocus()
@@ -73,8 +78,8 @@ describe.each(['en', 'sk', 'cs'] as const)('Recovery App Policy help in %s', lan
         expect(screen.getByRole('checkbox', { name: text('recoveryAppPolicies.form.bootVerify') })).toHaveAccessibleDescription(text('recoveryAppPolicies.reservedForFutureUse'))
         expect(screen.getByLabelText(text('recoveryAppPolicies.form.retention'))).toHaveAccessibleDescription(text('recoveryAppPolicies.reservedForFutureUse'))
         expect(screen.getByLabelText(text('recoveryAppPolicies.form.retentionUnit'))).toHaveAccessibleDescription(text('recoveryAppPolicies.reservedForFutureUse'))
-        for (const label of ['bootVerify', 'enabled', 'manualZoning', 'manualWwpnEntry']) {
-          expect(screen.getByRole('checkbox', { name: text(`recoveryAppPolicies.form.${label}`) })).toHaveProperty('checked', label === 'enabled')
+        for (const label of ['bootVerify', 'enabled', 'manualZoning', 'manualWwpnEntry', 'stopSourceLpar']) {
+          expect(screen.getByRole('checkbox', { name: text(`recoveryAppPolicies.form.${label}`) })).toHaveProperty('checked', label === 'enabled' || label === 'stopSourceLpar')
         }
         // An unchanged edit must close without a dirty confirmation after visiting all helps.
         if (mode === 'edit') {

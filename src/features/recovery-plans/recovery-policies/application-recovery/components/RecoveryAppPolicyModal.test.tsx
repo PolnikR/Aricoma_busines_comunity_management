@@ -12,6 +12,7 @@ vi.mock('react-router', async importOriginal => ({
 }))
 
 const policy: RecoveryAppPolicyRecordOutput = {
+  stop_source_lpar: true,
   id: 'critical-daily-latest',
   name: 'Critical - Daily DR Test',
   description: 'Daily recovery test using the newest available snapshot.',
@@ -85,6 +86,99 @@ function renderModal(props: Partial<React.ComponentProps<typeof RecoveryAppPolic
 afterEach(() => vi.unstubAllGlobals())
 
 describe('RecoveryAppPolicyModal', () => {
+  it.each([true, false])('creates a policy with explicit stop_source_lpar=%s', async stopSource => {
+    const fetchMock = stubSubmitResponse()
+    const onClose = vi.fn()
+    renderModal({ onClose })
+    const checkbox = screen.getByRole('checkbox', { name: 'Stop source LPAR' })
+    expect(checkbox).toBeChecked()
+    if (!stopSource) fireEvent.click(checkbox)
+    fillRequiredCreateFields()
+    fireEvent.click(screen.getByRole('button', { name: 'Create policy' }))
+    await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+    expect(submittedBody(fetchMock)).toMatchObject({ stop_source_lpar: stopSource, source_shutdown_timeout_seconds: 300 })
+  })
+
+  it.each([
+    [true, 'latest'], [false, 'latest'],
+    [true, 'time_range'], [false, 'time_range'],
+    [true, 'exact_time'], [false, 'exact_time'],
+  ] as const)('preserves stop_source_lpar=%s when editing %s', async (stopSource, selection) => {
+    const fetchMock = stubSubmitResponse()
+    const onClose = vi.fn()
+    renderModal({ onClose, policy: {
+      ...powerPolicy, stop_source_lpar: stopSource, snapshot_selection_mode: selection,
+      snapshot_max_age_value: 2, snapshot_max_age_unit: 'hours', snapshot_target_time: '02:00',
+    } })
+    expect(screen.getByRole('checkbox', { name: 'Stop source LPAR' })).toHaveProperty('checked', stopSource)
+    fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Changed description' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Edit policy' }))
+    await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+    expect(submittedBody(fetchMock)).toMatchObject({
+      stop_source_lpar: stopSource, source_shutdown_timeout_seconds: 600,
+      snapshot_selection_mode: selection, description: 'Changed description',
+      manual_zoning: true, manual_wwpn_entry: false, target_lpar_prefix: powerPolicy.target_lpar_prefix,
+    })
+  })
+
+  it.each([true, false])('toggles stop_source_lpar from %s without changing the timeout', async stopSource => {
+    const fetchMock = stubSubmitResponse()
+    const onClose = vi.fn()
+    renderModal({ onClose, policy: { ...powerPolicy, stop_source_lpar: stopSource } })
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Stop source LPAR' }))
+    expect(screen.getByLabelText('Source shutdown timeout (seconds)')).toBeEnabled()
+    expect(screen.getByLabelText('Source shutdown timeout (seconds)')).toHaveValue(600)
+    fireEvent.click(screen.getByRole('button', { name: 'Edit policy' }))
+    await waitFor(() => { expect(onClose).toHaveBeenCalledOnce() })
+    expect(submittedBody(fetchMock)).toMatchObject({ stop_source_lpar: !stopSource, source_shutdown_timeout_seconds: 600 })
+  })
+
+  it('returns to a clean edit after toggling stop source twice', () => {
+    const onClose = vi.fn()
+    renderModal({ onClose, policy: { ...powerPolicy, stop_source_lpar: false } })
+    const checkbox = screen.getByRole('checkbox', { name: 'Stop source LPAR' })
+    fireEvent.click(checkbox)
+    fireEvent.click(checkbox)
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(onClose).toHaveBeenCalledOnce()
+  })
+
+  it('guards a changed stop source value and restores the create default on reopen', () => {
+    const onClose = vi.fn()
+    const { rerender } = renderModal({ onClose })
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Stop source LPAR' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(onClose).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }))
+    expect(onClose).toHaveBeenCalledOnce()
+    const client = new QueryClient()
+    rerender(<QueryClientProvider client={client}><RecoveryAppPolicyModal open={false} onClose={onClose} existingPolicies={[]} /></QueryClientProvider>)
+    rerender(<QueryClientProvider client={client}><RecoveryAppPolicyModal open onClose={onClose} existingPolicies={[]} /></QueryClientProvider>)
+    expect(screen.getByRole('checkbox', { name: 'Stop source LPAR' })).toBeChecked()
+  })
+
+  it('disables stop source while submitting and retains false after a failed request', async () => {
+    let complete!: (response: Response) => void
+    vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>(resolve => { complete = resolve })))
+    renderModal({ policy: { ...powerPolicy, stop_source_lpar: false } })
+    fireEvent.click(screen.getByRole('button', { name: 'Edit policy' }))
+    await waitFor(() => { expect(screen.getByRole('checkbox', { name: 'Stop source LPAR' })).toBeDisabled() })
+    complete(Response.json({ detail: 'Save failed' }, { status: 500 }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Save failed')
+    expect(screen.getByRole('checkbox', { name: 'Stop source LPAR' })).toBeEnabled()
+    expect(screen.getByRole('checkbox', { name: 'Stop source LPAR' })).not.toBeChecked()
+    expect(screen.getByLabelText('Source shutdown timeout (seconds)')).toHaveValue(600)
+  })
+
+  it('still validates the retained timeout when source stopping is disabled', () => {
+    const fetchMock = stubSubmitResponse()
+    renderModal({ policy: { ...powerPolicy, stop_source_lpar: false } })
+    fireEvent.change(screen.getByLabelText('Source shutdown timeout (seconds)'), { target: { value: '0' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Edit policy' }))
+    expect(screen.getByLabelText('Source shutdown timeout (seconds)')).toHaveAttribute('aria-invalid', 'true')
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
   it.each([false, true])('preserves boot_verify=%s when editing another field', async bootVerify => {
     const fetchMock = stubSubmitResponse()
     const onClose = vi.fn()
@@ -423,7 +517,7 @@ describe('RecoveryAppPolicyModal', () => {
       frequency_value: 7, frequency_unit: 'days', retention_value: 1, retention_unit: 'days',
       boot_verify: false, snapshot_selection_mode: 'time_range', snapshot_max_age_value: 2,
       snapshot_max_age_unit: 'hours', enabled: true,
-      target_lpar_prefix: 'dr_', manual_zoning: false, manual_wwpn_entry: false, source_shutdown_timeout_seconds: 300, zoning_wait_minutes: 240,
+      target_lpar_prefix: 'dr_', manual_zoning: false, manual_wwpn_entry: false, stop_source_lpar: true, source_shutdown_timeout_seconds: 300, zoning_wait_minutes: 240,
     })
   })
 
@@ -458,7 +552,7 @@ describe('RecoveryAppPolicyModal', () => {
       id: 'critical-daily', name: 'Critical daily', description: 'Daily', level: 'critical',
       frequency_value: 1, frequency_unit: 'days', retention_value: 1, retention_unit: 'days',
       boot_verify: false, snapshot_selection_mode: 'latest', enabled: true,
-      target_lpar_prefix: 'dr_', manual_zoning: false, manual_wwpn_entry: false, source_shutdown_timeout_seconds: 300, zoning_wait_minutes: 240,
+      target_lpar_prefix: 'dr_', manual_zoning: false, manual_wwpn_entry: false, stop_source_lpar: true, source_shutdown_timeout_seconds: 300, zoning_wait_minutes: 240,
     })
   })
 
@@ -484,7 +578,7 @@ describe('RecoveryAppPolicyModal', () => {
       id: exactTimePolicy.id, name: exactTimePolicy.name, description: exactTimePolicy.description, level: exactTimePolicy.level,
       frequency_value: 30, frequency_unit: 'days', retention_value: 2, retention_unit: 'days',
       boot_verify: true, snapshot_selection_mode: 'exact_time', snapshot_target_time: '02:00', enabled: true,
-      target_lpar_prefix: 'dr_', manual_zoning: false, manual_wwpn_entry: false, source_shutdown_timeout_seconds: 300, zoning_wait_minutes: 240,
+      target_lpar_prefix: 'dr_', manual_zoning: false, manual_wwpn_entry: false, stop_source_lpar: true, source_shutdown_timeout_seconds: 300, zoning_wait_minutes: 240,
     })
   })
 
