@@ -62,19 +62,31 @@ function buildSections(
 ): PolicyDetailSection[] {
 
   const snapshotFacts: PolicyDetailFact[] = snapshotPolicy ? [
+    { label: t('details.description'), value: snapshotPolicy.description ?? '-' },
+    { label: t('details.level'), value: snapshotPolicy.level },
     { label: t('details.frequency'), value: t('snapshotPolicies.every').replace('{interval}', formatInterval(snapshotPolicy.frequency_value, snapshotPolicy.frequency_unit, 'snapshotPolicies', t)) },
     { label: t('details.retention'), value: formatInterval(snapshotPolicy.retention_value, snapshotPolicy.retention_unit, 'snapshotPolicies', t) },
+    { label: t('details.maxSnapshots'), value: snapshotPolicy.max_snapshots == null ? t('snapshotPolicies.noLimit') : String(snapshotPolicy.max_snapshots) },
     { label: t('snapshotPolicies.form.flashcopyCopyRate'), value: snapshotPolicy.flashcopy_copy_rate },
     { label: t('details.status'), value: t(snapshotPolicy.enabled ? 'snapshotPolicies.enabled' : 'snapshotPolicies.disabled') },
   ] : []
 
   const recoveryFacts: PolicyDetailFact[] = recoveryPolicy ? [
+    { label: t('details.description'), value: recoveryPolicy.description ?? '-' },
+    { label: t('details.level'), value: recoveryPolicy.level },
     { label: t('details.frequency'), value: t('recoveryAppPolicies.every').replace('{interval}', formatInterval(recoveryPolicy.frequency_value, recoveryPolicy.frequency_unit, 'recoveryAppPolicies', t)) },
-    { label: t('details.snapshotSelection'), value: formatRecoverySelection(recoveryPolicy, t) },
     { label: t('details.retention'), value: <span className="inline-flex flex-wrap items-center gap-2">{formatInterval(recoveryPolicy.retention_value, recoveryPolicy.retention_unit, 'recoveryAppPolicies', t)}<span className="rounded bg-surface-muted px-1.5 text-[10px] leading-4 text-text-secondary">{t('recoveryAppPolicies.reservedForFutureUse')}</span></span> },
+    { label: t('details.snapshotSelection'), value: formatRecoverySelection(recoveryPolicy, t) },
+    ...(recoveryPolicy.snapshot_selection_mode === 'time_range' ? [{ label: t('recoveryAppPolicies.form.maxAge'), value: recoveryPolicy.snapshot_max_age_value != null && recoveryPolicy.snapshot_max_age_unit ? formatInterval(recoveryPolicy.snapshot_max_age_value, recoveryPolicy.snapshot_max_age_unit, 'recoveryAppPolicies', t) : '-' }] : []),
+    ...(recoveryPolicy.snapshot_selection_mode === 'exact_time' ? [{ label: t('recoveryAppPolicies.form.targetTime'), value: recoveryPolicy.snapshot_target_time ?? '-' }] : []),
     { label: t('details.bootVerify'), value: <span className="inline-flex flex-wrap items-center gap-2">{t(recoveryPolicy.boot_verify ? 'recoveryAppPolicies.yes' : 'recoveryAppPolicies.no')}<span className="rounded bg-surface-muted px-1.5 text-[10px] leading-4 text-text-secondary">{t('recoveryAppPolicies.reservedForFutureUse')}</span></span> },
-    { label: t('recoveryAppPolicies.form.stopSourceLpar'), value: t(recoveryPolicy.stop_source_lpar ? 'recoveryAppPolicies.yes' : 'recoveryAppPolicies.no') },
     { label: t('details.status'), value: t(recoveryPolicy.enabled ? 'recoveryAppPolicies.enabled' : 'recoveryAppPolicies.disabled') },
+    { label: t('details.targetLparPrefix'), value: recoveryPolicy.target_lpar_prefix || '-' },
+    { label: t('details.manualZoning'), value: t(recoveryPolicy.manual_zoning ? 'recoveryAppPolicies.yes' : 'recoveryAppPolicies.no') },
+    { label: t('recoveryAppPolicies.form.manualWwpnEntry'), value: t(recoveryPolicy.manual_wwpn_entry ? 'recoveryAppPolicies.yes' : 'recoveryAppPolicies.no') },
+    { label: t('recoveryAppPolicies.form.stopSourceLpar'), value: t(recoveryPolicy.stop_source_lpar ? 'recoveryAppPolicies.yes' : 'recoveryAppPolicies.no') },
+    { label: t('details.sourceShutdownTimeout'), value: formatInterval(recoveryPolicy.source_shutdown_timeout_seconds, 'seconds', 'recoveryAppPolicies', t) },
+    { label: t('details.zoningWait'), value: formatInterval(recoveryPolicy.zoning_wait_minutes, 'minutes', 'recoveryAppPolicies', t) },
   ] : []
 
   const cleanRoomFacts: PolicyDetailFact[] = cleanRoomPolicy ? [

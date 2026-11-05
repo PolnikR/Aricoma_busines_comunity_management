@@ -1,6 +1,6 @@
 import { isProgrammaticIdAvailable } from '@/shared/utils/programmaticId'
 import { isCredentialOk } from '@/features/providers-connectors/providers/utils/credentialStatusChecks'
-import { getRecoveryGroupResourceOption } from '../config/recoveryGroupResourceOptions'
+import { getRecoveryGroupResourceOption, getSelectableRecoveryGroupProviders } from '../config/recoveryGroupResourceOptions'
 import { calculateRecoveryGroupStepIndices } from '../utils/calculateRecoveryGroupStepIndices'
 import type { DraftLifecycle, DraftObservation } from './recoveryGroupDraftLifecycle'
 import { getDraftLocks, type DraftResolution } from './resolveRecoveryGroupDraft'
@@ -17,7 +17,7 @@ export function getDraftReadiness(state: DraftLifecycle, resolution: DraftResolu
   const { draft, hasRelatedStorageStep, selectedVolumes, metroManaged, topologyValid } = resolution
   const locks = getDraftLocks(context.editAuthority)
   const allProviders = context.providers ?? []
-  const providers = context.editAuthority ? allProviders : allProviders.filter(provider => provider.role === 'source')
+  const providers = getSelectableRecoveryGroupProviders(allProviders, context.editAuthority?.providerId)
   const detailsValid = Boolean(raw.id && isProgrammaticIdAvailable(raw.id, context.existingIds ?? [], context.editAuthority?.id)
     && raw.name.trim() && raw.description.trim() && isRecoveryGroupEmailValid(raw.notificationEmail))
   const typeValid = Boolean(raw.sourceCategory && raw.workloadType && raw.resourceType)

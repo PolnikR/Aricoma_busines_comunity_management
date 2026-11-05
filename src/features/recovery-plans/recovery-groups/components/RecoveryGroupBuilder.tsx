@@ -28,6 +28,7 @@ import { useRecoveryGroupTargetPools } from '../hooks/useRecoveryGroupTargetPool
 import { missingAutomaticPools } from '../helpers/recoveryGroupTargetPools'
 import type { RecoveryGroup, RecoveryGroupDraft, RecoveryGroupVmMetadata } from '../model/recoveryGroupTypes'
 import { calculateRecoveryGroupStepIndices } from '../utils/calculateRecoveryGroupStepIndices'
+import { getSelectableRecoveryGroupProviders } from '../config/recoveryGroupResourceOptions'
 import { filterByPlatformProviderCredentialStatus } from '@/features/providers-connectors/providers/utils/credentialStatusChecks'
 import { RecoveryGroupDetailsStep } from './RecoveryGroupDetailsStep'
 import { RecoveryGroupOrchestrationStep } from './RecoveryGroupOrchestrationStep'
@@ -66,9 +67,7 @@ export function RecoveryGroupBuilder({
   const auxiliaryHintId = useId()
   const providerQuery = useGetProviders({ role: 'all' }, { query: { select: selectProviders } })
   const allProviders = providerQuery.data ?? []
-  const providers = initialData
-    ? allProviders
-    : allProviders.filter(provider => provider.role === 'source')
+  const providers = getSelectableRecoveryGroupProviders(allProviders, initialData?.providerId)
   const [step, setStep] = useState(1)
   const [lifecycle, setLifecycle] = useState(() => initializeDraft(initialData))
   const handleMetadataAvailable = useCallback((metadata: Record<string, RecoveryGroupVmMetadata>) => {

@@ -273,11 +273,13 @@ describe('AppMetadataForm', () => {
       expect(onMetadataChange).toHaveBeenLastCalledWith({ targetProviderId: 'vmware-target' })
     })
 
-    it('offers the selected IBM Power provider itself as the target', async () => {
+    it('offers only the target-role IBM Power provider and only source-role options', async () => {
       renderForm('power-source', '')
       const target = await screen.findByLabelText('Target provider ID *')
+      const source = screen.getByLabelText('Provider ID *')
 
-      expect([...target.querySelectorAll('option')].map(option => option.value)).toEqual(['', 'power-source', 'power-target'])
+      expect([...source.querySelectorAll('option')].map(option => option.value)).toEqual(['', 'vmware-source', 'vmware-source-2', 'power-source'])
+      expect([...target.querySelectorAll('option')].map(option => option.value)).toEqual(['', 'power-target'])
     })
 
     it('reports another source type without deriving a target reset', async () => {

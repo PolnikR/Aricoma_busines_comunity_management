@@ -37,8 +37,8 @@ describe('getEligiblePlatformProviders', () => {
 })
 
 describe('getEligibleSourceProviders', () => {
-  it('offers VMware source providers and IBM Power providers of any role, with available credentials', () => {
-    expect(getEligibleSourceProviders(providers).map(item => item.id)).toEqual(['vmware-source', 'power-source', 'power-target'])
+  it('offers only source-role VMware and IBM Power providers with available credentials', () => {
+    expect(getEligibleSourceProviders(providers).map(item => item.id)).toEqual(['vmware-source', 'power-source'])
   })
 })
 
@@ -47,8 +47,8 @@ describe('getEligibleTargetProviders', () => {
     expect(getEligibleTargetProviders(providers, 'VMWARE').map(item => item.id)).toEqual(['vmware-target'])
   })
 
-  it('offers IBM Power providers of any role for an IBM Power source, so one HMC can serve both sides', () => {
-    expect(getEligibleTargetProviders(providers, 'IBM_POWER').map(item => item.id)).toEqual(['power-source', 'power-target'])
+  it('offers only target-role IBM Power providers, excluding source and missing credentials', () => {
+    expect(getEligibleTargetProviders(providers, 'IBM_POWER').map(item => item.id)).toEqual(['power-target'])
   })
 
   it('offers nothing without a source type', () => {

@@ -68,6 +68,15 @@ const providersQuery = vi.hoisted(() => ({
       credentialId: 'power-cred',
       credentialStatus: 'ok',
     }, {
+      id: 'power-target-01',
+      name: 'DR HMC',
+      description: 'IBM Power target provider',
+      type: 'IBM_POWER',
+      role: 'target',
+      ipAddress: '10.0.0.31',
+      credentialId: 'power-target-cred',
+      credentialStatus: 'ok',
+    }, {
       id: 'vmware-target-01',
       name: 'DR vCenter',
       description: 'VMware target provider',
@@ -539,7 +548,7 @@ describe('RecoveryAppBuilder', () => {
 
     it.each([
       ['VMware', 'vmware-01', 'vmware-target-01', 'database_group', 'DB-01', 'DB-02'],
-      ['IBM Power', 'power-01', 'power-01', 'lpar_group', 'aix01', 'aix02'],
+      ['IBM Power', 'power-01', 'power-target-01', 'lpar_group', 'aix01', 'aix02'],
     ])('copies every %s VM field with assignment precedence, then reindexes selection and preserves survivor metadata', async (_label, platform, targetProviderId, groupId, firstName, secondName) => {
       recoveryGroupsQuery.current.groups = recoveryGroupsQuery.current.groups.map(group => group.id === groupId ? {
         ...group, resources: [firstName, secondName], vmMetadataByName: { [firstName]: { ...vmMetadata }, [secondName]: { hostname: 'second-original', cpu: 2 } },
@@ -872,9 +881,9 @@ describe('RecoveryAppBuilder', () => {
     expect(screen.getByText('Group options: database_group')).toBeInTheDocument()
   })
 
-  it('offers only IBM Power recovery groups for an IBM Power source, using one provider on both sides', async () => {
+  it('offers only IBM Power recovery groups for an IBM Power source and target', async () => {
     render(<RecoveryAppBuilder />)
-    await openTiers('power-01', 'power-01')
+    await openTiers('power-01', 'power-target-01')
     expect(screen.getByText('Group options: lpar_group')).toBeInTheDocument()
   })
 
@@ -1013,16 +1022,16 @@ describe('RecoveryAppBuilder', () => {
 
     it('blocks saving an IBM Power application with an invalid LPAR name', async () => {
       recoveryGroupsQuery.current.groups = recoveryGroupsQuery.current.groups.map(group => group.id === 'lpar_group' ? { ...group, resources: ['bad name'] } : group)
-      const { onSave, alert } = await trySave(savedApplication('power-01', 'power-01', 'lpar_group', 'LPAR Group', ['bad name']))
+      const { onSave, alert } = await trySave(savedApplication('power-01', 'power-target-01', 'lpar_group', 'LPAR Group', ['bad name']))
       expect(onSave).not.toHaveBeenCalled()
       expect(alert).not.toHaveBeenCalled()
       expect(screen.getByRole('alert')).toHaveTextContent('LPAR name "bad name" in tier "tier_id" is invalid')
     })
 
-    it('saves an IBM Power application using one provider as source and target', async () => {
-      const { onSave, alert } = await trySave(savedApplication('power-01', 'power-01', 'lpar_group', 'LPAR Group', ['aix2source']))
+    it('saves an IBM Power application using source and target role providers', async () => {
+      const { onSave, alert } = await trySave(savedApplication('power-01', 'power-target-01', 'lpar_group', 'LPAR Group', ['aix2source']))
       expect(alert).not.toHaveBeenCalled()
-      expect(onSave.mock.calls[0]?.[0]).toMatchObject({ platform: 'power-01', targetProviderId: 'power-01' })
+      expect(onSave.mock.calls[0]?.[0]).toMatchObject({ platform: 'power-01', targetProviderId: 'power-target-01' })
     })
 
     it("keeps a new application's source and target editable", () => {
@@ -1292,7 +1301,7 @@ describe('RecoveryAppBuilder', () => {
       await user.click(within(dialog).getByRole('button', { name: 'Change provider' }))
 
       expect(screen.getByLabelText('Provider ID *')).toHaveValue('power-01')
-      await user.selectOptions(screen.getByLabelText('Target provider ID *'), 'power-01')
+      await user.selectOptions(screen.getByLabelText('Target provider ID *'), 'power-target-01')
       await user.click(screen.getByRole('button', { name: 'Next' }))
       expect(screen.getByText('Tier count: 1')).toBeInTheDocument()
       expect(screen.getByText('Group id: none')).toBeInTheDocument()

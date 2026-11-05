@@ -23,7 +23,7 @@ function setup(power = false, version: string | null = null, duplicate = false, 
   const providers = [
     { id: 'vcenter', name: 'Source vCenter', type: 'VMWARE', role: 'source', credentialStatus: 'ok' },
     { id: 'target', name: 'Target vCenter', type: 'VMWARE', role: 'target', credentialStatus: 'ok' },
-    { id: 'hmc', name: 'HMC', type: 'IBM_POWER', role: 'target', credentialStatus: 'ok' },
+    { id: 'hmc', name: 'HMC', type: 'IBM_POWER', role: 'source', credentialStatus: 'ok' },
     { id: 'hmc-other', name: 'Another HMC', type: 'IBM_POWER', role: 'target', credentialStatus: 'ok' },
     { id: 'flash-source', name: 'Primary FlashSystem', type: 'FLASHCOPY', role: 'source', credentialStatus: 'ok', partnerProviderId: 'flash-auxiliary' },
     { id: 'flash-auxiliary', name: 'Auxiliary FlashSystem', type: 'FLASHCOPY', role: 'source', credentialStatus: 'ok', partnerProviderId: 'flash-source' },
@@ -122,7 +122,7 @@ describe('real wizard to HTTP functional consistency', () => {
     fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Recovery' } })
     await screen.findByRole('option', { name: power ? /^HMC - IBM_POWER$/ : /Source vCenter/ })
     await user.selectOptions(screen.getByLabelText('Provider ID *'), power ? 'hmc' : 'vcenter')
-    await user.selectOptions(screen.getByLabelText('Target provider ID *'), power ? 'hmc' : 'target')
+    await user.selectOptions(screen.getByLabelText('Target provider ID *'), power ? 'hmc-other' : 'target')
     await user.type(screen.getByLabelText('Notification email'), 'Team@Example.test')
     await user.click(screen.getByRole('button', { name: 'Recovery groups & tiers' }))
     await waitFor(() => { expect(fixture.client.getQueryData(getGetRecoveryGroupsQueryKey())).toBeDefined() })
@@ -134,7 +134,7 @@ describe('real wizard to HTTP functional consistency', () => {
     await user.click(screen.getByRole('button', { name: 'Save Application' }))
     await waitFor(() => { expect(fixture.requests.filter(req => req.method === 'POST')).toHaveLength(1) })
     expect(fixture.requests[before]?.method).toBe('POST')
-    expect(fixture.requests[before]?.body?.application).toMatchObject({ notificationEmail: 'Team@Example.test', source_provider_id: power ? 'hmc' : 'vcenter', target_provider_id: power ? 'hmc' : 'target', dag_template_version: null })
+    expect(fixture.requests[before]?.body?.application).toMatchObject({ notificationEmail: 'Team@Example.test', source_provider_id: power ? 'hmc' : 'vcenter', target_provider_id: power ? 'hmc-other' : 'target', dag_template_version: null })
     const submitted = fixture.requests[before]?.body
     if (!submitted) throw new Error('Expected submitted application')
     expect(Object.values(submitted.application.tiers)[0]?.recovery_group.vms).toEqual([{ name: 'db', order: 1 }])

@@ -4,7 +4,7 @@ import type {
   ProviderRecord,
   ProviderType,
 } from '@/features/providers-connectors/providers/model/providerTypes'
-import { getAvailableRecoveryGroupResourceOptions } from './recoveryGroupResourceOptions'
+import { getAvailableRecoveryGroupResourceOptions, getSelectableRecoveryGroupProviders } from './recoveryGroupResourceOptions'
 
 function provider(
   id: string,
@@ -22,6 +22,22 @@ function provider(
     credentialStatus,
   }
 }
+
+describe('getSelectableRecoveryGroupProviders', () => {
+  const providers = [
+    provider('power-source', 'IBM_POWER'),
+    { ...provider('power-target-1', 'IBM_POWER'), role: 'target' as const },
+    { ...provider('power-target-2', 'IBM_POWER'), role: 'target' as const },
+  ]
+
+  it('offers only source providers when creating a group', () => {
+    expect(getSelectableRecoveryGroupProviders(providers).map(item => item.id)).toEqual(['power-source'])
+  })
+
+  it('retains only the saved target-role provider as a legacy edit selection', () => {
+    expect(getSelectableRecoveryGroupProviders(providers, 'power-target-1').map(item => item.id)).toEqual(['power-source', 'power-target-1'])
+  })
+})
 
 describe('getAvailableRecoveryGroupResourceOptions', () => {
   it('returns one resource option for each healthy provider type', () => {

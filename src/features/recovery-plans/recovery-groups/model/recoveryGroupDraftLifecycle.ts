@@ -15,7 +15,7 @@ import { getDiscoveryIdentity, getDraftLocks, resolveEffectiveDraft } from './re
 export { resolveEffectiveDraft } from './resolveRecoveryGroupDraft'
 export { getDraftReadiness } from './recoveryGroupDraftReadiness'
 
-export type DraftAuthority = Pick<RecoveryGroup, 'id' | 'pushToOrchestrator' | 'metroMirrorMode' | 'consistencyGroupId' | 'auxiliaryNamesByVolume' | 'resourceType' | 'topology' | 'relatedVolumeProviderId' | 'relatedVolumes'>
+export type DraftAuthority = Pick<RecoveryGroup, 'id' | 'pushToOrchestrator' | 'metroMirrorMode' | 'consistencyGroupId' | 'auxiliaryNamesByVolume' | 'resourceType' | 'topology' | 'relatedVolumeProviderId' | 'relatedVolumes'> & Partial<Pick<RecoveryGroup, 'providerId'>>
 
 export interface DraftLifecycle {
   readonly draft: RecoveryGroupDraft

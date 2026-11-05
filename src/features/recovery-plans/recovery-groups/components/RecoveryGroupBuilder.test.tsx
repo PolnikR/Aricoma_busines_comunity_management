@@ -47,6 +47,18 @@ vi.mock('@/generated/query/providers/providers.gen', async (importOriginal) => (
         vmTags: ['WEB'],
       },
       {
+        id: 'vmware-vcenter-source-02',
+        name: 'Secondary source vCenter',
+        description: 'Additional source VMware provider',
+        type: 'VMWARE',
+        ipAddress: '10.99.99.42',
+        port: 22,
+        credentialId: 'vcenter-secondary-admin',
+        role: 'source',
+        credentialStatus: 'ok',
+        vmPrefix: 'SECOND-',
+      },
+      {
         id: 'vmware-vcenter-target-01',
         name: 'Recovery vCenter',
         description: 'Target VMware provider',
@@ -1133,11 +1145,11 @@ describe('RecoveryGroupBuilder', () => {
     render(<RecoveryGroupBuilder initialData={existingGroup} onCreate={vi.fn()} onCancel={vi.fn()} />)
 
     await user.click(screen.getByRole('button', { name: 'Provider' }))
-    await user.click(screen.getByRole('button', { name: /Recovery vCenter/i }))
+    await user.click(screen.getByRole('button', { name: /Secondary source vCenter/i }))
     await user.click(screen.getByRole('button', { name: 'Resources' }))
 
-    expect(resourceInventoryMock).toHaveBeenLastCalledWith('vmware_virtual_machines', 'vmware-vcenter-target-01', {
-      providerScope: { vmPrefix: 'DR-', vmTags: [] },
+    expect(resourceInventoryMock).toHaveBeenLastCalledWith('vmware_virtual_machines', 'vmware-vcenter-source-02', {
+      providerScope: { vmPrefix: 'SECOND-', vmTags: [] },
     })
     expect(screen.getByLabelText('Selected recovery group virtual machines')).not.toHaveTextContent('DB-01')
   })

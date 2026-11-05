@@ -22,7 +22,8 @@ function setup(power = false, version: string | null = null, pushed = false) {
   const providers = [
     { id: 'vcenter', name: 'Source vCenter', type: 'VMWARE', role: 'source', credentialStatus: 'ok' },
     { id: 'target', name: 'Target vCenter', type: 'VMWARE', role: 'target', credentialStatus: 'ok' },
-    { id: 'hmc', name: 'HMC', type: 'IBM_POWER', role: 'target', credentialStatus: 'ok' },
+    { id: 'hmc', name: 'HMC', type: 'IBM_POWER', role: 'source', credentialStatus: 'ok' },
+    { id: 'hmc-target', name: 'Target HMC', type: 'IBM_POWER', role: 'target', credentialStatus: 'ok' }
   ]
   const group = { id: 'group', name: 'Database group', provider_id_vm: source, provider_id_volume: '',
     vms: [{ name: 'db' }], volumes: [], topology: 'local',
@@ -126,7 +127,7 @@ describe('technical help through the real wizard and HTTP boundary', () => {
     await user.type(screen.getByLabelText('Description *'), 'Recovery')
     await screen.findByRole('option', { name: power ? /^HMC - IBM_POWER$/ : /Source vCenter/ })
     await user.selectOptions(screen.getByLabelText('Provider ID *'), power ? 'hmc' : 'vcenter')
-    await user.selectOptions(screen.getByLabelText('Target provider ID *'), power ? 'hmc' : 'target')
+    await user.selectOptions(screen.getByLabelText('Target provider ID *'), power ? 'hmc-target' : 'target')
     expect(await inspectHelp()).toBe(3)
     await user.click(screen.getByRole('button', { name: 'Recovery groups & tiers' }))
     await waitFor(() => { expect(fixture.client.getQueryData(getGetRecoveryGroupsQueryKey())).toBeDefined() })
@@ -142,7 +143,7 @@ describe('technical help through the real wizard and HTTP boundary', () => {
     await waitFor(() => { expect(fixture.requests.filter(request => request.method === 'POST')).toHaveLength(1) })
     const submitted = fixture.requests.find(request => request.method === 'POST')
     expect(submitted?.params.get('push_to_orchestrator')).toBe('false')
-    expect(submitted?.body?.application).toMatchObject({ source_provider_id: power ? 'hmc' : 'vcenter', target_provider_id: power ? 'hmc' : 'target', notificationEmail: null, dag_template_version: null })
+    expect(submitted?.body?.application).toMatchObject({ source_provider_id: power ? 'hmc' : 'vcenter', target_provider_id: power ? 'hmc-target' : 'target', notificationEmail: null, dag_template_version: null })
   })
 
   it.each([false, true])('lets pushed applications inspect help without a write request (Power=%s)', async power => {

@@ -83,6 +83,11 @@ const recoveryAppPolicies = [
     retention_unit: 'hours',
     boot_verify: true,
     stop_source_lpar: true,
+    target_lpar_prefix: 'dr_',
+    manual_zoning: false,
+    manual_wwpn_entry: true,
+    source_shutdown_timeout_seconds: 300,
+    zoning_wait_minutes: 240,
     snapshot_selection_mode: 'latest',
     snapshot_max_age_value: null,
     snapshot_max_age_unit: null,
@@ -100,6 +105,11 @@ const recoveryAppPolicies = [
     retention_unit: 'days',
     boot_verify: true,
     stop_source_lpar: false,
+    target_lpar_prefix: '',
+    manual_zoning: true,
+    manual_wwpn_entry: false,
+    source_shutdown_timeout_seconds: 600,
+    zoning_wait_minutes: 30,
     snapshot_selection_mode: 'time_range',
     snapshot_max_age_value: 2,
     snapshot_max_age_unit: 'hours',
@@ -128,6 +138,33 @@ describe('PolicySetPicker', () => {
     render(<PolicySetPicker policySets={policySets} selectedPolicySetId={id} onSelect={vi.fn()} />)
     const recovery = screen.getByRole('region', { name: 'Recovery application policy' })
     expect(within(recovery).getByText('Stop source LPAR').parentElement).toHaveTextContent(expected)
+  })
+
+  it('shows all recovery policy settings and snapshot limits without extra copies of policies', () => {
+    render(<PolicySetPicker policySets={policySets} selectedPolicySetId="tier2-apps" onSelect={vi.fn()} />)
+    const recovery = screen.getByRole('region', { name: 'Recovery application policy' })
+    const snapshot = screen.getByRole('region', { name: 'Snapshot policy' })
+    for (const [label, value] of [
+      ['Description', 'Daily recovery validation.'],
+      ['Level', 'critical'],
+      ['Target LPAR prefix', 'dr_'],
+      ['Manual zoning', 'No'],
+      ['Manual WWPN entry', 'Yes'],
+      ['Stop source LPAR', 'Yes'],
+      ['Source shutdown timeout', '300 seconds'],
+      ['Zoning wait', '240 minutes'],
+    ] as const) {
+      expect(within(recovery).getByText(label).parentElement).toHaveTextContent(value)
+    }
+    expect(within(snapshot).getByText('Maximum snapshots').parentElement).toHaveTextContent('No limit')
+    expect(within(snapshot).getByText('Level').parentElement).toHaveTextContent('medium')
+  })
+
+  it('shows the time-range age and exact-time snapshot selection only in their respective modes', () => {
+    render(<PolicySetPicker policySets={policySets} selectedPolicySetId="tier3-web" onSelect={vi.fn()} />)
+    const recovery = screen.getByRole('region', { name: 'Recovery application policy' })
+    expect(within(recovery).getByText('Maximum snapshot age').parentElement).toHaveTextContent('2 hours')
+    expect(within(recovery).queryByText('Target time')).not.toBeInTheDocument()
   })
 
   it('marks only recovery retention and boot verification as reserved for future use', () => {

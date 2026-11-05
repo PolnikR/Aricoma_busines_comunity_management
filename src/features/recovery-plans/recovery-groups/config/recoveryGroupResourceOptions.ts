@@ -52,6 +52,14 @@ export const RECOVERY_GROUP_RESOURCE_OPTIONS = [
   },
 ] as const satisfies readonly RecoveryGroupResourceOption[]
 
+// Only source providers are selectable, except a stored legacy provider during edit.
+export function getSelectableRecoveryGroupProviders(
+  providers: ProviderRecord[],
+  storedProviderId?: string | null,
+): ProviderRecord[] {
+  return providers.filter(provider => provider.role === 'source' || (storedProviderId != null && provider.id === storedProviderId))
+}
+
 export function getAvailableRecoveryGroupResourceOptions(
   providers: ProviderRecord[],
 ): RecoveryGroupResourceOption[] {
