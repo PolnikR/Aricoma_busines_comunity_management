@@ -107,8 +107,14 @@ describe('validateRecoveryApplication', () => {
     expect(validateRecoveryApplication({ ...formState, pushToOrchestrator: true, orchestrationProviderId: 'airflow-01' }, providers, platformProviders)).toBeNull()
   })
 
-  it('accepts the same IBM Power provider as source and target', () => {
-    expect(validateRecoveryApplication({ ...formState, platform: 'power-hmc', targetProviderId: 'power-hmc' }, providers)).toBeNull()
+  it('accepts IBM Power providers with separate source and target roles', () => {
+    expect(validateRecoveryApplication({ ...formState, platform: 'power-hmc', targetProviderId: 'power-target' }, providers)).toBeNull()
+  })
+
+  it('rejects a source-role IBM Power provider as the target on create', () => {
+    expect(validateRecoveryApplication({ ...formState, platform: 'power-hmc', targetProviderId: 'power-hmc' }, providers)).toEqual({
+      field: 'targetProvider', messageKey: 'recovery.application.validation.targetProviderRequired',
+    })
   })
 
   it.each([
@@ -174,7 +180,7 @@ describe('validateRecoveryApplication', () => {
       { pushToOrchestrator: true, airflowRunId: 'run-1', id: 'vm_group', providerId: 'vmware-source', resources: ['db01', 'db 01'], sourceCategory: 'backup_system_workload', workloadType: 'vmware_virtual_machines' },
       { pushToOrchestrator: true, airflowRunId: 'run-2', id: 'lpar_group', providerId: 'power-hmc', resources: ['db01', 'aix01', 'A', 'lpar.prod_01-a', 'x'.repeat(47), 'bad name', '-lpar', '.lpar', 'lpar/01', 'x'.repeat(48), ''], sourceCategory: 'backup_system_workload', workloadType: 'ibm_power_virtual_machines' },
     ] as const
-    const powerProviders = [provider('power-hmc', 'IBM_POWER', 'source')]
+    const powerProviders = [provider('power-hmc', 'IBM_POWER', 'source'), provider('power-target', 'IBM_POWER', 'target')]
 
     function withGroup(groupId: string, vmNames: string[], state: Partial<RecoveryApplicationFormState> = {}): RecoveryApplicationFormState {
       return {
@@ -204,7 +210,7 @@ describe('validateRecoveryApplication', () => {
       ] as const)('validates pushed=%s and run ID=%s', (pushToOrchestrator, airflowRunId, allowed) => {
         const power = platform === 'IBM_POWER'
         const current = { ...groups[power ? 1 : 0], pushToOrchestrator, airflowRunId }
-        const state = withGroup(current.id, ['db01'], power ? { platform: 'power-hmc', targetProviderId: 'power-hmc' } : {})
+        const state = withGroup(current.id, ['db01'], power ? { platform: 'power-hmc', targetProviderId: 'power-target' } : {})
         const before = structuredClone(state)
         for (const locked of [false, true]) {
           for (const push of [false, true]) {
@@ -250,12 +256,12 @@ describe('validateRecoveryApplication', () => {
     })
 
     it.each(['aix01', 'A', 'lpar.prod_01-a', 'x'.repeat(47)])('accepts the IBM Power LPAR name %s', (name) => {
-      const state = withGroup('lpar_group', [name], { platform: 'power-hmc', targetProviderId: 'power-hmc' })
+      const state = withGroup('lpar_group', [name], { platform: 'power-hmc', targetProviderId: 'power-target' })
       expect(validateRecoveryApplication(state, powerProviders, [], { groups: [...groups] })).toBeNull()
     })
 
     it.each(['bad name', '-lpar', '.lpar', 'lpar/01', 'x'.repeat(48), ''])('rejects the IBM Power LPAR name "%s"', (name) => {
-      const state = withGroup('lpar_group', [name], { platform: 'power-hmc', targetProviderId: 'power-hmc' })
+      const state = withGroup('lpar_group', [name], { platform: 'power-hmc', targetProviderId: 'power-target' })
       expect(validateRecoveryApplication(state, powerProviders, [], { groups: [...groups] })).toEqual({
         field: 'recoveryGroup',
         messageKey: 'recovery.application.validation.lparNameInvalid',
@@ -272,7 +278,7 @@ describe('functional consistency rules', () => {
     const source = power ? 'power-hmc' : 'vmware-source'
     const groups = [{ id: 'g', providerId: source, sourceCategory: 'backup_system_workload' as const, workloadType: power ? 'ibm_power_virtual_machines' as const : 'vmware_virtual_machines' as const, pushToOrchestrator: true, airflowRunId: 'run', resources: ['db'] }]
     const tier = { order: 1, description: 'DB', recovery_group: { id: 'g', name: 'Database group', vms: [{ name: 'db' }] } }
-    const state: RecoveryApplicationFormState = { ...formState, platform: source, targetProviderId: power ? source : 'vmware-target', dagTemplateVersion: version, pushToOrchestrator: push, orchestrationProviderId: 'airflow', tiers: new Map([['first', tier], ['second', { ...tier, order: 2 }]]) }
+    const state: RecoveryApplicationFormState = { ...formState, platform: source, targetProviderId: power ? 'power-target' : 'vmware-target', dagTemplateVersion: version, pushToOrchestrator: push, orchestrationProviderId: 'airflow', tiers: new Map([['first', tier], ['second', { ...tier, order: 2 }]]) }
     const catalog = { templates: (power ? ['v1', 'v2', 'v3'] : ['v1', 'v2']).map(version => ({ platform: power ? 'ibm_power' : 'vmware', version, default: version === 'v1', description: version })), verified: true }
     return { state, options: { groups, templateCatalog: catalog } }
   }

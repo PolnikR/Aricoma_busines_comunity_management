@@ -91,10 +91,10 @@ describe('getRecoveryApplicationDraftReadiness', () => {
   })
 
   it.each([null, { platform: 'IBM_POWER', sourceProviderId: 'hmc', targetProviderId: 'hmc' }])(
-    'allows the same IBM Power HMC on both sides with locks %j', lockedProviders => {
+    'allows the same IBM Power HMC only for a saved application with locks %j', lockedProviders => {
       const hmc: ProviderRecord = { id: 'hmc', name: 'HMC', type: 'IBM_POWER', role: 'target', credentialStatus: 'ok' }
       expect(getRecoveryApplicationDraftReadiness(draft({ platform: 'hmc', targetProviderId: 'hmc' }), context({ providers: [hmc], lockedProviders, groups: [{ id: 'stored-group', providerId: 'hmc', resources: [], sourceCategory: 'backup_system_workload', workloadType: 'ibm_power_virtual_machines', pushToOrchestrator: true, airflowRunId: 'run' }] })))
-        .toMatchObject({ detailsValid: true, canSave: true, lockedProvidersError: null })
+        .toMatchObject({ detailsValid: lockedProviders !== null, canSave: lockedProviders !== null, lockedProvidersError: null })
     },
   )
 
@@ -237,10 +237,11 @@ describe('shared functional validation readiness', () => {
 
 describe('Power v2 readiness gate', () => {
   it.each([false, true])('recomputes after version changes, selection and tier edits (Push=%s)', pushToOrchestrator => {
-    const hmc: ProviderRecord = { id: 'hmc', name: 'HMC', type: 'IBM_POWER', role: 'target', credentialStatus: 'ok' }
+    const hmc: ProviderRecord = { id: 'hmc', name: 'HMC', type: 'IBM_POWER', role: 'source', credentialStatus: 'ok' }
+    const target: ProviderRecord = { id: 'hmc-target', name: 'Target HMC', type: 'IBM_POWER', role: 'target', credentialStatus: 'ok' }
     const tier = { order: 1, description: 'Database', recovery_group: { id: 'group', name: 'Database group', vms: [{ name: 'db' }] } } satisfies DraftRecoveryTier
-    const state = draft({ platform: 'hmc', targetProviderId: 'hmc', pushToOrchestrator, dagTemplateVersion: 'v2', tiers: new Map([['first', tier], ['second', structuredClone(tier)]]) })
-    const current = context({ providers: [hmc], groups: [{ id: 'group', providerId: 'hmc', resources: ['db'], sourceCategory: 'backup_system_workload', workloadType: 'ibm_power_virtual_machines', pushToOrchestrator: true, airflowRunId: 'run' }], templateCatalog: { templates: [{ platform: 'ibm_power', version: 'v1', default: true, description: 'Default' }, { platform: 'ibm_power', version: 'v2', default: false, description: 'v2' }], verified: true } })
+    const state = draft({ platform: 'hmc', targetProviderId: 'hmc-target', pushToOrchestrator, dagTemplateVersion: 'v2', tiers: new Map([['first', tier], ['second', structuredClone(tier)]]) })
+    const current = context({ providers: [hmc, target], groups: [{ id: 'group', providerId: 'hmc', resources: ['db'], sourceCategory: 'backup_system_workload', workloadType: 'ibm_power_virtual_machines', pushToOrchestrator: true, airflowRunId: 'run' }], templateCatalog: { templates: [{ platform: 'ibm_power', version: 'v1', default: true, description: 'Default' }, { platform: 'ibm_power', version: 'v2', default: false, description: 'v2' }], verified: true } })
     expect(getRecoveryApplicationDraftReadiness(state, current)).toMatchObject({ canSave: false, tiersValid: false, validationError: { params: { name: 'db', tiers: 'first, second' } } })
     for (const dagTemplateVersion of [null, 'v1']) expect(getRecoveryApplicationDraftReadiness({ ...state, dagTemplateVersion }, current).canSave).toBe(true)
     const reordered = { ...state, tiers: new Map([...state.tiers].reverse()) }
