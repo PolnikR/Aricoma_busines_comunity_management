@@ -1,11 +1,11 @@
 # Implementačný plán: IBM Power Recovery Application Inventory
 
-Stav: návrh, bez implementácie. Dátum: 2026-11-05. FE HEAD pri analýze: `e028935c`; BE HEAD: `0f419ec`.
+Stav: implementované inline 2026-11-05; dôkazy overenia a podmienka nasadenia sú v TODO. Dátum: 2026-11-05. FE HEAD pri analýze: `e028935c`; BE HEAD: `0f419ec`.
 Checklist: [power-recovery-app-inventory-todo.md](power-recovery-app-inventory-todo.md).
 
 ## Rozsah a dôkazy
 
-Podporiť IBM Power v existujúcom Recovery Application Inventory pri zachovaní VMware, existujúceho GET hooku, cache, retry, invalidácie a technického JSON. Výstup tejto úlohy sú iba tieto dva dokumenty; implementácia vyžaduje ďalší pokyn. Žiadny push, merge, BE zásah ani ručná úprava generovaných súborov.
+Podporiť IBM Power v existujúcom Recovery Application Inventory pri zachovaní VMware, existujúceho GET hooku, cache, retry, invalidácie a technického JSON. Používateľ 2026-11-05 schválil vykonanie plánu inline. Žiadny push, merge, BE zásah ani ručná úprava generovaných súborov.
 
 Rel.AI nástroj nie je v relácii dostupný. CodeGraph MCP skončil s `Transport closed`; FE bol analyzovaný cez fungujúce `codegraph.cmd explore` a cielené čítanie aktuálnych súborov. BE bol čítaný priamo v `C:/Users/polnikr/source/ABCO/abco-be`: jeho CodeGraph CLI oznámil, že index nie je dostupný, hoci adresár `.codegraph` existuje. Index sa nevytváral. Analýzu preto nevydávame za overenie cez Rel.AI.
 
@@ -92,9 +92,9 @@ Prevziať `min-w-0`, flex-wrap, tokeny border/surface/text a container breakpoin
 
 Rozsah M, 3 súbory: `A/components/RecoveryApplicationInventory.tsx`, nový `RecoveryApplicationVmwareInventory.tsx`, existujúci `RecoveryApplicationInventory.test.tsx`. Závislosti: žiadne.
 
-- [ ] Presunúť iba VMware datastore/tier JSX; spoločný obal a header ponechať v kontajneri.
-- [ ] Zachovať existujúce metriky, JSON, keying, loading/error/retry a cache isolation test.
-- [ ] Existujúce testy prejdú; mock odpovede používajú validovaný Output vrátane default platformy.
+- [x] Presunúť iba VMware datastore/tier JSX; spoločný obal a header ponechať v kontajneri.
+- [x] Zachovať existujúce metriky, JSON, keying, loading/error/retry a cache isolation test.
+- [x] Existujúce testy prejdú; mock odpovede používajú validovaný Output vrátane default platformy.
 
 Overenie: inventory Vitest + cielený ESLint troch súborov. Žiadna produkčná zmena cache/hooks.
 
@@ -102,9 +102,9 @@ Overenie: inventory Vitest + cielený ESLint troch súborov. Žiadna produkčná
 
 Rozsah M, 4 súbory: `src/locales/en.json`, `sk.json`, `cs.json`, nový `src/locales/powerRecoveryInventoryTranslations.test.ts`. Závislosti: 1.
 
-- [ ] Doplniť rovnaké neprázdne kľúče pod `recoveryInventory.power.*` pre summary, ownership, LPAR/adapter fields, hosts, volumes, FlashCopy, partial data a co-holding warning; spoločné warnings/unknown-platform labely pod `recoveryInventory.*`.
-- [ ] Lokalizovať stavové vysvetlenia a jednotky/placeholdery; MAC/WWPN/IP/UUID ponechať ako technické názvy. Neznámy ownership zobrazovať bezpečne s pôvodnou hodnotou, nie ako run.
-- [ ] Test overí paritu kľúčov a interpolation placeholderov v troch jazykoch. `powerUnsupported` odstrániť až v úlohe 3 spolu s odpojením jeho použitia, aby medzikrok zostal funkčný.
+- [x] Doplniť rovnaké neprázdne kľúče pod `recoveryInventory.power.*` pre summary, ownership, LPAR/adapter fields, hosts, volumes, FlashCopy, partial data a co-holding warning; spoločné warnings/unknown-platform labely pod `recoveryInventory.*`.
+- [x] Lokalizovať stavové vysvetlenia a jednotky/placeholdery; MAC/WWPN/IP/UUID ponechať ako technické názvy. Neznámy ownership zobrazovať bezpečne s pôvodnou hodnotou, nie ako run.
+- [x] Test overí paritu kľúčov a interpolation placeholderov v troch jazykoch. `powerUnsupported` odstrániť až v úlohe 3 spolu s odpojením jeho použitia, aby medzikrok zostal funkčný.
 
 Overenie: nový locale Vitest a JSON parse. Kontrolný bod po 1–2: VMware bez regresie, texty pripravené.
 
@@ -112,9 +112,9 @@ Overenie: nový locale Vitest a JSON parse. Kontrolný bod po 1–2: VMware bez 
 
 Rozsah M: kontajner, nový `A/components/RecoveryApplicationPowerInventory.tsx`, inventory test, nový `RecoveryApplicationPowerInventory.test.tsx` (4 TSX súbory). Odstránenie troch zastaraných locale kľúčov je samostatný malý cleanup krok po zelenom teste, bez ďalšej logiky. Závislosti: 1–2.
 
-- [ ] Odstrániť Power request gate a obsolete komentár; spoločný target resolver pre obe platformy, rovnaké enabled podmienky a reálny GET s uloženým target ID. No-run/inactive/missing-target nevykonajú sieťový request.
-- [ ] Summary a tier/LPAR zoznam rozlišujú fyzický detail od ownership; všetky štyri ownership stavy, chýbajúci detail a `run + other_hosts` sú pokryté.
-- [ ] Dispatch podľa response platformy vrátane legacy VMware defaultu a neznámej hodnoty; odstrániť pôvodný test očakávajúci blokovanie Power a všetky použitia `powerUnsupported`.
+- [x] Odstrániť Power request gate a obsolete komentár; spoločný target resolver pre obe platformy, rovnaké enabled podmienky a reálny GET s uloženým target ID. No-run/inactive/missing-target nevykonajú sieťový request.
+- [x] Summary a tier/LPAR zoznam rozlišujú fyzický detail od ownership; všetky štyri ownership stavy, chýbajúci detail a `run + other_hosts` sú pokryté.
+- [x] Dispatch podľa response platformy vrátane legacy VMware defaultu a neznámej hodnoty; odstrániť pôvodný test očakávajúci blokovanie Power a všetky použitia `powerUnsupported`.
 
 Overenie: oba inventory Vitest súbory; request test cez skutočný hook/mutator a fetch stub, nie iba mock `enabled`. Cielený ESLint a locale test po cleanup kroku.
 
@@ -122,9 +122,9 @@ Overenie: oba inventory Vitest súbory; request test cez skutočný hook/mutator
 
 Rozsah S, 2 súbory: Power komponent a jeho test. Závislosti: 3.
 
-- [ ] Zobraziť všetky overené LPAR, vFC a Ethernet polia vrátane VIOS/port údajov, source/target mená a HMC/managed system.
-- [ ] File-local typové kontroly čítajú string/finite number/string array z `Record<string, unknown>`; žiadne `as` tvrdenie predstierajúce pevný API typ, globálny normalizer alebo nové schémy v generated priečinku.
-- [ ] Testovať null, absent, prázdne aj nesprávne typované record hodnoty a platnú nulu; neznáme detaily ostanú v JSON.
+- [x] Zobraziť všetky overené LPAR, vFC a Ethernet polia vrátane VIOS/port údajov, source/target mená a HMC/managed system.
+- [x] File-local typové kontroly čítajú string/finite number/string array z `Record<string, unknown>`; žiadne `as` tvrdenie predstierajúce pevný API typ, globálny normalizer alebo nové schémy v generated priečinku.
+- [x] Testovať null, absent, prázdne aj nesprávne typované record hodnoty a platnú nulu; neznáme detaily ostanú v JSON.
 
 Overenie: Power component test, cielený ESLint. Kontrolný bod po 3–4: GET → Power LPAR UI s korektnou bezpečnostnou interpretáciou.
 
@@ -132,9 +132,9 @@ Overenie: Power component test, cielený ESLint. Kontrolný bod po 3–4: GET �
 
 Rozsah S, 2 súbory: Power komponent a jeho test. Závislosti: 4.
 
-- [ ] Priamo z recovered_hosts zobraziť aj osirelé/čiastočne načítané hosty; count summary je konzistentný s vrátenými entries.
-- [ ] Volumes obsahujú SCSI 0, boot flag, capacity bytes, pool, všetky tri overené FlashCopy kľúče; rovnaký vdisk u viacerých hostov sa nestratí chybným dedupe/keyingom.
-- [ ] Prázdne/null údaje nepredstierajú úplnosť; host a tier majú prístup k technickému JSON.
+- [x] Priamo z recovered_hosts zobraziť aj osirelé/čiastočne načítané hosty; count summary je konzistentný s vrátenými entries.
+- [x] Volumes obsahujú SCSI 0, boot flag, capacity bytes, pool, všetky tri overené FlashCopy kľúče; rovnaký vdisk u viacerých hostov sa nestratí chybným dedupe/keyingom.
+- [x] Prázdne/null údaje nepredstierajú úplnosť; host a tier majú prístup k technickému JSON.
 
 Overenie: Power component test vrátane hosta bez LPAR a hosta s active_ports null, volumes [] a warningom; cielený ESLint.
 
@@ -142,9 +142,9 @@ Overenie: Power component test vrátane hosta bez LPAR a hosta s active_ports nu
 
 Rozsah M, najviac 3 testy plus kontajner: `RecoveryApplicationInventory.tsx`, jeho test, `RecoveryApplicationPowerInventory.test.tsx`, `A/hooks/useRollbackRecoveryApplication.test.tsx`. Závislosti: 3–5.
 
-- [ ] HTTP 200 warnings zobrazí dáta aj samostatnú warnings sekciu; initial error a cached refresh error majú odlišné správanie, retry funguje.
-- [ ] Reálny query test rozlíši run ID aj target provider pri prepnutí aplikácie; inactive/no-run/missing-target nevytvárajú fetch. Zachovať referenčný VMware cache test.
-- [ ] Existujúcu rollback invalidáciu overiť aj s Power inventory response a neovplyvneným iným runom; úspech aj chyba rollbacku obnovujú relevantný inventár. Produkčné cache/hooks meniť len pri preukázanej chybe, ktorá zatiaľ nebola zistená.
+- [x] HTTP 200 warnings zobrazí dáta aj samostatnú warnings sekciu; initial error a cached refresh error majú odlišné správanie, retry funguje.
+- [x] Reálny query test rozlíši run ID aj target provider pri prepnutí aplikácie; inactive/no-run/missing-target nevytvárajú fetch. Zachovať referenčný VMware cache test.
+- [x] Existujúcu rollback invalidáciu overiť aj s Power inventory response a neovplyvneným iným runom; úspech aj chyba rollbacku obnovujú relevantný inventár. Produkčné cache/hooks meniť len pri preukázanej chybe, ktorá zatiaľ nebola zistená.
 
 Overenie: inventory, Power a rollback testy; typecheck. Kontrolný bod po 5–6: čiastočné výsledky a lifecycle zachovávajú dostupné dáta.
 
@@ -152,9 +152,9 @@ Overenie: inventory, Power a rollback testy; typecheck. Kontrolný bod po 5–6:
 
 Rozsah S, bez plánovanej novej produkčnej logiky; aktualizovať iba tento plán/TODO s dôkazmi. Závislosti: 1–6.
 
-- [ ] Prejdú nižšie uvedené explicitné testy, typecheck, cielený ESLint, JSON validácia a diff check.
-- [ ] Reálny prehliadač: Power aj VMware, warnings/co-holding, keyboard disclosures a 360/390 px drawer; zaznamenať výsledok alebo presný environment blocker, nepredstierať vizuálne overenie cez jsdom.
-- [ ] Review potvrdí zachovanie Orval zmien, žiadne nové fallbacky providerov, závislosti ani zmeny BE; atomické commity iba autorizovaných súborov, bez push/merge v tejto úlohe.
+- [x] Prejdú nižšie uvedené explicitné testy, typecheck, cielený ESLint, JSON validácia a diff check.
+- [x] Reálny prehliadač: Power aj VMware, warnings/co-holding, keyboard disclosures a 360/390 px drawer; zaznamenať výsledok alebo presný environment blocker, nepredstierať vizuálne overenie cez jsdom.
+- [x] Review potvrdí zachovanie Orval zmien, žiadne nové fallbacky providerov, závislosti ani zmeny BE; atomické commity iba autorizovaných súborov, bez push/merge v tejto úlohe.
 
 ## Testovacia matica a príkazy
 

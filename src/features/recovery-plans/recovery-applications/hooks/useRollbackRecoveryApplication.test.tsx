@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { getGetRecoveryAppInventoryQueryKey, getGetRecoveryAppsQueryKey } from '@/generated/query/recovery-apps/recovery-apps.gen'
+import { getGetRecoveryAppInventoryQueryKey, getGetRecoveryAppsQueryKey, useGetRecoveryAppInventory } from '@/generated/query/recovery-apps/recovery-apps.gen'
 import { getGetOrchestratorRunsQueryKey } from '@/generated/query/operations/operations.gen'
 import { OrvalApiError } from '@/shared/api/orvalMutator'
 import { applicationHttpStatus, extractApplicationRollbackReport, useRollbackRecoveryApplication } from './useRollbackRecoveryApplication'
@@ -22,6 +22,45 @@ function setup() {
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks() })
 
 describe('standalone application rollback', () => {
+  it.each([200, 502])('refreshes the real Power inventory after rollback status %s without touching another run', async status => {
+    let reads = 0
+    vi.stubGlobal('fetch', vi.fn((url: string) => {
+      if (url.includes('get_recovery_app_inventory')) {
+        reads++
+        return Promise.resolve(Response.json({
+          recovery_app_id: app.id, recovery_app_name: reads === 1 ? 'Before rollback' : 'After rollback',
+          run_id: 'retained-run', compute_provider_id: 'target-hmc', platform: 'ibm_power', recovered_datastores: [], tiers: [],
+          recovered_hosts: reads === 1 ? [{ host: 'remaining-host', active_ports: null, volumes: [] }] : [],
+        }))
+      }
+      return Promise.resolve(Response.json(status === 200 ? raw : { detail: 'Partial rollback' }, { status }))
+    }))
+    const { queryClient, wrapper } = setup()
+    const unrelatedKey = getGetRecoveryAppInventoryQueryKey({ run_id: 'other-run', compute_provider_id: 'target-hmc' })
+    queryClient.setQueryData(unrelatedKey, { recovery_app_id: 'other-app', recovered_hosts: [{ host: 'unrelated' }] })
+    const view = renderHook(() => ({
+      inventory: useGetRecoveryAppInventory({ run_id: 'retained-run', compute_provider_id: 'target-hmc' }),
+      rollback: useRollbackRecoveryApplication(),
+    }), { wrapper })
+    try {
+      await waitFor(() => { expect(view.result.current.inventory.isSuccess).toBe(true) })
+      expect(view.result.current.inventory.data?.recovered_hosts).toHaveLength(1)
+      await act(async () => {
+        const mutation = view.result.current.rollback.mutateAsync({ ...app, data: { application: { ...app.data.application, platform: 'IBM_POWER', target_provider_id: 'target-hmc' } } })
+        if (status === 200) await expect(mutation).resolves.toEqual({ report: { status: 'ok' } })
+        else await expect(mutation).rejects.toBeInstanceOf(Error)
+      })
+      await waitFor(() => { expect(view.result.current.inventory.data?.recovery_app_name).toBe('After rollback') })
+      expect(reads).toBe(2)
+      expect(view.result.current.inventory.data?.recovered_hosts).toEqual([])
+      expect(queryClient.getQueryState(unrelatedKey)?.isInvalidated).toBe(false)
+      expect(queryClient.getQueryData(unrelatedKey)).toMatchObject({ recovered_hosts: [{ host: 'unrelated' }] })
+    } finally {
+      view.unmount()
+      queryClient.clear()
+    }
+  })
+
   it('cancels the older GET before applying rollback data and awaits the fresh GET', async () => {
     let finishOld!: (response: Response) => void
     let finishRefresh!: (response: Response) => void
