@@ -143,19 +143,20 @@ describe('RecoveryApplicationInventory', () => {
     expect(screen.getByText('recoveryInventory.loading')).toBeInTheDocument()
   })
 
-  it('retries an initial Power GET failure without stale data', async () => {
+  it.each([400, 502])('shows the backend reason and retries an initial Power HTTP %s failure', async status => {
     const actual = await vi.importActual<typeof import('@/generated/query/recovery-apps/recovery-apps.gen')>('@/generated/query/recovery-apps/recovery-apps.gen')
     vi.mocked(useGetRecoveryAppInventory).mockImplementation(actual.useGetRecoveryAppInventory)
     const client = createAppQueryClient()
     client.setDefaultOptions({ queries: { retry: false } })
     let failed = true
-    vi.stubGlobal('fetch', () => Promise.resolve(Response.json(failed ? { detail: 'Unavailable' } : {
+    vi.stubGlobal('fetch', () => Promise.resolve(Response.json(failed ? { detail: 'Power target validation failed' } : {
       recovery_app_id: 'power', recovery_app_name: 'Retried inventory', run_id: 'run-1', compute_provider_id: 'target-hmc',
       platform: 'ibm_power', recovered_datastores: [], tiers: [],
-    }, { status: failed ? 502 : 200 })))
+    }, { status: failed ? status : 200 })))
     const view = render(<QueryClientProvider client={client}><RecoveryApplicationInventory runId="run-1" active application={withApplication({ platform: 'IBM_POWER', target_provider_id: 'target-hmc' })} /></QueryClientProvider>)
     try {
       expect(await screen.findByRole('alert')).toHaveTextContent('recoveryInventory.error')
+      expect(screen.getByRole('alert')).toHaveTextContent('Power target validation failed')
       failed = false
       fireEvent.click(screen.getByRole('button', { name: 'buttons.retry' }))
       await screen.findByText('Retried inventory')

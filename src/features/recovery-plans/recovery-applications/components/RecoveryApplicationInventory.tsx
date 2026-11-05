@@ -1,4 +1,5 @@
 import { Alert } from '@/shared/components/alert/Alert'
+import { extractBackendErrorDetail } from '@/shared/api/apiErrorMessage'
 import { Badge } from '@/shared/components/badge/Badge'
 import { FetchErrorAlert } from '@/shared/components/fetch-error-alert/FetchErrorAlert'
 import { ResponseBodyViewer } from '@/shared/components/response-body/ResponseBodyViewer'
@@ -38,12 +39,13 @@ export function RecoveryApplicationInventory({ runId, active, application }: Rec
       },
     },
   )
+  const errorDetail = extractBackendErrorDetail(query.error)
 
   if (!runId) return <p className="px-5 py-6 text-sm text-text-subtle">{t('recoveryInventory.noRun')}</p>
   if (target.error) return <Alert className="m-5" variant="error" title={t('recoveryInventory.error')} description={target.error.message} />
   if (query.isLoading) return <p className="px-5 py-6 text-sm text-text-subtle">{t('recoveryInventory.loading')}</p>
   if (query.error && !query.data) {
-    return <FetchErrorAlert className="m-5" title={t('recoveryInventory.error')} retryLabel={t('buttons.retry')} isRetrying={query.isFetching} onRetry={() => { void query.refetch() }} />
+    return <FetchErrorAlert className="m-5" title={t('recoveryInventory.error')} {...(errorDetail ? { description: errorDetail } : {})} retryLabel={t('buttons.retry')} isRetrying={query.isFetching} onRetry={() => { void query.refetch() }} />
   }
   if (!query.data) return null
 
@@ -63,7 +65,7 @@ export function RecoveryApplicationInventory({ runId, active, application }: Rec
 
   return (
     <div className="min-w-0 space-y-4 px-5 py-4">
-      {query.error ? <FetchErrorAlert title={t('recoveryInventory.refreshFailed')} retryLabel={t('buttons.retry')} isRetrying={query.isFetching} onRetry={() => { void query.refetch() }} /> : null}
+      {query.error ? <FetchErrorAlert title={t('recoveryInventory.refreshFailed')} {...(errorDetail ? { description: errorDetail } : {})} retryLabel={t('buttons.retry')} isRetrying={query.isFetching} onRetry={() => { void query.refetch() }} /> : null}
       <div className="rounded-xl border border-border bg-surface-subtle p-3.5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
