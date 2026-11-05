@@ -82,6 +82,7 @@ const recoveryAppPolicies = [
     retention_value: 4,
     retention_unit: 'hours',
     boot_verify: true,
+    stop_source_lpar: true,
     snapshot_selection_mode: 'latest',
     snapshot_max_age_value: null,
     snapshot_max_age_unit: null,
@@ -98,6 +99,7 @@ const recoveryAppPolicies = [
     retention_value: 1,
     retention_unit: 'days',
     boot_verify: true,
+    stop_source_lpar: false,
     snapshot_selection_mode: 'time_range',
     snapshot_max_age_value: 2,
     snapshot_max_age_unit: 'hours',
@@ -122,6 +124,12 @@ const cleanRoomPolicies = [
 ] as const
 
 describe('PolicySetPicker', () => {
+  it.each([['tier2-apps', 'Yes'], ['tier3-web', 'No']] as const)('shows Stop source LPAR %s in the shared policy set details', (id, expected) => {
+    render(<PolicySetPicker policySets={policySets} selectedPolicySetId={id} onSelect={vi.fn()} />)
+    const recovery = screen.getByRole('region', { name: 'Recovery application policy' })
+    expect(within(recovery).getByText('Stop source LPAR').parentElement).toHaveTextContent(expected)
+  })
+
   it('marks only recovery retention and boot verification as reserved for future use', () => {
     render(<PolicySetPicker policySets={policySets} selectedPolicySetId="tier2-apps" onSelect={vi.fn()} />)
 

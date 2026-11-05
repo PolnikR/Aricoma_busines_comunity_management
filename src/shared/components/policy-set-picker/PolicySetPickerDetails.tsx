@@ -73,6 +73,7 @@ function buildSections(
     { label: t('details.snapshotSelection'), value: formatRecoverySelection(recoveryPolicy, t) },
     { label: t('details.retention'), value: <span className="inline-flex flex-wrap items-center gap-2">{formatInterval(recoveryPolicy.retention_value, recoveryPolicy.retention_unit, 'recoveryAppPolicies', t)}<span className="rounded bg-surface-muted px-1.5 text-[10px] leading-4 text-text-secondary">{t('recoveryAppPolicies.reservedForFutureUse')}</span></span> },
     { label: t('details.bootVerify'), value: <span className="inline-flex flex-wrap items-center gap-2">{t(recoveryPolicy.boot_verify ? 'recoveryAppPolicies.yes' : 'recoveryAppPolicies.no')}<span className="rounded bg-surface-muted px-1.5 text-[10px] leading-4 text-text-secondary">{t('recoveryAppPolicies.reservedForFutureUse')}</span></span> },
+    { label: t('recoveryAppPolicies.form.stopSourceLpar'), value: t(recoveryPolicy.stop_source_lpar ? 'recoveryAppPolicies.yes' : 'recoveryAppPolicies.no') },
     { label: t('details.status'), value: t(recoveryPolicy.enabled ? 'recoveryAppPolicies.enabled' : 'recoveryAppPolicies.disabled') },
   ] : []
 

@@ -1449,6 +1449,41 @@ describe('RecoveryAppBuilder', () => {
     expect(onDirtyChange).toHaveBeenCalledWith(true)
   })
 
+  it('defaults Primary Airflow only for a new app without marking it dirty', async () => {
+    const onDirtyChange = vi.fn()
+    const user = userEvent.setup()
+    render(<RecoveryAppBuilder onDirtyChange={onDirtyChange} />)
+    expect(onDirtyChange).not.toHaveBeenCalled()
+    await openPolicy()
+    await user.click(screen.getByRole('button', { name: /Critical - Daily DR Test/ }))
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+    await user.click(screen.getByRole('switch', { name: 'Push to orchestrator' }))
+    expect(screen.getByLabelText('Airflow provider *')).toHaveValue('airflow-01')
+  })
+
+  it('preserves the previously selected Airflow provider when editing a saved app', async () => {
+    const originalProviders = platformProvidersQuery.current.data
+    onTestFinished(() => { platformProvidersQuery.current.data = originalProviders })
+    platformProvidersQuery.current.data = [...originalProviders, { id: 'airflow-alt', name: 'Secondary Airflow', type: 'AIRFLOW', credentialStatus: 'ok' }]
+    render(<RecoveryAppBuilder initialData={{ ...draftFixture(), pushToOrchestrator: true, orchestrationProviderId: 'airflow-alt' }} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Orchestration' }))
+    expect(screen.getByLabelText('Airflow provider *')).toHaveValue('airflow-alt')
+  })
+
+  it('does not silently select another Airflow provider if Primary Airflow is unavailable', async () => {
+    const originalProviders = platformProvidersQuery.current.data
+    onTestFinished(() => { platformProvidersQuery.current.data = originalProviders })
+    platformProvidersQuery.current.data = originalProviders.filter(provider => provider.id !== 'airflow-01')
+    render(<RecoveryAppBuilder />)
+    await openPolicy()
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: /Critical - Daily DR Test/ }))
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+    await user.click(screen.getByRole('switch', { name: 'Push to orchestrator' }))
+    expect(screen.queryByLabelText('Airflow provider *')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Save Application' })).toBeDisabled()
+  })
+
   it('lists only AIRFLOW providers with valid credentials in the orchestration dropdown', async () => {
     const user = userEvent.setup()
     render(<RecoveryAppBuilder />)
@@ -1462,7 +1497,8 @@ describe('RecoveryAppBuilder', () => {
       'Select Airflow provider',
       'Primary Airflow - AIRFLOW',
     ])
-    expect(screen.getByRole('button', { name: 'Save Application' })).toBeDisabled()
+    expect(select).toHaveValue('airflow-01')
+    expect(screen.getByRole('button', { name: 'Save Application' })).toBeEnabled()
     await user.selectOptions(select, 'airflow-01')
     expect(screen.getByRole('button', { name: 'Save Application' })).toBeEnabled()
   })
@@ -1478,7 +1514,8 @@ describe('RecoveryAppBuilder', () => {
     const save = screen.getByRole('button', { name: 'Save Application' })
     expect(save).toBeEnabled()
     await user.click(screen.getByRole('switch', { name: 'Push to orchestrator' }))
-    expect(save).toBeDisabled()
+    expect(screen.getByLabelText('Airflow provider *')).toHaveValue('airflow-01')
+    expect(save).toBeEnabled()
     await user.selectOptions(screen.getByLabelText('Airflow provider *'), 'airflow-01')
     expect(save).toBeEnabled()
     await user.click(save)

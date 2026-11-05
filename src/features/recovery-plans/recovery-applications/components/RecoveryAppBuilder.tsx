@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from '@/hooks/useTranslation'
 import { resolveUserFacingErrorMessage } from '@/shared/api/apiErrorMessage'
 import { Button } from '@/shared/components/button/Button'
@@ -86,6 +86,16 @@ export function RecoveryAppBuilder({
     () => getEligiblePlatformProviders(platformProvidersQuery.data ?? []),
     [platformProvidersQuery.data],
   )
+  // A new app defaults to the eligible provider named Primary Airflow.
+  // Never overwrite a saved provider, or a deliberate manual selection/clear.
+  const orchestrationProviderTouched = useRef(false)
+  const primaryAirflowId = eligiblePlatformProviders.find(provider => provider.name.trim().toLowerCase() === 'primary airflow')?.id
+  useEffect(() => {
+    if (initialData || readOnly || orchestrationProviderTouched.current || !primaryAirflowId) return
+    setFormState(current => current.orchestrationProviderId
+      ? current
+      : { ...current, orchestrationProviderId: primaryAirflowId })
+  }, [initialData, readOnly, primaryAirflowId])
   // The platform is the selected source provider's type (or the stored one of a
   // saved application, whose provider may be gone); without one no group fits.
   const platform = lockedProviders?.platform
@@ -481,7 +491,7 @@ export function RecoveryAppBuilder({
                       <Select
                         id="recovery-application-orchestration-provider"
                         value={formState.orchestrationProviderId}
-                        onChange={event => { updateFormState({ orchestrationProviderId: event.target.value }) }}
+                        onChange={event => { orchestrationProviderTouched.current = true; updateFormState({ orchestrationProviderId: event.target.value }) }}
                         disabled={readOnly || platformProvidersQuery.isLoading}
                         required={formState.pushToOrchestrator}
                       >
