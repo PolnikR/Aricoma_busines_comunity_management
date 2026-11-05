@@ -14,7 +14,22 @@ export const RecoveryAppInventoryTier = zod.object({
   "vms": zod.array(zod.object({
   "name": zod.string(),
   "found": zod.boolean(),
-  "datastores": zod.array(zod.string()).default(recoveryAppInventoryTierVmsItemDatastoresDefault)
+  "datastores": zod.array(zod.string()).default(recoveryAppInventoryTierVmsItemDatastoresDefault),
+  "source_name": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "target_name": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "target_managed_system": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "target_hmc_provider_id": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "ownership": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "host": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "other_hosts": zod.union([zod.array(zod.string()),zod.null()]).exactOptional(),
+  "lpar": zod.union([zod.object({
+  "uuid": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "state": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "rmc_state": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "managed_system": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "vfc": zod.union([zod.array(zod.record(zod.string(), zod.unknown())),zod.null()]).exactOptional(),
+  "ethernet": zod.union([zod.array(zod.record(zod.string(), zod.unknown())),zod.null()]).exactOptional()
+}),zod.null()]).exactOptional()
 }))
 })
 

@@ -5849,6 +5849,87 @@
         ],
         "title": "PolicySetsResponse"
       },
+      "PowerLparInfo": {
+        "properties": {
+          "uuid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uuid"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          },
+          "rmc_state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rmc State"
+          },
+          "managed_system": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Managed System"
+          },
+          "vfc": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vfc"
+          },
+          "ethernet": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ethernet"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "PowerLparInfo"
+      },
       "PowerVmRecord": {
         "properties": {
           "lpar": {
@@ -6336,6 +6417,133 @@
         ],
         "title": "RecoveredDatastore"
       },
+      "RecoveredHost": {
+        "properties": {
+          "host": {
+            "type": "string",
+            "title": "Host"
+          },
+          "storage_provider_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Storage Provider Id"
+          },
+          "exists": {
+            "type": "boolean",
+            "title": "Exists",
+            "default": true
+          },
+          "active_ports": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active Ports"
+          },
+          "wwpns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Wwpns",
+            "default": []
+          },
+          "volumes": {
+            "items": {
+              "$ref": "#/components/schemas/RecoveredHostVolume"
+            },
+            "type": "array",
+            "title": "Volumes",
+            "default": []
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "host"
+        ],
+        "title": "RecoveredHost",
+        "description": "IBM Power: a FlashSystem host created for this run (h{run_uuid}_<target LPAR>)."
+      },
+      "RecoveredHostVolume": {
+        "properties": {
+          "vdisk_id": {
+            "type": "string",
+            "title": "Vdisk Id"
+          },
+          "vdisk_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vdisk Name"
+          },
+          "scsi_id": {
+            "type": "integer",
+            "title": "Scsi Id"
+          },
+          "boot": {
+            "type": "boolean",
+            "title": "Boot",
+            "default": false
+          },
+          "capacity_bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capacity Bytes"
+          },
+          "pool": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pool"
+          },
+          "flashcopy": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Flashcopy"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "vdisk_id",
+          "scsi_id"
+        ],
+        "title": "RecoveredHostVolume"
+      },
       "RecoveryAppInventoryResponse": {
         "properties": {
           "recovery_app_id": {
@@ -6354,6 +6562,11 @@
             "type": "string",
             "title": "Compute Provider Id"
           },
+          "platform": {
+            "type": "string",
+            "title": "Platform",
+            "default": "vmware"
+          },
           "recovered_datastores": {
             "items": {
               "$ref": "#/components/schemas/RecoveredDatastore"
@@ -6361,12 +6574,28 @@
             "type": "array",
             "title": "Recovered Datastores"
           },
+          "recovered_hosts": {
+            "items": {
+              "$ref": "#/components/schemas/RecoveredHost"
+            },
+            "type": "array",
+            "title": "Recovered Hosts",
+            "default": []
+          },
           "tiers": {
             "items": {
               "$ref": "#/components/schemas/RecoveryAppInventoryTier"
             },
             "type": "array",
             "title": "Tiers"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings",
+            "default": []
           }
         },
         "type": "object",
@@ -6428,6 +6657,96 @@
             "type": "array",
             "title": "Datastores",
             "default": []
+          },
+          "source_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Name"
+          },
+          "target_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Name"
+          },
+          "target_managed_system": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Managed System"
+          },
+          "target_hmc_provider_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Hmc Provider Id"
+          },
+          "ownership": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ownership"
+          },
+          "host": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Host"
+          },
+          "other_hosts": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Other Hosts"
+          },
+          "lpar": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PowerLparInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": true,

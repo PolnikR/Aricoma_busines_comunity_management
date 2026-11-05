@@ -6,18 +6,42 @@
  */
 import * as zod from 'zod';
 
+export const recoveryAppInventoryResponsePlatformDefault = `vmware`;
 export const recoveryAppInventoryResponseRecoveredDatastoresItemVmsDefault = [];
+export const recoveryAppInventoryResponseRecoveredHostsItemExistsDefault = true;
+export const recoveryAppInventoryResponseRecoveredHostsItemWwpnsDefault = [];
+export const recoveryAppInventoryResponseRecoveredHostsItemVolumesItemBootDefault = false;
+export const recoveryAppInventoryResponseRecoveredHostsItemVolumesDefault = [];
+export const recoveryAppInventoryResponseRecoveredHostsDefault = [];
 export const recoveryAppInventoryResponseTiersItemVmsItemDatastoresDefault = [];
+export const recoveryAppInventoryResponseWarningsDefault = [];
 export const RecoveryAppInventoryResponse = zod.object({
   "recovery_app_id": zod.string(),
   "recovery_app_name": zod.string(),
   "run_id": zod.string(),
   "compute_provider_id": zod.string(),
+  "platform": zod.string().default(recoveryAppInventoryResponsePlatformDefault),
   "recovered_datastores": zod.array(zod.object({
   "datastore": zod.string(),
   "target_vdisk": zod.union([zod.string(),zod.null()]).exactOptional(),
   "vms": zod.array(zod.string()).default(recoveryAppInventoryResponseRecoveredDatastoresItemVmsDefault)
 })),
+  "recovered_hosts": zod.array(zod.object({
+  "host": zod.string(),
+  "storage_provider_id": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "exists": zod.boolean().default(recoveryAppInventoryResponseRecoveredHostsItemExistsDefault),
+  "active_ports": zod.union([zod.int(),zod.null()]).exactOptional(),
+  "wwpns": zod.array(zod.string()).default(recoveryAppInventoryResponseRecoveredHostsItemWwpnsDefault),
+  "volumes": zod.array(zod.object({
+  "vdisk_id": zod.string(),
+  "vdisk_name": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "scsi_id": zod.int(),
+  "boot": zod.boolean().default(recoveryAppInventoryResponseRecoveredHostsItemVolumesItemBootDefault),
+  "capacity_bytes": zod.union([zod.int(),zod.null()]).exactOptional(),
+  "pool": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "flashcopy": zod.union([zod.record(zod.string(), zod.unknown()),zod.null()]).exactOptional()
+})).default(recoveryAppInventoryResponseRecoveredHostsItemVolumesDefault)
+}).describe('IBM Power: a FlashSystem host created for this run (h{run_uuid}_<target LPAR>).')).default(recoveryAppInventoryResponseRecoveredHostsDefault),
   "tiers": zod.array(zod.object({
   "tier_name": zod.string(),
   "recovery_group_id": zod.string(),
@@ -25,9 +49,25 @@ export const RecoveryAppInventoryResponse = zod.object({
   "vms": zod.array(zod.object({
   "name": zod.string(),
   "found": zod.boolean(),
-  "datastores": zod.array(zod.string()).default(recoveryAppInventoryResponseTiersItemVmsItemDatastoresDefault)
+  "datastores": zod.array(zod.string()).default(recoveryAppInventoryResponseTiersItemVmsItemDatastoresDefault),
+  "source_name": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "target_name": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "target_managed_system": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "target_hmc_provider_id": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "ownership": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "host": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "other_hosts": zod.union([zod.array(zod.string()),zod.null()]).exactOptional(),
+  "lpar": zod.union([zod.object({
+  "uuid": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "state": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "rmc_state": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "managed_system": zod.union([zod.string(),zod.null()]).exactOptional(),
+  "vfc": zod.union([zod.array(zod.record(zod.string(), zod.unknown())),zod.null()]).exactOptional(),
+  "ethernet": zod.union([zod.array(zod.record(zod.string(), zod.unknown())),zod.null()]).exactOptional()
+}),zod.null()]).exactOptional()
 }))
-}))
+})),
+  "warnings": zod.array(zod.string()).default(recoveryAppInventoryResponseWarningsDefault)
 })
 
 export type RecoveryAppInventoryResponse = zod.input<typeof RecoveryAppInventoryResponse>;
